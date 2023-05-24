@@ -22,13 +22,13 @@ const root = ReactDOM.createRoot(
 
 const router = createBrowserRouter([
   {
+    path: '/users/login',
+    element: <Login />,
+  },
+  {
     path: '/users',
     element: <DefaultPageNav />,
     children: [
-      {
-        path: 'login',
-        element: <Login />,
-      },
       {
         path: 'my-account',
         element: <MyAccount />,

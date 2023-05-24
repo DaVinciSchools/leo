@@ -1,36 +1,77 @@
-@use '../../../FieldWithError/FieldWithError';
+@use '../../../libs/color';
+@use '../../../libs/forms';
 
-@import '../../../libs/DefaultPage/DefaultPage';
+.space-filler {
+  height: 15%;
+}
+
+.logo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+
+  a {
+    line-height: 0;
+  }
+}
 
 .form-container {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  width: 100%;
-}
-
-.form {
-  width: 90%;
-}
-
-.form th {
-  width: 0;
-  vertical-align: baseline;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.form td {
-  width: 100%;
-}
-
-.form td select {
-  width: 100%;
-}
-
-.form-buttons {
-  float: right;
   display: flex;
-  flex-flow: row;
-  width: fit-content;
+  flex-flow: column nowrap;
+  height: 100%;
+  justify-content: flex-start;
+  white-space: nowrap;
+
+  .form-padding {
+    box-sizing: border-box;
+    padding: 0.5em;
+  }
+
+  .error {
+    @include color.error;
+
+    border: 1px solid;
+    justify-content: center;
+    padding: 0.25em;
+    border-radius: 6px;
+  }
+
+  .success {
+    @include color.success;
+
+    border: 1px solid;
+    justify-content: center;
+    padding: 0.25em;
+    border-radius: 6px;
+  }
+
+  .form-elements {
+    display: flex;
+    flex-flow: column nowrap;
+    gap: 0.5em;
+    min-width: fit-content;
+    width: 40%;
+  }
+
+  .footer {
+    align-items: center;
+    display: flex;
+    flex-flow: row nowrap;
+    flex-grow: 1;
+    gap: 1em;
+
+    a {
+      color: color.$primary-800;
+      flex-shrink: 1;
+      padding-right: 0.5em;
+      text-align: right;
+      white-space: nowrap;
+      margin-bottom: 24px;
+    }
+  }
+
+  .buttons {
+    padding: 0.5em;
+  }
 }

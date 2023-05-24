@@ -1,135 +1,140 @@
 import './Login.scss';
-import {Layout} from 'antd';
-import {useState} from 'react';
-import {useNavigate} from 'react-router';
-import {user_management} from '../../../generated/protobuf-js';
-import UserManagementService = user_management.UserManagementService;
-import {createService} from '../../../libs/protos';
-import {FieldWithError} from '../../../FieldWithError/FieldWithError';
-import ILoginResponse = user_management.ILoginResponse;
-import ILoginRequest = user_management.ILoginRequest;
-import {login} from '../../../libs/authentication';
-import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-const {Content} = Layout;
+
+import {Button, Checkbox, Form, Input} from 'antd';
+import {LockOutlined, UserOutlined} from '@ant-design/icons';
+import {useEffect, useRef, useState} from 'react';
+import {Link} from 'react-router-dom';
+import {addXsrfInputField} from '../../../libs/authentication';
 
 export function Login() {
-  const userManagementService = createService(
-    UserManagementService,
-    'UserManagementService'
-  );
-  const navigate = useNavigate();
+  const [loginForm] = Form.useForm();
+  const [disabled, setDisabled] = useState(false);
+  const [formValues, setFormValues] = useState({});
 
-  const [emailAddress, setEmailAddress] = useState('');
-  const [password, setPassword] = useState('');
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const [emailAddressError, setEmailAddressError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [loginFailure, setLoginFailure] = useState(false);
+  const queryParameters = new URLSearchParams(window.location.search);
+  const failed = queryParameters.get('failed');
+  const logout = queryParameters.get('logout');
 
-  function createLoginRequest(): ILoginRequest {
-    return {
-      emailAddress: emailAddress,
-      password: password,
-    } as ILoginRequest;
+  function onFinish(formValues: {}) {
+    setDisabled(true);
+    setFormValues(formValues);
   }
 
-  function parseLoginResponse(response: ILoginResponse): void {
-    setEmailAddressError(response.emailAddressError || '');
-    setPasswordError(response.passwordError || '');
-    setLoginFailure(!!response.loginFailure);
-  }
-
-  function onLogin(): void {
-    userManagementService
-      .login(createLoginRequest())
-      .then(response => {
-        if (response.success) {
-          login(response.user!);
-          console.log('Here');
-          navigate('/projects/ikigai-builder');
-          window.location.reload();
-        } else {
-          parseLoginResponse(response);
-        }
-      })
-      .catch(reason => console.log(reason));
-  }
-
-  function onCancel(): void {
-    navigate('/');
-  }
+  useEffect(() => {
+    if (Object.entries(formValues).length > 0) {
+      formRef.current!.requestSubmit();
+    }
+  }, [formValues]);
 
   return (
     <>
-      <DefaultPage title="Login">
-        <Layout style={{height: '100%'}}>
-          <Content style={{borderRight: '#F0781F solid 1px', padding: '0.5em'}}>
-            <div className="subtitle">Login</div>
-            <div className="brief-instructions">
-              Enter your e-mail address and password.
+      <div className="space-filler" />
+      <div className="logo">
+        <Link to="/">
+          <img src="/images/logo-orange-on-white.svg" />
+        </Link>
+      </div>
+      <div className="space-filler" />
+      <div className="form-container">
+        <Form
+          form={loginForm}
+          onFinish={onFinish}
+          disabled={disabled}
+          className="form-elements"
+        >
+          <div
+            className="form-padding"
+            style={{display: failed != null ? undefined : 'none'}}
+          >
+            <div className="error">
+              Authentication failure. Please try again.
             </div>
-            <div className="form-container">
-              <table className="form">
-                <tbody>
-                  <tr>
-                    <th>
-                      <label htmlFor="email_address">Email Address:</label>
-                    </th>
-                    <td>
-                      <FieldWithError
-                        id="email_address"
-                        value={emailAddress}
-                        setValue={setEmailAddress}
-                        autoComplete="username"
-                        type="email"
-                        maxLength={254}
-                        error={emailAddressError}
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>
-                      <label htmlFor="password">Password:</label>
-                    </th>
-                    <td>
-                      <FieldWithError
-                        id="password"
-                        value={password}
-                        setValue={setPassword}
-                        autoComplete="current-password"
-                        type="password"
-                        maxLength={128}
-                        error={passwordError}
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colSpan={2}>
-                      <div className="form-buttons">
-                        <span
-                          hidden={!loginFailure}
-                          className="field_with_error"
-                          style={{whiteSpace: 'nowrap'}}
-                        >
-                          Username or password incorrect.
-                        </span>
-                        &nbsp;
-                        <input type="submit" value="Login" onClick={onLogin} />
-                        &nbsp;
-                        <input
-                          type="button"
-                          value="Cancel"
-                          onClick={onCancel}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          </div>
+          <div
+            className="form-padding"
+            style={{display: logout != null ? undefined : 'none'}}
+          >
+            <div className="success">
+              You have been successfully logged out. Go&nbsp;
+              <Link to="/">Home</Link>.
             </div>
-          </Content>
-        </Layout>
-      </DefaultPage>
+          </div>
+          <Form.Item
+            name="username"
+            rules={[
+              {
+                required: true,
+                whitespace: true,
+                message: 'Please enter your email address.',
+              },
+              {
+                type: 'email',
+                message: 'This e-mail address is not valid.',
+              },
+            ]}
+          >
+            <Input
+              placeholder="Email Address"
+              maxLength={255}
+              autoComplete="username"
+              autoFocus={true}
+              prefix={<UserOutlined />}
+            />
+          </Form.Item>
+          <Form.Item
+            name="password"
+            rules={[
+              {
+                required: true,
+                message: 'Please enter your password.',
+              },
+            ]}
+          >
+            <Input
+              placeholder="Password"
+              maxLength={255}
+              type="password"
+              autoComplete="current-password"
+              prefix={<LockOutlined />}
+            />
+          </Form.Item>
+          <div className="footer">
+            <Form.Item name="rememberMe" valuePropName="checked">
+              <Checkbox disabled={true}>Remember me</Checkbox>
+            </Form.Item>
+            <Link to="/">TODO: Forgot your password?</Link>
+          </div>
+          <div className="buttons">
+            <Button type="primary" htmlType="submit">
+              Submit
+            </Button>
+          </div>
+        </Form>
+      </div>
+      {/* The SecurityFilterChain must be called from a <form action="...">. */}
+      {/* However, React doesn't support actions. So, we dynamically create  */}
+      {/* a form with the values and submit it manually.                     */}
+      {/* TODO: Explore FormProps, which has an action?                      */}
+      <form
+        ref={formRef}
+        method="post"
+        action="/api/login"
+        style={{display: 'none'}}
+      >
+        {/* This won't be detected if it is in the <Form/> component above. */}
+        {addXsrfInputField()}
+        {Object.entries(formValues).map(([key, value]) => (
+          <Input
+            key={key}
+            type="hidden"
+            id={key}
+            name={key}
+            value={value as string}
+          />
+        ))}
+      </form>
     </>
   );
 }
