@@ -51,6 +51,7 @@ public class ReactResourceController {
   @Autowired private Database db;
 
   @RequestMapping({
+    // This needs to be kept in sync with ServerApplication.SecurityConfigurer.
     "/",
     "/docs/**",
     "/favicon.*",
@@ -62,9 +63,11 @@ public class ReactResourceController {
     "/robots.txt",
     "/static/**",
     "/users/**",
+    // TODO: Move these out of the prod server.
     // React developer tools plugin.
     "/installHooks.js",
-    // Due to the https://github.com/webpack/webpack-dev-server.
+    // Webpack server hot reload files:
+    // https://github.com/webpack/webpack-dev-server.
     "/main.*.hot-update.js",
     "/main.*.hot-update.js.map",
     "/main.*.hot-update.json"

@@ -1,4 +1,5 @@
 import {Message, Method, rpc, RPCImpl, RPCImplCallback} from 'protobufjs';
+import {addXsrfHeader} from './authentication';
 
 export * from '../generated/protobuf-js';
 
@@ -44,10 +45,10 @@ function createNewService<Service>(
       body: requestData,
       cache: 'no-cache',
       credentials: 'include',
-      headers: {
+      headers: addXsrfHeader({
         'Content-Type': 'application/x-protobuf',
         'Response-Type': 'application/x-protobuf',
-      },
+      }),
       method: 'POST',
       mode: 'same-origin',
       redirect: 'follow',

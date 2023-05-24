@@ -2,24 +2,41 @@ package org.davincischools.leo.server;
 
 import static org.davincischools.leo.server.SpringConstants.LOCAL_SERVER_PORT_PROPERTY;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.post_environment_processors.LoadCustomProjectLeoProperties;
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.StandardEnvironment;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.protobuf.ProtobufHttpMessageConverter;
 import org.springframework.http.converter.protobuf.ProtobufJsonFormatHttpMessageConverter;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
 @SpringBootApplication(
@@ -44,6 +61,138 @@ public class ServerApplication {
     }
   }
 
+  @Configuration
+  @EnableWebSecurity
+  static class SecurityConfigurer {
+
+    @Bean
+    public SecurityFilterChain buildSecurityFilterChain(HttpSecurity http) throws Exception {
+      // https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html#_i_am_using_angularjs_or_another_javascript_framework
+      CookieCsrfTokenRepository tokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+      XorCsrfTokenRequestAttributeHandler delegate = new XorCsrfTokenRequestAttributeHandler();
+
+      return http
+
+          // Prevent Cross-Site Request Forgery.
+          .csrf(
+              config ->
+                  config
+                      .csrfTokenRepository(tokenRepository)
+                      .csrfTokenRequestHandler(
+                          (HttpServletRequest request,
+                              HttpServletResponse response,
+                              Supplier<CsrfToken> csrfToken) -> {
+                            // The CSRF cookie isn't actually generated until the get() method
+                            // is called, because it's generation is lazy. For the build-in
+                            // login page, get() is called as part of creating the login HTML.
+                            // But, get() is not called if you use an external login page,
+                            // like we are doing. So, in order to force a CSRF token to be
+                            // generated we manually call get() here. Once it's generated, it
+                            // is automatically included as a cookie in the response.
+                            csrfToken.get();
+
+                            // Use only the handle() method of XorCsrfTokenRequestAttributeHandler
+                            // and the default implementation of resolveCsrfTokenValue() from
+                            // CsrfTokenRequestHandler
+                            delegate.handle(request, response, csrfToken);
+                          }))
+
+          // Login
+          .formLogin(
+              config ->
+                  config
+                      .loginPage("/users/login")
+                      .loginProcessingUrl("/api/login")
+                      .defaultSuccessUrl("/projects/overview")
+                      .failureUrl("/users/login?failed=true")
+                      .permitAll())
+
+          // Logout
+          .logout(
+              config ->
+                  config
+                      .logoutUrl("/api/logout")
+                      .logoutSuccessUrl("/")
+                      .clearAuthentication(true)
+                      .invalidateHttpSession(true)
+                      .deleteCookies("JSESSIONID")
+                      .permitAll())
+
+          // A user's profile requires full authentication.
+          .authorizeHttpRequests(
+              config ->
+                  config
+                      .requestMatchers(new AntPathRequestMatcher("/users/my-account"))
+                      .fullyAuthenticated())
+
+          // Public content.
+          .authorizeHttpRequests(
+              config ->
+                  config
+                      .requestMatchers(
+                          // This needs to be kept in sync with ReactResourceController.
+                          new AntPathRequestMatcher("/", HttpMethod.GET.name()),
+                          new AntPathRequestMatcher("/docs/**", HttpMethod.GET.name()),
+                          new AntPathRequestMatcher("/favicon.*", HttpMethod.GET.name()),
+                          new AntPathRequestMatcher("/images/**", HttpMethod.GET.name()),
+                          new AntPathRequestMatcher("/index.html", HttpMethod.GET.name()),
+                          new AntPathRequestMatcher("/manifest.json", HttpMethod.GET.name()),
+                          new AntPathRequestMatcher("/robots.txt", HttpMethod.GET.name()),
+                          new AntPathRequestMatcher("/static/**", HttpMethod.GET.name()),
+                          // TODO: Move these out of the prod server.
+                          // React developer tools plugin.
+                          new AntPathRequestMatcher("/installHooks.js", HttpMethod.GET.name()),
+                          // Webpack server hot reload files:
+                          // https://github.com/webpack/webpack-dev-server.
+                          new AntPathRequestMatcher("/main.*.hot-update.js", HttpMethod.GET.name()),
+                          new AntPathRequestMatcher(
+                              "/main.*.hot-update.js.map", HttpMethod.GET.name()),
+                          new AntPathRequestMatcher(
+                              "/main.*.hot-update.json", HttpMethod.GET.name()))
+                      .permitAll())
+
+          // Remaining pages require authentication.
+          .authorizeHttpRequests(
+              config ->
+                  config
+                      .requestMatchers(
+                          new AntPathRequestMatcher("/api/**", HttpMethod.POST.name()),
+                          new AntPathRequestMatcher("/profiles/**", HttpMethod.GET.name()),
+                          new AntPathRequestMatcher("/projects/**", HttpMethod.GET.name()),
+                          new AntPathRequestMatcher("/users/**", HttpMethod.GET.name()))
+                      .authenticated())
+
+          // Deny everything else.
+          .authorizeHttpRequests(config -> config.anyRequest().denyAll())
+
+          // Set security realm.
+          // .httpBasic(config -> config.realmName("project.leo"))
+
+          // Done with configuration.
+          .build();
+    }
+
+    @Bean
+    static UserDetailsService userDetailsService(@Autowired Database db) {
+      return (String username) -> {
+        Optional<UserX> optionalUserX = db.getUserXRepository().findByEmailAddress(username);
+        if (optionalUserX.isEmpty()) {
+          throw new UsernameNotFoundException("User " + username + " not found.");
+        }
+
+        UserX userX = optionalUserX.get();
+        return User.builder()
+            .username(userX.getEmailAddress())
+            .password(userX.getEncodedPassword())
+            .roles(
+                db.getUserXRepository().getRoles(userX).stream()
+                    .map(Enum::name)
+                    .toArray(String[]::new))
+            .build();
+      };
+    }
+  }
+
   public static void main(String[] args) throws IOException {
     // Load custom Project Leo properties into the environment.
     ConfigurableEnvironment environment = new StandardEnvironment();
@@ -63,7 +212,7 @@ public class ServerApplication {
       logger.atInfo().log("  - {} ({})", beanName, bean.getClass().getName());
     }
 
-    // Log the port the server is running on.
+    // Log the port that the server is running on.
     int serverPort =
         context.getEnvironment().getProperty(LOCAL_SERVER_PORT_PROPERTY, Integer.class, 0);
     logger.atInfo().log("Leo server started on port http://localhost:{}.", serverPort);

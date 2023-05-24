@@ -12,8 +12,6 @@ service UserManagementService {
   rpc GetUserDetails (GetUserDetailsRequest) returns (GetUserDetailsResponse) {}
   rpc UpsertUser (UpsertUserRequest) returns (UserInformationResponse) {}
   rpc RemoveUser (RemoveUserRequest) returns (UserInformationResponse) {}
-
-  rpc Login (LoginRequest) returns (LoginResponse) {}
 }
 
 message GetUsersRequest {
@@ -50,18 +48,4 @@ message UserInformationResponse {
   optional string email_address_error = 7;
   optional string password_error = 8;
   optional string verify_password_error = 9;
-}
-
-message LoginRequest {
-  optional string email_address = 1;
-  optional string password = 2;
-}
-
-message LoginResponse {
-  optional bool success = 1;
-  optional pl_types.User user = 2;
-
-  optional bool login_failure = 3;
-  optional string email_address_error = 4;
-  optional string password_error = 5;
 }
