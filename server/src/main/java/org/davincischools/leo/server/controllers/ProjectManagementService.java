@@ -275,7 +275,7 @@ public class ProjectManagementService {
     return projects;
   }
 
-  @PostMapping(value = "/api/protos/ClassManagementService/GetProjects")
+  @PostMapping(value = "/api/protos/ProjectManagementService/GetProjects")
   @ResponseBody
   public GetProjectsResponse getProjects(
       @Authenticated UserX userX, @RequestBody Optional<GetProjectsRequest> optionalRequest)

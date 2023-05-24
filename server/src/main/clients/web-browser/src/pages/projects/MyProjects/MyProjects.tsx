@@ -22,7 +22,7 @@ export function MyProjects() {
   useEffect(() => {
     const service = createService(
       ProjectManagementService,
-      'ClassManagementService'
+      'ProjectManagementService'
     );
     service
       .getProjects({userXId: user!.userXId!})
