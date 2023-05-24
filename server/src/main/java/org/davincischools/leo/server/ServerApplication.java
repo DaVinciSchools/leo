@@ -15,6 +15,7 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.post_environment_processors.LoadCustomProjectLeoProperties;
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.server.utils.UserXDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -29,7 +30,6 @@ import org.springframework.http.converter.protobuf.ProtobufHttpMessageConverter;
 import org.springframework.http.converter.protobuf.ProtobufJsonFormatHttpMessageConverter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
@@ -165,7 +165,7 @@ public class ServerApplication {
           // Deny everything else.
           .authorizeHttpRequests(config -> config.anyRequest().denyAll())
 
-          // Set security realm.
+          // TODO: Set security realm.
           // .httpBasic(config -> config.realmName("project.leo"))
 
           // Done with configuration.
@@ -180,15 +180,7 @@ public class ServerApplication {
           throw new UsernameNotFoundException("User " + username + " not found.");
         }
 
-        UserX userX = optionalUserX.get();
-        return User.builder()
-            .username(userX.getEmailAddress())
-            .password(userX.getEncodedPassword())
-            .roles(
-                db.getUserXRepository().getRoles(userX).stream()
-                    .map(Enum::name)
-                    .toArray(String[]::new))
-            .build();
+        return new UserXDetails(optionalUserX.get());
       };
     }
   }
@@ -208,8 +200,7 @@ public class ServerApplication {
     String[] beanNames = context.getBeanDefinitionNames();
     Arrays.sort(beanNames);
     for (String beanName : beanNames) {
-      Object bean = context.getBean(beanName);
-      logger.atInfo().log("  - {} ({})", beanName, bean.getClass().getName());
+      logger.atInfo().log("  - {}", beanName);
     }
 
     // Log the port that the server is running on.

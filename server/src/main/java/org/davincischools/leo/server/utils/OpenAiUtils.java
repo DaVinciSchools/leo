@@ -63,8 +63,8 @@ public class OpenAiUtils {
   }
 
   // Makes a call to OpenAI. If no key is available, returns an unmodified response.
-  public <T extends Builder<?>> T sendOpenAiRequest(
-      Message request, T responseBuilder, Optional<Integer> user_id) throws IOException {
+  public <T extends Builder<?>> T sendOpenAiRequest(Message request, T responseBuilder)
+      throws IOException {
     return LogUtils.executeAndLog(
             db,
             request,

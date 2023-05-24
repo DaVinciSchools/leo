@@ -1,7 +1,5 @@
 package org.davincischools.leo.server.controllers;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +8,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.text.StringEscapeUtils;
+import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.open_ai.OpenAiMessage;
 import org.davincischools.leo.protos.open_ai.OpenAiRequest;
@@ -18,6 +17,7 @@ import org.davincischools.leo.protos.open_ai.OpenAiResponse.CreateCompletionChoi
 import org.davincischools.leo.protos.partial_text_openai_prompt.GetSuggestionsRequest;
 import org.davincischools.leo.protos.partial_text_openai_prompt.GetSuggestionsRequest.Prompt;
 import org.davincischools.leo.protos.partial_text_openai_prompt.GetSuggestionsResponse;
+import org.davincischools.leo.server.utils.HttpUserProvider.Authenticated;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
 import org.davincischools.leo.server.utils.OpenAiUtils;
@@ -58,13 +58,13 @@ public class PartialTextOpenAiPromptController {
   // So, handlers need to accept this type of input.
   @PostMapping(value = "/api/protos/PartialTextOpenAiPromptService/GetSuggestions")
   @ResponseBody
-  public GetSuggestionsResponse getResource(
-      @RequestBody Optional<GetSuggestionsRequest> optionalRequest) throws LogExecutionError {
+  public GetSuggestionsResponse getSuggestions(
+      @Authenticated UserX userX, @RequestBody Optional<GetSuggestionsRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(GetSuggestionsRequest.getDefaultInstance()),
             (request, log) -> {
-              checkArgument(request.hasUserXId());
               if (!PROMPTS.containsKey(request.getPrompt())) {
                 throw new IllegalArgumentException("Invalid prompt: " + request.getPrompt());
               }
@@ -87,10 +87,7 @@ public class PartialTextOpenAiPromptController {
                       .build();
 
               OpenAiResponse aiResponse =
-                  openAiUtils
-                      .sendOpenAiRequest(
-                          aiRequest, OpenAiResponse.newBuilder(), Optional.of(request.getUserXId()))
-                      .build();
+                  openAiUtils.sendOpenAiRequest(aiRequest, OpenAiResponse.newBuilder()).build();
 
               List<String> suggestions =
                   aiResponse.getChoicesList().stream()

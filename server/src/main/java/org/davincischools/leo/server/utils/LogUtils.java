@@ -31,7 +31,6 @@ import org.davincischools.leo.database.daos.Log;
 import org.davincischools.leo.database.daos.LogReference;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectInput;
-import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 
 public class LogUtils {
@@ -73,8 +72,6 @@ public class LogUtils {
     Log getLogEntry();
 
     void setOnlyLogOnFailure(boolean onlyLogOnFailure);
-
-    void setUserX(UserX userX);
 
     void addNote(String pattern, Object... args);
 
@@ -140,11 +137,6 @@ public class LogUtils {
     @Override
     public void setOnlyLogOnFailure(boolean onlyLogOnFailure) {
       this.onlyLogOnFailure = onlyLogOnFailure;
-    }
-
-    @Override
-    public void setUserX(UserX userX) {
-      logEntry.setUserX(userX);
     }
 
     @Override
@@ -331,6 +323,8 @@ public class LogUtils {
 
     Log logEntry = new Log().setCreationTime(Instant.now());
 
+    HttpUserProvider.getUser().ifPresent(logEntry::setUserX);
+
     StackWalker.StackFrame callerFrame =
         StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
             .walk(fnStream -> fnStream.skip(1).findFirst().orElse(null));
@@ -342,7 +336,7 @@ public class LogUtils {
         .setRequestType(request.getClass().getName())
         .setRequestTime(Instant.now());
 
-    return new Logger<I, I>(db, request, logEntry);
+    return new Logger<>(db, request, logEntry);
   }
 
   @CheckReturnValue

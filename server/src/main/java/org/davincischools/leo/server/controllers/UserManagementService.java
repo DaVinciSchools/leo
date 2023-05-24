@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.davincischools.leo.database.utils.EntityUtils.checkRequired;
 import static org.davincischools.leo.database.utils.EntityUtils.checkRequiredMaxLength;
 import static org.davincischools.leo.database.utils.EntityUtils.checkThat;
+import static org.davincischools.leo.server.utils.HttpUserProvider.isAdmin;
+import static org.davincischools.leo.server.utils.HttpUserProvider.isTeacher;
 
 import com.google.common.collect.Iterables;
 import jakarta.transaction.Transactional;
@@ -25,6 +27,8 @@ import org.davincischools.leo.protos.user_management.UpsertUserRequest;
 import org.davincischools.leo.protos.user_management.UserInformationResponse;
 import org.davincischools.leo.protos.user_management.UserInformationResponse.Builder;
 import org.davincischools.leo.server.utils.DataAccess;
+import org.davincischools.leo.server.utils.HttpUserProvider.Admin;
+import org.davincischools.leo.server.utils.HttpUserProvider.Authenticated;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +45,8 @@ public class UserManagementService {
   @PostMapping(value = "/api/protos/UserManagementService/GetUsers")
   @ResponseBody
   @Transactional
-  public UserInformationResponse getUserXs(@RequestBody Optional<GetUsersRequest> optionalRequest)
+  public UserInformationResponse getUserXs(
+      @Admin UserX userX, @RequestBody Optional<GetUsersRequest> optionalRequest)
       throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
@@ -61,19 +66,30 @@ public class UserManagementService {
   @ResponseBody
   @Transactional
   public GetUserDetailsResponse getUserXDetails(
-      @RequestBody Optional<GetUserDetailsRequest> optionalRequest) throws LogExecutionError {
+      @Authenticated UserX userX, @RequestBody Optional<GetUserDetailsRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(GetUserDetailsRequest.getDefaultInstance()),
             (request, log) -> {
-              UserX user = db.getUserXRepository().findById(request.getUserXId()).orElseThrow();
+              int userId = request.getUserXId();
+              if (isAdmin(userX)) {
+                // Do nothing.
+              } else {
+                // Make sure the user is only getting their own details.
+                checkArgument(userId == userX.getId(), "access denied");
+              }
+
+              UserX details = db.getUserXRepository().findById(userId).orElseThrow();
               var response = GetUserDetailsResponse.newBuilder();
 
-              response.setUser(DataAccess.convertFullUserXToProto(user));
-              response.addAllSchoolIds(
-                  Iterables.transform(
-                      db.getSchoolRepository().findAllByTeacherId(user.getTeacher().getId()),
-                      School::getId));
+              response.setUser(DataAccess.convertFullUserXToProto(details));
+              if (isTeacher(userX)) {
+                response.addAllSchoolIds(
+                    Iterables.transform(
+                        db.getSchoolRepository().findAllByTeacherId(details.getTeacher().getId()),
+                        School::getId));
+              }
 
               return response.build();
             })
@@ -84,11 +100,20 @@ public class UserManagementService {
   @ResponseBody
   @Transactional
   public UserInformationResponse upsertUserX(
-      @RequestBody Optional<UpsertUserRequest> optionalRequest) throws LogExecutionError {
+      @Authenticated UserX userX, @RequestBody Optional<UpsertUserRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(UpsertUserRequest.getDefaultInstance()),
             (request, log) -> {
+              int userId = request.getUser().getId();
+              if (isAdmin(userX)) {
+                // Do nothing.
+              } else {
+                // Make sure the user is only getting their own details.
+                checkArgument(userId == userX.getId(), "access denied");
+              }
+
               var response = UserInformationResponse.newBuilder();
 
               Optional<UserX> existingUserX = Optional.empty();
@@ -283,7 +308,8 @@ public class UserManagementService {
   @ResponseBody
   @Transactional
   public UserInformationResponse removeUser(
-      @RequestBody Optional<RemoveUserRequest> optionalRequest) throws LogExecutionError {
+      @Admin UserX userX, @RequestBody Optional<RemoveUserRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(RemoveUserRequest.getDefaultInstance()),

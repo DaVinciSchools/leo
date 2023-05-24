@@ -1,7 +1,5 @@
 package org.davincischools.leo.server.controllers;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.util.Optional;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.UserX;
@@ -9,6 +7,7 @@ import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.class_management.GetStudentAssignmentsRequest;
 import org.davincischools.leo.protos.class_management.GetStudentAssignmentsResponse;
 import org.davincischools.leo.server.utils.DataAccess;
+import org.davincischools.leo.server.utils.HttpUserProvider.Student;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
 import org.davincischools.leo.server.utils.OpenAiUtils;
@@ -27,18 +26,16 @@ public class ClassManagementService {
   @PostMapping(value = "/api/protos/ClassManagementService/GetStudentAssignments")
   @ResponseBody
   public GetStudentAssignmentsResponse getStudentAssignments(
-      @RequestBody Optional<GetStudentAssignmentsRequest> optionalRequest)
+      @Student UserX userX, @RequestBody Optional<GetStudentAssignmentsRequest> optionalRequest)
       throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(GetStudentAssignmentsRequest.getDefaultInstance()),
             (request, log) -> {
-              checkArgument(request.hasUserXId());
-              UserX user = db.getUserXRepository().findById(request.getUserXId()).orElseThrow();
               var response = GetStudentAssignmentsResponse.newBuilder();
 
               for (Assignment assignment :
-                  db.getAssignmentRepository().findAllByStudentId(user.getStudent().getId())) {
+                  db.getAssignmentRepository().findAllByStudentId(userX.getStudent().getId())) {
                 response.addAssignments(
                     DataAccess.convertAssignmentToProto(assignment.getClassX(), assignment));
               }

@@ -6,12 +6,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.davincischools.leo.database.daos.District;
+import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.district_management.AddDistrictRequest;
 import org.davincischools.leo.protos.district_management.DistrictInformationResponse;
 import org.davincischools.leo.protos.district_management.GetDistrictsRequest;
 import org.davincischools.leo.protos.district_management.RemoveDistrictRequest;
 import org.davincischools.leo.protos.district_management.UpdateDistrictRequest;
+import org.davincischools.leo.server.utils.HttpUserProvider.Admin;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +30,8 @@ public class DistrictManagementService {
   @PostMapping(value = "/api/protos/DistrictManagementService/GetDistricts")
   @ResponseBody
   public DistrictInformationResponse getDistricts(
-      @RequestBody Optional<GetDistrictsRequest> optionalRequest) throws LogExecutionError {
+      @Admin UserX userX, @RequestBody Optional<GetDistrictsRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(GetDistrictsRequest.getDefaultInstance()),
@@ -41,7 +44,8 @@ public class DistrictManagementService {
   @PostMapping(value = "/api/protos/DistrictManagementService/AddDistrict")
   @ResponseBody
   public DistrictInformationResponse addDistrict(
-      @RequestBody Optional<AddDistrictRequest> optionalRequest) throws LogExecutionError {
+      @Admin UserX userX, @RequestBody Optional<AddDistrictRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(AddDistrictRequest.getDefaultInstance()),
@@ -59,7 +63,8 @@ public class DistrictManagementService {
   @PostMapping(value = "/api/protos/DistrictManagementService/UpdateDistrict")
   @ResponseBody
   public DistrictInformationResponse updateDistrict(
-      @RequestBody Optional<UpdateDistrictRequest> optionalRequest) throws LogExecutionError {
+      @Admin UserX userX, @RequestBody Optional<UpdateDistrictRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(UpdateDistrictRequest.getDefaultInstance()),
@@ -73,7 +78,8 @@ public class DistrictManagementService {
   @PostMapping(value = "/api/protos/DistrictManagementService/RemoveDistrict")
   @ResponseBody
   public DistrictInformationResponse removeDistrict(
-      @RequestBody Optional<RemoveDistrictRequest> optionalRequest) throws LogExecutionError {
+      @Admin UserX userX, @RequestBody Optional<RemoveDistrictRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(RemoveDistrictRequest.getDefaultInstance()),

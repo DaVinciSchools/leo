@@ -3,12 +3,14 @@ package org.davincischools.leo.server.controllers;
 import java.time.Instant;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.School;
+import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.school_management.GetSchoolsRequest;
 import org.davincischools.leo.protos.school_management.RemoveSchoolRequest;
 import org.davincischools.leo.protos.school_management.SchoolInformationResponse;
 import org.davincischools.leo.protos.school_management.UpsertSchoolRequest;
 import org.davincischools.leo.server.utils.DataAccess;
+import org.davincischools.leo.server.utils.HttpUserProvider.Admin;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +27,8 @@ public class SchoolManagementService {
   @PostMapping(value = "/api/protos/SchoolManagementService/GetSchools")
   @ResponseBody
   public SchoolInformationResponse getSchools(
-      @RequestBody Optional<GetSchoolsRequest> optionalRequest) throws LogExecutionError {
+      @Admin UserX userX, @RequestBody Optional<GetSchoolsRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(GetSchoolsRequest.getDefaultInstance()),
@@ -38,7 +41,8 @@ public class SchoolManagementService {
   @PostMapping(value = "/api/protos/SchoolManagementService/UpsertSchool")
   @ResponseBody
   public SchoolInformationResponse upsertSchool(
-      @RequestBody Optional<UpsertSchoolRequest> optionalRequest) throws LogExecutionError {
+      @Admin UserX userX, @RequestBody Optional<UpsertSchoolRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(UpsertSchoolRequest.getDefaultInstance()),
@@ -63,7 +67,8 @@ public class SchoolManagementService {
   @PostMapping(value = "/api/protos/SchoolManagementService/RemoveSchool")
   @ResponseBody
   public SchoolInformationResponse removeSchool(
-      @RequestBody Optional<RemoveSchoolRequest> optionalRequest) throws LogExecutionError {
+      @Admin UserX userX, @RequestBody Optional<RemoveSchoolRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(RemoveSchoolRequest.getDefaultInstance()),

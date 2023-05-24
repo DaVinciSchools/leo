@@ -1,9 +1,7 @@
 package org.davincischools.leo.database.utils.repos;
 
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
-
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.UserX;
@@ -21,14 +19,17 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
     STUDENT
   }
 
-  default ImmutableSet<Role> getRoles(UserX user) {
-    return ImmutableList.of(
-            user.getAdminX().getId() != null ? Role.ADMIN : null,
-            user.getTeacher().getId() != null ? Role.TEACHER : null,
-            user.getStudent().getId() != null ? Role.STUDENT : null)
-        .stream()
-        .filter(Objects::nonNull)
-        .collect(toImmutableSet());
+  public static EnumSet<Role> getRoles(UserX user) {
+    EnumSet<Role> roles = EnumSet.noneOf(Role.class);
+    roles.addAll(
+        ImmutableList.of(
+                user.getAdminX().getId() != null ? Role.ADMIN : null,
+                user.getTeacher().getId() != null ? Role.TEACHER : null,
+                user.getStudent().getId() != null ? Role.STUDENT : null)
+            .stream()
+            .filter(Objects::nonNull)
+            .toList());
+    return roles;
   }
 
   @Query(

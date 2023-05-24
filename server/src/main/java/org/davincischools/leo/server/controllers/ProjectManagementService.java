@@ -1,6 +1,9 @@
 package org.davincischools.leo.server.controllers;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.davincischools.leo.server.utils.HttpUserProvider.isAdmin;
+import static org.davincischools.leo.server.utils.HttpUserProvider.isStudent;
+import static org.davincischools.leo.server.utils.HttpUserProvider.isTeacher;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -32,6 +35,8 @@ import org.davincischools.leo.protos.project_management.GetProjectsResponse;
 import org.davincischools.leo.protos.project_management.GetXqCompetenciesRequest;
 import org.davincischools.leo.protos.project_management.GetXqCompetenciesResponse;
 import org.davincischools.leo.server.utils.DataAccess;
+import org.davincischools.leo.server.utils.HttpUserProvider.Authenticated;
+import org.davincischools.leo.server.utils.HttpUserProvider.Student;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
 import org.davincischools.leo.server.utils.LogUtils.LogOperations;
@@ -82,12 +87,12 @@ public class ProjectManagementService {
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetEks")
   @ResponseBody
-  public GetEksResponse getEks(@RequestBody Optional<GetEksRequest> optionalRequest)
+  public GetEksResponse getEks(
+      @Authenticated UserX userX, @RequestBody Optional<GetEksRequest> optionalRequest)
       throws LogExecutionError {
     return LogUtils.executeAndLog(db, optionalRequest.orElse(GetEksRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              checkArgument(request.hasUserXId());
               var response = GetEksResponse.newBuilder();
 
               response.addAllEks(
@@ -104,12 +109,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetXqCompetencies")
   @ResponseBody
   public GetXqCompetenciesResponse getXqCompetencies(
-      @RequestBody Optional<GetXqCompetenciesRequest> optionalRequest) throws LogExecutionError {
+      @Authenticated UserX userX, @RequestBody Optional<GetXqCompetenciesRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db, optionalRequest.orElse(GetXqCompetenciesRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              checkArgument(request.hasUserXId());
               var response = GetXqCompetenciesResponse.newBuilder();
 
               response.addAllXqCompentencies(
@@ -126,16 +131,14 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GenerateProjects")
   @ResponseBody
   public GenerateProjectsResponse generateProjects(
-      @RequestBody Optional<GenerateProjectsRequest> optionalRequest) throws LogExecutionError {
+      @Student UserX userX, @RequestBody Optional<GenerateProjectsRequest> optionalRequest)
+      throws LogExecutionError {
     return LogUtils.executeAndLog(
             db, optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()))
         .retryNextStep(2, 1000)
         .andThen(
             (request, log) -> {
-              checkArgument(request.hasUserXId());
               var response = GenerateProjectsResponse.newBuilder();
-
-              UserX user = db.getUserXRepository().findById(request.getUserXId()).orElseThrow();
 
               // Save the Project input settings.
               ProjectInput projectInput =
@@ -143,7 +146,7 @@ public class ProjectManagementService {
                       .save(
                           new ProjectInput()
                               .setCreationTime(Instant.now())
-                              .setStudent(user.getStudent()));
+                              .setStudent(userX.getStudent()));
               log.addProjectInput(projectInput);
 
               // Query OpenAI for projects.
@@ -205,10 +208,7 @@ public class ProjectManagementService {
                       .build();
 
               OpenAiResponse aiResponse =
-                  openAiUtils
-                      .sendOpenAiRequest(
-                          aiRequest, OpenAiResponse.newBuilder(), Optional.of(user.getId()))
-                      .build();
+                  openAiUtils.sendOpenAiRequest(aiRequest, OpenAiResponse.newBuilder()).build();
 
               List<Project> projects =
                   extractProjects(
@@ -277,18 +277,30 @@ public class ProjectManagementService {
 
   @PostMapping(value = "/api/protos/ClassManagementService/GetProjects")
   @ResponseBody
-  public GetProjectsResponse getProjects(@RequestBody Optional<GetProjectsRequest> optionalRequest)
+  public GetProjectsResponse getProjects(
+      @Authenticated UserX userX, @RequestBody Optional<GetProjectsRequest> optionalRequest)
       throws LogExecutionError {
     return LogUtils.executeAndLog(
             db,
             optionalRequest.orElse(GetProjectsRequest.getDefaultInstance()),
             (request, log) -> {
-              UserX userX = db.getUserXRepository().findById(request.getUserXId()).orElseThrow();
+              int userId = request.getUserXId();
+              if (isAdmin(userX)) {
+                // Do nothing.
+              } else if (isTeacher(userX)) {
+                // TODO: Verify the requested user is in their class.
+              } else if (isStudent(userX)) {
+                // Make sure the student is only querying about their own projects.
+                checkArgument(userId == userX.getId(), "access denied");
+              }
+
+              UserX student = db.getUserXRepository().findById(userId).orElseThrow();
               var response = GetProjectsResponse.newBuilder();
 
               response.addAllProjects(
                   Streams.stream(
-                          db.getProjectRepository().findAllByStudentId(userX.getStudent().getId()))
+                          db.getProjectRepository()
+                              .findAllByStudentId(student.getStudent().getId()))
                       .map(DataAccess::convertProjectToProto)
                       .toList());
 
