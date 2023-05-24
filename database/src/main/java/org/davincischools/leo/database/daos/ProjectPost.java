@@ -10,11 +10,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = ProjectPost.ENTITY_NAME)
 @Table(name = ProjectPost.TABLE_NAME, schema = "leo_temp")
-public class ProjectPost {
+public class ProjectPost implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectPost";
   public static final String TABLE_NAME = "project_post";
@@ -25,6 +26,7 @@ public class ProjectPost {
   public static final String COLUMN_SHORTDESCRQUILL_NAME = "short_descr_quill";
   public static final String COLUMN_LONGDESCR_NAME = "long_descr";
   public static final String COLUMN_LONGDESCRQUILL_NAME = "long_descr_quill";
+  private static final long serialVersionUID = 8415701948728536380L;
 
   private Integer id;
 

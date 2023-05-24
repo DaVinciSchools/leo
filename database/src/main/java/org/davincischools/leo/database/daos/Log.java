@@ -10,11 +10,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = Log.ENTITY_NAME)
 @Table(name = Log.TABLE_NAME, schema = "leo_temp")
-public class Log {
+public class Log implements Serializable {
 
   public static final String ENTITY_NAME = "Log";
   public static final String TABLE_NAME = "log";
@@ -36,6 +37,7 @@ public class Log {
   public static final String COLUMN_LASTINPUT_NAME = "last_input";
   public static final String COLUMN_LASTINPUTTYPE_NAME = "last_input_type";
   public static final String COLUMN_LASTINPUTTIME_NAME = "last_input_time";
+  private static final long serialVersionUID = -1127760289233684756L;
 
   private Integer id;
 
@@ -108,8 +110,7 @@ public class Log {
     return this;
   }
 
-  @Lob
-  @Column(name = COLUMN_STATUS_NAME, nullable = false)
+  @Column(name = COLUMN_STATUS_NAME, nullable = false, length = 7)
   public String getStatus() {
     return status;
   }

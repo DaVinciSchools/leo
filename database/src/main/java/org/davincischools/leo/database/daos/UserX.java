@@ -12,6 +12,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = UserX.ENTITY_NAME)
@@ -25,7 +26,7 @@ import java.time.Instant;
       @Index(name = "student_id", columnList = "student_id", unique = true),
       @Index(name = "user_x__email_address", columnList = "email_address")
     })
-public class UserX {
+public class UserX implements Serializable {
 
   public static final String ENTITY_NAME = "UserX";
   public static final String TABLE_NAME = "user_x";
@@ -35,6 +36,7 @@ public class UserX {
   public static final String COLUMN_LASTNAME_NAME = "last_name";
   public static final String COLUMN_EMAILADDRESS_NAME = "email_address";
   public static final String COLUMN_ENCODEDPASSWORD_NAME = "encoded_password";
+  private static final long serialVersionUID = 1623331932844911934L;
 
   private Integer id;
 

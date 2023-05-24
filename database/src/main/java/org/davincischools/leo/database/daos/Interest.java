@@ -7,11 +7,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = Interest.ENTITY_NAME)
 @Table(name = Interest.TABLE_NAME, schema = "leo_temp")
-public class Interest {
+public class Interest implements Serializable {
 
   public static final String ENTITY_NAME = "Interest";
   public static final String TABLE_NAME = "interest";
@@ -31,6 +32,7 @@ public class Interest {
   public static final String COLUMN_ZIPCODE_NAME = "zip_code";
   public static final String COLUMN_NUMTEACHERS_NAME = "num_teachers";
   public static final String COLUMN_NUMSTUDENTS_NAME = "num_students";
+  private static final long serialVersionUID = 1089097917992088909L;
 
   private Integer id;
 

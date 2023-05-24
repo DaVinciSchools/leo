@@ -10,11 +10,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = Project.ENTITY_NAME)
 @Table(name = Project.TABLE_NAME, schema = "leo_temp")
-public class Project {
+public class Project implements Serializable {
 
   public static final String ENTITY_NAME = "Project";
   public static final String TABLE_NAME = "project";
@@ -34,6 +35,7 @@ public class Project {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NEEDSREVIEW_NAME = "needs_review";
   public static final String COLUMN_ACTIVE_NAME = "active";
+  private static final long serialVersionUID = 8628259105914406887L;
 
   private Integer id;
 
@@ -189,8 +191,7 @@ public class Project {
     return this;
   }
 
-  @Lob
-  @Column(name = COLUMN_THUMBSSTATE_NAME)
+  @Column(name = COLUMN_THUMBSSTATE_NAME, length = 11)
   public String getThumbsState() {
     return thumbsState;
   }

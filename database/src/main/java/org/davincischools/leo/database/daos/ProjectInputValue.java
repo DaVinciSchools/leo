@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = ProjectInputValue.ENTITY_NAME)
@@ -18,7 +19,7 @@ import java.time.Instant;
     name = ProjectInputValue.TABLE_NAME,
     schema = "leo_temp",
     indexes = {@Index(name = "input_category_id", columnList = "input_category_id")})
-public class ProjectInputValue {
+public class ProjectInputValue implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectInputValue";
   public static final String TABLE_NAME = "project_input_value";
@@ -26,6 +27,7 @@ public class ProjectInputValue {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_FREETEXTVALUE_NAME = "free_text_value";
+  private static final long serialVersionUID = -1012220161446923846L;
 
   private Integer id;
 

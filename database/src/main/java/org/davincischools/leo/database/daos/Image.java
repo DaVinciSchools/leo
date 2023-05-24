@@ -6,11 +6,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = Image.ENTITY_NAME)
 @Table(name = Image.TABLE_NAME, schema = "leo_temp")
-public class Image {
+public class Image implements Serializable {
 
   public static final String ENTITY_NAME = "Image";
   public static final String TABLE_NAME = "image";
@@ -18,6 +19,7 @@ public class Image {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_IMAGE_NAME = "image";
   public static final String COLUMN_MIMETYPE_NAME = "mime_type";
+  private static final long serialVersionUID = -3526002040327597487L;
 
   private Integer id;
 

@@ -7,14 +7,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = ProjectInputCategory.ENTITY_NAME)
 @Table(name = ProjectInputCategory.TABLE_NAME, schema = "leo_temp")
-public class ProjectInputCategory {
+public class ProjectInputCategory implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectInputCategory";
   public static final String TABLE_NAME = "project_input_category";
@@ -28,6 +28,7 @@ public class ProjectInputCategory {
   public static final String COLUMN_INPUTPLACEHOLDER_NAME = "input_placeholder";
   public static final String COLUMN_QUERYPREFIX_NAME = "query_prefix";
   public static final String COLUMN_VALUETYPE_NAME = "value_type";
+  private static final long serialVersionUID = -8430748289937880039L;
 
   private Integer id;
 
@@ -143,8 +144,7 @@ public class ProjectInputCategory {
     return this;
   }
 
-  @Lob
-  @Column(name = COLUMN_VALUETYPE_NAME, nullable = false)
+  @Column(name = COLUMN_VALUETYPE_NAME, nullable = false, length = 13)
   public String getValueType() {
     return valueType;
   }

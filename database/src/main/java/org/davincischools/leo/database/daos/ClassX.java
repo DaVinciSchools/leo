@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = ClassX.ENTITY_NAME)
@@ -20,7 +21,7 @@ import java.time.Instant;
     indexes = {
       @Index(name = "class_x__school_id__name", columnList = "name, school_id", unique = true)
     })
-public class ClassX {
+public class ClassX implements Serializable {
 
   public static final String ENTITY_NAME = "ClassX";
   public static final String TABLE_NAME = "class_x";
@@ -31,6 +32,7 @@ public class ClassX {
   public static final String COLUMN_SHORTDESCRQUILL_NAME = "short_descr_quill";
   public static final String COLUMN_LONGDESCR_NAME = "long_descr";
   public static final String COLUMN_LONGDESCRQUILL_NAME = "long_descr_quill";
+  private static final long serialVersionUID = 1357362916288047247L;
 
   private Integer id;
 

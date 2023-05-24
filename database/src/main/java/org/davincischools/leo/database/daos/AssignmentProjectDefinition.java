@@ -8,16 +8,18 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = AssignmentProjectDefinition.ENTITY_NAME)
 @Table(name = AssignmentProjectDefinition.TABLE_NAME, schema = "leo_temp")
-public class AssignmentProjectDefinition {
+public class AssignmentProjectDefinition implements Serializable {
 
   public static final String ENTITY_NAME = "AssignmentProjectDefinition";
   public static final String TABLE_NAME = "assignment__project_definition";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_SELECTED_NAME = "selected";
+  private static final long serialVersionUID = 4950335854922340024L;
 
   private AssignmentProjectDefinitionId id;
 

@@ -10,6 +10,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = School.ENTITY_NAME)
@@ -26,7 +27,7 @@ import java.time.Instant;
           columnList = "nickname, district_id",
           unique = true)
     })
-public class School {
+public class School implements Serializable {
 
   public static final String ENTITY_NAME = "School";
   public static final String TABLE_NAME = "school";
@@ -35,6 +36,7 @@ public class School {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_NICKNAME_NAME = "nickname";
   public static final String COLUMN_ADDRESS_NAME = "address";
+  private static final long serialVersionUID = -3650781065727551739L;
 
   private Integer id;
 

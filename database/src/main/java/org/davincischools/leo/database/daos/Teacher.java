@@ -6,16 +6,18 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = Teacher.ENTITY_NAME)
 @Table(name = Teacher.TABLE_NAME, schema = "leo_temp")
-public class Teacher {
+public class Teacher implements Serializable {
 
   public static final String ENTITY_NAME = "Teacher";
   public static final String TABLE_NAME = "teacher";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  private static final long serialVersionUID = -6656556068213460936L;
 
   private Integer id;
 

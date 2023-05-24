@@ -7,14 +7,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = ProjectInput.ENTITY_NAME)
 @Table(name = ProjectInput.TABLE_NAME, schema = "leo_temp")
-public class ProjectInput {
+public class ProjectInput implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectInput";
   public static final String TABLE_NAME = "project_input";
@@ -22,6 +22,7 @@ public class ProjectInput {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_TIMEOUT_NAME = "timeout";
   public static final String COLUMN_STATE_NAME = "state";
+  private static final long serialVersionUID = -7093946939269551820L;
 
   private Integer id;
 
@@ -67,8 +68,7 @@ public class ProjectInput {
     return this;
   }
 
-  @Lob
-  @Column(name = COLUMN_STATE_NAME, nullable = false)
+  @Column(name = COLUMN_STATE_NAME, nullable = false, length = 10)
   public String getState() {
     return state;
   }

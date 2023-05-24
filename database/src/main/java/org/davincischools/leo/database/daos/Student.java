@@ -6,11 +6,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = Student.ENTITY_NAME)
 @Table(name = Student.TABLE_NAME, schema = "leo_temp")
-public class Student {
+public class Student implements Serializable {
 
   public static final String ENTITY_NAME = "Student";
   public static final String TABLE_NAME = "student";
@@ -18,6 +19,7 @@ public class Student {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_STUDENTID_NAME = "student_id";
   public static final String COLUMN_GRADE_NAME = "grade";
+  private static final long serialVersionUID = 6486876479287914154L;
 
   private Integer id;
 

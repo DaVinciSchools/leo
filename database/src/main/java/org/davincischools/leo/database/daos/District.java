@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = District.ENTITY_NAME)
@@ -14,13 +15,14 @@ import java.time.Instant;
     name = District.TABLE_NAME,
     schema = "leo_temp",
     indexes = {@Index(name = "name", columnList = "name", unique = true)})
-public class District {
+public class District implements Serializable {
 
   public static final String ENTITY_NAME = "District";
   public static final String TABLE_NAME = "district";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_NAME_NAME = "name";
+  private static final long serialVersionUID = 6111701080089524300L;
 
   private Integer id;
 

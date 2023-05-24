@@ -8,15 +8,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = TeacherClassX.ENTITY_NAME)
 @Table(name = TeacherClassX.TABLE_NAME, schema = "leo_temp")
-public class TeacherClassX {
+public class TeacherClassX implements Serializable {
 
   public static final String ENTITY_NAME = "TeacherClassX";
   public static final String TABLE_NAME = "teacher__class_x";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  private static final long serialVersionUID = -1748924832116102991L;
 
   private TeacherClassXId id;
 

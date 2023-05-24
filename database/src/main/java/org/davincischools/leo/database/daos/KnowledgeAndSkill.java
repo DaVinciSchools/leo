@@ -10,11 +10,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = KnowledgeAndSkill.ENTITY_NAME)
 @Table(name = KnowledgeAndSkill.TABLE_NAME, schema = "leo_temp")
-public class KnowledgeAndSkill {
+public class KnowledgeAndSkill implements Serializable {
 
   public static final String ENTITY_NAME = "KnowledgeAndSkill";
   public static final String TABLE_NAME = "knowledge_and_skill";
@@ -26,6 +27,7 @@ public class KnowledgeAndSkill {
   public static final String COLUMN_SHORTDESCRQUILL_NAME = "short_descr_quill";
   public static final String COLUMN_LONGDESCR_NAME = "long_descr";
   public static final String COLUMN_LONGDESCRQUILL_NAME = "long_descr_quill";
+  private static final long serialVersionUID = -4317071355813280224L;
 
   private Integer id;
 
@@ -77,8 +79,7 @@ public class KnowledgeAndSkill {
     return this;
   }
 
-  @Lob
-  @Column(name = COLUMN_TYPE_NAME, nullable = false)
+  @Column(name = COLUMN_TYPE_NAME, nullable = false, length = 13)
   public String getType() {
     return type;
   }

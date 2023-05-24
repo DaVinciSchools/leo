@@ -9,16 +9,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = LogReference.ENTITY_NAME)
 @Table(name = LogReference.TABLE_NAME, schema = "leo_temp")
-public class LogReference {
+public class LogReference implements Serializable {
 
   public static final String ENTITY_NAME = "LogReference";
   public static final String TABLE_NAME = "log_reference";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  private static final long serialVersionUID = -4422575501061082110L;
 
   private Integer id;
 

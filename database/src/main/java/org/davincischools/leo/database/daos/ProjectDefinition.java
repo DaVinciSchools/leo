@@ -6,11 +6,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = ProjectDefinition.ENTITY_NAME)
 @Table(name = ProjectDefinition.TABLE_NAME, schema = "leo_temp")
-public class ProjectDefinition {
+public class ProjectDefinition implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectDefinition";
   public static final String TABLE_NAME = "project_definition";
@@ -18,6 +19,7 @@ public class ProjectDefinition {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_TEMPLATE_NAME = "template";
   public static final String COLUMN_TEMPLATENAME_NAME = "template_name";
+  private static final long serialVersionUID = 2938206953277094250L;
 
   private Integer id;
 

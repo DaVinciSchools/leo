@@ -16,7 +16,6 @@
 ### IntelliJ IDEA ###
 .idea/dataSources.xml
 .idea/jarRepositories.xml
-.idea/jpa-buddy.xml
 .idea/libraries/
 *.iws
 *.ipr

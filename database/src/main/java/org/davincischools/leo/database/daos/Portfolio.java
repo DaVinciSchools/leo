@@ -7,11 +7,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = Portfolio.ENTITY_NAME)
 @Table(name = Portfolio.TABLE_NAME, schema = "leo_temp")
-public class Portfolio {
+public class Portfolio implements Serializable {
 
   public static final String ENTITY_NAME = "Portfolio";
   public static final String TABLE_NAME = "portfolio";
@@ -22,6 +23,7 @@ public class Portfolio {
   public static final String COLUMN_SHORTDESCRQUILL_NAME = "short_descr_quill";
   public static final String COLUMN_LONGDESCR_NAME = "long_descr";
   public static final String COLUMN_LONGDESCRQUILL_NAME = "long_descr_quill";
+  private static final long serialVersionUID = 7431709917275693421L;
 
   private Integer id;
 
