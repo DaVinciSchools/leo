@@ -244,9 +244,9 @@ public class AdminUtils {
             .parallel()
             .map(
                 userX -> {
-                  // if (userX.getEncodedPassword().equals(Database.INVALID_ENCODED_PASSWORD)) {
-                  UserUtils.setPassword(userX, userX.getEmailAddress());
-                  // }
+                  if (userX.getEncodedPassword().equals(Database.INVALID_ENCODED_PASSWORD)) {
+                    UserUtils.setPassword(userX, userX.getEmailAddress());
+                  }
                   return userX;
                 })
             .toList();
