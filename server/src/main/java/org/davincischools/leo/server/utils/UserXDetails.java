@@ -8,8 +8,7 @@ import org.springframework.security.core.userdetails.User;
 
 public class UserXDetails extends User {
 
-  @Serial
-  private static final long serialVersionUID = -2242755819061848280L;
+  @Serial private static final long serialVersionUID = -2242755819061848280L;
 
   private final UserX userX;
 
