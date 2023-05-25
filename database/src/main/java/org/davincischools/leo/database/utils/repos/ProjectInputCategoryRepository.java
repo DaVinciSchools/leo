@@ -6,4 +6,12 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProjectInputCategoryRepository
-    extends JpaRepository<ProjectInputCategory, Integer> {}
+    extends JpaRepository<ProjectInputCategory, Integer> {
+
+  enum ValueType {
+    FREE_TEXT,
+    EKS,
+    XQ_COMPETENCY,
+    MOTIVATION
+  }
+}

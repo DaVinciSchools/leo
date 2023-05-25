@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
@@ -28,7 +29,8 @@ public class ProjectInputCategory implements Serializable {
   public static final String COLUMN_INPUTPLACEHOLDER_NAME = "input_placeholder";
   public static final String COLUMN_QUERYPREFIX_NAME = "query_prefix";
   public static final String COLUMN_VALUETYPE_NAME = "value_type";
-  private static final long serialVersionUID = -8430748289937880039L;
+  public static final String COLUMN_MAXNUMVALUES_NAME = "max_num_values";
+  private static final long serialVersionUID = -5764083503818819240L;
 
   private Integer id;
 
@@ -49,6 +51,8 @@ public class ProjectInputCategory implements Serializable {
   private String queryPrefix;
 
   private String valueType;
+
+  private Integer maxNumValues;
 
   private ProjectDefinition projectDefinition;
 
@@ -144,13 +148,24 @@ public class ProjectInputCategory implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_VALUETYPE_NAME, nullable = false, length = 13)
+  @Lob
+  @Column(name = COLUMN_VALUETYPE_NAME, nullable = false)
   public String getValueType() {
     return valueType;
   }
 
   public ProjectInputCategory setValueType(String valueType) {
     this.valueType = valueType;
+    return this;
+  }
+
+  @Column(name = COLUMN_MAXNUMVALUES_NAME, nullable = false)
+  public Integer getMaxNumValues() {
+    return maxNumValues;
+  }
+
+  public ProjectInputCategory setMaxNumValues(Integer maxNumValues) {
+    this.maxNumValues = maxNumValues;
     return this;
   }
 

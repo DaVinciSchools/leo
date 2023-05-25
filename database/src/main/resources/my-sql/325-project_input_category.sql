@@ -28,6 +28,7 @@ CREATE TABLE project_input_category
         'EKS' /*knowledge_and_skill_value_id*/,
         'XQ_COMPETENCY' /*knowledge_and_skill_value_id*/,
         'MOTIVATION') NOT NULL,
+    max_num_values        INT          NOT NULL,
 
     -- The project definition that this is part of.
     project_definition_id INT          NOT NULL,
