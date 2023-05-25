@@ -1,0 +1,21 @@
+@use '../../../libs/color';
+@use '../../../libs/forms';
+
+.space-filler {
+  height: 15%;
+}
+
+.logo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+
+  a {
+    line-height: 0;
+  }
+}
+
+.logout {
+  text-align: center;
+  color: color.$primary-800;
+}

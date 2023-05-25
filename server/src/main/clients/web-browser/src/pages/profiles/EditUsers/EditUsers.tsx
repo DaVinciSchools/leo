@@ -20,7 +20,7 @@ import IUserInformationResponse = user_management.IUserInformationResponse;
 import ISchool = pl_types.ISchool;
 import SchoolManagementService = school_management.SchoolManagementService;
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {getCurrentUser} from '../../../libs/authentication';
+import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
 
 export function SelectUserFromList(props: {
   id: string;
@@ -62,7 +62,7 @@ export function SelectUserFromList(props: {
 export function EditUsers() {
   const user = getCurrentUser();
   if (user == null) {
-    return <></>;
+    return sendToLogin();
   }
 
   const [districts, setDistricts] = useState(new Map<number, IDistrict>());

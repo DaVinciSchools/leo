@@ -7,7 +7,7 @@ import {
   pl_types,
   project_management,
 } from '../../../libs/protos';
-import {getCurrentUser} from '../../../libs/authentication';
+import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {CloseOutlined, PlusOutlined} from '@ant-design/icons';
 import IEks = pl_types.IEks;
@@ -273,7 +273,7 @@ const DropdownSelectInput = forwardRef<
 export function IkigaiBuilder() {
   const user = getCurrentUser();
   if (user == null) {
-    return <></>;
+    return sendToLogin();
   }
 
   const [processing, setProcessing] = useState(false);
@@ -306,7 +306,6 @@ export function IkigaiBuilder() {
 
     service
       .generateProjects({
-        userXId: user?.userXId,
         interests: studentInterests,
         career: careers,
         eks: eks.map(id => eksOptions.get(id)!),
@@ -342,12 +341,12 @@ export function IkigaiBuilder() {
     );
 
     service
-      .getEks({userXId: user.userXId})
+      .getEks({})
       .then(resp =>
         setEksOptions(new Map(resp.eks.map(eks => [eks.id!, eks])))
       );
     service
-      .getXqCompetencies({userXId: user.userXId})
+      .getXqCompetencies({})
       .then(resp =>
         setXqCompetencyOptions(
           new Map(resp.xqCompentencies.map(xqc => [xqc.id!, xqc]))

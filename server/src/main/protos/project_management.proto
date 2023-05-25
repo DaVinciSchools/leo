@@ -16,7 +16,6 @@ service ProjectManagementService {
 }
 
 message GetEksRequest {
-  optional int32 user_x_id = 1;
 }
 
 message GetEksResponse {
@@ -24,7 +23,6 @@ message GetEksResponse {
 }
 
 message GetXqCompetenciesRequest {
-  optional int32 user_x_id = 1;
 }
 
 message GetXqCompetenciesResponse {

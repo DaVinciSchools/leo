@@ -2,31 +2,88 @@ import './Login.scss';
 
 import {Button, Checkbox, Form, Input} from 'antd';
 import {LockOutlined, UserOutlined} from '@ant-design/icons';
-import {useEffect, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
-import {addXsrfInputField} from '../../../libs/authentication';
+import {
+  addXsrfHeader,
+  login,
+  LOGIN_RETURN_TO_PARAM,
+} from '../../../libs/authentication';
+import {pl_types} from '../../../generated/protobuf-js';
+import User = pl_types.User;
+import {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router';
+
+const AUTHORIZATION_FAILURE = 'Authentication failure. Please try again.';
 
 export function Login() {
   const [loginForm] = Form.useForm();
   const [disabled, setDisabled] = useState(false);
-  const [formValues, setFormValues] = useState({});
-
-  const formRef = useRef<HTMLFormElement>(null);
-
   const queryParameters = new URLSearchParams(window.location.search);
-  const failed = queryParameters.get('failed');
-  const logout = queryParameters.get('logout');
+  const [failure, setFailure] = useState(
+    queryParameters.get('failed') != null ? AUTHORIZATION_FAILURE : ''
+  );
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (failure) {
+      setTimeout(() => setFailure(''), 5000);
+    }
+  }, [failure]);
+
+  async function doSubmit(formValues: {}) {
+    try {
+      fetch('/api/login', {
+        method: 'POST',
+        headers: addXsrfHeader({
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Response-Type': 'application/x-protobuf',
+        }),
+        body: new URLSearchParams(formValues),
+        cache: 'no-cache',
+        redirect: 'follow',
+      })
+        .then(response => {
+          if (!response.ok) {
+            setFailure('Response not ok: ' + response.statusText);
+          } else if (response.redirected) {
+            if (new URL(response.url).searchParams.get('failed') != null) {
+              setFailure(AUTHORIZATION_FAILURE);
+            } else {
+              setFailure('Unexpected redirect: ' + response.url);
+            }
+          } else if (response.body != null) {
+            response.body
+              .getReader()
+              .read()
+              .then(result => {
+                try {
+                  login(User.decode(result.value!));
+                  navigate(
+                    queryParameters.get(LOGIN_RETURN_TO_PARAM) ||
+                      '/projects/overview'
+                  );
+                } catch (e) {
+                  setFailure('Unknown error: ' + e);
+                }
+              })
+              .catch(e => setFailure('Unknown error: ' + e));
+          } else {
+            setFailure('Unknown error: response had no body');
+          }
+        })
+        .catch(e => setFailure('Unknown error: ' + e));
+    } catch (e) {
+      setFailure('Unknown error: ' + e);
+    }
+  }
 
   function onFinish(formValues: {}) {
     setDisabled(true);
-    setFormValues(formValues);
+    setFailure('');
+    doSubmit(formValues)
+      .catch(e => setFailure('Unknown error: ' + e))
+      .finally(() => setDisabled(false));
   }
-
-  useEffect(() => {
-    if (Object.entries(formValues).length > 0) {
-      formRef.current!.requestSubmit();
-    }
-  }, [formValues]);
 
   return (
     <>
@@ -36,7 +93,11 @@ export function Login() {
           <img src="/images/logo-orange-on-white.svg" />
         </Link>
       </div>
-      <div className="space-filler" />
+      <div className="space-filler">
+        <div className="error" style={{display: failure ? undefined : 'none'}}>
+          {failure}
+        </div>
+      </div>
       <div className="form-container">
         <Form
           form={loginForm}
@@ -44,23 +105,6 @@ export function Login() {
           disabled={disabled}
           className="form-elements"
         >
-          <div
-            className="form-padding"
-            style={{display: failed != null ? undefined : 'none'}}
-          >
-            <div className="error">
-              Authentication failure. Please try again.
-            </div>
-          </div>
-          <div
-            className="form-padding"
-            style={{display: logout != null ? undefined : 'none'}}
-          >
-            <div className="success">
-              You have been successfully logged out. Go&nbsp;
-              <Link to="/">Home</Link>.
-            </div>
-          </div>
           <Form.Item
             name="username"
             rules={[
@@ -102,9 +146,9 @@ export function Login() {
           </Form.Item>
           <div className="footer">
             <Form.Item name="rememberMe" valuePropName="checked">
-              <Checkbox disabled={true}>Remember me</Checkbox>
+              <Checkbox>Remember me (TODO)</Checkbox>
             </Form.Item>
-            <Link to="/">TODO: Forgot your password?</Link>
+            <Link to="/">Forgot your password? (TODO)</Link>
           </div>
           <div className="buttons">
             <Button type="primary" htmlType="submit">
@@ -113,28 +157,6 @@ export function Login() {
           </div>
         </Form>
       </div>
-      {/* The SecurityFilterChain must be called from a <form action="...">. */}
-      {/* However, React doesn't support actions. So, we dynamically create  */}
-      {/* a form with the values and submit it manually.                     */}
-      {/* TODO: Explore FormProps, which has an action?                      */}
-      <form
-        ref={formRef}
-        method="post"
-        action="/api/login"
-        style={{display: 'none'}}
-      >
-        {/* This won't be detected if it is in the <Form/> component above. */}
-        {addXsrfInputField()}
-        {Object.entries(formValues).map(([key, value]) => (
-          <Input
-            key={key}
-            type="hidden"
-            id={key}
-            name={key}
-            value={value as string}
-          />
-        ))}
-      </form>
     </>
   );
 }

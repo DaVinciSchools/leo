@@ -15,6 +15,7 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.post_environment_processors.LoadCustomProjectLeoProperties;
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.protos.pl_types.User;
 import org.davincischools.leo.server.utils.UserXDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -30,6 +31,7 @@ import org.springframework.http.converter.protobuf.ProtobufHttpMessageConverter;
 import org.springframework.http.converter.protobuf.ProtobufJsonFormatHttpMessageConverter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
@@ -103,7 +105,35 @@ public class ServerApplication {
                   config
                       .loginPage("/users/login")
                       .loginProcessingUrl("/api/login")
-                      .defaultSuccessUrl("/projects/overview")
+                      .successHandler(
+                          (HttpServletRequest request,
+                              HttpServletResponse response,
+                              Authentication authentication) -> {
+                            // Return the user in the reply after authentication.
+                            UserX userX = ((UserXDetails) authentication.getPrincipal()).getUserX();
+                            User user =
+                                User.newBuilder()
+                                    .setId(userX.getId())
+                                    .setDistrictId(userX.getDistrict().getId())
+                                    .setEmailAddress(userX.getEmailAddress())
+                                    .setFirstName(userX.getFirstName())
+                                    .setLastName(userX.getLastName())
+                                    .setIsAdmin(userX.getAdminX().getId() != null)
+                                    .setIsTeacher(userX.getTeacher().getId() != null)
+                                    .setIsStudent(userX.getStudent().getId() != null)
+                                    .build();
+
+                            response.setContentType(
+                                ProtobufHttpMessageConverter.PROTOBUF.toString());
+                            response.setHeader(
+                                ProtobufHttpMessageConverter.X_PROTOBUF_SCHEMA_HEADER,
+                                user.getDescriptorForType().getFile().getName());
+                            response.setHeader(
+                                ProtobufHttpMessageConverter.X_PROTOBUF_MESSAGE_HEADER,
+                                user.getDescriptorForType().getFullName());
+                            response.getOutputStream().write(user.toByteArray());
+                            response.setStatus(HttpServletResponse.SC_OK);
+                          })
                       .failureUrl("/users/login?failed=true")
                       .permitAll())
 
@@ -139,6 +169,7 @@ public class ServerApplication {
                           new AntPathRequestMatcher("/manifest.json", HttpMethod.GET.name()),
                           new AntPathRequestMatcher("/robots.txt", HttpMethod.GET.name()),
                           new AntPathRequestMatcher("/static/**", HttpMethod.GET.name()),
+                          new AntPathRequestMatcher("/users/logout", HttpMethod.GET.name()),
                           // TODO: Move these out of the prod server.
                           // React developer tools plugin.
                           new AntPathRequestMatcher("/installHooks.js", HttpMethod.GET.name()),

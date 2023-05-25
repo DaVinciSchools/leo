@@ -15,6 +15,7 @@ import {MyProjects} from './pages/projects/MyProjects/MyProjects';
 import {MyAccount} from './pages/users/MyAccount/MyAccount';
 import {PrivacyPolicy} from './pages/docs/PrivacyPolicy';
 import {Overview} from './pages/projects/Overview/Overview';
+import {Logout} from './pages/users/Logout/Logout';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
   {
     path: '/users/login',
     element: <Login />,
+  },
+  {
+    path: '/users/logout',
+    element: <Logout />,
   },
   {
     path: '/users',

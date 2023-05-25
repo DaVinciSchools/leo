@@ -3,6 +3,21 @@
 
 .space-filler {
   height: 15%;
+
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-content: center;
+
+  .error {
+    @include color.error;
+
+    border: 1px solid;
+    align-self: center;
+    padding: 0.25em 0.5em;
+    border-radius: 6px;
+    width: fit-content;
+  }
 }
 
 .logo {
@@ -26,15 +41,6 @@
   .form-padding {
     box-sizing: border-box;
     padding: 0.5em;
-  }
-
-  .error {
-    @include color.error;
-
-    border: 1px solid;
-    justify-content: center;
-    padding: 0.25em;
-    border-radius: 6px;
   }
 
   .success {

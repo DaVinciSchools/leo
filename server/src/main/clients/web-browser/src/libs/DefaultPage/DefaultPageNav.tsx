@@ -9,7 +9,7 @@ import {
   SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import {getCurrentUser, Role} from '../authentication';
+import {getCurrentUser, sendToLogin} from '../authentication';
 import {Link} from 'react-router-dom';
 const Footer = Layout.Footer;
 import {useState} from 'react';
@@ -32,7 +32,11 @@ enum MenuKeys {
 }
 
 export function DefaultPageNav() {
-  const user = getCurrentUser(() => {});
+  const user = getCurrentUser();
+  if (user == null) {
+    return sendToLogin();
+  }
+
   const [collapsed, setCollapsed] = useState(false);
 
   return (
@@ -91,10 +95,7 @@ export function DefaultPageNav() {
                   icon={<SettingOutlined />}
                   title="Admin"
                   style={{
-                    display:
-                      user != null && user.roles.has(Role.ADMIN)
-                        ? 'block'
-                        : 'none',
+                    display: user != null && user.isAdmin ? 'block' : 'none',
                   }}
                 >
                   <Menu.Item key={MenuKeys.EDIT_DISTRICTS}>

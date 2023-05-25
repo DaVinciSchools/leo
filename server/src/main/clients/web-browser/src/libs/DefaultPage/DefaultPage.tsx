@@ -1,21 +1,20 @@
 import './DefaultPage.scss';
 
-import {addXsrfInputField, getCurrentUser} from '../authentication';
+import {getCurrentUser} from '../authentication';
 import {
   BellOutlined,
   QuestionCircleOutlined,
   SmileTwoTone,
 } from '@ant-design/icons';
-import {PropsWithChildren, useRef} from 'react';
+import {PropsWithChildren} from 'react';
 import {Popover} from 'antd';
 import {Link} from 'react-router-dom';
 
 export function DefaultPage(props: PropsWithChildren<{title: string}>) {
-  const user = getCurrentUser(() => {});
-  const formRef = useRef<HTMLFormElement>(null);
+  const user = getCurrentUser();
 
-  const avatarPanel = (
-    <>
+  const avatarPanel =
+    user != null ? (
       <div className="avatar-panel">
         <div className="avatar-icon">
           <SmileTwoTone />
@@ -31,19 +30,12 @@ export function DefaultPage(props: PropsWithChildren<{title: string}>) {
           <Link to="/users/my-account">My Account</Link>
         </div>
         <div className="menu">
-          <form action="/api/logout" method="POST" ref={formRef}>
-            {addXsrfInputField()}
-            <span
-              onClick={() => formRef.current!.requestSubmit()}
-              style={{cursor: 'pointer'}}
-            >
-              Log out
-            </span>
-          </form>
+          <Link to="/users/logout">Log out</Link>
         </div>
       </div>
-    </>
-  );
+    ) : (
+      <></>
+    );
 
   return (
     <>

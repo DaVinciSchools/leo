@@ -10,7 +10,7 @@ import DistrictInformationResponse = district_management.DistrictInformationResp
 import IDistrict = pl_types.IDistrict;
 import {Display, SelectFromList} from '../../../SelectFromList/SelectFromList';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {getCurrentUser} from '../../../libs/authentication';
+import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
 
 export function SelectDistrictFromList(props: {
   id: string;
@@ -38,7 +38,7 @@ export function SelectDistrictFromList(props: {
 export function EditDistricts() {
   const user = getCurrentUser();
   if (user == null) {
-    return <></>;
+    return sendToLogin();
   }
 
   const [districts, setDistricts] = useState(new Map<number, IDistrict>());

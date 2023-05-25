@@ -10,7 +10,6 @@ service PartialTextOpenAiPromptService {
 }
 
 message GetSuggestionsRequest {
-  optional int32 user_x_id = 1;
   optional string partial_text = 2;
 
   // The reason we have a limited number of prompts is that it prevents someone
