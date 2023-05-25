@@ -24,7 +24,9 @@ export function MyProjects() {
       ProjectManagementService,
       'ProjectManagementService'
     );
-    service.getProjects({}).then(response => setProjects(response.projects));
+    service
+      .getProjects({userXId: user.id})
+      .then(response => setProjects(response.projects));
   }, []);
 
   return (

@@ -14,6 +14,6 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
           + " FROM Project p"
           + " INNER JOIN ProjectInput pi"
           + " ON pi.id = p.projectInput.id"
-          + " WHERE pi.student.id = (:studentId)")
-  Iterable<Project> findAllByStudentId(@Param("studentId") int studentId);
+          + " WHERE pi.userX.id = (:userXId)")
+  Iterable<Project> findAllByUserXId(@Param("userXId") int userXId);
 }

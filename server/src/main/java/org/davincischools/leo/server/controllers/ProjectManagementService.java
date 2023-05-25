@@ -36,7 +36,6 @@ import org.davincischools.leo.protos.project_management.GetXqCompetenciesRequest
 import org.davincischools.leo.protos.project_management.GetXqCompetenciesResponse;
 import org.davincischools.leo.server.utils.DataAccess;
 import org.davincischools.leo.server.utils.HttpUserProvider.Authenticated;
-import org.davincischools.leo.server.utils.HttpUserProvider.Student;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
 import org.davincischools.leo.server.utils.LogUtils.LogOperations;
@@ -131,7 +130,7 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GenerateProjects")
   @ResponseBody
   public GenerateProjectsResponse generateProjects(
-      @Student UserX userX, @RequestBody Optional<GenerateProjectsRequest> optionalRequest)
+      @Authenticated UserX userX, @RequestBody Optional<GenerateProjectsRequest> optionalRequest)
       throws LogExecutionError {
     return LogUtils.executeAndLog(
             db, optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()))
@@ -143,10 +142,7 @@ public class ProjectManagementService {
               // Save the Project input settings.
               ProjectInput projectInput =
                   db.getProjectInputRepository()
-                      .save(
-                          new ProjectInput()
-                              .setCreationTime(Instant.now())
-                              .setStudent(userX.getStudent()));
+                      .save(new ProjectInput().setCreationTime(Instant.now()).setUserX(userX));
               log.addProjectInput(projectInput);
 
               // Query OpenAI for projects.
@@ -294,13 +290,14 @@ public class ProjectManagementService {
                 checkArgument(userId == userX.getId(), "access denied");
               }
 
-              UserX student = db.getUserXRepository().findById(userId).orElseThrow();
+              Optional<UserX> user = db.getUserXRepository().findById(userId);
+              if (user.isEmpty()) {
+                throw new IllegalArgumentException("User does not exist.");
+              }
               var response = GetProjectsResponse.newBuilder();
 
               response.addAllProjects(
-                  Streams.stream(
-                          db.getProjectRepository()
-                              .findAllByStudentId(student.getStudent().getId()))
+                  Streams.stream(db.getProjectRepository().findAllByUserXId(user.get().getId()))
                       .map(DataAccess::convertProjectToProto)
                       .toList());
 

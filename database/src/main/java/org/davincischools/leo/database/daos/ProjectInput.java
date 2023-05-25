@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
@@ -22,7 +23,7 @@ public class ProjectInput implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_TIMEOUT_NAME = "timeout";
   public static final String COLUMN_STATE_NAME = "state";
-  private static final long serialVersionUID = -7093946939269551820L;
+  private static final long serialVersionUID = -4422033212975617832L;
 
   private Integer id;
 
@@ -34,7 +35,7 @@ public class ProjectInput implements Serializable {
 
   private ProjectDefinition projectDefinition;
 
-  private Student student;
+  private UserX userX;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,7 +69,8 @@ public class ProjectInput implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_STATE_NAME, nullable = false, length = 10)
+  @Lob
+  @Column(name = COLUMN_STATE_NAME, nullable = false)
   public String getState() {
     return state;
   }
@@ -90,13 +92,13 @@ public class ProjectInput implements Serializable {
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "student_id", nullable = false)
-  public Student getStudent() {
-    return student;
+  @JoinColumn(name = "user_x_id", nullable = false)
+  public UserX getUserX() {
+    return userX;
   }
 
-  public ProjectInput setStudent(Student student) {
-    this.student = student;
+  public ProjectInput setUserX(UserX userX) {
+    this.userX = userX;
     return this;
   }
 }
