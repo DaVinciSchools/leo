@@ -10,6 +10,11 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndSkill, Integer> {
 
+  enum Type {
+    EKS,
+    XQ_COMPETENCY,
+  }
+
   @Query("SELECT ks FROM KnowledgeAndSkill ks" + " WHERE ks.type = (:type)")
   Iterable<KnowledgeAndSkill> findAll(@Param("type") String type);
 

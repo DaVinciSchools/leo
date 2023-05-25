@@ -26,8 +26,8 @@ import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.Database.KNOWLEDGE_AND_SKILL_TYPE;
 import org.davincischools.leo.database.utils.UserUtils;
+import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -224,7 +224,7 @@ public class AdminUtils {
                               classX,
                               eksName,
                               db.createKnowledgeAndSkill(
-                                  classX, eksName, eksDescr, KNOWLEDGE_AND_SKILL_TYPE.EKS));
+                                  classX, eksName, eksDescr, Type.EKS));
                         }
                       }
                     }
@@ -380,7 +380,7 @@ public class AdminUtils {
             classX,
             xqName,
             db.createKnowledgeAndSkill(
-                classX, xqName, xqDescr, KNOWLEDGE_AND_SKILL_TYPE.XQ_COMPETENCY));
+                classX, xqName, xqDescr, Type.XQ_COMPETENCY));
         classXIds.add(classX.getId());
 
         log.atInfo().log("Imported: {}", line);

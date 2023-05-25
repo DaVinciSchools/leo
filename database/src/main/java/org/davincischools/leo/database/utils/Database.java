@@ -27,6 +27,7 @@ import org.davincischools.leo.database.utils.repos.DistrictRepository;
 import org.davincischools.leo.database.utils.repos.ImageRepository;
 import org.davincischools.leo.database.utils.repos.InterestRepository;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository;
+import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.database.utils.repos.LogReferenceRepository;
 import org.davincischools.leo.database.utils.repos.LogRepository;
 import org.davincischools.leo.database.utils.repos.MotivationRepository;
@@ -66,11 +67,6 @@ public class Database {
   public static final int USER_MAX_LAST_NAME_LENGTH =
       EntityUtils.getColumn(UserX.class, UserX.COLUMN_LASTNAME_NAME).length();
   public static final int USER_MIN_PASSWORD_LENGTH = 8;
-
-  public enum KNOWLEDGE_AND_SKILL_TYPE {
-    EKS,
-    XQ_COMPETENCY,
-  }
 
   @Autowired private AdminXRepository adminXRepository;
   @Autowired private AssignmentKnowledgeAndSkillRepository assignmentKnowledgeAndSkillRepository;
@@ -371,7 +367,7 @@ public class Database {
   }
 
   public KnowledgeAndSkill createKnowledgeAndSkill(
-      ClassX classX, String name, String descr, KNOWLEDGE_AND_SKILL_TYPE type) {
+      ClassX classX, String name, String descr, Type type) {
     return getKnowledgeAndSkillRepository()
         .findByName(classX.getId(), name)
         .orElseGet(

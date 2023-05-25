@@ -20,7 +20,7 @@ import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.Database.KNOWLEDGE_AND_SKILL_TYPE;
+import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.protos.open_ai.OpenAiMessage;
 import org.davincischools.leo.protos.open_ai.OpenAiRequest;
 import org.davincischools.leo.protos.open_ai.OpenAiResponse;
@@ -97,7 +97,7 @@ public class ProjectManagementService {
               response.addAllEks(
                   Iterables.transform(
                       db.getKnowledgeAndSkillRepository()
-                          .findAll(KNOWLEDGE_AND_SKILL_TYPE.EKS.name()),
+                          .findAll(Type.EKS.name()),
                       DataAccess::getProtoEks));
 
               return response.build();
@@ -119,7 +119,7 @@ public class ProjectManagementService {
               response.addAllXqCompentencies(
                   Iterables.transform(
                       db.getKnowledgeAndSkillRepository()
-                          .findAll(KNOWLEDGE_AND_SKILL_TYPE.XQ_COMPETENCY.name()),
+                          .findAll(Type.XQ_COMPETENCY.name()),
                       DataAccess::orProtoXqCompetency));
 
               return response.build();

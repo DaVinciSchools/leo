@@ -10,8 +10,8 @@ import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.Database.KNOWLEDGE_AND_SKILL_TYPE;
 import org.davincischools.leo.database.utils.UserUtils;
+import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
@@ -171,7 +171,7 @@ public class TestData {
             programmingClassX,
             "Sort Algorithms",
             "I understand and can implement different sort algorithms.",
-            KNOWLEDGE_AND_SKILL_TYPE.EKS);
+            Type.EKS);
     programmingAssignment1 =
         db.createAssignment(programmingClassX, "Implement sort algorithms.", programmingEks1);
 
@@ -180,7 +180,7 @@ public class TestData {
             programmingClassX,
             "Containers",
             "I can use Lists, Sets, and Maps.",
-            KNOWLEDGE_AND_SKILL_TYPE.EKS);
+            Type.EKS);
     programmingAssignment2 =
         db.createAssignment(programmingClassX, "Implement sort algorithms.", programmingEks1);
 
@@ -194,7 +194,7 @@ public class TestData {
             chemistryClassX,
             "Periodic Table",
             "I know how to read a periodic table.",
-            KNOWLEDGE_AND_SKILL_TYPE.EKS);
+            Type.EKS);
     chemistryAssignment1 = db.createAssignment(chemistryClassX, "Periodic Table", chemistryEks1);
 
     chemistryEks2 =
@@ -202,7 +202,7 @@ public class TestData {
             chemistryClassX,
             "Valence Electrons",
             "I can determine the number of valence electrons for each element.",
-            KNOWLEDGE_AND_SKILL_TYPE.EKS);
+            Type.EKS);
     chemistryAssignment2 = db.createAssignment(chemistryClassX, "Valence Electrons", chemistryEks2);
   }
 }
