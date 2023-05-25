@@ -9,6 +9,7 @@ import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -19,15 +20,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.text.RandomStringGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
-import org.davincischools.leo.database.daos.Motivation;
+import org.davincischools.leo.database.daos.ProjectDefinition;
+import org.davincischools.leo.database.daos.ProjectInputCategory;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserUtils;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
+import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository.ValueType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -43,9 +47,9 @@ public class AdminUtils {
     STEAM("Science, Technology, Engineering, Arts, and Math (STEM)"),
     SEL("Social, Emotional Learning (SS)");
 
-    private String name;
+    private final String name;
 
-    private XqCategory(String name) {
+    XqCategory(String name) {
       this.name = name;
     }
 
@@ -60,7 +64,6 @@ public class AdminUtils {
 
   private record Error(String value, Exception e) {}
 
-  @Autowired private ApplicationContext context;
   @Autowired private Database db;
 
   @Value("${createDistrict:}")
@@ -142,7 +145,7 @@ public class AdminUtils {
     }
   }
 
-  private void resetPasswords() throws IOException {
+  private void resetPasswords() {
     checkArgument(!resetPasswords.isEmpty(), "--resetPassword required.");
     resetPasswords.stream()
         .parallel()
@@ -241,12 +244,11 @@ public class AdminUtils {
                 })
             .filter(Objects::nonNull)
             .parallel()
-            .map(
+            .peek(
                 userX -> {
                   if (userX.getEncodedPassword().equals(Database.INVALID_ENCODED_PASSWORD)) {
                     UserUtils.setPassword(userX, userX.getEmailAddress());
                   }
-                  return userX;
                 })
             .toList();
 
@@ -312,10 +314,7 @@ public class AdminUtils {
                         student.getStudent());
                     db.getClassXRepository()
                         .findAllBySchool(school)
-                        .forEach(
-                            classX -> {
-                              db.addStudentsToClassX(classX, student.getStudent());
-                            });
+                        .forEach(classX -> db.addStudentsToClassX(classX, student.getStudent()));
 
                     return student;
                   } catch (Exception e) {
@@ -326,13 +325,12 @@ public class AdminUtils {
                 })
             .filter(Objects::nonNull)
             .parallel()
-            .map(
+            .peek(
                 userX -> {
                   if (userX.getEncodedPassword().equals(Database.INVALID_ENCODED_PASSWORD)) {
                     UserUtils.setPassword(
                         userX, userX.getLastName() + userX.getStudent().getStudentId());
                   }
-                  return userX;
                 })
             .toList();
 
@@ -437,7 +435,7 @@ public class AdminUtils {
 
         checkArgument(!title.equals("Title"), "Header row.");
 
-        Motivation motivation = db.createMotivation(title, descr);
+        db.createMotivation(title, descr);
 
         log.atInfo().log("Imported: {}", line);
       } catch (Exception e) {
@@ -455,6 +453,99 @@ public class AdminUtils {
     }
 
     log.atInfo().log("Done importing motivations.");
+  }
+
+  private void addIkigaiDiagramDescriptions() {
+    log.atInfo().log("Creating Ikigai Diagram descriptions");
+
+    String projectDefinitionName = "2023-06-01 DVD Trial";
+    ProjectDefinition projectDefinition =
+        db.getProjectDefinitionRepository()
+            .save(
+                db.getProjectDefinitionRepository()
+                    .findByName(projectDefinitionName)
+                    .orElseGet(() -> new ProjectDefinition().setCreationTime(Instant.now()))
+                    .setName(projectDefinitionName)
+                    .setTemplate(true));
+
+    String careerInterestsTitle = "Career Interests";
+    db.getProjectInputCategoryRepository()
+        .save(
+            db.getProjectInputCategoryRepository()
+                .findByTitle(careerInterestsTitle)
+                .orElseGet(() -> new ProjectInputCategory().setCreationTime(Instant.now()))
+                .setShortDescr("Career interests free text")
+                .setPosition(0)
+                .setTitle(careerInterestsTitle)
+                .setHint("Click to add careers.")
+                .setInputDescr("Enter career interests:")
+                .setInputPlaceholder("Career Interest")
+                .setQueryPrefix("You are passionate about a career in")
+                .setValueType(ValueType.FREE_TEXT.name())
+                .setMaxNumValues(4)
+                .setProjectDefinition(projectDefinition));
+
+    String motivationsTitle = "Motivations";
+    db.getProjectInputCategoryRepository()
+        .save(
+            db.getProjectInputCategoryRepository()
+                .findByTitle(motivationsTitle)
+                .orElseGet(() -> new ProjectInputCategory().setCreationTime(Instant.now()))
+                .setShortDescr("Motivation selections")
+                .setPosition(1)
+                .setTitle(motivationsTitle)
+                .setHint("Click to add motivations.")
+                .setInputDescr("Select motivations:")
+                .setInputPlaceholder("Select a Motivation")
+                .setQueryPrefix("You are motivated by")
+                .setValueType(ValueType.MOTIVATION.name())
+                .setMaxNumValues(4)
+                .setProjectDefinition(projectDefinition));
+
+    String eksTitle = "Knowledge and Skills";
+    db.getProjectInputCategoryRepository()
+        .save(
+            db.getProjectInputCategoryRepository()
+                .findByTitle(eksTitle)
+                .orElseGet(() -> new ProjectInputCategory().setCreationTime(Instant.now()))
+                .setShortDescr("EKS selections")
+                .setPosition(2)
+                .setTitle(eksTitle)
+                .setHint("Click to add desired knowledge and skills.")
+                .setInputDescr("Select knowledge and skills:")
+                .setInputPlaceholder("Select a Knowledge and Skill")
+                .setQueryPrefix("You want to improve your ability to")
+                .setValueType(ValueType.EKS.name())
+                .setMaxNumValues(4)
+                .setProjectDefinition(projectDefinition));
+
+    String studentInterestsTitle = "Student Interests";
+    db.getProjectInputCategoryRepository()
+        .save(
+            db.getProjectInputCategoryRepository()
+                .findByTitle(studentInterestsTitle)
+                .orElseGet(() -> new ProjectInputCategory().setCreationTime(Instant.now()))
+                .setShortDescr("Student interest free text")
+                .setPosition(3)
+                .setTitle(studentInterestsTitle)
+                .setHint("Click to add student interests.")
+                .setInputDescr("Enter student interests:")
+                .setInputPlaceholder("Student Interest")
+                .setQueryPrefix("You are passionate about")
+                .setValueType(ValueType.FREE_TEXT.name())
+                .setMaxNumValues(4)
+                .setProjectDefinition(projectDefinition));
+
+    for (Assignment assignment : db.getAssignmentRepository().findAll()) {
+      db.getAssignmentProjectDefinitionRepository()
+          .save(
+              db.getAssignmentProjectDefinitionRepository()
+                  .newAssignmentProjectDefinition(assignment, projectDefinition)
+                  .setCreationTime(Instant.now())
+                  .setSelected(true));
+    }
+
+    log.atInfo().log("Done creating Ikigai Diagram descriptions");
   }
 
   private void processCommands() throws IOException {
@@ -487,6 +578,7 @@ public class AdminUtils {
       log.atInfo().log("Importing Motivations: {}", importMotivations);
       importMotivations();
     }
+    addIkigaiDiagramDescriptions();
     if (!createAdmins.isEmpty()) {
       log.atInfo().log("Creating admin: {}", createAdmins);
       createAdmins();
