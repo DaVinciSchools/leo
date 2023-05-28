@@ -18,7 +18,10 @@ import java.time.Instant;
 @Table(
     name = ProjectInputValue.TABLE_NAME,
     schema = "leo_temp",
-    indexes = {@Index(name = "input_category_id", columnList = "input_category_id")})
+    indexes = {
+      @Index(name = "project_input_id", columnList = "project_input_id"),
+      @Index(name = "project_input_category_id", columnList = "project_input_category_id")
+    })
 public class ProjectInputValue implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectInputValue";
@@ -27,13 +30,15 @@ public class ProjectInputValue implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_FREETEXTVALUE_NAME = "free_text_value";
-  private static final long serialVersionUID = -1012220161446923846L;
+  private static final long serialVersionUID = -8810454056494351635L;
 
   private Integer id;
 
   private Instant creationTime;
 
-  private ProjectInputCategory inputCategory;
+  private ProjectInput projectInput;
+
+  private ProjectInputCategory projectInputCategory;
 
   private Integer position;
 
@@ -66,13 +71,24 @@ public class ProjectInputValue implements Serializable {
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "input_category_id", nullable = false)
-  public ProjectInputCategory getInputCategory() {
-    return inputCategory;
+  @JoinColumn(name = "project_input_id", nullable = false)
+  public ProjectInput getProjectInput() {
+    return projectInput;
   }
 
-  public ProjectInputValue setInputCategory(ProjectInputCategory inputCategory) {
-    this.inputCategory = inputCategory;
+  public ProjectInputValue setProjectInput(ProjectInput projectInput) {
+    this.projectInput = projectInput;
+    return this;
+  }
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "project_input_category_id", nullable = false)
+  public ProjectInputCategory getProjectInputCategory() {
+    return projectInputCategory;
+  }
+
+  public ProjectInputValue setProjectInputCategory(ProjectInputCategory projectInputCategory) {
+    this.projectInputCategory = projectInputCategory;
     return this;
   }
 

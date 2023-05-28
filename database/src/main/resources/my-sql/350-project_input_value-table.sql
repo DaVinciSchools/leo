@@ -3,8 +3,14 @@ CREATE TABLE project_input_value
     id                           INT PRIMARY KEY AUTO_INCREMENT,
     creation_time                DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    input_category_id            INT      NOT NULL,
-    FOREIGN KEY (input_category_id)
+    project_input_id             INT      NOT NULL,
+    FOREIGN KEY (project_input_id)
+        REFERENCES project_input (id)
+        ON DELETE RESTRICT
+        ON UPDATE RESTRICT,
+
+    project_input_category_id    INT      NOT NULL,
+    FOREIGN KEY (project_input_category_id)
         REFERENCES project_input_category (id)
         ON DELETE RESTRICT
         ON UPDATE RESTRICT,
