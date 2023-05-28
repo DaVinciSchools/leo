@@ -14,7 +14,7 @@ CREATE TABLE project_input
             ON DELETE RESTRICT
             ON UPDATE RESTRICT,
 
-    user_x_id            INT      NOT NULL,
+    user_x_id             INT      NOT NULL,
     CONSTRAINT project_input__user_x_id
         FOREIGN KEY (user_x_id)
             REFERENCES user_x (id)
