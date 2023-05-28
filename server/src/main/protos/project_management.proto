@@ -13,6 +13,7 @@ service ProjectManagementService {
   rpc GetMotivations (GetMotivationsRequest) returns (GetMotivationsResponse) {}
   rpc GenerateProjects (GenerateProjectsRequest) returns (GenerateProjectsResponse) {}
   rpc GetProjects (GetProjectsRequest) returns (GetProjectsResponse) {}
+  rpc GetProjectDefinition (GetProjectDefinitionRequest) returns (GetProjectDefinitionResponse) {}
 }
 
 message GetEksRequest {
@@ -54,3 +55,12 @@ message GetProjectsRequest {
 message GetProjectsResponse {
   repeated pl_types.Project projects = 1;
 }
+
+message GetProjectDefinitionRequest {
+  optional int32 assignment_id = 1;
+}
+
+message GetProjectDefinitionResponse {
+  optional pl_types.ProjectDefinition definition = 1;
+}
+

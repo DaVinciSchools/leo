@@ -8,24 +8,32 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.text.StringEscapeUtils;
 import org.davincischools.leo.database.daos.Project;
+import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectInput;
+import org.davincischools.leo.database.daos.ProjectInputCategory;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
+import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.ProjectDefinitionInputCategories;
 import org.davincischools.leo.protos.open_ai.OpenAiMessage;
 import org.davincischools.leo.protos.open_ai.OpenAiRequest;
 import org.davincischools.leo.protos.open_ai.OpenAiResponse;
 import org.davincischools.leo.protos.pl_types.Eks;
+import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.pl_types.XqCompetency;
 import org.davincischools.leo.protos.project_management.GenerateProjectsRequest;
 import org.davincischools.leo.protos.project_management.GenerateProjectsResponse;
 import org.davincischools.leo.protos.project_management.GetEksRequest;
 import org.davincischools.leo.protos.project_management.GetEksResponse;
+import org.davincischools.leo.protos.project_management.GetProjectDefinitionRequest;
+import org.davincischools.leo.protos.project_management.GetProjectDefinitionResponse;
 import org.davincischools.leo.protos.project_management.GetProjectsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectsResponse;
 import org.davincischools.leo.protos.project_management.GetXqCompetenciesRequest;
@@ -312,5 +320,88 @@ public class ProjectManagementService {
               return response.build();
             })
         .finish();
+  }
+
+  @PostMapping(value = "/api/protos/ProjectManagementService/GetProjectDefinition")
+  @ResponseBody
+  public GetProjectDefinitionResponse getProjectDefinition(
+      @Authenticated HttpUser user,
+      @RequestBody Optional<GetProjectDefinitionRequest> optionalRequest)
+      throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(GetProjectDefinitionResponse.getDefaultInstance());
+    }
+
+    return LogUtils.executeAndLog(
+            db, optionalRequest.orElse(GetProjectDefinitionRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              GetProjectDefinitionResponse.Builder response =
+                  GetProjectDefinitionResponse.newBuilder();
+
+              // TODO: Just assume there's a single definition.
+              ProjectDefinition definitionDao =
+                  Iterables.getOnlyElement(db.getProjectDefinitionRepository().findAll());
+              ProjectDefinitionInputCategories definition =
+                  db.getProjectDefinitionRepository()
+                      .getProjectDefinition(definitionDao.getId())
+                      .orElseThrow();
+
+              response.getDefinitionBuilder().setId(definition.definition().getId());
+              for (ProjectInputCategory category : definition.inputCategories()) {
+                var input = response.getDefinitionBuilder().addInputsBuilder();
+                var inputCategory =
+                    input
+                        .getCategoryBuilder()
+                        .setId(category.getId())
+                        .setShortDescr(category.getShortDescr())
+                        .setTitle(category.getTitle())
+                        .setHint(category.getHint())
+                        .setPlaceholder(category.getInputPlaceholder())
+                        .setValueType(
+                            org.davincischools.leo.protos.pl_types.ProjectInputCategory.ValueType
+                                .valueOf(category.getValueType()))
+                        .setMaxNumValues(category.getMaxNumValues());
+                switch (inputCategory.getValueType()) {
+                  case EKS -> populateOptions(
+                      db.getKnowledgeAndSkillRepository().findAll(Type.EKS.name()),
+                      i ->
+                          Option.newBuilder()
+                              .setId(i.getId())
+                              .setName(i.getName())
+                              .setDescription(i.getShortDescr()),
+                      inputCategory);
+                  case XQ_COMPETENCY -> populateOptions(
+                      db.getKnowledgeAndSkillRepository().findAll(Type.XQ_COMPETENCY.name()),
+                      i ->
+                          Option.newBuilder()
+                              .setId(i.getId())
+                              .setName(i.getName())
+                              .setDescription(i.getShortDescr()),
+                      inputCategory);
+                  case MOTIVATION -> populateOptions(
+                      db.getMotivationRepository().findAll(),
+                      i ->
+                          Option.newBuilder()
+                              .setId(i.getId())
+                              .setName(i.getName())
+                              .setDescription(i.getShortDescr()),
+                      inputCategory);
+                }
+              }
+
+              return response.build();
+            })
+        .finish();
+  }
+
+  private <T> void populateOptions(
+      Iterable<T> values,
+      Function<T, Option.Builder> toOption,
+      org.davincischools.leo.protos.pl_types.ProjectInputCategory.Builder inputCategory) {
+    Streams.stream(values)
+        .map(toOption)
+        .sorted(Comparator.comparing(Option.Builder::getName))
+        .forEach(inputCategory::addOptions);
   }
 }

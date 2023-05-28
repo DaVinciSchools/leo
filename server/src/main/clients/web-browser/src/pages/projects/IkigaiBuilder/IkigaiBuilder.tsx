@@ -341,6 +341,9 @@ export function IkigaiBuilder() {
     );
 
     service
+      .getProjectDefinition({assignmentId: -1})
+      .then(resp => console.log(resp));
+    service
       .getEks({})
       .then(resp =>
         setEksOptions(new Map(resp.eks.map(eks => [eks.id!, eks])))

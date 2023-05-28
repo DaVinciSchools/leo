@@ -91,3 +91,45 @@ message XqCompetency {
   optional string name = 2;
   optional string short_descr = 3;
 }
+
+message ProjectDefinition {
+  optional int32 id = 1;
+  // Sorted by position already.
+  repeated ProjectInputValue inputs = 2;
+}
+
+message ProjectInputValue {
+  optional int32 id = 1;
+  optional ProjectInputCategory category = 2;
+
+  // Sorted by position already.
+  repeated string free_texts = 3;
+  repeated int32 selected_ids = 4;
+}
+
+message ProjectInputCategory {
+  enum ValueType {
+    UNSET = 0;
+    FREE_TEXT = 1;
+    EKS = 2;
+    XQ_COMPETENCY = 3;
+    MOTIVATION = 4;
+  }
+
+  message Option {
+    optional int32 id = 1;
+    optional string name = 2;
+    optional string description = 3;
+  }
+
+  optional int32 id = 1;
+  optional string title = 2;
+  optional string short_descr = 3;
+  optional string hint = 4;
+  optional string placeholder = 5;
+  optional ValueType value_type = 6;
+  optional int32 max_num_values = 7;
+
+  // Set for non-Free_TEXT value types.
+  repeated Option options = 8;
+}
