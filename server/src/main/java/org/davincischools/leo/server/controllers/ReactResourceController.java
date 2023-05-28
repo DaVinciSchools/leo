@@ -16,8 +16,8 @@ import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.URIBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Serves static React content from the java classpath or proxies requests to a development React
@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * are copied into <code>/target/classes/.../www</code>. This places the built content in the <code>
  * *.jar</code> and makes it available via <code>ClassLoader.getSystemResourceAsStream</code>.
  */
-@Controller
+@RestController
 public class ReactResourceController {
 
   // Optional port of running React web development server.
@@ -74,9 +74,8 @@ public class ReactResourceController {
   })
   public void getResource(HttpServletRequest originalRequest, HttpServletResponse response)
       throws IOException {
-    LogUtils.executeAndLog(
-            db,
-            originalRequest,
+    LogUtils.executeAndLog(db, originalRequest)
+        .andThen(
             (request, log) -> {
               log.setOnlyLogOnFailure(true);
 

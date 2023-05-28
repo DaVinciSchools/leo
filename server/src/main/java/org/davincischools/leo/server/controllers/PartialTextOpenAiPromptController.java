@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.text.StringEscapeUtils;
-import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.open_ai.OpenAiMessage;
 import org.davincischools.leo.protos.open_ai.OpenAiRequest;
@@ -17,10 +16,11 @@ import org.davincischools.leo.protos.open_ai.OpenAiResponse.CreateCompletionChoi
 import org.davincischools.leo.protos.partial_text_openai_prompt.GetSuggestionsRequest;
 import org.davincischools.leo.protos.partial_text_openai_prompt.GetSuggestionsRequest.Prompt;
 import org.davincischools.leo.protos.partial_text_openai_prompt.GetSuggestionsResponse;
-import org.davincischools.leo.server.utils.HttpUserProvider.Authenticated;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
 import org.davincischools.leo.server.utils.OpenAiUtils;
+import org.davincischools.leo.server.utils.http_user.Authenticated;
+import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,11 +59,15 @@ public class PartialTextOpenAiPromptController {
   @PostMapping(value = "/api/protos/PartialTextOpenAiPromptService/GetSuggestions")
   @ResponseBody
   public GetSuggestionsResponse getSuggestions(
-      @Authenticated UserX userX, @RequestBody Optional<GetSuggestionsRequest> optionalRequest)
+      @Authenticated HttpUser user, @RequestBody Optional<GetSuggestionsRequest> optionalRequest)
       throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(GetSuggestionsResponse.getDefaultInstance());
+    }
+
     return LogUtils.executeAndLog(
-            db,
-            optionalRequest.orElse(GetSuggestionsRequest.getDefaultInstance()),
+            db, optionalRequest.orElse(GetSuggestionsRequest.getDefaultInstance()))
+        .andThen(
             (request, log) -> {
               if (!PROMPTS.containsKey(request.getPrompt())) {
                 throw new IllegalArgumentException("Invalid prompt: " + request.getPrompt());

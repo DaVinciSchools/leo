@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,8 +15,9 @@ import org.davincischools.leo.database.post_environment_processors.LoadCustomPro
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.pl_types.User;
-import org.davincischools.leo.server.utils.UserXDetails;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.davincischools.leo.server.utils.http_user.HttpUserArgumentResolver;
+import org.davincischools.leo.server.utils.http_user.HttpUserService;
+import org.davincischools.leo.server.utils.http_user.UserXDetails;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
@@ -32,24 +32,34 @@ import org.springframework.http.converter.protobuf.ProtobufJsonFormatHttpMessage
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
 @SpringBootApplication(
     scanBasePackages = "org.davincischools.leo.server",
-    scanBasePackageClasses = {Database.class, UserX.class, TestDatabase.class})
+    scanBasePackageClasses = {
+      Database.class,
+      HttpUserService.class,
+      TestDatabase.class,
+      UserX.class
+    })
 public class ServerApplication {
 
   private static final Logger logger = LogManager.getLogger();
 
   @Configuration
   static class ServerApplicationConfigurer extends WebMvcConfigurationSupport {
+
+    private final Database db;
+
+    public ServerApplicationConfigurer(Database db) {
+      this.db = db;
+    }
 
     @Override
     public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
@@ -60,6 +70,11 @@ public class ServerApplication {
       // with a "Direct self-reference leading to cycle" error.
       converters.add(0, new ProtobufHttpMessageConverter());
       converters.add(1, new ProtobufJsonFormatHttpMessageConverter());
+    }
+
+    @Override
+    protected void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+      argumentResolvers.add(0, new HttpUserArgumentResolver(db));
     }
   }
 
@@ -201,18 +216,6 @@ public class ServerApplication {
 
           // Done with configuration.
           .build();
-    }
-
-    @Bean
-    static UserDetailsService userDetailsService(@Autowired Database db) {
-      return (String username) -> {
-        Optional<UserX> optionalUserX = db.getUserXRepository().findByEmailAddress(username);
-        if (optionalUserX.isEmpty()) {
-          throw new UsernameNotFoundException("User " + username + " not found.");
-        }
-
-        return new UserXDetails(optionalUserX.get());
-      };
     }
   }
 

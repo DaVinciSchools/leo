@@ -65,9 +65,8 @@ public class OpenAiUtils {
   // Makes a call to OpenAI. If no key is available, returns an unmodified response.
   public <T extends Builder<?>> T sendOpenAiRequest(Message request, T responseBuilder)
       throws IOException {
-    return LogUtils.executeAndLog(
-            db,
-            request,
+    return LogUtils.executeAndLog(db, request)
+        .andThen(
             (unused, log) -> {
               // The OPENAI_API_KEY is required.
               if (openAiKey.isEmpty() || openAiKey.equals("<your_open_ai_api_key>")) {

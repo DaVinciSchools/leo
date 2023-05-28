@@ -1,4 +1,4 @@
-package org.davincischools.leo.server.utils;
+package org.davincischools.leo.server.utils.http_user;
 
 import java.io.Serial;
 import org.davincischools.leo.database.daos.UserX;
@@ -21,6 +21,7 @@ public class UserXDetails extends User {
             .map(SimpleGrantedAuthority::new)
             .toList());
     this.userX = userX;
+    userX.setEncodedPassword(null);
   }
 
   public UserX getUserX() {

@@ -32,6 +32,7 @@ import org.davincischools.leo.database.daos.LogReference;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.server.utils.http_user.HttpUserService;
 
 public class LogUtils {
 
@@ -90,11 +91,6 @@ public class LogUtils {
   public interface ErrorConsumer<R> {
 
     void accept(Error<R> error, LogOperations log) throws Throwable;
-  }
-
-  public interface SaveErrorConsumer<R> {
-
-    void accept(Error<R> error, LogOperations log);
   }
 
   public static class Logger<R, I> implements LogOperations {
@@ -323,7 +319,7 @@ public class LogUtils {
 
     Log logEntry = new Log().setCreationTime(Instant.now());
 
-    HttpUserProvider.getUser().ifPresent(logEntry::setUserX);
+    HttpUserService.getAuthenticatedUserX(db).ifPresent(logEntry::setUserX);
 
     StackWalker.StackFrame callerFrame =
         StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
@@ -337,12 +333,6 @@ public class LogUtils {
         .setRequestTime(Instant.now());
 
     return new Logger<>(db, request, logEntry);
-  }
-
-  @CheckReturnValue
-  public static <I, O> Logger<I, O> executeAndLog(
-      Database db, I request, InputConsumer<I, O> inputConsumer) {
-    return executeAndLog(db, request).andThen(inputConsumer);
   }
 
   @Nullable

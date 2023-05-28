@@ -1,9 +1,6 @@
 package org.davincischools.leo.server.controllers;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.davincischools.leo.server.utils.HttpUserProvider.isAdmin;
-import static org.davincischools.leo.server.utils.HttpUserProvider.isStudent;
-import static org.davincischools.leo.server.utils.HttpUserProvider.isTeacher;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -18,7 +15,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.text.StringEscapeUtils;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectInput;
-import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.protos.open_ai.OpenAiMessage;
@@ -35,12 +31,13 @@ import org.davincischools.leo.protos.project_management.GetProjectsResponse;
 import org.davincischools.leo.protos.project_management.GetXqCompetenciesRequest;
 import org.davincischools.leo.protos.project_management.GetXqCompetenciesResponse;
 import org.davincischools.leo.server.utils.DataAccess;
-import org.davincischools.leo.server.utils.HttpUserProvider.Authenticated;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
 import org.davincischools.leo.server.utils.LogUtils.LogOperations;
 import org.davincischools.leo.server.utils.LogUtils.Status;
 import org.davincischools.leo.server.utils.OpenAiUtils;
+import org.davincischools.leo.server.utils.http_user.Authenticated;
+import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -87,8 +84,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetEks")
   @ResponseBody
   public GetEksResponse getEks(
-      @Authenticated UserX userX, @RequestBody Optional<GetEksRequest> optionalRequest)
+      @Authenticated HttpUser user, @RequestBody Optional<GetEksRequest> optionalRequest)
       throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(GetEksResponse.getDefaultInstance());
+    }
+
     return LogUtils.executeAndLog(db, optionalRequest.orElse(GetEksRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
@@ -107,8 +108,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetXqCompetencies")
   @ResponseBody
   public GetXqCompetenciesResponse getXqCompetencies(
-      @Authenticated UserX userX, @RequestBody Optional<GetXqCompetenciesRequest> optionalRequest)
+      @Authenticated HttpUser user, @RequestBody Optional<GetXqCompetenciesRequest> optionalRequest)
       throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(GetXqCompetenciesResponse.getDefaultInstance());
+    }
+
     return LogUtils.executeAndLog(
             db, optionalRequest.orElse(GetXqCompetenciesRequest.getDefaultInstance()))
         .andThen(
@@ -128,8 +133,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GenerateProjects")
   @ResponseBody
   public GenerateProjectsResponse generateProjects(
-      @Authenticated UserX userX, @RequestBody Optional<GenerateProjectsRequest> optionalRequest)
+      @Authenticated HttpUser user, @RequestBody Optional<GenerateProjectsRequest> optionalRequest)
       throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(GenerateProjectsResponse.getDefaultInstance());
+    }
+
     return LogUtils.executeAndLog(
             db, optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()))
         .retryNextStep(2, 1000)
@@ -140,7 +149,7 @@ public class ProjectManagementService {
               // Save the Project input settings.
               ProjectInput projectInput =
                   db.getProjectInputRepository()
-                      .save(new ProjectInput().setCreationTime(Instant.now()).setUserX(userX));
+                      .save(new ProjectInput().setCreationTime(Instant.now()).setUserX(user.get()));
               log.addProjectInput(projectInput);
 
               // Query OpenAI for projects.
@@ -272,30 +281,31 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjects")
   @ResponseBody
   public GetProjectsResponse getProjects(
-      @Authenticated UserX userX, @RequestBody Optional<GetProjectsRequest> optionalRequest)
+      @Authenticated HttpUser user, @RequestBody Optional<GetProjectsRequest> optionalRequest)
       throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(GetProjectsResponse.getDefaultInstance());
+    }
+
     return LogUtils.executeAndLog(
-            db,
-            optionalRequest.orElse(GetProjectsRequest.getDefaultInstance()),
+            db, optionalRequest.orElse(GetProjectsRequest.getDefaultInstance()))
+        .andThen(
             (request, log) -> {
               int userId = request.getUserXId();
-              if (isAdmin(userX)) {
+              if (user.isAdmin()) {
                 // Do nothing.
-              } else if (isTeacher(userX)) {
+              } else if (user.isTeacher()) {
                 // TODO: Verify the requested user is in their class.
-              } else if (isStudent(userX)) {
+              } else if (user.isStudent()) {
                 // Make sure the student is only querying about their own projects.
-                checkArgument(userId == userX.getId(), "access denied");
-              }
-
-              Optional<UserX> user = db.getUserXRepository().findById(userId);
-              if (user.isEmpty()) {
-                throw new IllegalArgumentException("User does not exist.");
+                if (userId != user.get().getId()) {
+                  return user.returnForbidden(GetProjectsResponse.getDefaultInstance());
+                }
               }
               var response = GetProjectsResponse.newBuilder();
 
               response.addAllProjects(
-                  Streams.stream(db.getProjectRepository().findAllByUserXId(user.get().getId()))
+                  Streams.stream(db.getProjectRepository().findAllByUserXId(userId))
                       .map(DataAccess::convertProjectToProto)
                       .toList());
 

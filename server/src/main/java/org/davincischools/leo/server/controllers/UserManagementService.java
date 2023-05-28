@@ -4,10 +4,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.davincischools.leo.database.utils.EntityUtils.checkRequired;
 import static org.davincischools.leo.database.utils.EntityUtils.checkRequiredMaxLength;
 import static org.davincischools.leo.database.utils.EntityUtils.checkThat;
-import static org.davincischools.leo.server.utils.HttpUserProvider.isAdmin;
-import static org.davincischools.leo.server.utils.HttpUserProvider.isTeacher;
+import static org.davincischools.leo.server.utils.http_user.HttpUser.isTeacher;
 
 import com.google.common.collect.Iterables;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.Optional;
@@ -27,10 +27,11 @@ import org.davincischools.leo.protos.user_management.UpsertUserRequest;
 import org.davincischools.leo.protos.user_management.UserInformationResponse;
 import org.davincischools.leo.protos.user_management.UserInformationResponse.Builder;
 import org.davincischools.leo.server.utils.DataAccess;
-import org.davincischools.leo.server.utils.HttpUserProvider.Admin;
-import org.davincischools.leo.server.utils.HttpUserProvider.Authenticated;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
+import org.davincischools.leo.server.utils.http_user.Admin;
+import org.davincischools.leo.server.utils.http_user.Authenticated;
+import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,11 +47,14 @@ public class UserManagementService {
   @ResponseBody
   @Transactional
   public UserInformationResponse getUserXs(
-      @Admin UserX userX, @RequestBody Optional<GetUsersRequest> optionalRequest)
+      @Admin HttpUser user, @RequestBody Optional<GetUsersRequest> optionalRequest)
       throws LogExecutionError {
-    return LogUtils.executeAndLog(
-            db,
-            optionalRequest.orElse(GetUsersRequest.getDefaultInstance()),
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(UserInformationResponse.getDefaultInstance());
+    }
+
+    return LogUtils.executeAndLog(db, optionalRequest.orElse(GetUsersRequest.getDefaultInstance()))
+        .andThen(
             (request, log) -> {
               checkArgument(request.hasDistrictId());
               var response = UserInformationResponse.newBuilder();
@@ -66,25 +70,31 @@ public class UserManagementService {
   @ResponseBody
   @Transactional
   public GetUserDetailsResponse getUserXDetails(
-      @Authenticated UserX userX, @RequestBody Optional<GetUserDetailsRequest> optionalRequest)
+      @Authenticated HttpUser user, @RequestBody Optional<GetUserDetailsRequest> optionalRequest)
       throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(GetUserDetailsResponse.getDefaultInstance());
+    }
+
     return LogUtils.executeAndLog(
-            db,
-            optionalRequest.orElse(GetUserDetailsRequest.getDefaultInstance()),
+            db, optionalRequest.orElse(GetUserDetailsRequest.getDefaultInstance()))
+        .andThen(
             (request, log) -> {
               int userId = request.getUserXId();
-              if (isAdmin(userX)) {
+              if (user.isAdmin()) {
                 // Do nothing.
               } else {
                 // Make sure the user is only getting their own details.
-                checkArgument(userId == userX.getId(), "access denied");
+                if (userId != user.get().getId()) {
+                  return user.returnForbidden(GetUserDetailsResponse.getDefaultInstance());
+                }
               }
 
               UserX details = db.getUserXRepository().findById(userId).orElseThrow();
               var response = GetUserDetailsResponse.newBuilder();
 
               response.setUser(DataAccess.convertFullUserXToProto(details));
-              if (isTeacher(userX)) {
+              if (isTeacher(details)) {
                 response.addAllSchoolIds(
                     Iterables.transform(
                         db.getSchoolRepository().findAllByTeacherId(details.getTeacher().getId()),
@@ -100,18 +110,26 @@ public class UserManagementService {
   @ResponseBody
   @Transactional
   public UserInformationResponse upsertUserX(
-      @Authenticated UserX userX, @RequestBody Optional<UpsertUserRequest> optionalRequest)
+      @Authenticated HttpUser user,
+      @RequestBody Optional<UpsertUserRequest> optionalRequest,
+      HttpServletRequest httpRequest)
       throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(UserInformationResponse.getDefaultInstance());
+    }
+
     return LogUtils.executeAndLog(
-            db,
-            optionalRequest.orElse(UpsertUserRequest.getDefaultInstance()),
+            db, optionalRequest.orElse(UpsertUserRequest.getDefaultInstance()))
+        .andThen(
             (request, log) -> {
               int userId = request.getUser().getId();
-              if (isAdmin(userX)) {
+              if (user.isAdmin()) {
                 // Do nothing.
               } else {
                 // Make sure the user is only getting their own details.
-                checkArgument(userId == userX.getId(), "access denied");
+                if (userId != user.get().getId()) {
+                  return user.returnForbidden(UserInformationResponse.getDefaultInstance());
+                }
               }
 
               var response = UserInformationResponse.newBuilder();
@@ -126,7 +144,7 @@ public class UserManagementService {
                 return response.build();
               }
 
-              UserX user =
+              UserX userX =
                   new UserX()
                       .setCreationTime(Instant.now())
                       .setDistrict(
@@ -138,77 +156,78 @@ public class UserManagementService {
                       .setEmailAddress(request.getUser().getEmailAddress());
               existingUserX.ifPresent(
                   e -> {
-                    user.setId(e.getId());
-                    user.setAdminX(e.getAdminX());
-                    user.setTeacher(e.getTeacher());
-                    user.setStudent(e.getStudent());
-                    user.setEncodedPassword(e.getEncodedPassword());
+                    userX.setId(e.getId());
+                    userX.setAdminX(e.getAdminX());
+                    userX.setTeacher(e.getTeacher());
+                    userX.setStudent(e.getStudent());
+                    userX.setEncodedPassword(e.getEncodedPassword());
                   });
 
               if (!request.getUser().getPassword().isEmpty()) {
-                UserUtils.setPassword(user, request.getUser().getPassword());
+                UserUtils.setPassword(userX, request.getUser().getPassword());
               }
 
-              if ((user.getAdminX() != null) ^ request.getUser().getIsAdmin()) {
+              if ((userX.getAdminX() != null) ^ request.getUser().getIsAdmin()) {
                 if (request.getUser().getIsAdmin()) {
-                  user.setAdminX(
+                  userX.setAdminX(
                       db.getAdminXRepository().save(new AdminX().setCreationTime(Instant.now())));
                 } else {
-                  user.setAdminX(null);
+                  userX.setAdminX(null);
                 }
               }
 
-              if ((user.getTeacher() != null) ^ request.getUser().getIsTeacher()) {
+              if ((userX.getTeacher() != null) ^ request.getUser().getIsTeacher()) {
                 if (request.getUser().getIsTeacher()) {
-                  user.setTeacher(
+                  userX.setTeacher(
                       db.getTeacherRepository().save(new Teacher().setCreationTime(Instant.now())));
                 } else {
-                  user.setTeacher(null);
+                  userX.setTeacher(null);
                 }
               }
-              if (user.getTeacher() != null) {
+              if (userX.getTeacher() != null) {
                 if (existingUserX.isPresent()) {
                   // Remove any extraneous schools.
                   db.getTeacherSchoolRepository()
-                      .keepSchoolsForTeacher(user.getTeacher().getId(), request.getSchoolIdsList());
+                      .keepSchoolsForTeacher(
+                          userX.getTeacher().getId(), request.getSchoolIdsList());
                 }
 
                 // Add missing schools.
                 for (int schoolId : request.getSchoolIdsList()) {
                   db.getTeacherSchoolRepository()
                       .saveTeacherSchool(
-                          user.getTeacher(),
+                          userX.getTeacher(),
                           new School().setCreationTime(Instant.now()).setId(schoolId));
                 }
               }
 
-              if ((user.getStudent() != null) ^ request.getUser().getIsStudent()) {
+              if ((userX.getStudent() != null) ^ request.getUser().getIsStudent()) {
                 if (request.getUser().getIsStudent()) {
                   // TODO: Set the student ID.
-                  user.setStudent(
+                  userX.setStudent(
                       db.getStudentRepository()
                           .save(new Student().setCreationTime(Instant.now()).setStudentId(-1)));
                 } else {
-                  user.setStudent(null);
+                  userX.setStudent(null);
                 }
               }
 
-              db.getUserXRepository().save(user);
+              db.getUserXRepository().save(userX);
 
               existingUserX.ifPresent(
                   e -> {
-                    if (e.getAdminX() != null && user.getAdminX() == null) {
+                    if (e.getAdminX() != null && userX.getAdminX() == null) {
                       db.getAdminXRepository().delete(e.getAdminX());
                     }
-                    if (e.getTeacher() != null && user.getTeacher() == null) {
+                    if (e.getTeacher() != null && userX.getTeacher() == null) {
                       db.getTeacherRepository().delete(e.getTeacher());
                     }
-                    if (e.getStudent() != null && user.getStudent() == null) {
+                    if (e.getStudent() != null && userX.getStudent() == null) {
                       db.getStudentRepository().delete(e.getStudent());
                     }
                   });
 
-              getAllFullUserXs(request.getUser().getDistrictId(), user.getId(), response);
+              getAllFullUserXs(request.getUser().getDistrictId(), userX.getId(), response);
               response.setSuccess(true);
               return response.build();
             })
@@ -308,11 +327,17 @@ public class UserManagementService {
   @ResponseBody
   @Transactional
   public UserInformationResponse removeUser(
-      @Admin UserX userX, @RequestBody Optional<RemoveUserRequest> optionalRequest)
+      @Admin HttpUser user,
+      @RequestBody Optional<RemoveUserRequest> optionalRequest,
+      HttpServletRequest httpRequest)
       throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(UserInformationResponse.getDefaultInstance());
+    }
+
     return LogUtils.executeAndLog(
-            db,
-            optionalRequest.orElse(RemoveUserRequest.getDefaultInstance()),
+            db, optionalRequest.orElse(RemoveUserRequest.getDefaultInstance()))
+        .andThen(
             (request, log) -> {
               checkArgument(request.hasUserXId());
               var response = UserInformationResponse.newBuilder();

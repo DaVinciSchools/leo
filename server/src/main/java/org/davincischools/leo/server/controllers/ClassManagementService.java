@@ -2,15 +2,15 @@ package org.davincischools.leo.server.controllers;
 
 import java.util.Optional;
 import org.davincischools.leo.database.daos.Assignment;
-import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.class_management.GetStudentAssignmentsRequest;
 import org.davincischools.leo.protos.class_management.GetStudentAssignmentsResponse;
 import org.davincischools.leo.server.utils.DataAccess;
-import org.davincischools.leo.server.utils.HttpUserProvider.Student;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
 import org.davincischools.leo.server.utils.OpenAiUtils;
+import org.davincischools.leo.server.utils.http_user.HttpUser;
+import org.davincischools.leo.server.utils.http_user.Student;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,16 +26,21 @@ public class ClassManagementService {
   @PostMapping(value = "/api/protos/ClassManagementService/GetStudentAssignments")
   @ResponseBody
   public GetStudentAssignmentsResponse getStudentAssignments(
-      @Student UserX userX, @RequestBody Optional<GetStudentAssignmentsRequest> optionalRequest)
+      @Student HttpUser user, @RequestBody Optional<GetStudentAssignmentsRequest> optionalRequest)
       throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(GetStudentAssignmentsResponse.getDefaultInstance());
+    }
+
     return LogUtils.executeAndLog(
-            db,
-            optionalRequest.orElse(GetStudentAssignmentsRequest.getDefaultInstance()),
+            db, optionalRequest.orElse(GetStudentAssignmentsRequest.getDefaultInstance()))
+        .andThen(
             (request, log) -> {
               var response = GetStudentAssignmentsResponse.newBuilder();
 
               for (Assignment assignment :
-                  db.getAssignmentRepository().findAllByStudentId(userX.getStudent().getId())) {
+                  db.getAssignmentRepository()
+                      .findAllByStudentId(user.get().getStudent().getId())) {
                 response.addAssignments(
                     DataAccess.convertAssignmentToProto(assignment.getClassX(), assignment));
               }

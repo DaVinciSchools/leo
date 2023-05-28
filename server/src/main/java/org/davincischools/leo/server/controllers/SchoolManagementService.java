@@ -3,16 +3,16 @@ package org.davincischools.leo.server.controllers;
 import java.time.Instant;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.School;
-import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.school_management.GetSchoolsRequest;
 import org.davincischools.leo.protos.school_management.RemoveSchoolRequest;
 import org.davincischools.leo.protos.school_management.SchoolInformationResponse;
 import org.davincischools.leo.protos.school_management.UpsertSchoolRequest;
 import org.davincischools.leo.server.utils.DataAccess;
-import org.davincischools.leo.server.utils.HttpUserProvider.Admin;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
+import org.davincischools.leo.server.utils.http_user.Admin;
+import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,11 +27,15 @@ public class SchoolManagementService {
   @PostMapping(value = "/api/protos/SchoolManagementService/GetSchools")
   @ResponseBody
   public SchoolInformationResponse getSchools(
-      @Admin UserX userX, @RequestBody Optional<GetSchoolsRequest> optionalRequest)
+      @Admin HttpUser user, @RequestBody Optional<GetSchoolsRequest> optionalRequest)
       throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(SchoolInformationResponse.getDefaultInstance());
+    }
+
     return LogUtils.executeAndLog(
-            db,
-            optionalRequest.orElse(GetSchoolsRequest.getDefaultInstance()),
+            db, optionalRequest.orElse(GetSchoolsRequest.getDefaultInstance()))
+        .andThen(
             (request, log) -> {
               return getAllSchools(request.getDistrictId(), -1);
             })
@@ -41,11 +45,15 @@ public class SchoolManagementService {
   @PostMapping(value = "/api/protos/SchoolManagementService/UpsertSchool")
   @ResponseBody
   public SchoolInformationResponse upsertSchool(
-      @Admin UserX userX, @RequestBody Optional<UpsertSchoolRequest> optionalRequest)
+      @Admin HttpUser user, @RequestBody Optional<UpsertSchoolRequest> optionalRequest)
       throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(SchoolInformationResponse.getDefaultInstance());
+    }
+
     return LogUtils.executeAndLog(
-            db,
-            optionalRequest.orElse(UpsertSchoolRequest.getDefaultInstance()),
+            db, optionalRequest.orElse(UpsertSchoolRequest.getDefaultInstance()))
+        .andThen(
             (request, log) -> {
               School school =
                   new School()
@@ -67,11 +75,15 @@ public class SchoolManagementService {
   @PostMapping(value = "/api/protos/SchoolManagementService/RemoveSchool")
   @ResponseBody
   public SchoolInformationResponse removeSchool(
-      @Admin UserX userX, @RequestBody Optional<RemoveSchoolRequest> optionalRequest)
+      @Admin HttpUser user, @RequestBody Optional<RemoveSchoolRequest> optionalRequest)
       throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(SchoolInformationResponse.getDefaultInstance());
+    }
+
     return LogUtils.executeAndLog(
-            db,
-            optionalRequest.orElse(RemoveSchoolRequest.getDefaultInstance()),
+            db, optionalRequest.orElse(RemoveSchoolRequest.getDefaultInstance()))
+        .andThen(
             (request, log) -> {
               db.getSchoolRepository().deleteById(request.getSchoolId());
               return getAllSchools(request.getDistrictId(), -1);
