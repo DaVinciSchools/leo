@@ -177,10 +177,7 @@ public class TestData {
 
     programmingEks2 =
         db.createKnowledgeAndSkill(
-            programmingClassX,
-            "Containers",
-            "I can use Lists, Sets, and Maps.",
-            Type.EKS);
+            programmingClassX, "Containers", "I can use Lists, Sets, and Maps.", Type.EKS);
     programmingAssignment2 =
         db.createAssignment(programmingClassX, "Implement sort algorithms.", programmingEks1);
 
@@ -191,10 +188,7 @@ public class TestData {
 
     chemistryEks1 =
         db.createKnowledgeAndSkill(
-            chemistryClassX,
-            "Periodic Table",
-            "I know how to read a periodic table.",
-            Type.EKS);
+            chemistryClassX, "Periodic Table", "I know how to read a periodic table.", Type.EKS);
     chemistryAssignment1 = db.createAssignment(chemistryClassX, "Periodic Table", chemistryEks1);
 
     chemistryEks2 =

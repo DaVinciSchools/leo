@@ -96,8 +96,7 @@ public class ProjectManagementService {
 
               response.addAllEks(
                   Iterables.transform(
-                      db.getKnowledgeAndSkillRepository()
-                          .findAll(Type.EKS.name()),
+                      db.getKnowledgeAndSkillRepository().findAll(Type.EKS.name()),
                       DataAccess::getProtoEks));
 
               return response.build();
@@ -118,8 +117,7 @@ public class ProjectManagementService {
 
               response.addAllXqCompentencies(
                   Iterables.transform(
-                      db.getKnowledgeAndSkillRepository()
-                          .findAll(Type.XQ_COMPETENCY.name()),
+                      db.getKnowledgeAndSkillRepository().findAll(Type.XQ_COMPETENCY.name()),
                       DataAccess::orProtoXqCompetency));
 
               return response.build();

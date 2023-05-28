@@ -223,8 +223,7 @@ public class AdminUtils {
                           db.createAssignment(
                               classX,
                               eksName,
-                              db.createKnowledgeAndSkill(
-                                  classX, eksName, eksDescr, Type.EKS));
+                              db.createKnowledgeAndSkill(classX, eksName, eksDescr, Type.EKS));
                         }
                       }
                     }
@@ -379,8 +378,7 @@ public class AdminUtils {
         db.createAssignment(
             classX,
             xqName,
-            db.createKnowledgeAndSkill(
-                classX, xqName, xqDescr, Type.XQ_COMPETENCY));
+            db.createKnowledgeAndSkill(classX, xqName, xqDescr, Type.XQ_COMPETENCY));
         classXIds.add(classX.getId());
 
         log.atInfo().log("Imported: {}", line);
