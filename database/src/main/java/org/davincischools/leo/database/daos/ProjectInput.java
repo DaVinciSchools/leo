@@ -23,7 +23,7 @@ public class ProjectInput implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_TIMEOUT_NAME = "timeout";
   public static final String COLUMN_STATE_NAME = "state";
-  private static final long serialVersionUID = -4422033212975617832L;
+  private static final long serialVersionUID = -2951372818901188392L;
 
   private Integer id;
 
@@ -34,6 +34,8 @@ public class ProjectInput implements Serializable {
   private String state;
 
   private ProjectDefinition projectDefinition;
+
+  private Assignment assignment;
 
   private UserX userX;
 
@@ -80,14 +82,25 @@ public class ProjectInput implements Serializable {
     return this;
   }
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "project_definition_id")
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "project_definition_id", nullable = false)
   public ProjectDefinition getProjectDefinition() {
     return projectDefinition;
   }
 
   public ProjectInput setProjectDefinition(ProjectDefinition projectDefinition) {
     this.projectDefinition = projectDefinition;
+    return this;
+  }
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "assignment_id")
+  public Assignment getAssignment() {
+    return assignment;
+  }
+
+  public ProjectInput setAssignment(Assignment assignment) {
+    this.assignment = assignment;
     return this;
   }
 

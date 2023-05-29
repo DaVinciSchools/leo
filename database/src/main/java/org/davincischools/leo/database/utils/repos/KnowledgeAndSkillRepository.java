@@ -15,8 +15,12 @@ public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndS
     XQ_COMPETENCY,
   }
 
-  @Query("SELECT ks FROM KnowledgeAndSkill ks" + " WHERE ks.type = (:type)")
+  @Query("SELECT ks FROM KnowledgeAndSkill ks WHERE ks.type = (:type)")
   Iterable<KnowledgeAndSkill> findAll(@Param("type") String type);
+
+  @Query("SELECT ks FROM KnowledgeAndSkill ks WHERE ks.id IN (:id) AND ks.type = (:type)")
+  Iterable<KnowledgeAndSkill> findAllByIdsAndType(
+      @Param("id") Iterable ids, @Param("type") String type);
 
   @Query(
       "SELECT ks FROM KnowledgeAndSkill ks"

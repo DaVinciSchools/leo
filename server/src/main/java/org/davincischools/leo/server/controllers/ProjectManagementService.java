@@ -4,30 +4,39 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.text.StringEscapeUtils;
+import org.davincischools.leo.database.daos.Assignment;
+import org.davincischools.leo.database.daos.KnowledgeAndSkill;
+import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputCategory;
+import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.ProjectDefinitionInputCategories;
+import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository.ValueType;
+import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.protos.open_ai.OpenAiMessage;
 import org.davincischools.leo.protos.open_ai.OpenAiRequest;
 import org.davincischools.leo.protos.open_ai.OpenAiResponse;
-import org.davincischools.leo.protos.pl_types.Eks;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
-import org.davincischools.leo.protos.pl_types.XqCompetency;
 import org.davincischools.leo.protos.project_management.GenerateProjectsRequest;
 import org.davincischools.leo.protos.project_management.GenerateProjectsResponse;
 import org.davincischools.leo.protos.project_management.GetEksRequest;
@@ -138,6 +147,13 @@ public class ProjectManagementService {
         .finish();
   }
 
+  public record GenerateProjectsState(
+      GenerateProjectsRequest request,
+      ProjectDefinitionInputCategories definition,
+      ProjectInput input,
+      List<ImmutableList<ProjectInputValue>> values,
+      GenerateProjectsResponse.Builder response) {}
+
   @PostMapping(value = "/api/protos/ProjectManagementService/GenerateProjects")
   @ResponseBody
   public GenerateProjectsResponse generateProjects(
@@ -149,49 +165,142 @@ public class ProjectManagementService {
 
     return LogUtils.executeAndLog(
             db, optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()))
-        .retryNextStep(2, 1000)
         .andThen(
             (request, log) -> {
-              var response = GenerateProjectsResponse.newBuilder();
+              ProjectDefinitionInputCategories definition =
+                  db.getProjectDefinitionRepository()
+                      .getProjectDefinition(request.getDefinition().getId())
+                      .orElseThrow(
+                          () ->
+                              new IllegalArgumentException(
+                                  "Project definition does not exist: "
+                                      + request.getDefinition().getId()));
 
-              // Save the Project input settings.
-              ProjectInput projectInput =
-                  db.getProjectInputRepository()
-                      .save(new ProjectInput().setCreationTime(Instant.now()).setUserX(user.get()));
-              log.addProjectInput(projectInput);
+              GenerateProjectsState state =
+                  new GenerateProjectsState(
+                      request,
+                      definition,
+                      new ProjectInput()
+                          .setCreationTime(Instant.now())
+                          .setProjectDefinition(definition.definition())
+                          .setUserX(user.get())
+                          .setState(State.PROCESSING.name())
+                          .setTimeout(Instant.now().plus(Duration.ofMinutes(10))),
+                      new ArrayList<>(),
+                      GenerateProjectsResponse.newBuilder());
+              if (request.getAssignmentId() > 0) {
+                state.input.setAssignment(new Assignment().setId(request.getAssignmentId()));
+              }
 
+              return state;
+            })
+        .andThen(
+            (state, log) -> {
+              if (state.definition.inputCategories().size()
+                  != state.request.getDefinition().getInputsList().size()) {
+                throw new IllegalArgumentException(
+                    "Incorrect number of inputs: "
+                        + state.request.getDefinition().getInputsList().size());
+              }
+
+              AtomicInteger position = new AtomicInteger(0);
+              for (int i = 0; i < state.definition.inputCategories().size(); ++i) {
+                ProjectInputCategory category = state.definition.inputCategories().get(i);
+                var inputProto = state.request.getDefinition().getInputsList().get(i);
+
+                Supplier<ProjectInputValue> newProjectInputValue =
+                    () ->
+                        new ProjectInputValue()
+                            .setCreationTime(Instant.now())
+                            .setProjectInput(state.input)
+                            .setProjectInputCategory(category)
+                            .setPosition(position.getAndIncrement());
+
+                Builder<ProjectInputValue> projectInputValues = ImmutableList.builder();
+                switch (ValueType.valueOf(category.getValueType())) {
+                  case FREE_TEXT -> projectInputValues.addAll(
+                      throwIfEmptyCategory(
+                          inputProto.getFreeTextsList().stream()
+                              .map(s -> newProjectInputValue.get().setFreeTextValue(s))
+                              .toList()));
+                  case EKS -> projectInputValues.addAll(
+                      throwIfEmptyCategory(
+                          Streams.stream(
+                                  db.getKnowledgeAndSkillRepository()
+                                      .findAllByIdsAndType(
+                                          inputProto.getSelectedIdsList(), Type.EKS.name()))
+                              .map(ks -> newProjectInputValue.get().setKnowledgeAndSkillValue(ks))
+                              .toList()));
+                  case XQ_COMPETENCY -> projectInputValues.addAll(
+                      throwIfEmptyCategory(
+                          Streams.stream(
+                                  db.getKnowledgeAndSkillRepository()
+                                      .findAllByIdsAndType(
+                                          inputProto.getSelectedIdsList(),
+                                          Type.XQ_COMPETENCY.name()))
+                              .map(ks -> newProjectInputValue.get().setKnowledgeAndSkillValue(ks))
+                              .toList()));
+                  case MOTIVATION -> projectInputValues.addAll(
+                      throwIfEmptyCategory(
+                          Streams.stream(
+                                  db.getMotivationRepository()
+                                      .findAllByIds(inputProto.getSelectedIdsList()))
+                              .map(m -> newProjectInputValue.get().setMotivationValue(m))
+                              .toList()));
+                }
+                state.values.add(projectInputValues.build());
+              }
+
+              // Save project projectInput.
+              db.getProjectInputRepository().save(state.input);
+              log.addProjectInput(state.input);
+              db.getProjectInputValueRepository()
+                  .saveAll(state.values.stream().flatMap(Collection::stream).toList());
+
+              return state;
+            })
+        .retryNextStep(3, 1000)
+        .andThen(
+            (state, log) -> {
               // Query OpenAI for projects.
-              // TODO: Is there an asynchronous way to do this?
+              StringBuilder sb = new StringBuilder();
+              sb.append(
+                  "You are a senior student who wants to spend 60 hours to build a project. ");
+              for (int i = 0; i < state.definition.inputCategories().size(); ++i) {
+                ProjectInputCategory category = state.definition.inputCategories().get(i);
+                ImmutableList<ProjectInputValue> values = state.values.get(i);
+
+                sb.append(category.getQueryPrefix()).append(' ');
+                switch (ValueType.valueOf(category.getValueType())) {
+                  case FREE_TEXT -> sb.append(
+                      COMMA_AND_JOINER.join(
+                          values.stream()
+                              .map(ProjectInputValue::getFreeTextValue)
+                              .map(ProjectManagementService::quoteAndEscape)
+                              .toList()));
+                  case EKS, XQ_COMPETENCY -> sb.append(
+                      COMMA_AND_JOINER.join(
+                          values.stream()
+                              .map(ProjectInputValue::getKnowledgeAndSkillValue)
+                              .map(KnowledgeAndSkill::getShortDescr)
+                              .map(ProjectManagementService::quoteAndEscape)
+                              .toList()));
+                  case MOTIVATION -> sb.append(
+                      COMMA_AND_JOINER.join(
+                          values.stream()
+                              .map(ProjectInputValue::getMotivationValue)
+                              .map(Motivation::getShortDescr)
+                              .map(ProjectManagementService::quoteAndEscape)
+                              .toList()));
+                }
+                sb.append(". ");
+              }
+
               OpenAiRequest aiRequest =
                   OpenAiRequest.newBuilder()
                       .setModel(OpenAiUtils.GPT_3_5_TURBO_MODEL)
                       .addMessages(
-                          OpenAiMessage.newBuilder()
-                              .setRole("system")
-                              .setContent(
-                                  String.format(
-                                      "You are a senior student who wants to spend 60 hours to"
-                                          + " build a project that demonstrates your mastery of"
-                                          + " %s. You are passionate about %s and careers of %s."
-                                          + " You want to improve your ability to %s.",
-                                      COMMA_AND_JOINER.join(
-                                          request.getEksList().stream()
-                                              .map(Eks::getShortDescr)
-                                              .map(ProjectManagementService::quoteAndEscape)
-                                              .toList()),
-                                      COMMA_AND_JOINER.join(
-                                          request.getInterestsList().stream()
-                                              .map(ProjectManagementService::quoteAndEscape)
-                                              .toList()),
-                                      COMMA_AND_JOINER.join(
-                                          request.getCareerList().stream()
-                                              .map(ProjectManagementService::quoteAndEscape)
-                                              .toList()),
-                                      COMMA_AND_JOINER.join(
-                                          request.getXqCompentenciesList().stream()
-                                              .map(XqCompetency::getShortDescr)
-                                              .map(ProjectManagementService::quoteAndEscape)
-                                              .toList()))))
+                          OpenAiMessage.newBuilder().setRole("system").setContent(sb.toString()))
                       .addMessages(
                           OpenAiMessage.newBuilder()
                               .setRole("user")
@@ -224,15 +333,32 @@ public class ProjectManagementService {
               List<Project> projects =
                   extractProjects(
                       log,
-                      response,
-                      projectInput,
+                      state.response,
+                      state.input,
                       aiResponse.getChoices(0).getMessage().getContent());
               db.getProjectRepository().saveAll(projects);
               projects.forEach(log::addProject);
 
-              return response.build();
+              db.getProjectInputRepository().save(state.input.setState(State.COMPLETED.name()));
+
+              return state.response.build();
+            })
+        .onError(
+            (error, log) -> {
+              if (error.lastInput() instanceof GenerateProjectsState state) {
+                if (state.input.getId() != null) {
+                  db.getProjectInputRepository().save(state.input.setState(State.FAILED.name()));
+                }
+              }
             })
         .finish();
+  }
+
+  private <T> Iterable<T> throwIfEmptyCategory(Iterable<T> values) {
+    if (Iterables.isEmpty(values)) {
+      throw new IllegalArgumentException("No projectInput for category");
+    }
+    return values;
   }
 
   private static String quoteAndEscape(String s) {
@@ -278,7 +404,6 @@ public class ProjectManagementService {
                 .setLongDescr(normalizeAndCheckString(pieces_of_information[2])));
         response.addProjects(DataAccess.convertProjectToProto(projects.get(projects.size() - 1)));
       } catch (Throwable e) {
-
         log.setStatus(Status.ERROR);
         log.addNote("Could not parse project text because \"%s\": %s", e.getMessage(), projectText);
       }

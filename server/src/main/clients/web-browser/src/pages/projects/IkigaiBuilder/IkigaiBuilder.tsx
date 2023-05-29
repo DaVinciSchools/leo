@@ -1,7 +1,7 @@
 import './IkigaiBuilder.scss';
 import {Input, Layout, Modal} from 'antd';
 import {Ikigai} from '../../../Ikigai/Ikigai';
-import {ChangeEvent, useEffect, useState, useRef, forwardRef} from 'react';
+import {ChangeEvent, useEffect, useState} from 'react';
 import {
   createService,
   pl_types,
@@ -9,26 +9,22 @@ import {
 } from '../../../libs/protos';
 import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {CloseOutlined, PlusOutlined} from '@ant-design/icons';
-import IEks = pl_types.IEks;
-import IXqCompetency = pl_types.IXqCompetency;
+import {MinusCircleOutlined, PlusCircleOutlined} from '@ant-design/icons';
 import ProjectManagementService = project_management.ProjectManagementService;
 import {useNavigate} from 'react-router';
+import ISelectionOption = pl_types.ProjectInputCategory.IOption;
 
 const {Content} = Layout;
 
-const FreeTextInput = forwardRef<
-  HTMLDivElement,
-  {
-    id: string;
-    shortTitle: string;
-    hint?: string;
-    inputPlaceholder: string;
-    values: string[];
-    onValuesUpdated: (values: string[]) => void;
-    maxNumberOfValues: number;
-  }
->((props, ref) => {
+function FreeTextInput(props: {
+  id: string;
+  shortTitle: string;
+  hint?: string;
+  placeholder: string;
+  values: string[];
+  onValuesUpdated: (values: string[]) => void;
+  maxNumberOfValues: number;
+}) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingValues, setEditingValues] = useState<string[]>([]);
 
@@ -71,7 +67,7 @@ const FreeTextInput = forwardRef<
 
   return (
     <>
-      <div id={props.id} ref={ref} onClick={onClick}>
+      <div id={props.id} onClick={onClick}>
         <div className="panel">
           <div className="title">{props.shortTitle}</div>
           {props.values.length > 0 ? (
@@ -113,14 +109,14 @@ const FreeTextInput = forwardRef<
         {editingValues.map((value, index) => (
           <div key={index} className="line-item">
             <Input
-              placeholder={props.inputPlaceholder}
+              placeholder={props.placeholder}
               maxLength={255}
               onChange={(e: ChangeEvent<HTMLInputElement>) => {
                 setEditingValue(index, e.target.value);
               }}
               value={value}
             />
-            <CloseOutlined
+            <MinusCircleOutlined
               style={{
                 visibility: editingValues.length > 1 ? 'visible' : 'hidden',
               }}
@@ -128,7 +124,7 @@ const FreeTextInput = forwardRef<
             />
           </div>
         ))}
-        <PlusOutlined
+        <PlusCircleOutlined
           className="add-line-item"
           onClick={() => addEditingValue()}
           style={{
@@ -141,22 +137,18 @@ const FreeTextInput = forwardRef<
       </Modal>
     </>
   );
-});
+}
 
-const DropdownSelectInput = forwardRef<
-  HTMLDivElement,
-  {
-    id: string;
-    shortTitle: string;
-    hint?: string;
-    inputPlaceholder: string;
-    options: Map<number, {}>;
-    values: number[];
-    onValuesUpdated: (values: number[]) => void;
-    maxNumberOfValues: number;
-    optionToLabel: (option: {} | undefined) => string;
-  }
->((props, ref) => {
+function DropdownSelectInput(props: {
+  id: string;
+  shortTitle: string;
+  hint?: string;
+  placeholder: string;
+  options: Map<number, ISelectionOption>;
+  values: number[];
+  onValuesUpdated: (values: number[]) => void;
+  maxNumberOfValues: number;
+}) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingValues, setEditingValues] = useState<number[]>([]);
 
@@ -171,7 +163,12 @@ const DropdownSelectInput = forwardRef<
 
   function onOk() {
     setModalOpen(false);
-    props.onValuesUpdated(editingValues.filter(value => value >= 0));
+    props.onValuesUpdated(
+      editingValues
+        .map(id => props.options.get(id))
+        .filter(value => value != null)
+        .map(value => value!.id!)
+    );
   }
 
   function onCancel() {
@@ -199,17 +196,16 @@ const DropdownSelectInput = forwardRef<
 
   return (
     <>
-      <div id={props.id} ref={ref} onClick={onClick}>
+      <div id={props.id} onClick={onClick}>
         <div className="panel">
           <div className="title">{props.shortTitle}</div>
           <div className="body">
             {props.values.length > 0 ? (
               <div>
                 <div style={{textAlign: 'left'}}>
-                  {props.values.map((value, index) => (
-                    <span key={index} style={{whiteSpace: 'nowrap'}}>
-                      - {props.optionToLabel(props.options.get(value))}
-                      <br />
+                  {props.values.map(value => (
+                    <span key={value} style={{whiteSpace: 'nowrap'}}>
+                      - {props.options.get(value)?.name ?? '[error]'} <br />
                     </span>
                   ))}
                 </div>
@@ -229,25 +225,26 @@ const DropdownSelectInput = forwardRef<
         onOk={onOk}
         onCancel={onCancel}
       >
-        {editingValues.map((value, index) => (
+        {editingValues.map((id, index) => (
           <div key={index} className="line-item">
             <select
-              key={index}
-              value={value}
+              value={id}
               onChange={(e: ChangeEvent<HTMLSelectElement>) => {
                 setEditingValue(index, Number.parseInt(e.target.value));
               }}
             >
               <option key={-1} value={-1}>
-                {props.inputPlaceholder}
+                {props.placeholder}
               </option>
-              {[...props.options.keys()].map(key => (
+              {Array.from(props.options).map(([key, value]) => (
                 <option key={key} value={key}>
-                  {props.optionToLabel(props.options.get(key))}
+                  <>
+                    {value.name!} - <i>{value.description!}</i>
+                  </>
                 </option>
               ))}
             </select>
-            <CloseOutlined
+            <MinusCircleOutlined
               style={{
                 visibility: editingValues.length > 1 ? 'visible' : 'hidden',
               }}
@@ -255,7 +252,7 @@ const DropdownSelectInput = forwardRef<
             />
           </div>
         ))}
-        <PlusOutlined
+        <PlusCircleOutlined
           className="add-line-item"
           onClick={() => addEditingValue()}
           style={{
@@ -268,7 +265,12 @@ const DropdownSelectInput = forwardRef<
       </Modal>
     </>
   );
-});
+}
+
+type Category = {
+  htmlId: string;
+  input: pl_types.IProjectInputValue;
+};
 
 export function IkigaiBuilder() {
   const user = getCurrentUser();
@@ -278,6 +280,37 @@ export function IkigaiBuilder() {
 
   const [processing, setProcessing] = useState(false);
   const navigate = useNavigate();
+
+  const [projectDefinition, setProjectDefinition] = useState<
+    pl_types.IProjectDefinition | undefined
+  >();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryValues, setCategoryValues] = useState<(string | number)[][]>(
+    []
+  );
+  useEffect(() => {
+    const service = createService(
+      ProjectManagementService,
+      'ProjectManagementService'
+    );
+    service
+      .getProjectDefinition({})
+      .then(response => setProjectDefinition(response.definition!));
+  }, []);
+  useEffect(() => {
+    if (projectDefinition != null) {
+      setCategories(
+        projectDefinition.inputs!.map<Category>((input, index) => ({
+          htmlId: `ikigaiCategory${index}`,
+          input: input,
+        }))
+      );
+      setCategoryValues([...projectDefinition.inputs!.map(() => [])]);
+    } else {
+      setCategories([]);
+      setCategoryValues([]);
+    }
+  }, [projectDefinition]);
 
   // function getLovesRelatedSuggestions() {
   //   const partialTextOpenAiPromptService = createService(
@@ -305,57 +338,15 @@ export function IkigaiBuilder() {
     );
 
     service
-      .generateProjects({
-        interests: studentInterests,
-        career: careers,
-        eks: eks.map(id => eksOptions.get(id)!),
-        xqCompentencies: xqCompetencies.map(id => xqCompetencyOptions.get(id)!),
-      })
+      .generateProjects({definition: projectDefinition})
       .finally(() => navigate('/projects/my-projects'));
   }
 
-  const [studentInterests, setStudentInterests] = useState<string[]>([]);
-  const studentInterestsRef = useRef<HTMLDivElement>(null);
-
-  const [eks, setEks] = useState<number[]>([]);
-  const [eksOptions, setEksOptions] = useState(new Map<number, IEks>());
-  const eksRef = useRef<HTMLDivElement>(null);
-
-  const [xqCompetencies, setXqCompetencies] = useState<number[]>([]);
-  const [xqCompetencyOptions, setXqCompetencyOptions] = useState(
-    new Map<number, IXqCompetency>()
-  );
-  const xqCompetencyRef = useRef<HTMLDivElement>(null);
-
-  const [careers, setCareers] = useState<string[]>([]);
-  const careersRef = useRef<HTMLDivElement>(null);
-
-  // const [motivations, setMotivations] = useState<string[]>([]);
-  // const motivationsRef = useRef<HTMLDivElement>(null);
-
-  // Initialize the data.
-  useEffect(() => {
-    const service = createService(
-      ProjectManagementService,
-      'ProjectManagementService'
-    );
-
-    service
-      .getProjectDefinition({assignmentId: -1})
-      .then(resp => console.log(resp));
-    service
-      .getEks({})
-      .then(resp =>
-        setEksOptions(new Map(resp.eks.map(eks => [eks.id!, eks])))
-      );
-    service
-      .getXqCompetencies({})
-      .then(resp =>
-        setXqCompetencyOptions(
-          new Map(resp.xqCompentencies.map(xqc => [xqc.id!, xqc]))
-        )
-      );
-  }, []);
+  function updateCategoryValues(index: number, values: (string | number)[]) {
+    const newCategoryValues = [...categoryValues];
+    newCategoryValues[index] = [...values];
+    setCategoryValues(newCategoryValues);
+  }
 
   return (
     <>
@@ -371,76 +362,59 @@ export function IkigaiBuilder() {
               radians={0}
               enabled={!processing}
               processing={processing}
-              categoryElementIds={[
-                careersRef.current?.id,
-                xqCompetencyRef.current?.id,
-                eksRef.current?.id,
-                studentInterestsRef.current?.id,
-                // motivationsRef
-              ]}
-              showSpinButton={
-                careers.length > 0 &&
-                studentInterests.length > 0 &&
-                eks.length > 0 &&
-                xqCompetencies.length > 0
-              }
+              categoryElementIds={categories.map(c => c.htmlId)}
+              showSpinButton={categoryValues.every(v => v.length > 0)}
               onSpinClick={onSpinClick}
               radiansOffset={0}
             >
-              <FreeTextInput
-                id="studentInterests"
-                ref={studentInterestsRef}
-                shortTitle="Student Interests"
-                hint="Click to add student interests."
-                inputPlaceholder="Enter a Student Interest"
-                values={studentInterests}
-                maxNumberOfValues={4}
-                onValuesUpdated={setStudentInterests}
-              />
-              <DropdownSelectInput
-                id="eks"
-                ref={eksRef}
-                shortTitle="Knowledge and Skills"
-                hint="Click to add desired knowledge and skills."
-                inputPlaceholder="Select a Knowledge and Skills"
-                options={eksOptions}
-                values={eks}
-                maxNumberOfValues={4}
-                onValuesUpdated={setEks}
-                optionToLabel={value => (value as IEks).name!}
-              />
-              <DropdownSelectInput
-                id="xqCompetency"
-                ref={xqCompetencyRef}
-                shortTitle="XQ Competency"
-                hint="Click to add desired XQ Competency."
-                inputPlaceholder="Select an XQ Competency"
-                options={xqCompetencyOptions}
-                values={xqCompetencies}
-                maxNumberOfValues={4}
-                onValuesUpdated={setXqCompetencies}
-                optionToLabel={value => (value as IXqCompetency).name!}
-              />
-              <FreeTextInput
-                id="careers"
-                ref={careersRef}
-                shortTitle="Career Interest"
-                hint="Click to set a career."
-                inputPlaceholder="Enter a Career Name"
-                values={careers}
-                maxNumberOfValues={4}
-                onValuesUpdated={setCareers}
-              />
-              {/*<FreeTextInput*/}
-              {/*  id="motivations"*/}
-              {/*  ref={motivationsRef}*/}
-              {/*  shortTitle="Motivations"*/}
-              {/*  hint="Click to add a motivation."*/}
-              {/*  inputPlaceholder="Motivation"*/}
-              {/*  values={motivations}*/}
-              {/*  maxNumberOfValues={4}*/}
-              {/*  onValuesUpdated={setMotivations}*/}
-              {/*/>*/}
+              {categories.map((category, index) => {
+                switch (category.input.category!.valueType!) {
+                  case pl_types.ProjectInputCategory.ValueType.FREE_TEXT:
+                    return (
+                      <FreeTextInput
+                        id={`${category.htmlId}`}
+                        key={category.input.category!.id!}
+                        shortTitle={category.input.category!.title!}
+                        hint={category.input.category!.hint!}
+                        placeholder={category.input.category!.placeholder!}
+                        values={categoryValues[index] as string[]}
+                        onValuesUpdated={values => {
+                          updateCategoryValues(index, values);
+                          category.input.freeTexts = [...values];
+                        }}
+                        maxNumberOfValues={
+                          category.input.category!.maxNumValues!
+                        }
+                      />
+                    );
+                  default:
+                    return (
+                      <DropdownSelectInput
+                        id={`${category.htmlId}`}
+                        key={category.input.category!.id!}
+                        shortTitle={category.input.category!.title!}
+                        hint={category.input.category!.hint!}
+                        placeholder={category.input.category!.placeholder!}
+                        values={categoryValues[index] as number[]}
+                        onValuesUpdated={values => {
+                          updateCategoryValues(index, values);
+                          category.input.selectedIds = [...values];
+                        }}
+                        maxNumberOfValues={
+                          category.input.category!.maxNumValues!
+                        }
+                        options={
+                          new Map(
+                            category.input.category!.options!.map(i => [
+                              i.id!,
+                              i,
+                            ])
+                          )
+                        }
+                      />
+                    );
+                }
+              })}
             </Ikigai>
           </Content>
         </Layout>

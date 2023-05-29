@@ -7,10 +7,19 @@ CREATE TABLE project_input
     timeout               DATETIME,
     state                 ENUM ('PROCESSING', 'COMPLETED', 'FAILED') NOT NULL,
 
-    project_definition_id INT,
+    project_definition_id INT NOT NULL,
     CONSTRAINT project_input__project_definition_id
         FOREIGN KEY (project_definition_id)
             REFERENCES project_definition (id)
+            ON DELETE RESTRICT
+            ON UPDATE RESTRICT,
+
+    -- Allow projects to be created outside of assignments. Useful for testing
+    -- project definitions while they are being developed.
+    assignment_id         INT,
+    CONSTRAINT project__assignment_id
+        FOREIGN KEY (assignment_id)
+            REFERENCES assignment (id)
             ON DELETE RESTRICT
             ON UPDATE RESTRICT,
 

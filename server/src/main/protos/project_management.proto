@@ -37,11 +37,8 @@ message GetMotivationsResponse {
 }
 
 message GenerateProjectsRequest {
-  optional int32 user_x_id = 1;
-  repeated string interests = 2;
-  repeated string career = 3;
-  repeated pl_types.Eks eks = 4;
-  repeated pl_types.XqCompetency xq_compentencies = 5;
+  optional int32 assignment_id = 1;
+  optional pl_types.ProjectDefinition definition = 2;
 }
 
 message GenerateProjectsResponse {

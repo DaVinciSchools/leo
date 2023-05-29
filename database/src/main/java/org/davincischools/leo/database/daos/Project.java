@@ -35,7 +35,7 @@ public class Project implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NEEDSREVIEW_NAME = "needs_review";
   public static final String COLUMN_ACTIVE_NAME = "active";
-  private static final long serialVersionUID = 8628259105914406887L;
+  private static final long serialVersionUID = 2871718941751587972L;
 
   private Integer id;
 
@@ -68,8 +68,6 @@ public class Project implements Serializable {
   private Boolean needsReview;
 
   private Boolean active;
-
-  private Assignment assignment;
 
   private ProjectInput projectInput;
 
@@ -191,7 +189,8 @@ public class Project implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_THUMBSSTATE_NAME, length = 11)
+  @Lob
+  @Column(name = COLUMN_THUMBSSTATE_NAME)
   public String getThumbsState() {
     return thumbsState;
   }
@@ -238,17 +237,6 @@ public class Project implements Serializable {
 
   public Project setActive(Boolean active) {
     this.active = active;
-    return this;
-  }
-
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "assignment_id", nullable = false)
-  public Assignment getAssignment() {
-    return assignment;
-  }
-
-  public Project setAssignment(Assignment assignment) {
-    this.assignment = assignment;
     return this;
   }
 
