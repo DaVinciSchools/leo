@@ -12,7 +12,9 @@ service ProjectManagementService {
   rpc GetXqCompetencies (GetXqCompetenciesRequest) returns (GetXqCompetenciesResponse) {}
   rpc GetMotivations (GetMotivationsRequest) returns (GetMotivationsResponse) {}
   rpc GenerateProjects (GenerateProjectsRequest) returns (GenerateProjectsResponse) {}
+
   rpc GetProjects (GetProjectsRequest) returns (GetProjectsResponse) {}
+  rpc UpdateProject (UpdateProjectRequest) returns (UpdateProjectResponse) {}
   rpc GetProjectDefinition (GetProjectDefinitionRequest) returns (GetProjectDefinitionResponse) {}
 }
 
@@ -53,6 +55,15 @@ message GetProjectsResponse {
   repeated pl_types.Project projects = 1;
 }
 
+message UpdateProjectRequest {
+  optional int32 id = 1;
+  optional pl_types.Project modifications = 2;
+}
+
+message UpdateProjectResponse {
+  optional pl_types.Project project = 1;
+}
+
 message GetProjectDefinitionRequest {
   optional int32 assignment_id = 1;
 }
@@ -60,4 +71,3 @@ message GetProjectDefinitionRequest {
 message GetProjectDefinitionResponse {
   optional pl_types.ProjectDefinition definition = 1;
 }
-

@@ -5,11 +5,13 @@ import {
   pl_types,
   project_management,
 } from '../../../libs/protos';
-import IProject = pl_types.IProject;
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {ProjectCard} from '../../../libs/ProjectCard/ProjectCard';
-import ProjectManagementService = project_management.ProjectManagementService;
 import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
+import IProject = pl_types.IProject;
+import ProjectManagementService = project_management.ProjectManagementService;
+import ThumbsState = pl_types.Project.ThumbsState;
+import {Modal} from 'antd';
 
 export function MyProjects() {
   const user = getCurrentUser();
@@ -18,25 +20,61 @@ export function MyProjects() {
   }
 
   const [projects, setProjects] = useState<IProject[]>([]);
+  const [detailedProject, setDetailedProject] = useState<
+    IProject | undefined
+  >();
+
+  const service = createService(
+    ProjectManagementService,
+    'ProjectManagementService'
+  );
 
   useEffect(() => {
-    const service = createService(
-      ProjectManagementService,
-      'ProjectManagementService'
-    );
-    service
-      .getProjects({userXId: user.id})
-      .then(response => setProjects(response.projects));
+    service.getProjects({userXId: user!.id}).then(response => {
+      setProjects(response.projects);
+    });
   }, []);
+
+  function updateProject(project: IProject, modifications: IProject) {
+    service.updateProject({id: project.id!, modifications: modifications});
+
+    const newProjects = [...projects];
+    Object.assign(project, modifications);
+    setProjects(newProjects);
+  }
+
+  function showModal(project: pl_types.IProject) {
+    setDetailedProject(project);
+  }
 
   return (
     <>
       <DefaultPage title="My Projects">
         <div>
           {projects.map(project => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard
+              id={project.id!}
+              key={project.id!}
+              name={project.name!}
+              shortDescr={project.shortDescr!}
+              longDescr={project.longDescr!}
+              active={project.active ?? false}
+              favorite={project.favorite ?? false}
+              thumbsState={project.thumbsState ?? ThumbsState.UNSET}
+              showDetails={() => showModal(project)}
+              updateProject={modifications =>
+                updateProject(project, modifications)
+              }
+            />
           ))}
         </div>
+        <Modal
+          open={detailedProject != null}
+          onOk={() => setDetailedProject(undefined)}
+          onCancel={() => setDetailedProject(undefined)}
+        >
+          TODO
+        </Modal>
       </DefaultPage>
     </>
   );

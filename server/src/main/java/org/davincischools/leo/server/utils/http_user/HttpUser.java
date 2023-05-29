@@ -53,6 +53,12 @@ public class HttpUser {
     return response;
   }
 
+  public <T> T returnNotFound(T response) {
+    checkArgument(!authorized);
+    this.response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+    return response;
+  }
+
   public <T> T forwardToLogin(T response) throws IOException {
     this.response.sendRedirect("/users/login");
     return response;

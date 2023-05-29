@@ -1,5 +1,6 @@
 package org.davincischools.leo.database.utils.repos;
 
+import java.util.Optional;
 import org.davincischools.leo.database.daos.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,8 +13,10 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
   @Query(
       "SELECT p"
           + " FROM Project p"
-          + " INNER JOIN ProjectInput pi"
-          + " ON pi.id = p.projectInput.id"
+          + " INNER JOIN p.projectInput pi"
           + " WHERE pi.userX.id = (:userXId)")
   Iterable<Project> findAllByUserXId(@Param("userXId") int userXId);
+
+  @Query("SELECT p FROM Project p INNER JOIN p.projectInput WHERE p.id = (:projectId)")
+  Optional<Project> findById(@Param("projectId") int projectId);
 }

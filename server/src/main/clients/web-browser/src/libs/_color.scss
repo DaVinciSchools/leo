@@ -70,6 +70,39 @@ $error-color: #990000;
   color: $error-color;
 }
 
+$like-background: #eaf5ff;
+$like-border: #002077;
+$like-color: #002077;
+$like-shadow: #bbbbdd;
+
+@mixin like {
+  background-color: $like-background;
+  border-color: $like-border;
+  color: $like-color;
+}
+
+$dislike-background: #ffffff;
+$dislike-border: #bbbbbb;
+$dislike-color: #bbbbbb;
+$dislike-shadow: #dddddd;
+
+@mixin dislike {
+  background-color: $dislike-background;
+  border-color: $dislike-border;
+  color: $dislike-color;
+}
+
+$active-background: #f5fff5;
+$active-border: #007700;
+$active-color: #007700;
+$active-shadow: #bbddbb;
+
+@mixin active {
+  background-color: $active-background;
+  border-color: $active-border;
+  color: $active-color;
+}
+
 $success-background: #cceecc;
 $success-border: #006600;
 $success-color: #006600;

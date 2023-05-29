@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -36,6 +37,7 @@ import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.protos.open_ai.OpenAiMessage;
 import org.davincischools.leo.protos.open_ai.OpenAiRequest;
 import org.davincischools.leo.protos.open_ai.OpenAiResponse;
+import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.project_management.GenerateProjectsRequest;
 import org.davincischools.leo.protos.project_management.GenerateProjectsResponse;
@@ -47,6 +49,8 @@ import org.davincischools.leo.protos.project_management.GetProjectsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectsResponse;
 import org.davincischools.leo.protos.project_management.GetXqCompetenciesRequest;
 import org.davincischools.leo.protos.project_management.GetXqCompetenciesResponse;
+import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
+import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
 import org.davincischools.leo.server.utils.DataAccess;
 import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
@@ -528,5 +532,60 @@ public class ProjectManagementService {
         .map(toOption)
         .sorted(Comparator.comparing(Option.Builder::getName))
         .forEach(inputCategory::addOptions);
+  }
+
+  @PostMapping(value = "/api/protos/ProjectManagementService/UpdateProject")
+  @ResponseBody
+  public UpdateProjectResponse UpdateProject(
+      @Authenticated HttpUser user, @RequestBody Optional<UpdateProjectRequest> optionalRequest)
+      throws LogExecutionError {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(UpdateProjectResponse.getDefaultInstance());
+    }
+
+    return LogUtils.executeAndLog(
+            db, optionalRequest.orElse(UpdateProjectRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              Optional<Project> optionalProject =
+                  db.getProjectRepository().findById(request.getId());
+              if (optionalProject.isEmpty()) {
+                return user.returnNotFound(UpdateProjectResponse.getDefaultInstance());
+              }
+              Project project = optionalProject.get();
+
+              if (user.isAdmin()) {
+                // Do nothing.
+              } else if (user.isTeacher()) {
+                // TODO: Verify the project is for a student in their class.
+              } else if (user.isStudent()) {
+                // Make sure the student is only updating their own projects.
+                if (!Objects.equals(
+                    project.getProjectInput().getUserX().getId(), user.get().getId())) {
+                  return user.returnForbidden(UpdateProjectResponse.getDefaultInstance());
+                }
+              }
+
+              org.davincischools.leo.protos.pl_types.Project modifications =
+                  request.getModifications();
+              if (modifications.hasFavorite()) {
+                project.setFavorite(modifications.getFavorite());
+              }
+              if (modifications.hasThumbsState()) {
+                project.setThumbsState(
+                    modifications.getThumbsState() == ThumbsState.UNSET
+                        ? null
+                        : modifications.getThumbsState().name());
+              }
+              if (modifications.hasActive()) {
+                project.setActive(modifications.getActive());
+              }
+              db.getProjectRepository().save(project);
+
+              return UpdateProjectResponse.newBuilder()
+                  .setProject(DataAccess.convertProjectToProto(project))
+                  .build();
+            })
+        .finish();
   }
 }
