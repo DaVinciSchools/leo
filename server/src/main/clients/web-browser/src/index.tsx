@@ -16,6 +16,7 @@ import {MyAccount} from './pages/users/MyAccount/MyAccount';
 import {PrivacyPolicy} from './pages/docs/PrivacyPolicy';
 import {Overview} from './pages/projects/Overview/Overview';
 import {Logout} from './pages/users/Logout/Logout';
+import {AllProjects} from './pages/projects/AllProjects/AllProjects';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -83,6 +84,10 @@ const router = createBrowserRouter([
       {
         path: 'my-projects',
         element: <MyProjects />,
+      },
+      {
+        path: 'all-projects',
+        element: <AllProjects />,
       },
     ],
   },

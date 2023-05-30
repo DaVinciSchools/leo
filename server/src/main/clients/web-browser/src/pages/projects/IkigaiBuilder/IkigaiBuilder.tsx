@@ -339,7 +339,7 @@ export function IkigaiBuilder() {
 
     service
       .generateProjects({definition: projectDefinition})
-      .finally(() => navigate('/projects/my-projects'));
+      .finally(() => navigate('/projects/all-projects'));
   }
 
   function updateCategoryValues(index: number, values: (string | number)[]) {

@@ -18,6 +18,7 @@ const {Header, Sider, Content} = Layout;
 
 enum MenuKeys {
   ADMIN,
+  ALL_PROJECTS,
   DASHBOARD,
   EDIT_DISTRICTS,
   EDIT_SCHOOLS,
@@ -82,6 +83,9 @@ export function DefaultPageNav() {
                   </Menu.Item>
                   <Menu.Item key={MenuKeys.IKIGAI_BUILDER}>
                     <Link to="/projects/ikigai-builder">Ikigai Builder</Link>
+                  </Menu.Item>
+                  <Menu.Item key={MenuKeys.ALL_PROJECTS}>
+                    <Link to="/projects/all-projects">All Projects</Link>
                   </Menu.Item>
                 </Menu.SubMenu>
                 <Menu.Item
