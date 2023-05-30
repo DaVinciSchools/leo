@@ -21,26 +21,20 @@ public class ProjectPost implements Serializable {
   public static final String TABLE_NAME = "project_post";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
-  public static final String COLUMN_NAME_NAME = "name";
-  public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
-  public static final String COLUMN_SHORTDESCRQUILL_NAME = "short_descr_quill";
-  public static final String COLUMN_LONGDESCR_NAME = "long_descr";
-  public static final String COLUMN_LONGDESCRQUILL_NAME = "long_descr_quill";
-  private static final long serialVersionUID = 8415701948728536380L;
+  public static final String COLUMN_TITLE_NAME = "title";
+  public static final String COLUMN_MESSAGE_NAME = "message";
+  public static final String COLUMN_MESSAGEQUILL_NAME = "message_quill";
+  private static final long serialVersionUID = 6512570515062393159L;
 
   private Integer id;
 
   private Instant creationTime;
 
-  private String name;
+  private String title;
 
-  private String shortDescr;
+  private String message;
 
-  private String shortDescrQuill;
-
-  private String longDescr;
-
-  private String longDescrQuill;
+  private String messageQuill;
 
   private UserX userX;
 
@@ -68,57 +62,35 @@ public class ProjectPost implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_NAME_NAME, nullable = false)
-  public String getName() {
-    return name;
+  @Column(name = COLUMN_TITLE_NAME)
+  public String getTitle() {
+    return title;
   }
 
-  public ProjectPost setName(String name) {
-    this.name = name;
+  public ProjectPost setTitle(String title) {
+    this.title = title;
     return this;
   }
 
   @Lob
-  @Column(name = COLUMN_SHORTDESCR_NAME)
-  public String getShortDescr() {
-    return shortDescr;
+  @Column(name = COLUMN_MESSAGE_NAME)
+  public String getMessage() {
+    return message;
   }
 
-  public ProjectPost setShortDescr(String shortDescr) {
-    this.shortDescr = shortDescr;
+  public ProjectPost setMessage(String message) {
+    this.message = message;
     return this;
   }
 
   @Lob
-  @Column(name = COLUMN_SHORTDESCRQUILL_NAME)
-  public String getShortDescrQuill() {
-    return shortDescrQuill;
+  @Column(name = COLUMN_MESSAGEQUILL_NAME)
+  public String getMessageQuill() {
+    return messageQuill;
   }
 
-  public ProjectPost setShortDescrQuill(String shortDescrQuill) {
-    this.shortDescrQuill = shortDescrQuill;
-    return this;
-  }
-
-  @Lob
-  @Column(name = COLUMN_LONGDESCR_NAME)
-  public String getLongDescr() {
-    return longDescr;
-  }
-
-  public ProjectPost setLongDescr(String longDescr) {
-    this.longDescr = longDescr;
-    return this;
-  }
-
-  @Lob
-  @Column(name = COLUMN_LONGDESCRQUILL_NAME)
-  public String getLongDescrQuill() {
-    return longDescrQuill;
-  }
-
-  public ProjectPost setLongDescrQuill(String longDescrQuill) {
-    this.longDescrQuill = longDescrQuill;
+  public ProjectPost setMessageQuill(String messageQuill) {
+    this.messageQuill = messageQuill;
     return this;
   }
 

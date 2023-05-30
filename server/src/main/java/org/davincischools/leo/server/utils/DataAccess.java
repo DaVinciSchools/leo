@@ -11,10 +11,12 @@ import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.Project;
+import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
+import org.davincischools.leo.server.utils.http_user.HttpUser;
 
 public class DataAccess {
 
@@ -91,9 +93,9 @@ public class DataAccess {
             .setFirstName(user.getFirstName())
             .setLastName(user.getLastName())
             .setEmailAddress(user.getEmailAddress())
-            .setIsAdmin(user.getAdminX() != null)
-            .setIsTeacher(user.getTeacher() != null)
-            .setIsStudent(user.getStudent() != null);
+            .setIsAdmin(HttpUser.isAdmin(user))
+            .setIsTeacher(HttpUser.isTeacher(user))
+            .setIsStudent(HttpUser.isStudent(user));
     return userProto.build();
   }
 
@@ -156,6 +158,16 @@ public class DataAccess {
         .setArchived(Boolean.TRUE.equals(project.getArchived()))
         .setNeedsReview(Boolean.TRUE.equals(project.getNeedsReview()))
         .setActive(Boolean.TRUE.equals(project.getActive()))
+        .build();
+  }
+
+  public static org.davincischools.leo.protos.pl_types.ProjectPost convertProjectPostToProto(
+      ProjectPost projectPost) {
+    return org.davincischools.leo.protos.pl_types.ProjectPost.newBuilder()
+        .setUser(convertFullUserXToProto(projectPost.getUserX()))
+        .setTitle(projectPost.getTitle())
+        .setMessage(projectPost.getMessage())
+        .setPostEpochSec((int) projectPost.getCreationTime().getEpochSecond())
         .build();
   }
 

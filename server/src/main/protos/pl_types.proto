@@ -133,3 +133,11 @@ message ProjectInputCategory {
   // Set for non-Free_TEXT value types.
   repeated Option options = 8;
 }
+
+message ProjectPost {
+  optional int32 id = 1;
+  optional User user = 2;
+  optional string title = 3;
+  optional string message = 4;
+  optional int32 post_epoch_sec = 5;
+}
