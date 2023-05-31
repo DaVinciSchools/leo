@@ -1,17 +1,18 @@
 import './MyProjects.scss';
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {
   createService,
   pl_types,
   project_management,
 } from '../../../libs/protos';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {ProjectCard} from '../../../libs/ProjectCard/ProjectCard';
 import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
+import {Dropdown} from 'antd';
+import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
 import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
-import ThumbsState = pl_types.Project.ThumbsState;
-import {Modal} from 'antd';
+import {ItemType} from 'antd/es/menu/hooks/useItems';
+import IProjectPost = pl_types.IProjectPost;
 
 export function MyProjects() {
   const user = getCurrentUser();
@@ -19,10 +20,10 @@ export function MyProjects() {
     return sendToLogin();
   }
 
+  const projectId = useRef<number | undefined>();
   const [projects, setProjects] = useState<IProject[]>([]);
-  const [detailedProject, setDetailedProject] = useState<
-    IProject | undefined
-  >();
+  const [project, setProject] = useState<IProject | undefined>();
+  const [posts, setPosts] = useState<IProjectPost[] | undefined>();
 
   const service = createService(
     ProjectManagementService,
@@ -30,10 +31,23 @@ export function MyProjects() {
   );
 
   useEffect(() => {
-    service.getProjects({userXId: user!.id}).then(response => {
-      setProjects(response.projects);
-    });
+    service
+      .getProjects({userXId: user!.id, activeOnly: true})
+      .then(response => {
+        setProjects(response.projects);
+      });
   }, []);
+
+  function selectProject(project: IProject) {
+    setProject(project);
+    projectId.current = project.id!;
+    setPosts(undefined);
+    service.getProjectPosts({projectId: project.id!}).then(response => {
+      if (project.id! === projectId.current) {
+        setPosts(response.projectPosts);
+      }
+    });
+  }
 
   function updateProject(project: IProject, modifications: IProject) {
     service.updateProject({id: project.id!, modifications: modifications});
@@ -43,38 +57,78 @@ export function MyProjects() {
     setProjects(newProjects);
   }
 
-  function showModal(project: pl_types.IProject) {
-    setDetailedProject(project);
+  function postMessage(title: string, message: string) {
+    service
+      .postMessage({projectId: project!.id!, title: title, message: message})
+      .then(response => {
+        if (project!.id! === projectId.current) {
+          const newPosts: IProjectPost[] = [
+            ...(posts ?? []),
+            {
+              id: response.projectPostId!,
+              title: title,
+              message: message,
+              user: user!,
+            },
+          ];
+          setPosts(newPosts);
+        }
+      });
+  }
+
+  function deletePost(post: pl_types.IProjectPost) {
+    service.deletePost({id: post.id!}).then(() => {
+      if (project!.id! === projectId.current) {
+        const newPosts: IProjectPost[] = [...(posts ?? [])].filter(
+          p => p.id !== post.id
+        );
+        setPosts(newPosts);
+      }
+    });
   }
 
   return (
     <>
       <DefaultPage title="My Projects">
-        <div>
-          {projects.map(project => (
-            <ProjectCard
+        <div style={{width: '100%'}}>
+          <Dropdown.Button
+            menu={{
+              items: projects.map(project => ({
+                key: project.id,
+                label: (
+                  <div
+                    className="project-menu"
+                    onClick={() => selectProject(project)}
+                    style={{width: '100%'}}
+                  >
+                    <span className="name">{project.name!}</span>
+                    <span className="descr">{project.shortDescr!}</span>
+                  </div>
+                ),
+              })) as ItemType[],
+            }}
+            style={{width: '100%'}}
+          >
+            {project != null ? <>{project.name!}</> : <>Select project...</>}
+          </Dropdown.Button>
+          {project != null ? (
+            <ProjectPage
               id={project.id!}
               key={project.id!}
               name={project.name!}
               shortDescr={project.shortDescr!}
               longDescr={project.longDescr!}
-              active={project.active ?? false}
-              favorite={project.favorite ?? false}
-              thumbsState={project.thumbsState ?? ThumbsState.UNSET}
-              showDetails={() => showModal(project)}
+              posts={posts}
               updateProject={modifications =>
                 updateProject(project, modifications)
               }
+              onDeletePost={post => deletePost(post)}
+              onSubmitPost={postMessage}
             />
-          ))}
+          ) : (
+            <></>
+          )}
         </div>
-        <Modal
-          open={detailedProject != null}
-          onOk={() => setDetailedProject(undefined)}
-          onCancel={() => setDetailedProject(undefined)}
-        >
-          TODO
-        </Modal>
       </DefaultPage>
     </>
   );

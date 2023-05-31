@@ -16,6 +16,9 @@ service ProjectManagementService {
   rpc GetProjects (GetProjectsRequest) returns (GetProjectsResponse) {}
   rpc UpdateProject (UpdateProjectRequest) returns (UpdateProjectResponse) {}
   rpc GetProjectDefinition (GetProjectDefinitionRequest) returns (GetProjectDefinitionResponse) {}
+  rpc GetProjectPosts (GetProjectPostsRequest) returns (GetProjectPostsResponse) {}
+  rpc PostMessage (PostMessageRequest) returns (PostMessageResponse) {}
+  rpc DeletePost (DeletePostRequest) returns (DeletePostResponse) {}
 }
 
 message GetEksRequest {
@@ -49,6 +52,7 @@ message GenerateProjectsResponse {
 
 message GetProjectsRequest {
   optional int32 user_x_id = 1;
+  optional bool active_only = 2;
 }
 
 message GetProjectsResponse {
@@ -70,4 +74,29 @@ message GetProjectDefinitionRequest {
 
 message GetProjectDefinitionResponse {
   optional pl_types.ProjectDefinition definition = 1;
+}
+
+message GetProjectPostsRequest {
+  optional int32 project_id = 1;
+}
+
+message GetProjectPostsResponse {
+  repeated pl_types.ProjectPost project_posts = 1;
+}
+
+message PostMessageRequest {
+  optional int32 project_id = 1;
+  optional string title = 2;
+  optional string message = 3;
+}
+
+message PostMessageResponse {
+  optional int32 project_post_id = 1;
+}
+
+message DeletePostRequest {
+  optional int32 id = 1;
+}
+
+message DeletePostResponse {
 }

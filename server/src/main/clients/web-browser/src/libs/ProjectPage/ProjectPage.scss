@@ -1,0 +1,23 @@
+@use '../color';
+
+.project-page {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 1em;
+
+  .title {
+    font-weight: bold;
+    font-size: xx-large;
+    text-align: center;
+  }
+
+  .label {
+    font-weight: bold;
+  }
+
+  .post-user-info {
+    font-style: italic;
+    font-size: xx-small;
+    font-weight: normal;
+  }
+}

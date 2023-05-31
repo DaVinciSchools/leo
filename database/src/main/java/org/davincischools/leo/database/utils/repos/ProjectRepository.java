@@ -17,6 +17,14 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
           + " WHERE pi.userX.id = (:userXId)")
   Iterable<Project> findAllByUserXId(@Param("userXId") int userXId);
 
+  @Query(
+      "SELECT p"
+          + " FROM Project p"
+          + " INNER JOIN p.projectInput pi"
+          + " WHERE pi.userX.id = (:userXId)"
+          + " AND p.active")
+  Iterable<Project> findAllActiveByUserXId(@Param("userXId") int userXId);
+
   @Query("SELECT p FROM Project p INNER JOIN p.projectInput WHERE p.id = (:projectId)")
   Optional<Project> findById(@Param("projectId") int projectId);
 }

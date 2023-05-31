@@ -1,1 +1,15 @@
 @import '../../../libs/DefaultPage/DefaultPage';
+
+.project-menu {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 0.5em;
+
+  .name {
+    font-weight: bold;
+  }
+
+  .descr {
+    font-style: italic;
+  }
+}
