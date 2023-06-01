@@ -38,6 +38,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
@@ -85,16 +86,50 @@ public class ServerApplication {
 
     @Bean
     public SecurityFilterChain buildSecurityFilterChain(HttpSecurity http) throws Exception {
+      // Public resources.
+      RequestMatcher[] publicMatchers =
+          new RequestMatcher[] {
+            // This needs to be kept in sync with ReactResourceController.
+            new AntPathRequestMatcher("/", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/api/login", HttpMethod.POST.name()),
+            new AntPathRequestMatcher("/api/logout", HttpMethod.POST.name()),
+            new AntPathRequestMatcher("/docs/**", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/error**", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/favicon.*", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/images/**", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/index.html", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/manifest.json", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/robots.txt", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/static/**", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/users/logout", HttpMethod.GET.name()),
+            // TODO: Move these out of the prod server.
+            // React developer tools plugin.
+            new AntPathRequestMatcher("/installHooks.js", HttpMethod.GET.name()),
+            // Webpack server hot reload files:
+            // https://github.com/webpack/webpack-dev-server.
+            new AntPathRequestMatcher("/main.*.hot-update.js", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/main.*.hot-update.js.map", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/main.*.hot-update.json", HttpMethod.GET.name())
+          };
+
       // https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html#_i_am_using_angularjs_or_another_javascript_framework
       CookieCsrfTokenRepository tokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
       XorCsrfTokenRequestAttributeHandler delegate = new XorCsrfTokenRequestAttributeHandler();
 
       return http
 
+          // Public content.
+          .authorizeHttpRequests(
+              config ->
+                  config
+                      .requestMatchers(publicMatchers)
+                      .permitAll())
+
           // Prevent Cross-Site Request Forgery.
           .csrf(
               config ->
                   config
+                      .ignoringRequestMatchers(publicMatchers)
                       .csrfTokenRepository(tokenRepository)
                       .csrfTokenRequestHandler(
                           (HttpServletRequest request,
@@ -170,33 +205,6 @@ public class ServerApplication {
                   config
                       .requestMatchers(new AntPathRequestMatcher("/users/my-account"))
                       .fullyAuthenticated())
-
-          // Public content.
-          .authorizeHttpRequests(
-              config ->
-                  config
-                      .requestMatchers(
-                          // This needs to be kept in sync with ReactResourceController.
-                          new AntPathRequestMatcher("/", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher("/docs/**", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher("/favicon.*", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher("/images/**", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher("/index.html", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher("/manifest.json", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher("/robots.txt", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher("/static/**", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher("/users/logout", HttpMethod.GET.name()),
-                          // TODO: Move these out of the prod server.
-                          // React developer tools plugin.
-                          new AntPathRequestMatcher("/installHooks.js", HttpMethod.GET.name()),
-                          // Webpack server hot reload files:
-                          // https://github.com/webpack/webpack-dev-server.
-                          new AntPathRequestMatcher("/main.*.hot-update.js", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher(
-                              "/main.*.hot-update.js.map", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher(
-                              "/main.*.hot-update.json", HttpMethod.GET.name()))
-                      .permitAll())
 
           // Remaining pages require authentication.
           .authorizeHttpRequests(
