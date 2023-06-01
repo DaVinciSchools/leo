@@ -4,7 +4,7 @@ import {Button, Card, Form, Input} from 'antd';
 import {pl_types} from '../../generated/protobuf-js';
 import IProject = pl_types.IProject;
 import IProjectPost = pl_types.IProjectPost;
-import {ChangeEvent, useEffect, useState} from 'react';
+import {ChangeEvent, useState} from 'react';
 import {CloseCircleTwoTone} from '@ant-design/icons';
 
 export function ProjectPage(props: {
@@ -24,14 +24,6 @@ export function ProjectPage(props: {
   function submitPost(values: {title: string; message: string}) {
     props.onSubmitPost(values.title, values.message);
   }
-
-  useEffect(() => {
-    if ((props.posts ?? []).length > 0) {
-      if (props.posts![-1] === message) {
-        setMessage('');
-      }
-    }
-  }, [props.posts]);
 
   return (
     <>
