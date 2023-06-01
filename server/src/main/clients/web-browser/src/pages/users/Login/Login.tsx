@@ -1,7 +1,11 @@
 import './Login.scss';
 
 import {Button, Checkbox, Form, Input} from 'antd';
-import {LockOutlined, UserOutlined} from '@ant-design/icons';
+import {
+  LockOutlined,
+  QuestionCircleOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import {Link} from 'react-router-dom';
 import {
   addXsrfHeader,
@@ -22,6 +26,7 @@ export function Login() {
   const [failure, setFailure] = useState(
     queryParameters.get('failed') != null ? AUTHORIZATION_FAILURE : ''
   );
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -139,9 +144,14 @@ export function Login() {
             <Input
               placeholder="Password"
               maxLength={255}
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               prefix={<LockOutlined />}
+              suffix={
+                <QuestionCircleOutlined
+                  onClick={() => setShowPassword(!showPassword)}
+                />
+              }
             />
           </Form.Item>
           <div className="footer">
