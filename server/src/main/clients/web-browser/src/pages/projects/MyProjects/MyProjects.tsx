@@ -127,6 +127,7 @@ export function MyProjects() {
               }
               onDeletePost={post => deletePost(post)}
               onSubmitPost={postMessage}
+              editable={true}
             />
           ) : (
             <></>

@@ -16,6 +16,7 @@ export function ProjectPage(props: {
   updateProject: (update: IProject) => void;
   onSubmitPost: (title: string, message: string) => void;
   onDeletePost: (post: IProjectPost) => void;
+  editable: boolean;
 }) {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
@@ -41,9 +42,9 @@ export function ProjectPage(props: {
         </div>
         <div className="long-descr">
           <span className="label">Details:</span>
-          {props.longDescr.split('\n').map(line => (
-            <div>{line}</div>
-          ))}
+          {props.longDescr
+            .split('\n')
+            .map(line => line.split('\r').map(line => <div>{line}</div>))}
         </div>
         {props.posts != null &&
           props.posts.map(post => (
@@ -68,7 +69,7 @@ export function ProjectPage(props: {
               </Card>
             </>
           ))}
-        {props.posts != null && (
+        {props.posts != null && props.editable && (
           <>
             <div className="title">Add Post</div>
             <Form onFinish={submitPost}>

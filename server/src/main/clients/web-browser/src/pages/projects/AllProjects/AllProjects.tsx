@@ -12,6 +12,7 @@ import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
 import ThumbsState = pl_types.Project.ThumbsState;
 import {Modal} from 'antd';
+import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
 
 export function AllProjects() {
   const user = getCurrentUser();
@@ -20,9 +21,7 @@ export function AllProjects() {
   }
 
   const [projects, setProjects] = useState<IProject[]>([]);
-  const [detailedProject, setDetailedProject] = useState<
-    IProject | undefined
-  >();
+  const [project, setProject] = useState<IProject | undefined>();
 
   const service = createService(
     ProjectManagementService,
@@ -44,7 +43,7 @@ export function AllProjects() {
   }
 
   function showModal(project: pl_types.IProject) {
-    setDetailedProject(project);
+    setProject(project);
   }
 
   return (
@@ -69,11 +68,26 @@ export function AllProjects() {
           ))}
         </div>
         <Modal
-          open={detailedProject != null}
-          onOk={() => setDetailedProject(undefined)}
-          onCancel={() => setDetailedProject(undefined)}
+          open={project != null}
+          onOk={() => setProject(undefined)}
+          onCancel={() => setProject(undefined)}
         >
-          TODO
+          {project != null && (
+            <ProjectPage
+              id={project!.id!}
+              key={project!.id!}
+              name={project!.name!}
+              shortDescr={project!.shortDescr!}
+              longDescr={project!.longDescr!}
+              updateProject={modifications =>
+                updateProject(project!, modifications)
+              }
+              onDeletePost={() => {}}
+              onSubmitPost={() => {}}
+              posts={[]}
+              editable={false}
+            />
+          )}
         </Modal>
       </DefaultPage>
     </>
