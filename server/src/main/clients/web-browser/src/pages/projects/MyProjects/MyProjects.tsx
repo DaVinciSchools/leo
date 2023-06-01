@@ -38,16 +38,19 @@ export function MyProjects() {
       });
   }, []);
 
-  function selectProject(project: IProject) {
-    setProject(project);
-    projectId.current = project.id!;
-    setPosts(undefined);
-    service.getProjectPosts({projectId: project.id!}).then(response => {
-      if (project.id! === projectId.current) {
-        setPosts(response.projectPosts);
-      }
-    });
-  }
+  useEffect(() => {
+    if (project == null) {
+      projectId.current = undefined;
+      setPosts(undefined);
+    } else {
+      projectId.current = project.id!;
+      service.getProjectPosts({projectId: project!.id!}).then(response => {
+        if (project.id! === projectId.current) {
+          setPosts(response.projectPosts);
+        }
+      });
+    }
+  }, [project]);
 
   function updateProject(project: IProject, modifications: IProject) {
     service.updateProject({id: project.id!, modifications: modifications});
@@ -98,7 +101,7 @@ export function MyProjects() {
                 label: (
                   <div
                     className="project-menu"
-                    onClick={() => selectProject(project)}
+                    onClick={() => setProject(project)}
                     style={{width: '100%'}}
                   >
                     <span className="name">{project.name!}</span>

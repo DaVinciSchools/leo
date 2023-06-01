@@ -119,11 +119,7 @@ public class ServerApplication {
       return http
 
           // Public content.
-          .authorizeHttpRequests(
-              config ->
-                  config
-                      .requestMatchers(publicMatchers)
-                      .permitAll())
+          .authorizeHttpRequests(config -> config.requestMatchers(publicMatchers).permitAll())
 
           // Prevent Cross-Site Request Forgery.
           .csrf(
