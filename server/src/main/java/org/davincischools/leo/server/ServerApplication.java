@@ -15,6 +15,7 @@ import org.davincischools.leo.database.post_environment_processors.LoadCustomPro
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.pl_types.User;
+import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.davincischools.leo.server.utils.http_user.HttpUserArgumentResolver;
 import org.davincischools.leo.server.utils.http_user.HttpUserService;
 import org.davincischools.leo.server.utils.http_user.UserXDetails;
@@ -133,9 +134,9 @@ public class ServerApplication {
                                     .setEmailAddress(userX.getEmailAddress())
                                     .setFirstName(userX.getFirstName())
                                     .setLastName(userX.getLastName())
-                                    .setIsAdmin(userX.getAdminX().getId() != null)
-                                    .setIsTeacher(userX.getTeacher().getId() != null)
-                                    .setIsStudent(userX.getStudent().getId() != null)
+                                    .setIsAdmin(HttpUser.isAdmin(userX))
+                                    .setIsTeacher(HttpUser.isTeacher(userX))
+                                    .setIsStudent(HttpUser.isStudent(userX))
                                     .build();
 
                             response.setContentType(

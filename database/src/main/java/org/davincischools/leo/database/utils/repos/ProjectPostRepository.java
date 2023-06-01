@@ -12,7 +12,7 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
   @Query(
       "SELECT pp"
           + " FROM ProjectPost pp"
-          + " INNER JOIN pp.userX"
+          + " INNER JOIN FETCH pp.userX"
           + " INNER JOIN pp.project p"
           + " INNER JOIN p.projectInput pi"
           + " WHERE pp.id = (:projectId)"
