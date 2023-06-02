@@ -23,7 +23,7 @@ export function Logout() {
       </div>
       <div className="space-filler" />
       <div className="logout">Logging out...</div>
-      <form action="/api/logout" method="POST" ref={formRef}>
+      <form action="/api/logout.html" method="POST" ref={formRef}>
         {addXsrfInputField()}
       </form>
     </>

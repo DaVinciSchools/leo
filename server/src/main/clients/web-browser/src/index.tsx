@@ -24,11 +24,11 @@ const root = ReactDOM.createRoot(
 
 const router = createBrowserRouter([
   {
-    path: '/users/login',
+    path: '/users/login.html',
     element: <Login />,
   },
   {
-    path: '/users/logout',
+    path: '/users/logout.html',
     element: <Logout />,
   },
   {
@@ -36,7 +36,7 @@ const router = createBrowserRouter([
     element: <DefaultPageNav />,
     children: [
       {
-        path: 'my-account',
+        path: 'my-account.html',
         element: <MyAccount />,
       },
     ],
@@ -46,7 +46,7 @@ const router = createBrowserRouter([
     element: <DefaultPageNav />,
     children: [
       {
-        path: 'privacy-policy',
+        path: 'privacy-policy.html',
         element: <PrivacyPolicy />,
       },
     ],
@@ -56,15 +56,15 @@ const router = createBrowserRouter([
     element: <DefaultPageNav />,
     children: [
       {
-        path: 'edit-districts',
+        path: 'edit-districts.html',
         element: <EditDistricts />,
       },
       {
-        path: 'edit-schools',
+        path: 'edit-schools.html',
         element: <EditSchools />,
       },
       {
-        path: 'edit-users',
+        path: 'edit-users.html',
         element: <EditUsers />,
       },
     ],
@@ -74,19 +74,19 @@ const router = createBrowserRouter([
     element: <DefaultPageNav />,
     children: [
       {
-        path: 'overview',
+        path: 'overview.html',
         element: <Overview />,
       },
       {
-        path: 'ikigai-builder',
+        path: 'ikigai-builder.html',
         element: <IkigaiBuilder />,
       },
       {
-        path: 'my-projects',
+        path: 'my-projects.html',
         element: <MyProjects />,
       },
       {
-        path: 'all-projects',
+        path: 'all-projects.html',
         element: <AllProjects />,
       },
     ],

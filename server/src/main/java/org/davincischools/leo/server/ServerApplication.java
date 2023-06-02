@@ -91,8 +91,8 @@ public class ServerApplication {
           new RequestMatcher[] {
             // This needs to be kept in sync with ReactResourceController.
             new AntPathRequestMatcher("/", HttpMethod.GET.name()),
-            new AntPathRequestMatcher("/api/login", HttpMethod.POST.name()),
-            new AntPathRequestMatcher("/api/logout", HttpMethod.POST.name()),
+            new AntPathRequestMatcher("/api/login.html", HttpMethod.POST.name()),
+            new AntPathRequestMatcher("/api/logout.html", HttpMethod.POST.name()),
             new AntPathRequestMatcher("/docs/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/error**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/favicon.*", HttpMethod.GET.name()),
@@ -101,7 +101,8 @@ public class ServerApplication {
             new AntPathRequestMatcher("/manifest.json", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/robots.txt", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/static/**", HttpMethod.GET.name()),
-            new AntPathRequestMatcher("/users/logout", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/users/login.html", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/users/logout.html", HttpMethod.GET.name()),
             // TODO: Move these out of the prod server.
             // React developer tools plugin.
             new AntPathRequestMatcher("/installHooks.js", HttpMethod.GET.name()),
@@ -150,8 +151,8 @@ public class ServerApplication {
           .formLogin(
               config ->
                   config
-                      .loginPage("/users/login")
-                      .loginProcessingUrl("/api/login")
+                      .loginPage("/users/login.html")
+                      .loginProcessingUrl("/api/login.html")
                       .successHandler(
                           (HttpServletRequest request,
                               HttpServletResponse response,
@@ -181,14 +182,14 @@ public class ServerApplication {
                             response.getOutputStream().write(user.toByteArray());
                             response.setStatus(HttpServletResponse.SC_OK);
                           })
-                      .failureUrl("/users/login?failed=true")
+                      .failureUrl("/users/login.html?failed=true")
                       .permitAll())
 
           // Logout
           .logout(
               config ->
                   config
-                      .logoutUrl("/api/logout")
+                      .logoutUrl("/api/logout.html")
                       .logoutSuccessUrl("/")
                       .clearAuthentication(true)
                       .invalidateHttpSession(true)
@@ -199,7 +200,7 @@ public class ServerApplication {
           .authorizeHttpRequests(
               config ->
                   config
-                      .requestMatchers(new AntPathRequestMatcher("/users/my-account"))
+                      .requestMatchers(new AntPathRequestMatcher("/users/my-account.html"))
                       .fullyAuthenticated())
 
           // Remaining pages require authentication.

@@ -61,7 +61,11 @@ export function Root() {
           <a href="#our_mission" className="nav-link">
             Our Mission
           </a>
-          <Link to="/projects/overview" className="nav-link">
+          <Link
+            to="/projects/overview.html"
+            className="nav-link"
+            reloadDocument={true}
+          >
             Projects
           </Link>
           <Link to="" className="nav-link">
@@ -69,7 +73,7 @@ export function Root() {
           </Link>
         </div>
         <div className="header-section header-section-right">
-          <Link to="/users/login">
+          <Link to="/users/login.html">
             <button className="primary">Login</button>
           </Link>
           <button className="light" onClick={() => setInterestFormOpen(true)}>

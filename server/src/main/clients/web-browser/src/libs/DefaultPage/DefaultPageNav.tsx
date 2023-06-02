@@ -76,16 +76,18 @@ export function DefaultPageNav() {
                   title="Projects"
                 >
                   <Menu.Item key={MenuKeys.OVERVIEW}>
-                    <Link to="/projects/overview">Overview</Link>
+                    <Link to="/projects/overview.html">Overview</Link>
                   </Menu.Item>
                   <Menu.Item key={MenuKeys.MY_PROJECTS}>
-                    <Link to="/projects/my-projects">My Projects</Link>
+                    <Link to="/projects/my-projects.html">My Projects</Link>
                   </Menu.Item>
                   <Menu.Item key={MenuKeys.IKIGAI_BUILDER}>
-                    <Link to="/projects/ikigai-builder">Ikigai Builder</Link>
+                    <Link to="/projects/ikigai-builder.html">
+                      Ikigai Builder
+                    </Link>
                   </Menu.Item>
                   <Menu.Item key={MenuKeys.ALL_PROJECTS}>
-                    <Link to="/projects/all-projects">All Projects</Link>
+                    <Link to="/projects/all-projects.html">All Projects</Link>
                   </Menu.Item>
                 </Menu.SubMenu>
                 <Menu.Item
@@ -103,13 +105,15 @@ export function DefaultPageNav() {
                   }}
                 >
                   <Menu.Item key={MenuKeys.EDIT_DISTRICTS}>
-                    <Link to="/profiles/edit-districts">Edit Districts</Link>
+                    <Link to="/profiles/edit-districts.html">
+                      Edit Districts
+                    </Link>
                   </Menu.Item>
                   <Menu.Item key={MenuKeys.EDIT_SCHOOLS}>
-                    <Link to="/profiles/edit-schools">Edit Schools</Link>
+                    <Link to="/profiles/edit-schools.html">Edit Schools</Link>
                   </Menu.Item>
                   <Menu.Item key={MenuKeys.EDIT_USERS}>
-                    <Link to="/profiles/edit-users">Edit Users</Link>
+                    <Link to="/profiles/edit-users.html">Edit Users</Link>
                   </Menu.Item>
                 </Menu.SubMenu>
               </Menu>
@@ -117,7 +121,7 @@ export function DefaultPageNav() {
             <Footer>
               <Menu mode="inline" className="top-menu">
                 <Menu.Item key={MenuKeys.MY_ACCOUNT} icon={<UserOutlined />}>
-                  <Link to="/users/my-account">My Account</Link>
+                  <Link to="/users/my-account.html">My Account</Link>
                 </Menu.Item>
               </Menu>
             </Footer>

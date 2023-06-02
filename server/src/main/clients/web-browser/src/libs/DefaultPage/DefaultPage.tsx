@@ -27,10 +27,10 @@ export function DefaultPage(props: PropsWithChildren<{title: string}>) {
         <div className="email">{user?.emailAddress}</div>
         <div className="sectionDiv" />
         <div className="menu">
-          <Link to="/users/my-account">My Account</Link>
+          <Link to="/users/my-account.html">My Account</Link>
         </div>
         <div className="menu">
-          <Link to="/users/logout">Log out</Link>
+          <Link to="/users/logout.html">Log out</Link>
         </div>
       </div>
     ) : (

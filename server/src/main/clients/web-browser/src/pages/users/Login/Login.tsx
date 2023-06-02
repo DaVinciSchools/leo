@@ -37,7 +37,7 @@ export function Login() {
 
   async function doSubmit(formValues: {}) {
     try {
-      fetch('/api/login', {
+      fetch('/api/login.html', {
         method: 'POST',
         headers: addXsrfHeader({
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -65,7 +65,7 @@ export function Login() {
                   login(User.decode(result.value!));
                   navigate(
                     queryParameters.get(LOGIN_RETURN_TO_PARAM) ||
-                      '/projects/overview'
+                      '/projects/overview.html'
                   );
                 } catch (e) {
                   setFailure('Unknown error: ' + e);
