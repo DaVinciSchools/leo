@@ -31,11 +31,12 @@ public class Project implements Serializable {
   public static final String COLUMN_GENERATOR_NAME = "generator";
   public static final String COLUMN_FAVORITE_NAME = "favorite";
   public static final String COLUMN_THUMBSSTATE_NAME = "thumbs_state";
+  public static final String COLUMN_THUMBSSTATEREASON_NAME = "thumbs_state_reason";
   public static final String COLUMN_ARCHIVED_NAME = "archived";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NEEDSREVIEW_NAME = "needs_review";
   public static final String COLUMN_ACTIVE_NAME = "active";
-  private static final long serialVersionUID = 2871718941751587972L;
+  private static final long serialVersionUID = 3837028389251700234L;
 
   private Integer id;
 
@@ -60,6 +61,8 @@ public class Project implements Serializable {
   private Boolean favorite;
 
   private String thumbsState;
+
+  private String thumbsStateReason;
 
   private Boolean archived;
 
@@ -197,6 +200,17 @@ public class Project implements Serializable {
 
   public Project setThumbsState(String thumbsState) {
     this.thumbsState = thumbsState;
+    return this;
+  }
+
+  @Lob
+  @Column(name = COLUMN_THUMBSSTATEREASON_NAME)
+  public String getThumbsStateReason() {
+    return thumbsStateReason;
+  }
+
+  public Project setThumbsStateReason(String thumbsStateReason) {
+    this.thumbsStateReason = thumbsStateReason;
     return this;
   }
 
