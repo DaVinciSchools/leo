@@ -60,6 +60,7 @@ export function AllProjects() {
               active={project.active ?? false}
               favorite={project.favorite ?? false}
               thumbsState={project.thumbsState ?? ThumbsState.UNSET}
+              thumbsStateReason={project.thumbsStateReason ?? ''}
               showDetails={() => showModal(project)}
               updateProject={modifications =>
                 updateProject(project, modifications)

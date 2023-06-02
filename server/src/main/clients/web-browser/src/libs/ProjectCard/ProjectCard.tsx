@@ -1,6 +1,6 @@
 import './ProjectCard.scss';
 
-import {Card} from 'antd';
+import {Card, Form, Input, InputRef} from 'antd';
 import {
   CheckCircleOutlined,
   CheckCircleTwoTone,
@@ -10,7 +10,7 @@ import {
   LikeTwoTone,
 } from '@ant-design/icons';
 import {pl_types} from '../../generated/protobuf-js';
-import {ReactNode} from 'react';
+import {ReactNode, useRef, useState} from 'react';
 import IProject = pl_types.IProject;
 import ThumbsState = pl_types.Project.ThumbsState;
 
@@ -22,9 +22,11 @@ export function ProjectCard(props: {
   active: boolean;
   favorite: boolean;
   thumbsState: ThumbsState;
+  thumbsStateReason: string;
   updateProject: (update: IProject) => void;
   showDetails: () => void;
 }) {
+  const thumbsQueryRef = useRef<InputRef>(null);
   const actions: ReactNode[] = [
     <>
       {props.thumbsState === ThumbsState.THUMBS_UP ? (
@@ -34,9 +36,12 @@ export function ProjectCard(props: {
         />
       ) : (
         <LikeOutlined
-          onClick={() =>
-            props.updateProject({thumbsState: ThumbsState.THUMBS_UP})
-          }
+          onClick={() => {
+            props.updateProject({thumbsState: ThumbsState.THUMBS_UP});
+            if (thumbsQueryRef.current != null) {
+              thumbsQueryRef.current.focus();
+            }
+          }}
         />
       )}
     </>,
@@ -48,12 +53,15 @@ export function ProjectCard(props: {
         />
       ) : (
         <DislikeOutlined
-          onClick={() =>
+          onClick={() => {
             props.updateProject({
               favorite: false,
               thumbsState: ThumbsState.THUMBS_DOWN,
-            })
-          }
+            });
+            if (thumbsQueryRef.current != null) {
+              thumbsQueryRef.current.focus();
+            }
+          }}
         />
       )}
     </>,
@@ -79,6 +87,10 @@ export function ProjectCard(props: {
     </>,
   ];
 
+  const [thumbsStateReason, setThumbsStateReason] = useState(
+    props.thumbsStateReason
+  );
+
   return (
     <>
       <Card
@@ -103,6 +115,21 @@ export function ProjectCard(props: {
         }
       >
         {props.shortDescr}
+        <Form>
+          <Input
+            ref={thumbsQueryRef}
+            type="text"
+            placeholder="Why did you select thumbs up or down?"
+            name="thumbs_reason"
+            value={thumbsStateReason}
+            onChange={e => setThumbsStateReason(e.target.value)}
+            onBlur={() =>
+              props.updateProject({
+                thumbsStateReason: thumbsStateReason,
+              })
+            }
+          />
+        </Form>
       </Card>
     </>
   );

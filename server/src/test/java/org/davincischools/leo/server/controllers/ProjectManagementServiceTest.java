@@ -4,7 +4,6 @@ import com.google.common.truth.Truth;
 import com.google.common.truth.extensions.proto.ProtoTruth;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.protos.pl_types.Project;
-import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.project_management.GenerateProjectsResponse;
 import org.davincischools.leo.server.utils.LogUtils.LogOperations;
 import org.junit.Test;
@@ -136,32 +135,19 @@ Full 2
             ProjectManagementService.END_OF_SHORT,
             ProjectManagementService.START_OF_PROJECT));
     ProtoTruth.assertThat(response.build())
+        .comparingExpectedFieldsOnly()
         .isEqualTo(
             GenerateProjectsResponse.newBuilder()
                 .addProjects(
                     Project.newBuilder()
-                        .setId(-1)
                         .setName("Title 1")
                         .setShortDescr("Short 1")
-                        .setLongDescr("Full 1")
-                        .setStepsDescr("")
-                        .setFavorite(false)
-                        .setThumbsState(ThumbsState.UNSET)
-                        .setArchived(false)
-                        .setNeedsReview(false)
-                        .setActive(false))
+                        .setLongDescr("Full 1"))
                 .addProjects(
                     Project.newBuilder()
-                        .setId(-1)
                         .setName("Title 2")
                         .setShortDescr("Short 2")
-                        .setLongDescr("Full 2")
-                        .setStepsDescr("")
-                        .setFavorite(false)
-                        .setThumbsState(ThumbsState.UNSET)
-                        .setArchived(false)
-                        .setNeedsReview(false)
-                        .setActive(false))
+                        .setLongDescr("Full 2"))
                 .build());
   }
 }

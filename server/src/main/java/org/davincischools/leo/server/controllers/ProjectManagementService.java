@@ -546,7 +546,7 @@ public class ProjectManagementService {
 
   @PostMapping(value = "/api/protos/ProjectManagementService/UpdateProject")
   @ResponseBody
-  public UpdateProjectResponse UpdateProject(
+  public UpdateProjectResponse updateProject(
       @Authenticated HttpUser user, @RequestBody Optional<UpdateProjectRequest> optionalRequest)
       throws LogExecutionError {
     if (user.isNotAuthorized()) {
@@ -586,6 +586,9 @@ public class ProjectManagementService {
                     modifications.getThumbsState() == ThumbsState.UNSET
                         ? null
                         : modifications.getThumbsState().name());
+              }
+              if (modifications.hasThumbsStateReason()) {
+                project.setThumbsStateReason(modifications.getThumbsStateReason());
               }
               if (modifications.hasActive()) {
                 project.setActive(modifications.getActive());

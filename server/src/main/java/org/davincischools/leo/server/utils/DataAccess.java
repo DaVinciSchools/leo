@@ -155,6 +155,7 @@ public class DataAccess {
         .setFavorite(Boolean.TRUE.equals(project.getFavorite()))
         .setThumbsState(
             ThumbsState.valueOf(firstNonNull(project::getThumbsState, ThumbsState.UNSET::name)))
+        .setThumbsStateReason(firstNonNull(project::getThumbsStateReason, () -> ""))
         .setArchived(Boolean.TRUE.equals(project.getArchived()))
         .setNeedsReview(Boolean.TRUE.equals(project.getNeedsReview()))
         .setActive(Boolean.TRUE.equals(project.getActive()))

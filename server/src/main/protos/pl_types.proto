@@ -54,9 +54,10 @@ message Project {
   optional string steps_descr = 5;
   optional bool favorite = 6;
   optional ThumbsState thumbs_state = 7;
-  optional bool archived = 8;
-  optional bool needs_review = 9;
-  optional bool active = 10;
+  optional string thumbs_state_reason = 8;
+  optional bool archived = 9;
+  optional bool needs_review = 10;
+  optional bool active = 11;
 }
 
 message School {
