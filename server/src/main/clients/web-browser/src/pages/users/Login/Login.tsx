@@ -2,8 +2,9 @@ import './Login.scss';
 
 import {Button, Checkbox, Form, Input} from 'antd';
 import {
+  EyeInvisibleOutlined,
+  EyeOutlined,
   LockOutlined,
-  QuestionCircleOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import {Link} from 'react-router-dom';
@@ -151,9 +152,11 @@ export function Login() {
               autoComplete="current-password"
               prefix={<LockOutlined />}
               suffix={
-                <QuestionCircleOutlined
-                  onClick={() => setShowPassword(!showPassword)}
-                />
+                showPassword ? (
+                  <EyeOutlined onClick={() => setShowPassword(false)} />
+                ) : (
+                  <EyeInvisibleOutlined onClick={() => setShowPassword(true)} />
+                )
               }
             />
           </Form.Item>
