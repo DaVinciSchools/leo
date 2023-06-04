@@ -2,6 +2,7 @@ package org.davincischools.leo.server;
 
 import static org.davincischools.leo.server.SpringConstants.LOCAL_SERVER_PORT_PROPERTY;
 
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -61,9 +62,11 @@ public class ServerApplication {
   static class ServerApplicationConfigurer extends WebMvcConfigurationSupport {
 
     private final Database db;
+    private final EntityManager entityManager;
 
-    public ServerApplicationConfigurer(Database db) {
+    public ServerApplicationConfigurer(Database db, EntityManager entityManager) {
       this.db = db;
+      this.entityManager = entityManager;
     }
 
     @Override
@@ -79,8 +82,8 @@ public class ServerApplication {
 
     @Override
     protected void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
-      argumentResolvers.add(0, new HttpUserArgumentResolver(db));
-      argumentResolvers.add(1, new HttpExecutorArgumentResolver(db));
+      argumentResolvers.add(0, new HttpUserArgumentResolver(db, entityManager));
+      argumentResolvers.add(1, new HttpExecutorArgumentResolver(db, entityManager));
     }
   }
 

@@ -1,5 +1,6 @@
 package org.davincischools.leo.server.utils.http_user;
 
+import jakarta.persistence.EntityManager;
 import java.io.Serial;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
@@ -12,7 +13,7 @@ public class UserXDetails extends User {
 
   private final UserX userX;
 
-  public UserXDetails(UserX userX) {
+  public UserXDetails(UserX userX, EntityManager entityManager) {
     super(
         userX.getEmailAddress(),
         userX.getEncodedPassword(),
@@ -21,6 +22,7 @@ public class UserXDetails extends User {
             .map(SimpleGrantedAuthority::new)
             .toList());
     this.userX = userX;
+    entityManager.detach(userX);
     userX.setEncodedPassword(null);
   }
 

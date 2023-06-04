@@ -1,11 +1,11 @@
 package org.davincischools.leo.server.utils.http_user;
 
 import com.google.common.collect.ImmutableMap;
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.lang.annotation.Annotation;
 import java.util.List;
-import org.apache.commons.lang3.function.TriFunction;
 import org.davincischools.leo.database.utils.Database;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -15,14 +15,17 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 public class HttpUserArgumentResolver implements HandlerMethodArgumentResolver {
 
-  private static final ImmutableMap<
-          Class<? extends Annotation>,
-          TriFunction<Database, HttpServletRequest, HttpServletResponse, HttpUser>>
+  private interface HttpUserCreator {
+    HttpUser createHttpUser(
+        Database db,
+        HttpServletRequest request,
+        HttpServletResponse response,
+        EntityManager entityManager);
+  }
+
+  private static final ImmutableMap<Class<? extends Annotation>, HttpUserCreator>
       HTTP_USER_ANNOTATIONS_MAP =
-          ImmutableMap
-              .<Class<? extends Annotation>,
-                  TriFunction<Database, HttpServletRequest, HttpServletResponse, HttpUser>>
-                  builderWithExpectedSize(5)
+          ImmutableMap.<Class<? extends Annotation>, HttpUserCreator>builderWithExpectedSize(5)
               .put(Admin.class, HttpUserService::getAdminHttpUser)
               .put(Teacher.class, HttpUserService::getTeacherHttpUser)
               .put(Student.class, HttpUserService::getStudentHttpUser)
@@ -31,9 +34,11 @@ public class HttpUserArgumentResolver implements HandlerMethodArgumentResolver {
               .build();
 
   private final Database db;
+  private final EntityManager entityManager;
 
-  public HttpUserArgumentResolver(Database db) {
+  public HttpUserArgumentResolver(Database db, EntityManager entityManager) {
     this.db = db;
+    this.entityManager = entityManager;
   }
 
   @Override
@@ -64,13 +69,14 @@ public class HttpUserArgumentResolver implements HandlerMethodArgumentResolver {
       NativeWebRequest webRequest,
       WebDataBinderFactory binderFactory)
       throws Exception {
-    TriFunction<Database, HttpServletRequest, HttpServletResponse, HttpUser> fn;
+    HttpUserCreator fn;
     for (Annotation annotation : List.of(parameter.getParameterAnnotations())) {
       if ((fn = HTTP_USER_ANNOTATIONS_MAP.get(annotation.annotationType())) != null) {
-        return fn.apply(
+        return fn.createHttpUser(
             db,
             webRequest.getNativeRequest(HttpServletRequest.class),
-            webRequest.getNativeResponse(HttpServletResponse.class));
+            webRequest.getNativeResponse(HttpServletResponse.class),
+            entityManager);
       }
     }
     throw new UnsupportedOperationException("Could not find HttpUser for " + parameter);

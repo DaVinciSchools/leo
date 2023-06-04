@@ -1,5 +1,6 @@
 package org.davincischools.leo.server.utils.http_user;
 
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Optional;
@@ -15,13 +16,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class HttpUserService {
 
-  private static Optional<UserX> getAuthenticatedUserX(Database db) {
+  private static Optional<UserX> getAuthenticatedUserX(Database db, EntityManager entityManager) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     if (auth != null) {
       if (auth.getPrincipal() instanceof UserXDetails details) {
         Optional<UserX> optionalUserX =
             db.getUserXRepository().findById(details.getUserX().getId());
-        optionalUserX.ifPresent(userX -> userX.setEncodedPassword(null));
+        optionalUserX.ifPresent(
+            userX -> {
+              entityManager.detach(userX);
+              userX.setEncodedPassword(null);
+            });
         return optionalUserX;
       }
     }
@@ -31,22 +36,31 @@ public class HttpUserService {
   @Bean
   @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
   public static HttpUser getAnonymousHttpUser(
-      Database db, HttpServletRequest request, HttpServletResponse response) {
-    return new HttpUser(getAuthenticatedUserX(db), request, response, false);
+      Database db,
+      HttpServletRequest request,
+      HttpServletResponse response,
+      EntityManager entityManager) {
+    return new HttpUser(getAuthenticatedUserX(db, entityManager), request, response, false);
   }
 
   @Bean
   @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
   public static HttpUser getAuthenticatedHttpUser(
-      Database db, HttpServletRequest request, HttpServletResponse response) {
-    return new HttpUser(getAuthenticatedUserX(db), request, response, true);
+      Database db,
+      HttpServletRequest request,
+      HttpServletResponse response,
+      EntityManager entityManager) {
+    return new HttpUser(getAuthenticatedUserX(db, entityManager), request, response, true);
   }
 
   @Bean
   @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
   public static HttpUser getAdminHttpUser(
-      Database db, HttpServletRequest request, HttpServletResponse response) {
-    Optional<UserX> userX = getAuthenticatedUserX(db);
+      Database db,
+      HttpServletRequest request,
+      HttpServletResponse response,
+      EntityManager entityManager) {
+    Optional<UserX> userX = getAuthenticatedUserX(db, entityManager);
     if (userX.isPresent() && HttpUser.isAdmin(userX.get())) {
       return new HttpUser(userX, request, response, true);
     }
@@ -56,8 +70,11 @@ public class HttpUserService {
   @Bean
   @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
   public static HttpUser getTeacherHttpUser(
-      Database db, HttpServletRequest request, HttpServletResponse response) {
-    Optional<UserX> userX = getAuthenticatedUserX(db);
+      Database db,
+      HttpServletRequest request,
+      HttpServletResponse response,
+      EntityManager entityManager) {
+    Optional<UserX> userX = getAuthenticatedUserX(db, entityManager);
     if (userX.isPresent() && HttpUser.isTeacher(userX.get())) {
       return new HttpUser(userX, request, response, true);
     }
@@ -67,8 +84,11 @@ public class HttpUserService {
   @Bean
   @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
   public static HttpUser getStudentHttpUser(
-      Database db, HttpServletRequest request, HttpServletResponse response) {
-    Optional<UserX> userX = getAuthenticatedUserX(db);
+      Database db,
+      HttpServletRequest request,
+      HttpServletResponse response,
+      EntityManager entityManager) {
+    Optional<UserX> userX = getAuthenticatedUserX(db, entityManager);
     if (userX.isPresent() && HttpUser.isStudent(userX.get())) {
       return new HttpUser(userX, request, response, true);
     }

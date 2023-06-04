@@ -1,5 +1,6 @@
 package org.davincischools.leo.server.utils.http_executor;
 
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.davincischools.leo.database.utils.Database;
@@ -13,9 +14,11 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 public class HttpExecutorArgumentResolver implements HandlerMethodArgumentResolver {
 
   private final Database db;
+  private final EntityManager entityManager;
 
-  public HttpExecutorArgumentResolver(Database db) {
+  public HttpExecutorArgumentResolver(Database db, EntityManager entityManager) {
     this.db = db;
+    this.entityManager = entityManager;
   }
 
   @Override
@@ -36,6 +39,7 @@ public class HttpExecutorArgumentResolver implements HandlerMethodArgumentResolv
         HttpUserService.getAnonymousHttpUser(
             db,
             webRequest.getNativeRequest(HttpServletRequest.class),
-            webRequest.getNativeResponse(HttpServletResponse.class)));
+            webRequest.getNativeResponse(HttpServletResponse.class),
+            entityManager));
   }
 }
