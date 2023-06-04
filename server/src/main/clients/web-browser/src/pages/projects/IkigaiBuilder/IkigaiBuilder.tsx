@@ -431,7 +431,9 @@ export function IkigaiBuilder() {
               width: '100%',
             }}
           >
-            Finding great projects! Please wait. This can take a few minutes.
+            Using the power of AI to create new and unique projects tailored to
+            your individual preferences! Please be patient, this can take a few
+            minutes.
           </div>
         </Modal>
       </DefaultPage>
