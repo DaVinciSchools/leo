@@ -99,7 +99,10 @@ export function Login() {
         </Link>
       </div>
       <div className="space-filler">
-        <div className="error" style={{display: failure ? undefined : 'none'}}>
+        <div
+          className="error-notice"
+          style={{display: failure ? undefined : 'none'}}
+        >
           {failure}
         </div>
       </div>

@@ -5,7 +5,6 @@ import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
 
 import {Root} from './pages/Root';
-import {EditUsers} from './pages/profiles/EditUsers/EditUsers';
 import {Login} from './pages/users/Login/Login';
 import {EditDistricts} from './pages/profiles/EditDistricts/EditDistricts';
 import {EditSchools} from './pages/profiles/EditSchools/EditSchools';
@@ -62,10 +61,6 @@ const router = createBrowserRouter([
       {
         path: 'edit-schools.html',
         element: <EditSchools />,
-      },
-      {
-        path: 'edit-users.html',
-        element: <EditUsers />,
       },
     ],
   },

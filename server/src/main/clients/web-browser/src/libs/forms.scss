@@ -21,6 +21,17 @@
   color: color.$neutral-800;
 }
 
+.form-fields-single-line {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 0.5em;
+  justify-content: stretch;
+
+  &> * {
+    flex-grow: 1;
+  }
+}
+
 .ant-form-item-control {
   @include focus-padding;
 }
@@ -37,6 +48,26 @@
 
   &:hover {
     @include hover;
+  }
+}
+
+.space-filler {
+  height: 15%;
+
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-content: center;
+
+  .error-notice {
+    @include color.error;
+
+    border: 1px solid;
+    align-self: center;
+    padding: 0.25em 0.5em;
+    border-radius: 6px;
+    width: fit-content;
+    margin: auto;
   }
 }
 

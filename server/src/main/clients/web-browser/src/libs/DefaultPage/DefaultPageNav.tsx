@@ -112,9 +112,6 @@ export function DefaultPageNav() {
                   <Menu.Item key={MenuKeys.EDIT_SCHOOLS}>
                     <Link to="/profiles/edit-schools.html">Edit Schools</Link>
                   </Menu.Item>
-                  <Menu.Item key={MenuKeys.EDIT_USERS}>
-                    <Link to="/profiles/edit-users.html">Edit Users</Link>
-                  </Menu.Item>
                 </Menu.SubMenu>
               </Menu>
             </Content>

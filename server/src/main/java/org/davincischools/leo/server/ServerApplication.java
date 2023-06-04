@@ -37,9 +37,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
+import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter.Directive;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -123,6 +126,8 @@ public class ServerApplication {
       // https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html#_i_am_using_angularjs_or_another_javascript_framework
       CookieCsrfTokenRepository tokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
       XorCsrfTokenRequestAttributeHandler delegate = new XorCsrfTokenRequestAttributeHandler();
+      HeaderWriterLogoutHandler clearSiteData =
+          new HeaderWriterLogoutHandler(new ClearSiteDataHeaderWriter(Directive.ALL));
 
       return http
 
@@ -200,7 +205,7 @@ public class ServerApplication {
                       .logoutSuccessUrl("/")
                       .clearAuthentication(true)
                       .invalidateHttpSession(true)
-                      .deleteCookies("JSESSIONID")
+                      .addLogoutHandler(clearSiteData)
                       .permitAll())
 
           // A user's profile requires full authentication.

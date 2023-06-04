@@ -1,7 +1,6 @@
 package org.davincischools.leo.server.utils.http_user;
 
 import jakarta.persistence.EntityManager;
-import java.util.Optional;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.springframework.context.annotation.Bean;
@@ -15,12 +14,12 @@ public class UserXDetailProvider {
   @Bean
   static UserDetailsService userDetailsService(Database db, EntityManager entityManager) {
     return (String username) -> {
-      Optional<UserX> optionalUserX = db.getUserXRepository().findByEmailAddress(username);
-      if (optionalUserX.isEmpty()) {
+      UserX userX = db.getUserXRepository().findByEmailAddress(username).orElse(null);
+      if (userX == null) {
         throw new UsernameNotFoundException("User " + username + " not found.");
       }
 
-      return new UserXDetails(optionalUserX.get(), entityManager);
+      return new UserXDetails(userX, entityManager);
     };
   }
 }

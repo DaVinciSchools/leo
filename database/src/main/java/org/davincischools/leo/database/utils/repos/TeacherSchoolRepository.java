@@ -30,4 +30,7 @@ public interface TeacherSchoolRepository extends JpaRepository<TeacherSchool, Te
           + " AND NOT ts.school.id IN (:schoolIds)")
   void keepSchoolsForTeacher(
       @Param("teacherId") int teacherId, @Param("schoolIds") Iterable<Integer> schoolIdsToKeep);
+
+  @Query("SELECT ts.school FROM TeacherSchool ts WHERE ts.teacher.id = (:teacherId)")
+  Iterable<School> findSchoolsByTeacherId(@Param("teacherId") int teacherId);
 }

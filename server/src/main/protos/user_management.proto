@@ -8,14 +8,37 @@ option java_package = "org.davincischools.leo.protos.user_management";
 package user_management;
 
 service UserManagementService {
-  rpc GetUsers (GetUsersRequest) returns (UserInformationResponse) {}
+  rpc GetUsersDetails (GetUsersDetailsRequest) returns (GetUsersDetailsResponse) {}
   rpc GetUserDetails (GetUserDetailsRequest) returns (GetUserDetailsResponse) {}
-  rpc UpsertUser (UpsertUserRequest) returns (UserInformationResponse) {}
-  rpc RemoveUser (RemoveUserRequest) returns (UserInformationResponse) {}
+  rpc UpsertUser (UpsertUserRequest) returns (UpsertUserResponse) {}
+  rpc RemoveUser (RemoveUserRequest) returns (RemoveUserResponse) {}
 }
 
-message GetUsersRequest {
+message FullUserDetails {
+  optional pl_types.User user = 1;
+
+  repeated int32 school_ids = 2;
+
+  optional int32 student_id = 3;
+  optional int32 student_grade = 4;
+}
+
+message GetUsersDetailsRequest {
+  enum OrderBy {
+    UNSET = 0;
+    EMAIL = 1;
+    NAME = 2;
+  }
+
   optional int32 district_id = 1;
+
+  optional int32 beginIndex = 2;
+  optional int32 count = 3;
+  optional OrderBy order_by = 5;
+}
+
+message GetUsersDetailsResponse {
+  repeated FullUserDetails users = 1;
 }
 
 message GetUserDetailsRequest {
@@ -23,29 +46,38 @@ message GetUserDetailsRequest {
 }
 
 message GetUserDetailsResponse {
-  optional pl_types.User user = 1;
-  repeated int32 school_ids = 2;
+  optional FullUserDetails user = 1;
 }
 
 message UpsertUserRequest {
   optional pl_types.User user = 1;
-  repeated int32 school_ids = 2;
+
+  // Only used when a user changes their password.
+  optional string current_password = 2;
+  optional string new_password = 3;
+  optional string verify_password = 4;
+
+  // Repeated fields don't have a has_field method. So, it's not possible
+  // to differentiate between "clear all schools" and "don't modify schools."
+  // Here we use the has_field method on the outer message.
+  message SchoolIds {
+    repeated int32 school_ids = 1;
+  }
+  optional SchoolIds school_ids = 5;
+
+  optional int32 student_id = 6;
+  optional int32 student_grade = 7;
+}
+
+message UpsertUserResponse {
+  optional FullUserDetails user = 1;
+
+  optional string error = 5;
 }
 
 message RemoveUserRequest {
-  optional int32 district_id = 1;
   optional int32 user_x_id = 2;
 }
 
-message UserInformationResponse {
-  optional int32 district_id = 1;
-  optional int32 next_user_x_id = 2;
-  repeated pl_types.User users = 3;
-
-  optional bool success = 4;
-  optional string first_name_error = 5;
-  optional string last_name_error = 6;
-  optional string email_address_error = 7;
-  optional string password_error = 8;
-  optional string verify_password_error = 9;
+message RemoveUserResponse {
 }
