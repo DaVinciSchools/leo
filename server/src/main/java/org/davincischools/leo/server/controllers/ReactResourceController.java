@@ -12,8 +12,8 @@ import java.net.URI;
 import java.util.Optional;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.server.utils.HttpServletProxy;
-import org.davincischools.leo.server.utils.LogUtils;
 import org.davincischools.leo.server.utils.URIBuilder;
+import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -72,13 +72,14 @@ public class ReactResourceController {
     "/main.*.hot-update.js.map",
     "/main.*.hot-update.json"
   })
-  public void getResource(HttpServletRequest originalRequest, HttpServletResponse response)
+  public void getResource(
+      HttpServletRequest originalRequest, HttpServletResponse response, HttpExecutors httpExecutors)
       throws IOException {
-    LogUtils.executeAndLog(db, originalRequest)
+    httpExecutors
+        .start(originalRequest)
+        .setOnlyLogOnFailure(true)
         .andThen(
             (request, log) -> {
-              log.setOnlyLogOnFailure(true);
-
               URI uri = getUri(request);
               Optional<MediaType> mediaType = getResponseMimeType(uri);
               if (reactPort > 0) {

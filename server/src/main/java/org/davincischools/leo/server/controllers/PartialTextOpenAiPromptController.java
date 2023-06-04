@@ -16,9 +16,9 @@ import org.davincischools.leo.protos.open_ai.OpenAiResponse.CreateCompletionChoi
 import org.davincischools.leo.protos.partial_text_openai_prompt.GetSuggestionsRequest;
 import org.davincischools.leo.protos.partial_text_openai_prompt.GetSuggestionsRequest.Prompt;
 import org.davincischools.leo.protos.partial_text_openai_prompt.GetSuggestionsResponse;
-import org.davincischools.leo.server.utils.LogUtils;
-import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
 import org.davincischools.leo.server.utils.OpenAiUtils;
+import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
+import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user.Authenticated;
 import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,14 +59,16 @@ public class PartialTextOpenAiPromptController {
   @PostMapping(value = "/api/protos/PartialTextOpenAiPromptService/GetSuggestions")
   @ResponseBody
   public GetSuggestionsResponse getSuggestions(
-      @Authenticated HttpUser user, @RequestBody Optional<GetSuggestionsRequest> optionalRequest)
-      throws LogExecutionError {
+      @Authenticated HttpUser user,
+      @RequestBody Optional<GetSuggestionsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(GetSuggestionsResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(
-            db, optionalRequest.orElse(GetSuggestionsRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(GetSuggestionsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               if (!PROMPTS.containsKey(request.getPrompt())) {
@@ -91,7 +93,9 @@ public class PartialTextOpenAiPromptController {
                       .build();
 
               OpenAiResponse aiResponse =
-                  openAiUtils.sendOpenAiRequest(aiRequest, OpenAiResponse.newBuilder()).build();
+                  openAiUtils
+                      .sendOpenAiRequest(aiRequest, OpenAiResponse.newBuilder(), httpExecutors)
+                      .build();
 
               List<String> suggestions =
                   aiResponse.getChoicesList().stream()

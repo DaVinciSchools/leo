@@ -15,6 +15,8 @@ import org.davincischools.leo.database.post_environment_processors.LoadCustomPro
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.pl_types.User;
+import org.davincischools.leo.server.utils.http_executor.HttpExecutor;
+import org.davincischools.leo.server.utils.http_executor.HttpExecutorArgumentResolver;
 import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.davincischools.leo.server.utils.http_user.HttpUserArgumentResolver;
 import org.davincischools.leo.server.utils.http_user.HttpUserService;
@@ -46,6 +48,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
     scanBasePackages = "org.davincischools.leo.server",
     scanBasePackageClasses = {
       Database.class,
+      HttpExecutor.class,
       HttpUserService.class,
       TestDatabase.class,
       UserX.class
@@ -77,6 +80,7 @@ public class ServerApplication {
     @Override
     protected void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
       argumentResolvers.add(0, new HttpUserArgumentResolver(db));
+      argumentResolvers.add(1, new HttpExecutorArgumentResolver(db));
     }
   }
 

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class HttpUserService {
 
-  public static Optional<UserX> getAuthenticatedUserX(Database db) {
+  private static Optional<UserX> getAuthenticatedUserX(Database db) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     if (auth != null) {
       if (auth.getPrincipal() instanceof UserXDetails details) {
@@ -30,21 +30,21 @@ public class HttpUserService {
 
   @Bean
   @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-  static HttpUser getAnonymousHttpUser(
+  public static HttpUser getAnonymousHttpUser(
       Database db, HttpServletRequest request, HttpServletResponse response) {
     return new HttpUser(getAuthenticatedUserX(db), request, response, false);
   }
 
   @Bean
   @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-  static HttpUser getAuthenticatedHttpUser(
+  public static HttpUser getAuthenticatedHttpUser(
       Database db, HttpServletRequest request, HttpServletResponse response) {
     return new HttpUser(getAuthenticatedUserX(db), request, response, true);
   }
 
   @Bean
   @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-  static HttpUser getAdminHttpUser(
+  public static HttpUser getAdminHttpUser(
       Database db, HttpServletRequest request, HttpServletResponse response) {
     Optional<UserX> userX = getAuthenticatedUserX(db);
     if (userX.isPresent() && HttpUser.isAdmin(userX.get())) {
@@ -55,7 +55,7 @@ public class HttpUserService {
 
   @Bean
   @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-  static HttpUser getTeacherHttpUser(
+  public static HttpUser getTeacherHttpUser(
       Database db, HttpServletRequest request, HttpServletResponse response) {
     Optional<UserX> userX = getAuthenticatedUserX(db);
     if (userX.isPresent() && HttpUser.isTeacher(userX.get())) {
@@ -66,7 +66,7 @@ public class HttpUserService {
 
   @Bean
   @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-  static HttpUser getStudentHttpUser(
+  public static HttpUser getStudentHttpUser(
       Database db, HttpServletRequest request, HttpServletResponse response) {
     Optional<UserX> userX = getAuthenticatedUserX(db);
     if (userX.isPresent() && HttpUser.isStudent(userX.get())) {

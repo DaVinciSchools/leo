@@ -27,8 +27,8 @@ import org.davincischools.leo.protos.user_management.UpsertUserRequest;
 import org.davincischools.leo.protos.user_management.UserInformationResponse;
 import org.davincischools.leo.protos.user_management.UserInformationResponse.Builder;
 import org.davincischools.leo.server.utils.DataAccess;
-import org.davincischools.leo.server.utils.LogUtils;
-import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
+import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
+import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user.Admin;
 import org.davincischools.leo.server.utils.http_user.Authenticated;
 import org.davincischools.leo.server.utils.http_user.HttpUser;
@@ -47,13 +47,16 @@ public class UserManagementService {
   @ResponseBody
   @Transactional
   public UserInformationResponse getUserXs(
-      @Admin HttpUser user, @RequestBody Optional<GetUsersRequest> optionalRequest)
-      throws LogExecutionError {
+      @Admin HttpUser user,
+      @RequestBody Optional<GetUsersRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(UserInformationResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(db, optionalRequest.orElse(GetUsersRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(GetUsersRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               checkArgument(request.hasDistrictId());
@@ -70,14 +73,16 @@ public class UserManagementService {
   @ResponseBody
   @Transactional
   public GetUserDetailsResponse getUserXDetails(
-      @Authenticated HttpUser user, @RequestBody Optional<GetUserDetailsRequest> optionalRequest)
-      throws LogExecutionError {
+      @Authenticated HttpUser user,
+      @RequestBody Optional<GetUserDetailsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(GetUserDetailsResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(
-            db, optionalRequest.orElse(GetUserDetailsRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(GetUserDetailsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               int userId = request.getUserXId();
@@ -112,14 +117,15 @@ public class UserManagementService {
   public UserInformationResponse upsertUserX(
       @Authenticated HttpUser user,
       @RequestBody Optional<UpsertUserRequest> optionalRequest,
-      HttpServletRequest httpRequest)
-      throws LogExecutionError {
+      HttpServletRequest httpRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(UserInformationResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(
-            db, optionalRequest.orElse(UpsertUserRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(UpsertUserRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               int userId = request.getUser().getId();
@@ -329,14 +335,15 @@ public class UserManagementService {
   public UserInformationResponse removeUser(
       @Admin HttpUser user,
       @RequestBody Optional<RemoveUserRequest> optionalRequest,
-      HttpServletRequest httpRequest)
-      throws LogExecutionError {
+      HttpServletRequest httpRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(UserInformationResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(
-            db, optionalRequest.orElse(RemoveUserRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(RemoveUserRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               checkArgument(request.hasUserXId());

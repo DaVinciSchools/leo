@@ -32,6 +32,7 @@ import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
+import org.davincischools.leo.database.utils.repos.LogRepository.Status;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.ProjectDefinitionInputCategories;
 import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
@@ -59,11 +60,10 @@ import org.davincischools.leo.protos.project_management.PostMessageResponse;
 import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
 import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
 import org.davincischools.leo.server.utils.DataAccess;
-import org.davincischools.leo.server.utils.LogUtils;
-import org.davincischools.leo.server.utils.LogUtils.LogExecutionError;
-import org.davincischools.leo.server.utils.LogUtils.LogOperations;
-import org.davincischools.leo.server.utils.LogUtils.Status;
 import org.davincischools.leo.server.utils.OpenAiUtils;
+import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
+import org.davincischools.leo.server.utils.http_executor.HttpExecutorLog;
+import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user.Authenticated;
 import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,13 +112,16 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetEks")
   @ResponseBody
   public GetEksResponse getEks(
-      @Authenticated HttpUser user, @RequestBody Optional<GetEksRequest> optionalRequest)
-      throws LogExecutionError {
+      @Authenticated HttpUser user,
+      @RequestBody Optional<GetEksRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(GetEksResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(db, optionalRequest.orElse(GetEksRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(GetEksRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               var response = GetEksResponse.newBuilder();
@@ -136,14 +139,16 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetXqCompetencies")
   @ResponseBody
   public GetXqCompetenciesResponse getXqCompetencies(
-      @Authenticated HttpUser user, @RequestBody Optional<GetXqCompetenciesRequest> optionalRequest)
-      throws LogExecutionError {
+      @Authenticated HttpUser user,
+      @RequestBody Optional<GetXqCompetenciesRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(GetXqCompetenciesResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(
-            db, optionalRequest.orElse(GetXqCompetenciesRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(GetXqCompetenciesRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               var response = GetXqCompetenciesResponse.newBuilder();
@@ -168,14 +173,16 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GenerateProjects")
   @ResponseBody
   public GenerateProjectsResponse generateProjects(
-      @Authenticated HttpUser user, @RequestBody Optional<GenerateProjectsRequest> optionalRequest)
-      throws LogExecutionError {
+      @Authenticated HttpUser user,
+      @RequestBody Optional<GenerateProjectsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(GenerateProjectsResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(
-            db, optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               ProjectDefinitionInputCategories definition =
@@ -339,7 +346,9 @@ public class ProjectManagementService {
                       .build();
 
               OpenAiResponse aiResponse =
-                  openAiUtils.sendOpenAiRequest(aiRequest, OpenAiResponse.newBuilder()).build();
+                  openAiUtils
+                      .sendOpenAiRequest(aiRequest, OpenAiResponse.newBuilder(), httpExecutors)
+                      .build();
 
               List<Project> projects =
                   extractProjects(
@@ -361,6 +370,7 @@ public class ProjectManagementService {
                   db.getProjectInputRepository().save(state.input.setState(State.FAILED.name()));
                 }
               }
+              return Optional.empty();
             })
         .finish();
   }
@@ -392,7 +402,7 @@ public class ProjectManagementService {
   }
 
   static List<Project> extractProjects(
-      LogOperations log,
+      HttpExecutorLog log,
       GenerateProjectsResponse.Builder response,
       ProjectInput projectInput,
       String aiResponse) {
@@ -425,14 +435,16 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjects")
   @ResponseBody
   public GetProjectsResponse getProjects(
-      @Authenticated HttpUser user, @RequestBody Optional<GetProjectsRequest> optionalRequest)
-      throws LogExecutionError {
+      @Authenticated HttpUser user,
+      @RequestBody Optional<GetProjectsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(GetProjectsResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(
-            db, optionalRequest.orElse(GetProjectsRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(GetProjectsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               int userId = request.getUserXId();
@@ -465,14 +477,15 @@ public class ProjectManagementService {
   @ResponseBody
   public GetProjectDefinitionResponse getProjectDefinition(
       @Authenticated HttpUser user,
-      @RequestBody Optional<GetProjectDefinitionRequest> optionalRequest)
-      throws LogExecutionError {
+      @RequestBody Optional<GetProjectDefinitionRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(GetProjectDefinitionResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(
-            db, optionalRequest.orElse(GetProjectDefinitionRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(GetProjectDefinitionRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               GetProjectDefinitionResponse.Builder response =
@@ -547,14 +560,16 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/UpdateProject")
   @ResponseBody
   public UpdateProjectResponse updateProject(
-      @Authenticated HttpUser user, @RequestBody Optional<UpdateProjectRequest> optionalRequest)
-      throws LogExecutionError {
+      @Authenticated HttpUser user,
+      @RequestBody Optional<UpdateProjectRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(UpdateProjectResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(
-            db, optionalRequest.orElse(UpdateProjectRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(UpdateProjectRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               Optional<Project> optionalProject =
@@ -605,14 +620,16 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjectPosts")
   @ResponseBody
   public GetProjectPostsResponse getProjectPosts(
-      @Authenticated HttpUser user, @RequestBody Optional<GetProjectPostsRequest> optionalRequest)
-      throws LogExecutionError {
+      @Authenticated HttpUser user,
+      @RequestBody Optional<GetProjectPostsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(GetProjectPostsResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(
-            db, optionalRequest.orElse(GetProjectPostsRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(GetProjectPostsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               var response = GetProjectPostsResponse.newBuilder();
@@ -629,14 +646,16 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/PostMessage")
   @ResponseBody
   public PostMessageResponse postMessage(
-      @Authenticated HttpUser user, @RequestBody Optional<PostMessageRequest> optionalRequest)
-      throws LogExecutionError {
+      @Authenticated HttpUser user,
+      @RequestBody Optional<PostMessageRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(PostMessageResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(
-            db, optionalRequest.orElse(PostMessageRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(PostMessageRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               ProjectPost post =
@@ -657,14 +676,16 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/DeletePost")
   @ResponseBody
   public DeletePostResponse deletePost(
-      @Authenticated HttpUser user, @RequestBody Optional<DeletePostRequest> optionalRequest)
-      throws LogExecutionError {
+      @Authenticated HttpUser user,
+      @RequestBody Optional<DeletePostRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
     if (user.isNotAuthorized()) {
       return user.returnForbidden(DeletePostResponse.getDefaultInstance());
     }
 
-    return LogUtils.executeAndLog(
-            db, optionalRequest.orElse(DeletePostRequest.getDefaultInstance()))
+    return httpExecutors
+        .start(optionalRequest.orElse(DeletePostRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               db.getProjectPostRepository().deleteById(request.getId());

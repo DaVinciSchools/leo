@@ -20,8 +20,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.davincischools.leo.database.utils.Database;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
@@ -47,15 +46,12 @@ public class OpenAiUtils {
 
   private final String openAiKey;
   private final String openAiUrl;
-  private final Database db;
 
   private OpenAiUtils(
       @Value("${" + OPENAI_API_KEY_PROP_NAME + ":}") String openAiKey,
-      @Value("${" + OPENAI_URL_PROP_NAME + ":}") String openAiUrl,
-      @Autowired Database db) {
+      @Value("${" + OPENAI_URL_PROP_NAME + ":}") String openAiUrl) {
     this.openAiKey = openAiKey;
     this.openAiUrl = openAiUrl;
-    this.db = db;
   }
 
   public Optional<String> getOpenAiKey() {
@@ -63,9 +59,10 @@ public class OpenAiUtils {
   }
 
   // Makes a call to OpenAI. If no key is available, returns an unmodified response.
-  public <T extends Builder<?>> T sendOpenAiRequest(Message request, T responseBuilder)
-      throws IOException {
-    return LogUtils.executeAndLog(db, request)
+  public <T extends Builder<?>> T sendOpenAiRequest(
+      Message request, T responseBuilder, HttpExecutors httpExecutors) throws IOException {
+    return httpExecutors
+        .start(request)
         .andThen(
             (unused, log) -> {
               // The OPENAI_API_KEY is required.
@@ -132,6 +129,7 @@ public class OpenAiUtils {
 
               return Bytes.concat(Objects.requireNonNull(streamedBytes).toArray(byte[][]::new));
             })
+        .logInitialResponse()
         .andThen(
             (bytes, log) -> {
               JsonFormat.parser()

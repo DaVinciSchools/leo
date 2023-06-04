@@ -5,12 +5,12 @@ import com.google.common.truth.extensions.proto.ProtoTruth;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.protos.pl_types.Project;
 import org.davincischools.leo.protos.project_management.GenerateProjectsResponse;
-import org.davincischools.leo.server.utils.LogUtils.LogOperations;
+import org.davincischools.leo.server.utils.http_executor.HttpExecutorLog;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 public class ProjectManagementServiceTest {
-  LogOperations mockLog = Mockito.mock(LogOperations.class);
+  HttpExecutorLog mockLog = Mockito.mock(HttpExecutorLog.class);
 
   @Test
   public void testProjectNumberColon() {
