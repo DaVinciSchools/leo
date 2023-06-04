@@ -317,7 +317,7 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
                               "HEADER: "
                                   + name
                                   + ": "
-                                  + Streams.stream(r.getHeaders(name)).sorted().toList())
+                                  + r.getHeaders(name).stream().sorted().toList())
                       .toList())
               .build());
     } else if (o instanceof byte[]) {
