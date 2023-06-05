@@ -53,6 +53,7 @@ public class ReactResourceController {
   @RequestMapping({
     // This needs to be kept in sync with ServerApplication.SecurityConfigurer.
     "/",
+    "/admin/**",
     "/docs/**",
     "/favicon.*",
     "/images/**",

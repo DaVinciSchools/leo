@@ -16,6 +16,7 @@ import {PrivacyPolicy} from './pages/docs/PrivacyPolicy';
 import {Overview} from './pages/projects/Overview/Overview';
 import {Logout} from './pages/users/Logout/Logout';
 import {AllProjects} from './pages/projects/AllProjects/AllProjects';
+import {Accounts} from './pages/admin/Accounts/Accounts';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -29,6 +30,16 @@ const router = createBrowserRouter([
   {
     path: '/users/logout.html',
     element: <Logout />,
+  },
+  {
+    path: '/admin',
+    element: <DefaultPageNav />,
+    children: [
+      {
+        path: 'accounts.html',
+        element: <Accounts />,
+      },
+    ],
   },
   {
     path: '/users',

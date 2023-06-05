@@ -32,13 +32,15 @@ message GetUsersDetailsRequest {
 
   optional int32 district_id = 1;
 
-  optional int32 beginIndex = 2;
-  optional int32 count = 3;
-  optional OrderBy order_by = 5;
+  // Zero-based page.
+  optional int32 page = 2;
+  optional int32 page_size = 3;
+  optional string search_text = 4;
 }
 
 message GetUsersDetailsResponse {
   repeated FullUserDetails users = 1;
+  optional int32 total_users = 2;
 }
 
 message GetUserDetailsRequest {

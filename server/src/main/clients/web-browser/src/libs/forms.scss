@@ -21,14 +21,29 @@
   color: color.$neutral-800;
 }
 
-.form-fields-single-line {
+.form-container {
   display: flex;
-  flex-flow: row nowrap;
-  gap: 0.5em;
-  justify-content: stretch;
+  flex-flow: column nowrap;
+  height: 100%;
+  width: 90%;
+  align-items: center;
+  margin: auto;
+  white-space: nowrap;
+  justify-content: flex-start;
 
   &> * {
-    flex-grow: 1;
+    width: 100%;
+  }
+
+  .form-fields-single-line {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 0.5em;
+    justify-content: stretch;
+
+    &> * {
+      flex-grow: 1;
+    }
   }
 }
 

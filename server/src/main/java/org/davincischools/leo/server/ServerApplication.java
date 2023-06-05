@@ -220,6 +220,7 @@ public class ServerApplication {
               config ->
                   config
                       .requestMatchers(
+                          new AntPathRequestMatcher("/admin/**", HttpMethod.GET.name()),
                           new AntPathRequestMatcher("/api/**", HttpMethod.POST.name()),
                           new AntPathRequestMatcher("/profiles/**", HttpMethod.GET.name()),
                           new AntPathRequestMatcher("/projects/**", HttpMethod.GET.name()),

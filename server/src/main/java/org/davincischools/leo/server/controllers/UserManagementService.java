@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.Optional;
@@ -32,6 +33,8 @@ import org.davincischools.leo.server.utils.http_user.Admin;
 import org.davincischools.leo.server.utils.http_user.Authenticated;
 import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,6 +47,7 @@ public class UserManagementService {
   private Pattern EMAIL_REQS = Pattern.compile("^[^@]+@[^@]+[.][^@]+$");
 
   @Autowired Database db;
+  @Autowired EntityManager entityManager;
 
   @PostMapping(value = "/api/protos/UserManagementService/GetUsersDetails")
   @ResponseBody
@@ -60,10 +64,23 @@ public class UserManagementService {
         .start(optionalRequest.orElse(GetUsersDetailsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              var response = GetUsersDetailsResponse.newBuilder();
+              var pagedUsers =
+                  db.getUserXRepository()
+                      .findAllByDistrictId(
+                          user.get().getDistrict().getId(),
+                          "%" + request.getSearchText().toLowerCase() + "%",
+                          PageRequest.of(
+                              request.getPage(),
+                              request.getPageSize(),
+                              Sort.by("lastName", "firstName", "emailAddress")));
 
-              // TODO: Populate users.
-
+              GetUsersDetailsResponse.Builder response =
+                  GetUsersDetailsResponse.newBuilder()
+                      .addAllUsers(
+                          pagedUsers.getContent().stream()
+                              .map(DataAccess::convertFullUserXToDetailsProto)
+                              .toList())
+                      .setTotalUsers((int) pagedUsers.getTotalElements());
               return response.build();
             })
         .finish();
@@ -118,6 +135,7 @@ public class UserManagementService {
         .start(optionalRequest.orElse(UpsertUserRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
+
               // Make sure a user is only updating their own profile.
               if (!user.isAdmin()) {
                 if (!request.getUser().hasId() || request.getUser().getId() != user.get().getId()) {
@@ -125,6 +143,12 @@ public class UserManagementService {
                 }
               }
 
+              // Lookup existing data and detach.
+              Optional<UserX> existingEmailUser =
+                  db.getUserXRepository().findByEmailAddress(request.getUser().getEmailAddress());
+              existingEmailUser.ifPresent(entityManager::detach);
+
+              // Prepare for modifications.
               var response = UpsertUserResponse.newBuilder();
               Optional<AdminX> saveAdminX = Optional.empty();
               Optional<Teacher> saveTeacher = Optional.empty();
@@ -144,7 +168,23 @@ public class UserManagementService {
                 if (!user.isAdmin()) {
                   return user.returnForbidden(UpsertUserResponse.getDefaultInstance());
                 }
-                userX = new UserX().setCreationTime(Instant.now());
+                userX =
+                    new UserX()
+                        .setCreationTime(Instant.now())
+                        .setDistrict(new District().setId(user.get().getDistrict().getId()))
+                        .setStudent(
+                            db.getStudentRepository()
+                                .save(
+                                    new Student()
+                                        .setCreationTime(Instant.now())
+                                        .setStudentId(-1)
+                                        .setGrade(-1)));
+              }
+
+              // If it's a new account, a password is required.
+              if (userX.getId() == null
+                  && !PASSWORD_REQS.matcher(request.getNewPassword()).matches()) {
+                return response.setError("Error: New accounts must have a password.").build();
               }
 
               // Set first and last names.
@@ -155,7 +195,7 @@ public class UserManagementService {
               }
               userX.setFirstName(firstName).setLastName(lastName);
 
-              // Change the password.
+              // Change / set the password.
               if (request.hasNewPassword()) {
                 // Check the existing password.
                 if (!user.isAdmin()) {
@@ -170,26 +210,23 @@ public class UserManagementService {
                 if (!request.getNewPassword().equals(request.getVerifyPassword())) {
                   return response.setError("Error: The passwords do not match.").build();
                 }
-                if (!PASSWORD_REQS.matcher(request.getNewPassword()).matches()) {
-                  return response.setError("Error: The password is invalid.").build();
+                if (!request.getNewPassword().isEmpty()) {
+                  if (!PASSWORD_REQS.matcher(request.getNewPassword()).matches()) {
+                    return response.setError("Error: The password is invalid.").build();
+                  }
+                  UserUtils.setPassword(userX, request.getNewPassword());
                 }
-                UserUtils.setPassword(userX, request.getNewPassword());
               }
 
               // Only admins can change the following properties.
               if (user.isAdmin()) {
-                // Update the district.
-                userX.setDistrict(new District().setId(request.getUser().getDistrictId()));
-
                 // Set the e-mail address.
                 String emailAddress = request.getUser().getEmailAddress().trim();
                 if (!EMAIL_REQS.matcher(emailAddress).matches()) {
                   return response.setError("Error: The e-mail address is invalid.").build();
                 }
-                Optional<UserX> emailUser =
-                    db.getUserXRepository().findByEmailAddress(emailAddress);
-                if (emailUser.isPresent()) {
-                  if (!emailUser.get().getId().equals(userX.getId())) {
+                if (existingEmailUser.isPresent()) {
+                  if (!existingEmailUser.get().getId().equals(userX.getId())) {
                     return response
                         .setError("Error: That e-mail address is already in use.")
                         .build();
@@ -197,86 +234,97 @@ public class UserManagementService {
                 }
                 userX.setEmailAddress(emailAddress);
 
-                // Update admin privileges.
-                if ((userX.getAdminX() != null) ^ request.getUser().getIsAdmin()) {
-                  if (request.getUser().getIsAdmin()) {
-                    saveAdminX =
-                        Optional.of(
-                            Optional.ofNullable(userX.getAdminX())
-                                .orElse(new AdminX().setCreationTime(Instant.now())));
-                    userX.setAdminX(saveAdminX.get());
-                  } else {
-                    removeAdminX = Optional.ofNullable(userX.getAdminX());
-                    userX.setAdminX(null);
-                  }
-                }
+                // These need to be fixed in that they break foreign-key constraints.
 
-                // Update teacher privileges.
-                if ((userX.getTeacher() != null) ^ request.getUser().getIsTeacher()) {
-                  if (request.getUser().getIsTeacher()) {
-                    saveTeacher =
-                        Optional.of(
-                            Optional.ofNullable(userX.getTeacher())
-                                .orElse(new Teacher().setCreationTime(Instant.now())));
-                    userX.setTeacher(saveTeacher.get());
-                  } else {
-                    // Remove all existing schools.
-                    if (userX.getTeacher() != null && userX.getTeacher().getId() != null) {
-                      db.getTeacherSchoolRepository()
-                          .keepSchoolsForTeacher(userX.getTeacher().getId(), ImmutableList.of());
-                    }
-                    removeTeacher = Optional.ofNullable(userX.getTeacher());
-                    userX.setTeacher(null);
-                  }
-                }
-                // Remove any extraneous schools.
-                if (userX.getTeacher() != null && request.hasSchoolIds()) {
-                  db.getTeacherSchoolRepository()
-                      .keepSchoolsForTeacher(
-                          userX.getTeacher().getId(), request.getSchoolIds().getSchoolIdsList());
-                }
-
-                // Update student privileges.
-                if ((userX.getStudent() != null) ^ request.getUser().getIsStudent()) {
-                  if (request.getUser().getIsStudent()) {
-                    saveStudent =
-                        Optional.of(
-                            Optional.ofNullable(userX.getStudent())
-                                .orElse(new Student().setCreationTime(Instant.now())));
-                    userX.setStudent(
-                        saveStudent
-                            .get()
-                            .setStudentId(request.hasStudentId() ? request.getStudentId() : null)
-                            .setGrade(
-                                request.hasStudentGrade() ? request.getStudentGrade() : null));
-                  } else {
-                    removeStudent = Optional.ofNullable(userX.getStudent());
-                    userX.setStudent(null);
-                  }
-                }
+                //// Update admin privileges.
+                // if ((userX.getAdminX() != null) ^ request.getUser().getIsAdmin()) {
+                // if (request.getUser().getIsAdmin()) {
+                // saveAdminX =
+                // Optional.of(
+                // Optional.ofNullable(userX.getAdminX())
+                //    .orElse(new AdminX().setCreationTime(Instant.now())));
+                // userX.setAdminX(saveAdminX.get());
+                // } else {
+                // removeAdminX = Optional.ofNullable(userX.getAdminX());
+                // userX.setAdminX(null);
+                // }
+                // }
+                //
+                //// Update teacher privileges.
+                // if ((userX.getTeacher() != null) ^ request.getUser().getIsTeacher()) {
+                // if (request.getUser().getIsTeacher()) {
+                // saveTeacher =
+                // Optional.of(
+                // Optional.ofNullable(userX.getTeacher())
+                //    .orElse(new Teacher().setCreationTime(Instant.now())));
+                // userX.setTeacher(saveTeacher.get());
+                // } else {
+                //// Remove all existing schools.
+                // if (userX.getTeacher() != null && userX.getTeacher().getId() != null) {
+                // db.getTeacherSchoolRepository()
+                // .keepSchoolsForTeacher(userX.getTeacher().getId(), ImmutableList.of());
+                // }
+                // removeTeacher = Optional.ofNullable(userX.getTeacher());
+                // userX.setTeacher(null);
+                // }
+                // }
+                //// Remove any extraneous schools.
+                // if (userX.getTeacher() != null && request.hasSchoolIds()) {
+                // db.getTeacherSchoolRepository()
+                // .keepSchoolsForTeacher(
+                // userX.getTeacher().getId(), request.getSchoolIds().getSchoolIdsList());
+                // }
+                //
+                //// Update student privileges.
+                // if ((userX.getStudent() != null) ^ request.getUser().getIsStudent()) {
+                // if (request.getUser().getIsStudent()) {
+                // saveStudent =
+                // Optional.of(
+                // Optional.ofNullable(userX.getStudent())
+                //    .orElse(new Student().setCreationTime(Instant.now())));
+                // userX.setStudent(
+                // saveStudent
+                // .get()
+                // .setStudentId(request.hasStudentId() ? request.getStudentId() : null)
+                // .setGrade(
+                //    request.hasStudentGrade() ? request.getStudentGrade() : null));
+                // } else {
+                // removeStudent = Optional.ofNullable(userX.getStudent());
+                // userX.setStudent(null);
+                // }
+                // }
               }
 
               // Save updates.
               saveAdminX.ifPresent(db.getAdminXRepository()::save);
               saveTeacher.ifPresent(db.getTeacherRepository()::save);
               saveStudent.ifPresent(db.getStudentRepository()::save);
-              // Add any missing schools.
-              if (userX.getTeacher() != null) {
-                for (int schoolId : request.getSchoolIds().getSchoolIdsList()) {
-                  db.getTeacherSchoolRepository()
-                      .saveTeacherSchool(
-                          userX.getTeacher(),
-                          new School().setCreationTime(Instant.now()).setId(schoolId));
-                }
-              }
+
+              // This needs to be fixed in that it breaks foreign key constraints.
+
+              //// Add any missing schools.
+              // if (userX.getTeacher() != null) {
+              // for (int schoolId : request.getSchoolIds().getSchoolIdsList()) {
+              // db.getTeacherSchoolRepository()
+              // .saveTeacherSchool(
+              // userX.getTeacher(),
+              // new School().setCreationTime(Instant.now()).setId(schoolId));
+              // }
+              // }
+
               db.getUserXRepository().save(userX);
               removeAdminX.ifPresent(db.getAdminXRepository()::delete);
               removeTeacher.ifPresent(db.getTeacherRepository()::delete);
               removeStudent.ifPresent(db.getStudentRepository()::delete);
 
-              getFullUserDetails(userX.getId(), response.getUserBuilder());
-
               return response.build();
+            })
+        .onError(
+            (error, log) -> {
+              return Optional.of(
+                  UpsertUserResponse.newBuilder()
+                      .setError(error.throwables().get(0).getMessage())
+                      .build());
             })
         .finish();
   }

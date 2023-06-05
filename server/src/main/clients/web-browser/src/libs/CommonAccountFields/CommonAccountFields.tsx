@@ -8,17 +8,29 @@ import {
   MailOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import {useEffect, useState} from 'react';
+import {useState} from 'react';
 import {getCurrentUser} from '../authentication';
 
 export function CommonAccountFields(props: {
   form: FormInstance;
-  fieldsLoaded: boolean;
+  disabled?: boolean;
 }) {
   const user = getCurrentUser() ?? {};
   const [showPassword, setShowPassword] = useState(false);
   const passwordReqs = RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,50}$');
   const passwordRules: FormRule[] = [
+    {
+      message: 'A password is required for new accounts.',
+      validator: (rule: FormRule, value: string) => {
+        if (
+          props.form.getFieldValue('id') == null &&
+          (value == null || value === '')
+        ) {
+          return Promise.reject();
+        }
+        return Promise.resolve();
+      },
+    },
     {
       message: 'The passwords do not match.',
       validator: () => {
@@ -33,7 +45,7 @@ export function CommonAccountFields(props: {
     },
     {
       message:
-        'Requires: 8+ characters, a number, a lower case letter, and an upper case letter.',
+        'Must have 8+ characters, a number, and a lower and upper case letter.',
       validator: (rule: FormRule, value: string) => {
         if (value != null && value.length > 0 && !passwordReqs.test(value)) {
           return Promise.reject();
@@ -43,12 +55,6 @@ export function CommonAccountFields(props: {
     },
   ];
 
-  useEffect(() => {
-    if (props.fieldsLoaded) {
-      props.form.validateFields();
-    }
-  });
-
   return (
     <>
       <div className="form-fields-single-line">
@@ -57,7 +63,7 @@ export function CommonAccountFields(props: {
             {
               required: true,
               whitespace: true,
-              message: 'Please enter your first name.',
+              message: 'Please enter a first name.',
             },
           ]}
           name="firstName"
@@ -67,6 +73,7 @@ export function CommonAccountFields(props: {
             maxLength={255}
             autoComplete="given-name"
             prefix={<UserOutlined />}
+            disabled={props.disabled}
           />
         </Form.Item>
         <Form.Item
@@ -74,7 +81,7 @@ export function CommonAccountFields(props: {
             {
               required: true,
               whitespace: true,
-              message: 'Please enter your last name.',
+              message: 'Please enter a last name.',
             },
           ]}
           name="lastName"
@@ -84,6 +91,7 @@ export function CommonAccountFields(props: {
             maxLength={255}
             autoComplete="family-name"
             prefix={<UserOutlined />}
+            disabled={props.disabled}
           />
         </Form.Item>
       </div>
@@ -92,7 +100,7 @@ export function CommonAccountFields(props: {
           {
             required: true,
             whitespace: true,
-            message: 'Please enter your email address.',
+            message: 'Please enter an email address.',
           },
           {
             type: 'email',
@@ -106,7 +114,7 @@ export function CommonAccountFields(props: {
           maxLength={255}
           autoComplete="email"
           prefix={<MailOutlined />}
-          disabled={!user.isAdmin}
+          disabled={!user.isAdmin || props.disabled}
         />
       </Form.Item>
       <Form.Item
@@ -114,7 +122,7 @@ export function CommonAccountFields(props: {
         style={{display: user.isAdmin ? 'none' : undefined}}
         rules={[
           {
-            message: 'The current password is required to update the password.',
+            message: 'The current password is required for password updates.',
             validator: () => {
               if (
                 !user.isAdmin &&
@@ -135,6 +143,7 @@ export function CommonAccountFields(props: {
           maxLength={255}
           type={showPassword ? 'text' : 'password'}
           autoComplete="current-password"
+          disabled={props.disabled}
           prefix={<LockOutlined />}
           suffix={
             showPassword ? (
@@ -155,6 +164,7 @@ export function CommonAccountFields(props: {
           maxLength={255}
           type={showPassword ? 'text' : 'password'}
           autoComplete="new-password"
+          disabled={props.disabled}
           prefix={<LockOutlined />}
           suffix={
             showPassword ? (
@@ -175,6 +185,7 @@ export function CommonAccountFields(props: {
           maxLength={255}
           type={showPassword ? 'text' : 'password'}
           autoComplete="new-password"
+          disabled={props.disabled}
           prefix={<LockOutlined />}
           suffix={
             showPassword ? (

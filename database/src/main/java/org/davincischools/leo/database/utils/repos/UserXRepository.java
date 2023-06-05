@@ -3,6 +3,8 @@ package org.davincischools.leo.database.utils.repos;
 import java.util.EnumSet;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.UserX;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -33,6 +35,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
 
   @Query(
       "SELECT u FROM UserX u"
+          + " LEFT JOIN FETCH u.district"
           + " LEFT JOIN FETCH u.adminX"
           + " LEFT JOIN FETCH u.teacher"
           + " LEFT JOIN FETCH u.student"
@@ -41,6 +44,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
 
   @Query(
       "SELECT u FROM UserX u"
+          + " LEFT JOIN FETCH u.district"
           + " LEFT JOIN FETCH u.adminX"
           + " LEFT JOIN FETCH u.teacher"
           + " LEFT JOIN FETCH u.student"
@@ -49,6 +53,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
 
   @Query(
       "SELECT u FROM UserX u"
+          + " LEFT JOIN FETCH u.district"
           + " LEFT JOIN FETCH u.adminX"
           + " LEFT JOIN FETCH u.teacher"
           + " LEFT JOIN FETCH u.student"
@@ -57,9 +62,26 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
 
   @Query(
       "SELECT u FROM UserX u"
+          + " LEFT JOIN FETCH u.district"
           + " LEFT JOIN FETCH u.adminX"
           + " LEFT JOIN FETCH u.teacher"
           + " LEFT JOIN FETCH u.student"
           + " WHERE u.district.id = (:districtId)")
   Iterable<UserX> findAllByDistrictId(@Param("districtId") int districtId);
+
+  @Query(
+      "SELECT u FROM UserX u"
+          + " LEFT JOIN FETCH u.district"
+          + " LEFT JOIN FETCH u.adminX"
+          + " LEFT JOIN FETCH u.teacher"
+          + " LEFT JOIN FETCH u.student"
+          + " WHERE u.district.id = (:districtId)"
+          + " AND ("
+          + "    LOWER(u.firstName) LIKE (:searchText) "
+          + " OR LOWER(u.lastName) LIKE (:searchText) "
+          + " OR LOWER(u.emailAddress) LIKE (:searchText))")
+  Page<UserX> findAllByDistrictId(
+      @Param("districtId") int districtId,
+      @Param("searchText") String searchText,
+      Pageable pageable);
 }

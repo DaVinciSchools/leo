@@ -71,7 +71,7 @@ export function MyAccount() {
         </div>
         <div className="form-container">
           <Form form={form} onFinish={finish}>
-            <CommonAccountFields form={form} fieldsLoaded={userX != null} />
+            <CommonAccountFields form={form} />
             <Form.Item>
               <Button type="primary" htmlType="submit">
                 Save

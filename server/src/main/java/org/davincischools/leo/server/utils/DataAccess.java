@@ -16,6 +16,7 @@ import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
+import org.davincischools.leo.protos.user_management.FullUserDetails;
 import org.davincischools.leo.server.utils.http_user.HttpUser;
 
 public class DataAccess {
@@ -97,6 +98,16 @@ public class DataAccess {
             .setIsTeacher(HttpUser.isTeacher(user))
             .setIsStudent(HttpUser.isStudent(user));
     return userProto.build();
+  }
+
+  public static FullUserDetails convertFullUserXToDetailsProto(UserX userX) {
+    var proto = FullUserDetails.newBuilder().setUser(convertFullUserXToProto(userX));
+    if (userX.getStudent() != null) {
+      proto
+          .setStudentId(userX.getStudent().getStudentId())
+          .setStudentGrade(userX.getStudent().getGrade());
+    }
+    return proto.build();
   }
 
   public static List<org.davincischools.leo.protos.pl_types.User> getProtoFullUserXsByDistrictId(

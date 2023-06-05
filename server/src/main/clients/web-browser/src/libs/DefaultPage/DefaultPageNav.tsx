@@ -18,11 +18,11 @@ const {Header, Sider, Content} = Layout;
 
 enum MenuKeys {
   ADMIN,
+  ACCOUNTS,
   ALL_PROJECTS,
   DASHBOARD,
   EDIT_DISTRICTS,
   EDIT_SCHOOLS,
-  EDIT_USERS,
   HOME,
   IKIGAI_BUILDER,
   INTERNSHIPS,
@@ -101,9 +101,12 @@ export function DefaultPageNav() {
                   icon={<SettingOutlined />}
                   title="Admin"
                   style={{
-                    display: user != null && user.isAdmin ? 'block' : 'none',
+                    display: user.isAdmin ? 'block' : 'none',
                   }}
                 >
+                  <Menu.Item key={MenuKeys.ACCOUNTS}>
+                    <Link to="/admin/accounts.html">Accounts</Link>
+                  </Menu.Item>
                   <Menu.Item key={MenuKeys.EDIT_DISTRICTS}>
                     <Link to="/profiles/edit-districts.html">
                       Edit Districts
