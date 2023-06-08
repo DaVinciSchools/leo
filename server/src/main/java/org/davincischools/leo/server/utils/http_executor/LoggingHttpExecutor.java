@@ -200,6 +200,10 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
   @CheckReturnValue
   @SuppressWarnings("unchecked")
   public I finish(ErrorConsumer<R, I> errorConsumer) throws HttpExecutorException {
+    if (log.getFinalResponseTime() == null) {
+      log.setFinalResponseTime(lastSuccessfulInputTime);
+    }
+
     if (!throwables.isEmpty()) {
       try {
         if (lastSuccessfulInput != null) {
@@ -249,7 +253,6 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
         log.setFinalResponseType("null");
       }
       log.setFinalResponse(ioToString(lastSuccessfulInput));
-      log.setFinalResponseTime(lastSuccessfulInputTime);
 
       if (Strings.isNullOrEmpty(log.getStatus())) {
         log.setStatus(LogRepository.Status.SUCCESS.name());
