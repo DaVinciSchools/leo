@@ -1,8 +1,6 @@
 package org.davincischools.leo.server.controllers;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import com.google.common.base.Joiner;
+import com.fasterxml.jackson.datatype.jdk8.WrappedIOException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
@@ -18,12 +16,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.commons.text.StringEscapeUtils;
 import org.davincischools.leo.database.daos.Assignment;
-import org.davincischools.leo.database.daos.KnowledgeAndSkill;
-import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectInput;
@@ -32,13 +26,9 @@ import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
-import org.davincischools.leo.database.utils.repos.LogRepository.Status;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.ProjectDefinitionInputCategories;
 import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
-import org.davincischools.leo.protos.open_ai.OpenAiMessage;
-import org.davincischools.leo.protos.open_ai.OpenAiRequest;
-import org.davincischools.leo.protos.open_ai.OpenAiResponse;
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.project_management.DeletePostRequest;
@@ -59,10 +49,10 @@ import org.davincischools.leo.protos.project_management.PostMessageRequest;
 import org.davincischools.leo.protos.project_management.PostMessageResponse;
 import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
 import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
+import org.davincischools.leo.server.controllers.project_generators.OpenAi3V1ProjectGenerator;
+import org.davincischools.leo.server.controllers.project_generators.OpenAi3V2ProjectGenerator;
 import org.davincischools.leo.server.utils.DataAccess;
-import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
-import org.davincischools.leo.server.utils.http_executor.HttpExecutorLog;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user.Authenticated;
 import org.davincischools.leo.server.utils.http_user.HttpUser;
@@ -75,39 +65,16 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class ProjectManagementService {
 
-  private static final Joiner COMMA_AND_JOINER = Joiner.on(", and ");
-
-  private static final Pattern REMOVE_FLUFF =
-      Pattern.compile(
-          // Match newlines with the '.' character.
-          "(?s)"
-              // Match the start of the line.
-              + "^"
-              // A number, e.g., "1: " or "1. "
-              + "([0-9]+[:.])?\\s*"
-              // A label, e.g., "Title - " or "Full Description: "
-              + "(([Pp]roject\\s*[0-9]*|[Tt]itle|[Ss]hort|[Ff]ull|[Ss]ummary)?\\s*"
-              + "([Dd]escription)?)?\\s*"
-              // The end of the label, e.g., the ":" or " - " from above.
-              + "(\\.|:| -)?\\s*" //
-              // A second number for, e.g., "Project: 1. "
-              + "([0-9]+[:.])?\\s*" //
-              // A title after the label, e.g., "Project 1 - Title: "
-              + "(Title:)?\\s*" //
-              // The main text, either quoted or not. Quotes are removed.
-              + "([\"“”](?<quotedText>.*)[\"“”]|(?<unquotedText>.*))"
-              // Match the end of the line.
-              + "$");
-  private static final ImmutableList<String> TEXT_GROUPS =
-      ImmutableList.of("quotedText", "unquotedText");
-
-  // Do NOT have any special Regex characters in these delimiters.
-  static final String START_OF_PROJECT = "~~prj:ProjectLeoDelimiter~~";
-  static final String END_OF_TITLE = "~~title:ProjectLeoDelimiter~~";
-  static final String END_OF_SHORT = "~~short:ProjectLeoDelimiter~~";
+  public record GenerateProjectsState(
+      GenerateProjectsRequest request,
+      ProjectDefinitionInputCategories definition,
+      ProjectInput input,
+      List<ImmutableList<ProjectInputValue>> values,
+      GenerateProjectsResponse.Builder response) {}
 
   @Autowired Database db;
-  @Autowired OpenAiUtils openAiUtils;
+  @Autowired OpenAi3V1ProjectGenerator openAi3V1ProjectGenerator;
+  @Autowired OpenAi3V2ProjectGenerator openAi3V2ProjectGenerator;
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetEks")
   @ResponseBody
@@ -163,13 +130,6 @@ public class ProjectManagementService {
         .finish();
   }
 
-  public record GenerateProjectsState(
-      GenerateProjectsRequest request,
-      ProjectDefinitionInputCategories definition,
-      ProjectInput input,
-      List<ImmutableList<ProjectInputValue>> values,
-      GenerateProjectsResponse.Builder response) {}
-
   @PostMapping(value = "/api/protos/ProjectManagementService/GenerateProjects")
   @ResponseBody
   public GenerateProjectsResponse generateProjects(
@@ -185,6 +145,7 @@ public class ProjectManagementService {
         .start(optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
+              // Generate initial GenerateProjectsState state with definition.
               ProjectDefinitionInputCategories definition =
                   db.getProjectDefinitionRepository()
                       .getProjectDefinition(request.getDefinition().getId())
@@ -214,6 +175,7 @@ public class ProjectManagementService {
             })
         .andThen(
             (state, log) -> {
+              // Save project values and input.
               if (state.definition.inputCategories().size()
                   != state.request.getDefinition().getInputsList().size()) {
                 throw new IllegalArgumentException(
@@ -277,87 +239,21 @@ public class ProjectManagementService {
 
               return state;
             })
-        .retryNextStep(3, 1000)
         .andThen(
             (state, log) -> {
-              // Query OpenAI for projects.
-              StringBuilder sb = new StringBuilder();
-              sb.append(
-                  "You are a senior student who wants to spend 60 hours to build a project. ");
-              for (int i = 0; i < state.definition.inputCategories().size(); ++i) {
-                ProjectInputCategory category = state.definition.inputCategories().get(i);
-                ImmutableList<ProjectInputValue> values = state.values.get(i);
-
-                sb.append(category.getQueryPrefix()).append(' ');
-                switch (ValueType.valueOf(category.getValueType())) {
-                  case FREE_TEXT -> sb.append(
-                      COMMA_AND_JOINER.join(
-                          values.stream()
-                              .map(ProjectInputValue::getFreeTextValue)
-                              .map(ProjectManagementService::quoteAndEscape)
-                              .toList()));
-                  case EKS, XQ_COMPETENCY -> sb.append(
-                      COMMA_AND_JOINER.join(
-                          values.stream()
-                              .map(ProjectInputValue::getKnowledgeAndSkillValue)
-                              .map(KnowledgeAndSkill::getShortDescr)
-                              .map(ProjectManagementService::quoteAndEscape)
-                              .toList()));
-                  case MOTIVATION -> sb.append(
-                      COMMA_AND_JOINER.join(
-                          values.stream()
-                              .map(ProjectInputValue::getMotivationValue)
-                              .map(Motivation::getShortDescr)
-                              .map(ProjectManagementService::quoteAndEscape)
-                              .toList()));
-                }
-                sb.append(". ");
-              }
-
-              OpenAiRequest aiRequest =
-                  OpenAiRequest.newBuilder()
-                      .setModel(OpenAiUtils.GPT_3_5_TURBO_MODEL)
-                      .addMessages(
-                          OpenAiMessage.newBuilder().setRole("system").setContent(sb.toString()))
-                      .addMessages(
-                          OpenAiMessage.newBuilder()
-                              .setRole("user")
-                              .setContent(
-                                  String.format(
-                                      // Notes:
-                                      //
-                                      // "then a declarative summary of the project in one
-                                      // sentence" caused the short description to be skipped.
-                                      //
-                                      // Ending the block with the project delimiter caused it
-                                      // to be included prematurely, before the full description
-                                      // was finished generating.
-                                      "Generate 5 projects that would fit the criteria. For each"
-                                          + " project, return: 1) the text \"%s\", 2) then a"
-                                          + " title, 3) then the text \"%s\", 4) then a short"
-                                          + " declarative command statement that summarizes the"
-                                          + " project, 5) then the text \"%s\", 6) then a detailed"
-                                          + " description of the project followed by major steps"
-                                          + " to complete it. Do not return any text before the"
-                                          + " first project and do not format the output.",
-                                      StringEscapeUtils.escapeJava(START_OF_PROJECT),
-                                      StringEscapeUtils.escapeJava(END_OF_TITLE),
-                                      StringEscapeUtils.escapeJava(END_OF_SHORT))))
-                      .build();
-
-              OpenAiResponse aiResponse =
-                  openAiUtils
-                      .sendOpenAiRequest(aiRequest, OpenAiResponse.newBuilder(), httpExecutors)
-                      .build();
-
               List<Project> projects =
-                  extractProjects(
-                      log,
-                      state.response,
-                      state.input,
-                      aiResponse.getChoices(0).getMessage().getContent());
-              db.getProjectRepository().saveAll(projects);
-              projects.forEach(log::addProject);
+                  ImmutableList.of(openAi3V1ProjectGenerator, openAi3V2ProjectGenerator).stream()
+                      .parallel()
+                      .map(
+                          generator -> {
+                            try {
+                              return generator.generateAndSaveProjects(state, httpExecutors, 3);
+                            } catch (HttpExecutorException e) {
+                              throw new WrappedIOException(e);
+                            }
+                          })
+                      .flatMap(Collection::stream)
+                      .toList();
 
               db.getProjectInputRepository().save(state.input.setState(State.COMPLETED.name()));
 
@@ -382,54 +278,8 @@ public class ProjectManagementService {
     return values;
   }
 
-  private static String quoteAndEscape(String s) {
+  public static String quoteAndEscape(String s) {
     return "\"" + StringEscapeUtils.escapeJava(s) + "\"";
-  }
-
-  static String normalizeAndCheckString(String input) {
-    input = input.trim().replaceAll("\\n\\n", "\n");
-    Matcher fluffMatcher = REMOVE_FLUFF.matcher(input);
-    if (fluffMatcher.matches()) {
-      for (String groupName : TEXT_GROUPS) {
-        String groupText = fluffMatcher.group(groupName);
-        if (groupText != null) {
-          input = groupText;
-          break;
-        }
-      }
-    }
-    return input.trim().replaceAll("\\n\\n", "\n");
-  }
-
-  static List<Project> extractProjects(
-      HttpExecutorLog log,
-      GenerateProjectsResponse.Builder response,
-      ProjectInput projectInput,
-      String aiResponse) {
-    List<Project> projects = new ArrayList<>();
-    for (String projectText : aiResponse.split(START_OF_PROJECT)) {
-      try {
-        if (normalizeAndCheckString(projectText).isEmpty()) {
-          continue;
-        }
-        String[] pieces_of_information =
-            projectText.trim().split(END_OF_TITLE + "|" + END_OF_SHORT);
-        checkArgument(pieces_of_information.length == 3);
-
-        projects.add(
-            new Project()
-                .setCreationTime(Instant.now())
-                .setProjectInput(projectInput)
-                .setName(normalizeAndCheckString(pieces_of_information[0]))
-                .setShortDescr(normalizeAndCheckString(pieces_of_information[1]))
-                .setLongDescr(normalizeAndCheckString(pieces_of_information[2])));
-        response.addProjects(DataAccess.convertProjectToProto(projects.get(projects.size() - 1)));
-      } catch (Throwable e) {
-        log.setStatus(Status.ERROR);
-        log.addNote("Could not parse project text because \"%s\": %s", e.getMessage(), projectText);
-      }
-    }
-    return projects;
   }
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjects")
