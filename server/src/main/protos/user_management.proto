@@ -8,7 +8,7 @@ option java_package = "org.davincischools.leo.protos.user_management";
 package user_management;
 
 service UserManagementService {
-  rpc GetUsersDetails (GetUsersDetailsRequest) returns (GetUsersDetailsResponse) {}
+  rpc GetPagedUsersDetails (GetPagedUsersDetailsRequest) returns (GetPagedUsersDetailsResponse) {}
   rpc GetUserDetails (GetUserDetailsRequest) returns (GetUserDetailsResponse) {}
   rpc UpsertUser (UpsertUserRequest) returns (UpsertUserResponse) {}
   rpc RemoveUser (RemoveUserRequest) returns (RemoveUserResponse) {}
@@ -23,7 +23,7 @@ message FullUserDetails {
   optional int32 student_grade = 4;
 }
 
-message GetUsersDetailsRequest {
+message GetPagedUsersDetailsRequest {
   enum OrderBy {
     UNSET = 0;
     EMAIL = 1;
@@ -38,7 +38,7 @@ message GetUsersDetailsRequest {
   optional string search_text = 4;
 }
 
-message GetUsersDetailsResponse {
+message GetPagedUsersDetailsResponse {
   repeated FullUserDetails users = 1;
   optional int32 total_users = 2;
 }

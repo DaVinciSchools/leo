@@ -42,7 +42,7 @@ export function Accounts() {
 
   useEffect(() => {
     userService
-      .getUsersDetails({
+      .getPagedUsersDetails({
         districtId: user.districtId,
         page: page - 1,
         pageSize: pageSize,

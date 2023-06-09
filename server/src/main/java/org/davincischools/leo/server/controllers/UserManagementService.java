@@ -18,10 +18,10 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserUtils;
 import org.davincischools.leo.protos.user_management.FullUserDetails;
+import org.davincischools.leo.protos.user_management.GetPagedUsersDetailsRequest;
+import org.davincischools.leo.protos.user_management.GetPagedUsersDetailsResponse;
 import org.davincischools.leo.protos.user_management.GetUserDetailsRequest;
 import org.davincischools.leo.protos.user_management.GetUserDetailsResponse;
-import org.davincischools.leo.protos.user_management.GetUsersDetailsRequest;
-import org.davincischools.leo.protos.user_management.GetUsersDetailsResponse;
 import org.davincischools.leo.protos.user_management.RemoveUserRequest;
 import org.davincischools.leo.protos.user_management.RemoveUserResponse;
 import org.davincischools.leo.protos.user_management.UpsertUserRequest;
@@ -49,19 +49,19 @@ public class UserManagementService {
   @Autowired Database db;
   @Autowired EntityManager entityManager;
 
-  @PostMapping(value = "/api/protos/UserManagementService/GetUsersDetails")
+  @PostMapping(value = "/api/protos/UserManagementService/GetPagedUsersDetails")
   @ResponseBody
-  public GetUsersDetailsResponse getUsersDetails(
+  public GetPagedUsersDetailsResponse getPagedUsersDetails(
       @Admin HttpUser user,
-      @RequestBody Optional<GetUsersDetailsRequest> optionalRequest,
+      @RequestBody Optional<GetPagedUsersDetailsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
     if (user.isNotAuthorized()) {
-      return user.returnForbidden(GetUsersDetailsResponse.getDefaultInstance());
+      return user.returnForbidden(GetPagedUsersDetailsResponse.getDefaultInstance());
     }
 
     return httpExecutors
-        .start(optionalRequest.orElse(GetUsersDetailsRequest.getDefaultInstance()))
+        .start(optionalRequest.orElse(GetPagedUsersDetailsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               var pagedUsers =
@@ -74,8 +74,8 @@ public class UserManagementService {
                               request.getPageSize(),
                               Sort.by("lastName", "firstName", "emailAddress")));
 
-              GetUsersDetailsResponse.Builder response =
-                  GetUsersDetailsResponse.newBuilder()
+              GetPagedUsersDetailsResponse.Builder response =
+                  GetPagedUsersDetailsResponse.newBuilder()
                       .addAllUsers(
                           pagedUsers.getContent().stream()
                               .map(DataAccess::convertFullUserXToDetailsProto)
