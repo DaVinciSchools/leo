@@ -20,7 +20,7 @@ public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndS
 
   @Query("SELECT ks FROM KnowledgeAndSkill ks WHERE ks.id IN (:id) AND ks.type = (:type)")
   Iterable<KnowledgeAndSkill> findAllByIdsAndType(
-      @Param("id") Iterable ids, @Param("type") String type);
+      @Param("id") Iterable<Integer> ids, @Param("type") String type);
 
   @Query(
       "SELECT ks FROM KnowledgeAndSkill ks"
