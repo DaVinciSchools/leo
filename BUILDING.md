@@ -156,17 +156,15 @@ java -jar server/target/project-leo-server-*.jar --react_port=3000
 
 ``` shell
 # Run the React server from the root project folder.
-# Note: You will need to close http://localhost:3000, which the React server
-#       automatically opens.
 cd server/src/main/clients/web-browser
-npm start
+BROWSER=none npm start
 ```
 
 > <picture>
 >   <source media="(prefers-color-scheme: light)" srcset="https://github.com/Mqxx/GitHub-Markdown/blob/main/blockquotes/badge/light-theme/warning.svg">
 >   <img alt="Warning" src="https://github.com/Mqxx/GitHub-Markdown/blob/main/blockquotes/badge/dark-theme/warning.svg">
 > </picture><br>
-> Starting the React server will open a browser to http://localhost:3000. This
+> Starting the React server may open a browser to http://localhost:3000. This
 > does NOT go through the Spring server and will NOT work. You need to go to
 > port 8080 on localhost.
 
