@@ -103,9 +103,12 @@ public class DataAccess {
   public static FullUserDetails convertFullUserXToDetailsProto(UserX userX) {
     var proto = FullUserDetails.newBuilder().setUser(convertFullUserXToProto(userX));
     if (userX.getStudent() != null) {
-      proto
-          .setStudentId(userX.getStudent().getStudentId())
-          .setStudentGrade(userX.getStudent().getGrade());
+      if (userX.getStudent().getStudentId() != null) {
+        proto.setStudentId(userX.getStudent().getStudentId());
+      }
+      if (userX.getStudent().getGrade() != null) {
+        proto.setStudentGrade(userX.getStudent().getGrade());
+      }
     }
     return proto.build();
   }

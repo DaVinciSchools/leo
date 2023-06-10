@@ -51,7 +51,7 @@ public class Student implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_STUDENTID_NAME, nullable = false)
+  @Column(name = COLUMN_STUDENTID_NAME)
   public Integer getStudentId() {
     return studentId;
   }

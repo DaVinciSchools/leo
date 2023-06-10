@@ -123,7 +123,7 @@ public class AdminUtils {
       db.addAdminXPermission(admin);
 
       // TODO: Later we don't want to do this. But, for development for now...
-      db.addStudentPermission(userX -> userX.getStudent().setStudentId(-1).setGrade(-1), admin);
+      db.addStudentPermission(userX -> userX.getStudent(), admin);
       db.addTeacherPermission(admin);
       for (School school : db.getSchoolRepository().findAll()) {
         db.addTeachersToSchool(school, admin.getTeacher());
@@ -201,8 +201,7 @@ public class AdminUtils {
                             emailAddress,
                             userX -> userX.setFirstName(firstName).setLastName(lastName));
                     db.addTeacherPermission(teacher);
-                    db.addStudentPermission(
-                        userX -> userX.getStudent().setStudentId(-1).setGrade(-1), teacher);
+                    db.addStudentPermission(userX -> userX.getStudent(), teacher);
 
                     School school = db.createSchool(district, schoolNickname);
                     db.addTeachersToSchool(school, teacher.getTeacher());
