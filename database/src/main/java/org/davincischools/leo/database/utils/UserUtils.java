@@ -13,6 +13,9 @@ public class UserUtils {
   }
 
   public static boolean checkPassword(UserX user, String password) {
+    if (user.getEncodedPassword() == null) {
+      return false;
+    }
     return PasswordEncoderFactories.createDelegatingPasswordEncoder()
         .matches(password, user.getEncodedPassword());
   }
