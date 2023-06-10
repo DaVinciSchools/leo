@@ -51,6 +51,8 @@ message GetUserDetailsResponse {
   optional FullUserDetails user = 1;
 }
 
+// Field names in this message and that of the pl_types.User message must
+// be unique. The Accounts.tsx form merges them together.
 message UpsertUserRequest {
   optional pl_types.User user = 1;
 

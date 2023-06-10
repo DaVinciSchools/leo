@@ -67,6 +67,9 @@ message School {
   optional string address = 4 ;
 }
 
+// Field names in this message and that of the
+// user_management.UpsertUserRequest message must be unique. The
+// Accounts.tsx form merges them together.
 message User {
   optional int32 id = 1;
   optional int32 district_id = 2;
