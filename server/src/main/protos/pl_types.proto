@@ -63,8 +63,9 @@ message Project {
 message School {
   optional int32 id = 1;
   optional int32 district_id = 2;
-  optional string name = 3 ;
-  optional string address = 4 ;
+  optional string name = 3;
+  optional string nickname = 4;
+  optional string address = 5;
 }
 
 // Field names in this message and that of the

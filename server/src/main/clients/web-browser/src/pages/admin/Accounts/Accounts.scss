@@ -1,3 +1,15 @@
-@import '../../../libs/DefaultPage/DefaultPage';
-@import '../../../libs/color';
-@import '../../../libs/forms';
+@use '../../../libs/DefaultPage/DefaultPage';
+@use '../../../libs/color';
+@use '../../../libs/forms';
+
+.form-subsection {
+  margin-left: 5em;
+}
+
+.edit-icon {
+  color: color.$primary-800;
+}
+
+.clear-icon {
+  color: color.$primary-800;
+}

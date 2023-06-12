@@ -9,12 +9,27 @@ package school_management;
 
 service SchoolManagementService {
   rpc GetSchools (GetSchoolsRequest) returns (SchoolInformationResponse) {}
+  rpc GetPagedSchools (GetPagedSchoolsRequest) returns (GetPagedSchoolsResponse) {}
   rpc UpsertSchool (UpsertSchoolRequest) returns (SchoolInformationResponse) {}
   rpc RemoveSchool (RemoveSchoolRequest) returns (SchoolInformationResponse) {}
 }
 
 message GetSchoolsRequest {
   optional int32 district_id = 1;
+}
+
+message GetPagedSchoolsRequest {
+  optional int32 district_id = 1;
+
+  // Zero-based page.
+  optional int32 page = 2;
+  optional int32 page_size = 3;
+  optional string search_text = 4;
+}
+
+message GetPagedSchoolsResponse {
+  repeated pl_types.School schools = 1;
+  optional int32 total_schools = 2;
 }
 
 message UpsertSchoolRequest {

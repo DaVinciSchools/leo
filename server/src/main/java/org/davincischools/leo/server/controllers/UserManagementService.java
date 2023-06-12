@@ -2,6 +2,7 @@ package org.davincischools.leo.server.controllers;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
 import jakarta.persistence.EntityManager;
@@ -150,12 +151,6 @@ public class UserManagementService {
 
               // Prepare for modifications.
               var response = UpsertUserResponse.newBuilder();
-              Optional<AdminX> saveAdminX = Optional.empty();
-              Optional<Teacher> saveTeacher = Optional.empty();
-              Optional<Student> saveStudent = Optional.empty();
-              Optional<AdminX> removeAdminX = Optional.empty();
-              Optional<Teacher> removeTeacher = Optional.empty();
-              Optional<Student> removeStudent = Optional.empty();
 
               // Possibly load the existing user.
               UserX userX =
@@ -171,29 +166,8 @@ public class UserManagementService {
                 userX =
                     new UserX()
                         .setCreationTime(Instant.now())
-                        .setDistrict(new District().setId(user.get().getDistrict().getId()))
-                        .setStudent(
-                            db.getStudentRepository()
-                                .save(
-                                    new Student()
-                                        .setCreationTime(Instant.now())
-                                        .setStudentId(-1)
-                                        .setGrade(-1)));
+                        .setDistrict(new District().setId(user.get().getDistrict().getId()));
               }
-
-              // If it's a new account, a password is required.
-              if (userX.getId() == null
-                  && !PASSWORD_REQS.matcher(request.getNewPassword()).matches()) {
-                return response.setError("Error: New accounts must have a password.").build();
-              }
-
-              // Set first and last names.
-              String firstName = request.getUser().getFirstName().trim();
-              String lastName = request.getUser().getLastName().trim();
-              if (firstName.isEmpty() || lastName.isEmpty()) {
-                return response.setError("Error: Both first and last names are required.").build();
-              }
-              userX.setFirstName(firstName).setLastName(lastName);
 
               // Change / set the password.
               if (request.hasNewPassword()) {
@@ -217,6 +191,17 @@ public class UserManagementService {
                   UserUtils.setPassword(userX, request.getNewPassword());
                 }
               }
+              if (Strings.isNullOrEmpty(userX.getEncodedPassword())) {
+                return response.setError("Error: New accounts must have a password.").build();
+              }
+
+              // Set first and last names.
+              String firstName = request.getUser().getFirstName().trim();
+              String lastName = request.getUser().getLastName().trim();
+              if (firstName.isEmpty() || lastName.isEmpty()) {
+                return response.setError("Error: Both first and last names are required.").build();
+              }
+              userX.setFirstName(firstName).setLastName(lastName);
 
               // Only admins can change the following properties.
               if (user.isAdmin()) {
@@ -234,22 +219,16 @@ public class UserManagementService {
                 }
                 userX.setEmailAddress(emailAddress);
 
-                // These need to be fixed in that they break foreign-key constraints.
+                // Update admin privileges.
+                if ((userX.getAdminX() != null) ^ request.getUser().getIsAdmin()) {
+                  if (request.getUser().getIsAdmin()) {
+                    userX.setAdminX(
+                        db.getAdminXRepository().save(new AdminX().setCreationTime(Instant.now())));
+                  } else {
+                    userX.setAdminX(null);
+                  }
+                }
 
-                //// Update admin privileges.
-                // if ((userX.getAdminX() != null) ^ request.getUser().getIsAdmin()) {
-                // if (request.getUser().getIsAdmin()) {
-                // saveAdminX =
-                // Optional.of(
-                // Optional.ofNullable(userX.getAdminX())
-                //    .orElse(new AdminX().setCreationTime(Instant.now())));
-                // userX.setAdminX(saveAdminX.get());
-                // } else {
-                // removeAdminX = Optional.ofNullable(userX.getAdminX());
-                // userX.setAdminX(null);
-                // }
-                // }
-                //
                 //// Update teacher privileges.
                 // if ((userX.getTeacher() != null) ^ request.getUser().getIsTeacher()) {
                 // if (request.getUser().getIsTeacher()) {
@@ -274,33 +253,24 @@ public class UserManagementService {
                 // .keepSchoolsForTeacher(
                 // userX.getTeacher().getId(), request.getSchoolIds().getSchoolIdsList());
                 // }
-                //
-                //// Update student privileges.
-                // if ((userX.getStudent() != null) ^ request.getUser().getIsStudent()) {
-                // if (request.getUser().getIsStudent()) {
-                // saveStudent =
-                // Optional.of(
-                // Optional.ofNullable(userX.getStudent())
-                //    .orElse(new Student().setCreationTime(Instant.now())));
-                // userX.setStudent(
-                // saveStudent
-                // .get()
-                // .setStudentId(request.hasStudentId() ? request.getStudentId() : null)
-                // .setGrade(
-                //    request.hasStudentGrade() ? request.getStudentGrade() : null));
-                // } else {
-                // removeStudent = Optional.ofNullable(userX.getStudent());
-                // userX.setStudent(null);
-                // }
-                // }
+
+                // Update student privileges.
+                if ((userX.getStudent() != null) ^ request.getUser().getIsStudent()) {
+                  if (request.getUser().getIsStudent()) {
+                    userX.setStudent(
+                        db.getStudentRepository()
+                            .save(new Student().setCreationTime(Instant.now())));
+                  } else {
+                    userX.setStudent(null);
+                  }
+                }
+                if (request.getUser().getIsStudent()) {
+                  userX
+                      .getStudent()
+                      .setStudentId(request.hasStudentId() ? request.getStudentId() : null)
+                      .setGrade(request.hasStudentGrade() ? request.getStudentGrade() : null);
+                }
               }
-
-              // Save updates.
-              saveAdminX.ifPresent(db.getAdminXRepository()::save);
-              saveTeacher.ifPresent(db.getTeacherRepository()::save);
-              saveStudent.ifPresent(db.getStudentRepository()::save);
-
-              // This needs to be fixed in that it breaks foreign key constraints.
 
               //// Add any missing schools.
               // if (userX.getTeacher() != null) {
@@ -312,10 +282,16 @@ public class UserManagementService {
               // }
               // }
 
+              if (userX.getAdminX() != null) {
+                db.getAdminXRepository().save(userX.getAdminX());
+              }
+              if (userX.getTeacher() != null) {
+                db.getTeacherRepository().save(userX.getTeacher());
+              }
+              if (userX.getStudent() != null) {
+                db.getStudentRepository().save(userX.getStudent());
+              }
               db.getUserXRepository().save(userX);
-              removeAdminX.ifPresent(db.getAdminXRepository()::delete);
-              removeTeacher.ifPresent(db.getTeacherRepository()::delete);
-              removeStudent.ifPresent(db.getStudentRepository()::delete);
 
               return response.build();
             })

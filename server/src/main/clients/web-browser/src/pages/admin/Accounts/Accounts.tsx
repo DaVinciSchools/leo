@@ -1,12 +1,16 @@
 import './Accounts.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {pl_types, user_management} from '../../../generated/protobuf-js';
-import {Button, Form, Input, InputRef, Modal, Pagination, Table} from 'antd';
+import {Button, Checkbox, Form, Input, Modal, Pagination, Table} from 'antd';
 import {createService} from '../../../libs/protos';
 import {CommonAccountFields} from '../../../libs/CommonAccountFields/CommonAccountFields';
-import {EditOutlined} from '@ant-design/icons';
+import {
+  CloseSquareOutlined,
+  EditOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
 import UserManagementService = user_management.UserManagementService;
 import IFullUserDetails = user_management.IFullUserDetails;
 import IUpsertUserRequest = user_management.IUpsertUserRequest;
@@ -21,17 +25,19 @@ export function Accounts() {
   const [showSearchForAccount, setShowSearchForAccount] = useState(false);
   const [searchForm] = Form.useForm();
   const [searchText, setSearchText] = useState('');
-  const searchTextRef = useRef<InputRef>(null);
   const [users, setUsers] = useState<IFullUserDetails[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [page, setPage] = useState(1); // One, not zero, based.
   const [pageSize, setPageSize] = useState(5);
 
+  const [selectUserForm] = Form.useForm();
   const [form] = Form.useForm();
   const [editingUser, setEditingUser] = useState<
     IFullUserDetails | undefined
   >();
   const [errorMessage, setErrorMessage] = useState('');
+  // Counter to force updates.
+  const [formChangeCount, setFormChangeCount] = useState(0);
 
   const userService = createService(
     UserManagementService,
@@ -53,12 +59,13 @@ export function Accounts() {
         setTotalUsers(response.totalUsers!);
       })
       .catch(error => setErrorMessage(error.message ?? 'unknown error'));
-  }, [page, pageSize, searchText]);
+  }, [page, pageSize, searchText, showSearchForAccount]);
 
   useEffect(() => {
     form.resetFields();
+    setFormChangeCount(formChangeCount + 1);
     if (editingUser != null) {
-      form.setFieldsValue(Object.assign({}, editingUser && editingUser.user!));
+      form.setFieldsValue(Object.assign({}, editingUser, editingUser.user!));
     }
   }, [editingUser]);
 
@@ -89,7 +96,7 @@ export function Accounts() {
   return (
     <>
       <DefaultPage title="Accounts">
-        <div className="space-filler">
+        <div className="space-filler" style={{height: '2em'}}>
           <div
             className="error-notice"
             style={{display: errorMessage ? undefined : 'none'}}
@@ -97,17 +104,13 @@ export function Accounts() {
             {errorMessage}
           </div>
         </div>
-        <Form form={form} className="form-container" onFinish={finish}>
+        <Form form={selectUserForm} className="form-container">
           <div className="form-fields-single-line">
             <Form.Item>
               <Button
                 type="primary"
                 onClick={() => {
-                  setSearchText('');
                   setShowSearchForAccount(true);
-                  if (searchTextRef.current != null) {
-                    searchTextRef.current.focus();
-                  }
                 }}
                 style={{width: '100%'}}
               >
@@ -129,15 +132,102 @@ export function Accounts() {
               </Button>
             </Form.Item>
           </div>
-          <CommonAccountFields
-            form={form}
-            disabled={editingUser?.user == null}
-          />
-          <Form.Item>
-            <Button type="primary" htmlType="submit">
-              {editingUser?.user?.id ?? 0 > 0 ? 'Save' : 'Add'}
-            </Button>
-          </Form.Item>
+        </Form>
+        <Form
+          form={form}
+          className="form-container"
+          onFinish={finish}
+          disabled={editingUser == null}
+          onChange={() => setFormChangeCount(formChangeCount + 1)}
+        >
+          <CommonAccountFields form={form} />
+          <div style={{display: user.isAdmin ? undefined : 'none'}}>
+            <Form.Item
+              style={{margin: '0 0'}}
+              name="isAdmin"
+              valuePropName="checked"
+            >
+              <Checkbox>Administrator</Checkbox>
+            </Form.Item>
+            <Form.Item
+              style={{margin: '0 0'}}
+              name="isTeacher"
+              valuePropName="checked"
+            >
+              <Checkbox>Teacher</Checkbox>
+            </Form.Item>
+            <div
+              className="form-subsection"
+              style={{
+                display:
+                  form.getFieldValue('isTeacher') === true ? undefined : 'none',
+              }}
+            >
+              TODO
+            </div>
+            <Form.Item
+              style={{margin: '0 0'}}
+              name="isStudent"
+              valuePropName="checked"
+            >
+              <Checkbox
+                onChange={() => {
+                  if (form.getFieldValue('isStudent') === false) {
+                    form.setFieldValue('studentId', undefined);
+                    form.setFieldValue('studentGrade', undefined);
+                  }
+                }}
+              >
+                Student
+              </Checkbox>
+            </Form.Item>
+            <div
+              className="form-subsection"
+              style={{
+                display:
+                  form.getFieldValue('isStudent') === true ? undefined : 'none',
+              }}
+            >
+              <Form.Item
+                rules={[
+                  {
+                    message: 'A student ID must be a number.',
+                    pattern: new RegExp(/^[0-9]*$/),
+                  },
+                ]}
+                name="studentId"
+                normalize={value => (value.length !== 0 ? value : undefined)}
+              >
+                <Input placeholder="Student ID" maxLength={25} />
+              </Form.Item>
+              <Form.Item
+                rules={[
+                  {
+                    message: 'A student grade must be a number.',
+                    pattern: new RegExp(/^[0-9]*$/),
+                  },
+                ]}
+                name="studentGrade"
+                normalize={value => (value.length !== 0 ? value : undefined)}
+              >
+                <Input placeholder="Student Grade" maxLength={2} />
+              </Form.Item>
+            </div>
+            <Form.Item
+              style={{display: editingUser != null ? undefined : 'none'}}
+            >
+              <Button type="primary" htmlType="submit" style={{width: '6em'}}>
+                {editingUser?.user?.id ?? 0 > 0 ? 'Save' : 'Add'}
+              </Button>
+              &nbsp;
+              <Button
+                onClick={() => setEditingUser(undefined)}
+                style={{width: '6em'}}
+              >
+                Cancel
+              </Button>
+            </Form.Item>
+          </div>
         </Form>
       </DefaultPage>
       <Modal
@@ -145,16 +235,33 @@ export function Accounts() {
         open={showSearchForAccount}
         onCancel={() => setShowSearchForAccount(false)}
         onOk={() => setShowSearchForAccount(false)}
-        centered
-        forceRender={true}
+        width="80%"
+        style={{
+          position: 'absolute',
+          left: '10%',
+          top: '5%',
+          width: '80%',
+          height: '90%',
+          minWidth: '80%',
+          minHeight: '90%',
+        }}
+        bodyStyle={{
+          width: '100%',
+          height: '100%',
+          minWidth: '100%',
+          minHeight: '100%',
+        }}
       >
         <Form form={searchForm} className="form-container">
-          <Form.Item label="Search" style={{margin: '0.5em'}}>
+          <Form.Item style={{margin: '0.5em'}}>
             <Input
-              ref={searchTextRef}
               type="text"
+              placeholder="Enter Text to Filter List"
               value={searchText}
               onChange={e => setSearchText(e.target.value)}
+              autoFocus={true}
+              prefix={<SearchOutlined />}
+              suffix={<CloseSquareOutlined onClick={() => setSearchText('')} />}
             />
           </Form.Item>
           <Table
@@ -168,6 +275,7 @@ export function Accounts() {
                       setEditingUser(record.value);
                       setShowSearchForAccount(false);
                     }}
+                    className="edit-icon"
                   />
                 ),
               },
