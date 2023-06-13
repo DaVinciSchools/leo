@@ -1,0 +1,57 @@
+@use '../color';
+@use '../forms';
+
+.logo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+
+  a {
+    line-height: 0;
+  }
+}
+
+.form-container {
+  .form-padding {
+    box-sizing: border-box;
+    padding: 0.5em;
+  }
+
+  .success {
+    @include color.success;
+
+    border: 1px solid;
+    justify-content: center;
+    padding: 0.25em;
+    border-radius: 6px;
+  }
+
+  .form-elements {
+    display: flex;
+    flex-flow: column nowrap;
+    gap: 0.5em;
+    min-width: fit-content;
+    width: 40%;
+  }
+
+  .footer {
+    align-items: center;
+    display: flex;
+    flex-flow: row nowrap;
+    flex-grow: 1;
+    gap: 1em;
+
+    a {
+      color: color.$primary-800;
+      flex-shrink: 1;
+      padding-right: 0.5em;
+      text-align: right;
+      white-space: nowrap;
+      margin-bottom: 24px;
+    }
+  }
+
+  .buttons {
+    padding: 0.5em;
+  }
+}
