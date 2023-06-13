@@ -242,12 +242,15 @@ public class ProjectManagementService {
         .andThen(
             (state, log) -> {
               List<Project> projects =
-                  ImmutableList.of(openAi3V1ProjectGenerator, openAi3V2ProjectGenerator).stream()
+                  ImmutableList.of(
+                          // openAi3V1ProjectGenerator,
+                          openAi3V2ProjectGenerator)
+                      .stream()
                       .parallel()
                       .map(
                           generator -> {
                             try {
-                              return generator.generateAndSaveProjects(state, httpExecutors, 3);
+                              return generator.generateAndSaveProjects(state, httpExecutors, 5);
                             } catch (HttpExecutorException e) {
                               throw new WrappedIOException(e);
                             }
