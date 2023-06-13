@@ -16,7 +16,7 @@
     <file url="file://$PROJECT_DIR$/database/src/main/resources/my-sql/250-assignment-table.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/database/src/main/resources/my-sql/275-project-table.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/database/src/main/resources/my-sql/300-knowledge_and_skill-table.sql" dialect="GenericSQL" />
-    <file url="file://$PROJECT_DIR$/database/src/main/resources/my-sql/300-project_cycle-table.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/database/src/main/resources/my-sql/300-project_milestone-table.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/database/src/main/resources/my-sql/325-project_post-table.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/database/src/main/resources/my-sql/350-portfolio-table.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/database/src/main/resources/my-sql/350-project_post_comment-table.sql" dialect="GenericSQL" />

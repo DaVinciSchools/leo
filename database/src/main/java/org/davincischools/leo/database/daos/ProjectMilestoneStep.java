@@ -13,12 +13,12 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 
-@Entity(name = ProjectCycleStep.ENTITY_NAME)
-@Table(name = ProjectCycleStep.TABLE_NAME, schema = "leo_temp")
-public class ProjectCycleStep implements Serializable {
+@Entity(name = ProjectMilestoneStep.ENTITY_NAME)
+@Table(name = ProjectMilestoneStep.TABLE_NAME, schema = "leo_temp")
+public class ProjectMilestoneStep implements Serializable {
 
-  public static final String ENTITY_NAME = "ProjectCycleStep";
-  public static final String TABLE_NAME = "project_cycle_step";
+  public static final String ENTITY_NAME = "ProjectMilestoneStep";
+  public static final String TABLE_NAME = "project_milestone_step";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_POSITION_NAME = "position";
@@ -27,7 +27,7 @@ public class ProjectCycleStep implements Serializable {
   public static final String COLUMN_SHORTDESCRQUILL_NAME = "short_descr_quill";
   public static final String COLUMN_LONGDESCR_NAME = "long_descr";
   public static final String COLUMN_LONGDESCRQUILL_NAME = "long_descr_quill";
-  private static final long serialVersionUID = -1897891964958123871L;
+  private static final long serialVersionUID = 6649396949785151885L;
 
   private Integer id;
 
@@ -45,7 +45,7 @@ public class ProjectCycleStep implements Serializable {
 
   private String longDescrQuill;
 
-  private ProjectCycle projectCycle;
+  private ProjectMilestone projectMilestone;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,7 +54,7 @@ public class ProjectCycleStep implements Serializable {
     return id;
   }
 
-  public ProjectCycleStep setId(Integer id) {
+  public ProjectMilestoneStep setId(Integer id) {
     this.id = id;
     return this;
   }
@@ -64,7 +64,7 @@ public class ProjectCycleStep implements Serializable {
     return creationTime;
   }
 
-  public ProjectCycleStep setCreationTime(Instant creationTime) {
+  public ProjectMilestoneStep setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
     return this;
   }
@@ -74,7 +74,7 @@ public class ProjectCycleStep implements Serializable {
     return position;
   }
 
-  public ProjectCycleStep setPosition(Integer position) {
+  public ProjectMilestoneStep setPosition(Integer position) {
     this.position = position;
     return this;
   }
@@ -84,7 +84,7 @@ public class ProjectCycleStep implements Serializable {
     return name;
   }
 
-  public ProjectCycleStep setName(String name) {
+  public ProjectMilestoneStep setName(String name) {
     this.name = name;
     return this;
   }
@@ -95,7 +95,7 @@ public class ProjectCycleStep implements Serializable {
     return shortDescr;
   }
 
-  public ProjectCycleStep setShortDescr(String shortDescr) {
+  public ProjectMilestoneStep setShortDescr(String shortDescr) {
     this.shortDescr = shortDescr;
     return this;
   }
@@ -106,7 +106,7 @@ public class ProjectCycleStep implements Serializable {
     return shortDescrQuill;
   }
 
-  public ProjectCycleStep setShortDescrQuill(String shortDescrQuill) {
+  public ProjectMilestoneStep setShortDescrQuill(String shortDescrQuill) {
     this.shortDescrQuill = shortDescrQuill;
     return this;
   }
@@ -117,7 +117,7 @@ public class ProjectCycleStep implements Serializable {
     return longDescr;
   }
 
-  public ProjectCycleStep setLongDescr(String longDescr) {
+  public ProjectMilestoneStep setLongDescr(String longDescr) {
     this.longDescr = longDescr;
     return this;
   }
@@ -128,19 +128,19 @@ public class ProjectCycleStep implements Serializable {
     return longDescrQuill;
   }
 
-  public ProjectCycleStep setLongDescrQuill(String longDescrQuill) {
+  public ProjectMilestoneStep setLongDescrQuill(String longDescrQuill) {
     this.longDescrQuill = longDescrQuill;
     return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "project_cycle_id", nullable = false)
-  public ProjectCycle getProjectCycle() {
-    return projectCycle;
+  @JoinColumn(name = "project_milestone_id", nullable = false)
+  public ProjectMilestone getProjectMilestone() {
+    return projectMilestone;
   }
 
-  public ProjectCycleStep setProjectCycle(ProjectCycle projectCycle) {
-    this.projectCycle = projectCycle;
+  public ProjectMilestoneStep setProjectMilestone(ProjectMilestone projectMilestone) {
+    this.projectMilestone = projectMilestone;
     return this;
   }
 }

@@ -32,13 +32,13 @@ import org.davincischools.leo.database.utils.repos.LogReferenceRepository;
 import org.davincischools.leo.database.utils.repos.LogRepository;
 import org.davincischools.leo.database.utils.repos.MotivationRepository;
 import org.davincischools.leo.database.utils.repos.PortfolioRepository;
-import org.davincischools.leo.database.utils.repos.ProjectCycleRepository;
-import org.davincischools.leo.database.utils.repos.ProjectCycleStepRepository;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository;
 import org.davincischools.leo.database.utils.repos.ProjectImageRepository;
 import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository;
 import org.davincischools.leo.database.utils.repos.ProjectInputValueRepository;
+import org.davincischools.leo.database.utils.repos.ProjectMilestoneRepository;
+import org.davincischools.leo.database.utils.repos.ProjectMilestoneStepRepository;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository;
 import org.davincischools.leo.database.utils.repos.ProjectPostRepository;
 import org.davincischools.leo.database.utils.repos.ProjectRepository;
@@ -81,8 +81,8 @@ public class Database {
   @Autowired private LogRepository logRepository;
   @Autowired private MotivationRepository motivationRepository;
   @Autowired private PortfolioRepository portfolioRepository;
-  @Autowired private ProjectCycleRepository projectCycleRepository;
-  @Autowired private ProjectCycleStepRepository projectCycleStepRepository;
+  @Autowired private ProjectMilestoneRepository projectMilestoneRepository;
+  @Autowired private ProjectMilestoneStepRepository projectMilestoneStepRepository;
   @Autowired private ProjectDefinitionRepository projectDefinitionRepository;
   @Autowired private ProjectImageRepository projectImageRepository;
   @Autowired private ProjectInputCategoryRepository projectInputCategoryRepository;
@@ -152,12 +152,12 @@ public class Database {
     return portfolioRepository;
   }
 
-  public ProjectCycleRepository getProjectCycleRepository() {
-    return projectCycleRepository;
+  public ProjectMilestoneRepository getProjectMilestoneRepository() {
+    return projectMilestoneRepository;
   }
 
-  public ProjectCycleStepRepository getProjectCycleStepRepository() {
-    return projectCycleStepRepository;
+  public ProjectMilestoneStepRepository getProjectMilestoneStepRepository() {
+    return projectMilestoneStepRepository;
   }
 
   public ProjectDefinitionRepository getProjectDefinitionRepository() {

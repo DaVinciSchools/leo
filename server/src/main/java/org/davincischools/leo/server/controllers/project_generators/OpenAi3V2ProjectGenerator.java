@@ -12,9 +12,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.daos.Project;
-import org.davincischools.leo.database.daos.ProjectCycle;
-import org.davincischools.leo.database.daos.ProjectCycleStep;
 import org.davincischools.leo.database.daos.ProjectInput;
+import org.davincischools.leo.database.daos.ProjectMilestone;
+import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.LogRepository.Status;
 import org.davincischools.leo.protos.open_ai.OpenAiMessage;
@@ -136,22 +136,22 @@ public class OpenAi3V2ProjectGenerator implements ProjectGenerator {
                         .setShortDescr(projectWithSteps.getShortDescr())
                         .setLongDescr(projectWithSteps.getLongDescr()));
         for (Milestone milestone : projectWithSteps.getMilestonesList()) {
-          ProjectCycle projectCycle =
-              db.getProjectCycleRepository()
+          ProjectMilestone projectMilestone =
+              db.getProjectMilestoneRepository()
                   .save(
-                      new ProjectCycle()
+                      new ProjectMilestone()
                           .setCreationTime(Instant.now())
                           .setPosition(position.incrementAndGet())
                           .setName(milestone.getName())
                           .setProject(project));
           for (String step : milestone.getStepsList()) {
-            db.getProjectCycleStepRepository()
+            db.getProjectMilestoneStepRepository()
                 .save(
-                    new ProjectCycleStep()
+                    new ProjectMilestoneStep()
                         .setCreationTime(Instant.now())
                         .setPosition(position.incrementAndGet())
                         .setName(step)
-                        .setProjectCycle(projectCycle));
+                        .setProjectMilestone(projectMilestone));
           }
         }
 

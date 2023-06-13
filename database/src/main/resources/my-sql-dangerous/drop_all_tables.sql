@@ -16,6 +16,9 @@ DROP TABLE IF EXISTS assignment__knowledge_and_skill;
 
 DROP TABLE IF EXISTS project_cycle_step;
 DROP TABLE IF EXISTS project_cycle;
+DROP TABLE IF EXISTS project_milestone_step;
+DROP TABLE IF EXISTS project_milestone;
+
 DROP TABLE IF EXISTS project__image;
 DROP TABLE IF EXISTS motivation;
 DROP TABLE IF EXISTS knowledge_and_skill;

@@ -13,12 +13,12 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 
-@Entity(name = ProjectCycle.ENTITY_NAME)
-@Table(name = ProjectCycle.TABLE_NAME, schema = "leo_temp")
-public class ProjectCycle implements Serializable {
+@Entity(name = ProjectMilestone.ENTITY_NAME)
+@Table(name = ProjectMilestone.TABLE_NAME, schema = "leo_temp")
+public class ProjectMilestone implements Serializable {
 
-  public static final String ENTITY_NAME = "ProjectCycle";
-  public static final String TABLE_NAME = "project_cycle";
+  public static final String ENTITY_NAME = "ProjectMilestone";
+  public static final String TABLE_NAME = "project_milestone";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_POSITION_NAME = "position";
@@ -27,7 +27,7 @@ public class ProjectCycle implements Serializable {
   public static final String COLUMN_SHORTDESCRQUILL_NAME = "short_descr_quill";
   public static final String COLUMN_LONGDESCR_NAME = "long_descr";
   public static final String COLUMN_LONGDESCRQUILL_NAME = "long_descr_quill";
-  private static final long serialVersionUID = -6766043586418609010L;
+  private static final long serialVersionUID = 5123253140319633640L;
 
   private Integer id;
 
@@ -54,7 +54,7 @@ public class ProjectCycle implements Serializable {
     return id;
   }
 
-  public ProjectCycle setId(Integer id) {
+  public ProjectMilestone setId(Integer id) {
     this.id = id;
     return this;
   }
@@ -64,7 +64,7 @@ public class ProjectCycle implements Serializable {
     return creationTime;
   }
 
-  public ProjectCycle setCreationTime(Instant creationTime) {
+  public ProjectMilestone setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
     return this;
   }
@@ -74,7 +74,7 @@ public class ProjectCycle implements Serializable {
     return position;
   }
 
-  public ProjectCycle setPosition(Integer position) {
+  public ProjectMilestone setPosition(Integer position) {
     this.position = position;
     return this;
   }
@@ -84,7 +84,7 @@ public class ProjectCycle implements Serializable {
     return name;
   }
 
-  public ProjectCycle setName(String name) {
+  public ProjectMilestone setName(String name) {
     this.name = name;
     return this;
   }
@@ -95,7 +95,7 @@ public class ProjectCycle implements Serializable {
     return shortDescr;
   }
 
-  public ProjectCycle setShortDescr(String shortDescr) {
+  public ProjectMilestone setShortDescr(String shortDescr) {
     this.shortDescr = shortDescr;
     return this;
   }
@@ -106,7 +106,7 @@ public class ProjectCycle implements Serializable {
     return shortDescrQuill;
   }
 
-  public ProjectCycle setShortDescrQuill(String shortDescrQuill) {
+  public ProjectMilestone setShortDescrQuill(String shortDescrQuill) {
     this.shortDescrQuill = shortDescrQuill;
     return this;
   }
@@ -117,7 +117,7 @@ public class ProjectCycle implements Serializable {
     return longDescr;
   }
 
-  public ProjectCycle setLongDescr(String longDescr) {
+  public ProjectMilestone setLongDescr(String longDescr) {
     this.longDescr = longDescr;
     return this;
   }
@@ -128,7 +128,7 @@ public class ProjectCycle implements Serializable {
     return longDescrQuill;
   }
 
-  public ProjectCycle setLongDescrQuill(String longDescrQuill) {
+  public ProjectMilestone setLongDescrQuill(String longDescrQuill) {
     this.longDescrQuill = longDescrQuill;
     return this;
   }
@@ -139,7 +139,7 @@ public class ProjectCycle implements Serializable {
     return project;
   }
 
-  public ProjectCycle setProject(Project project) {
+  public ProjectMilestone setProject(Project project) {
     this.project = project;
     return this;
   }

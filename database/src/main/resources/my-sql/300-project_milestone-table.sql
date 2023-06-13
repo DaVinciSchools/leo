@@ -1,9 +1,9 @@
-CREATE TABLE project_cycle_step
+CREATE TABLE project_milestone
 (
     id                INT PRIMARY KEY AUTO_INCREMENT,
     creation_time     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    -- Indicates the relative location on the cycle.
+    -- Indicates the relative location on the milestone.
     position          INT          NOT NULL,
 
     name              VARCHAR(255) NOT NULL,
@@ -12,10 +12,10 @@ CREATE TABLE project_cycle_step
     long_descr        TEXT,
     long_descr_quill  TEXT,
 
-    project_cycle_id  INT          NOT NULL,
-    CONSTRAINT project_cycle_step__project_cycle_id
-        FOREIGN KEY (project_cycle_id)
-            REFERENCES project_cycle (id)
+    project_id        INT          NOT NULL,
+    CONSTRAINT project_milestone__project_id
+        FOREIGN KEY (project_id)
+            REFERENCES project (id)
             ON DELETE RESTRICT
             ON UPDATE RESTRICT
 ) ENGINE InnoDB
