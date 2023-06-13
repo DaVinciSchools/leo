@@ -1,9 +1,18 @@
 import './Accounts.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {pl_types, user_management} from '../../../generated/protobuf-js';
-import {Button, Checkbox, Form, Input, Modal, Pagination, Table} from 'antd';
+import {
+  Button,
+  Checkbox,
+  Form,
+  Input,
+  InputRef,
+  Modal,
+  Pagination,
+  Table,
+} from 'antd';
 import {createService} from '../../../libs/protos';
 import {CommonAccountFields} from '../../../libs/CommonAccountFields/CommonAccountFields';
 import {
@@ -38,6 +47,7 @@ export function Accounts() {
   const [errorMessage, setErrorMessage] = useState('');
   // Counter to force updates.
   const [formChangeCount, setFormChangeCount] = useState(0);
+  const searchTextRef = useRef<InputRef>(null);
 
   const userService = createService(
     UserManagementService,
@@ -74,6 +84,12 @@ export function Accounts() {
       setTimeout(() => setErrorMessage(''), 5000);
     }
   }, [errorMessage]);
+
+  useEffect(() => {
+    if (searchTextRef && searchTextRef.current) {
+      searchTextRef.current.focus();
+    }
+  }, [searchTextRef.current]);
 
   function finish(values: FormData) {
     const newUserX: IUser = Object.assign(
@@ -234,7 +250,7 @@ export function Accounts() {
         title="Search for Account"
         open={showSearchForAccount}
         onCancel={() => setShowSearchForAccount(false)}
-        onOk={() => setShowSearchForAccount(false)}
+        okButtonProps={{style: {display: 'none'}}}
         width="80%"
         style={{
           position: 'absolute',
@@ -255,6 +271,7 @@ export function Accounts() {
         <Form form={searchForm} className="form-container">
           <Form.Item style={{margin: '0.5em'}}>
             <Input
+              ref={searchTextRef}
               type="text"
               placeholder="Enter Text to Filter List"
               value={searchText}
@@ -303,6 +320,12 @@ export function Accounts() {
             pagination={false}
             size="small"
             scroll={{x: true}}
+            onRow={record => ({
+              onClick: () => {
+                setEditingUser(record.value);
+                setShowSearchForAccount(false);
+              },
+            })}
           />
           <div
             style={{
