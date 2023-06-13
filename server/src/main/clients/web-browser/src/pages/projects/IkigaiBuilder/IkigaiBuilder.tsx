@@ -363,7 +363,10 @@ export function IkigaiBuilder() {
               enabled={!processing}
               processing={processing}
               categoryElementIds={categories.map(c => c.htmlId)}
-              showSpinButton={categoryValues.every(v => v.length > 0)}
+              showSpinButton={
+                categoryValues.length > 0 &&
+                categoryValues.every(v => v.length > 0)
+              }
               onSpinClick={onSpinClick}
               radiansOffset={0}
             >
