@@ -2,16 +2,17 @@ import './ProjectPage.scss';
 
 import {Button, Card, Form, Input} from 'antd';
 import {pl_types} from '../../generated/protobuf-js';
-import IProject = pl_types.IProject;
-import IProjectPost = pl_types.IProjectPost;
 import {ChangeEvent, useState} from 'react';
 import {CloseCircleTwoTone} from '@ant-design/icons';
+import IProject = pl_types.IProject;
+import IProjectPost = pl_types.IProjectPost;
 
 export function ProjectPage(props: {
   id: number;
   name: string;
   shortDescr: string;
   longDescr: string;
+  milestones: pl_types.Project.IMilestone[];
   posts: IProjectPost[] | undefined;
   updateProject: (update: IProject) => void;
   onSubmitPost: (title: string, message: string) => void;
@@ -30,13 +31,35 @@ export function ProjectPage(props: {
       <div className="project-page">
         <div className="title">{props.name}</div>
         <div className="short-descr">
-          <span className="label">Description:</span> {props.shortDescr}
+          <span className="label">Description:</span>
+          <div>{props.shortDescr}</div>
         </div>
         <div className="long-descr">
           <span className="label">Details:</span>
           {props.longDescr
             .split('\n')
             .map(line => line.split('\r').map(line => <div>{line}</div>))}
+        </div>
+        <div>
+          {props.milestones?.length > 0 && (
+            <>
+              <span className="label">Milestones:</span>
+              <ol>
+                {props.milestones.map(milestone => (
+                  <li key={milestone.id!}>
+                    <div className="milestone">{milestone.name}</div>
+                    {(milestone.steps?.length ?? 0) > 0 && (
+                      <ol type="A">
+                        {milestone.steps!.map(step => (
+                          <li key={step.id!}>{step.name}</li>
+                        ))}
+                      </ol>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
         </div>
         {props.posts != null &&
           props.posts.map(post => (

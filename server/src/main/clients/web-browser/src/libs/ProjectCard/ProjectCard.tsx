@@ -77,11 +77,14 @@ export function ProjectCard(props: {
         />
       ) : (
         <CheckCircleOutlined
-          onClick={() =>
+          onClick={() => {
             props.updateProject({
               active: true,
-            })
-          }
+            });
+            if (thumbsQueryRef.current != null) {
+              thumbsQueryRef.current.focus();
+            }
+          }}
         />
       )}
     </>,
@@ -119,7 +122,15 @@ export function ProjectCard(props: {
           <Input
             ref={thumbsQueryRef}
             type="text"
-            placeholder="Why did you select thumbs up or down?"
+            placeholder={
+              props.active
+                ? 'Why did you choose this project?'
+                : props.thumbsState === ThumbsState.THUMBS_UP
+                ? 'Why do you like this project?'
+                : props.thumbsState === ThumbsState.THUMBS_DOWN
+                ? 'Why do you dislike this project?'
+                : 'What do you think about this project?'
+            }
             name="thumbs_reason"
             value={thumbsStateReason}
             onChange={e => setThumbsStateReason(e.target.value)}

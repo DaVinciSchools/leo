@@ -11,10 +11,14 @@ import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.Project;
+import org.davincischools.leo.database.daos.ProjectMilestone;
+import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.ProjectRepository.MilestoneWithSteps;
+import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.user_management.FullUserDetails;
 import org.davincischools.leo.server.utils.http_user.HttpUser;
@@ -173,6 +177,40 @@ public class DataAccess {
         .setArchived(Boolean.TRUE.equals(project.getArchived()))
         .setNeedsReview(Boolean.TRUE.equals(project.getNeedsReview()))
         .setActive(Boolean.TRUE.equals(project.getActive()))
+        .build();
+  }
+
+  public static org.davincischools.leo.protos.pl_types.Project.Milestone
+      convertProjectMilestoneToProto(ProjectMilestone projectMilestone) {
+    return org.davincischools.leo.protos.pl_types.Project.Milestone.newBuilder()
+        .setId(projectMilestone.getId())
+        .setName(projectMilestone.getName())
+        .build();
+  }
+
+  public static org.davincischools.leo.protos.pl_types.Project.Milestone.Step
+      convertProjectMilestoneStepToProto(ProjectMilestoneStep projectMilestoneStep) {
+    return org.davincischools.leo.protos.pl_types.Project.Milestone.Step.newBuilder()
+        .setId(projectMilestoneStep.getId())
+        .setName(projectMilestoneStep.getName())
+        .build();
+  }
+
+  public static org.davincischools.leo.protos.pl_types.Project.Milestone
+      convertMilestoneWithStepsToProto(MilestoneWithSteps milestone) {
+    return convertProjectMilestoneToProto(milestone.milestone()).toBuilder()
+        .addAllSteps(
+            milestone.steps().stream().map(DataAccess::convertProjectMilestoneStepToProto).toList())
+        .build();
+  }
+
+  public static org.davincischools.leo.protos.pl_types.Project convertProjectWithMilestonesToProto(
+      ProjectWithMilestones projectWithMilestones) {
+    return convertProjectToProto(projectWithMilestones.project()).toBuilder()
+        .addAllMilestones(
+            projectWithMilestones.milestones().stream()
+                .map(DataAccess::convertMilestoneWithStepsToProto)
+                .toList())
         .build();
   }
 

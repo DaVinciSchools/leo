@@ -4,11 +4,14 @@
   display: flex;
   flex-flow: column nowrap;
   gap: 1em;
+  min-width: 70%;
 
   .title {
     font-weight: bold;
     font-size: xx-large;
     text-align: center;
+    white-space: nowrap;
+    min-width: fit-content;
   }
 
   .label {
@@ -19,5 +22,15 @@
     font-style: italic;
     font-size: xx-small;
     font-weight: normal;
+  }
+
+  .milestone {
+    font-weight: bold;
+  }
+
+  .step {
+    font-style: italic;
+    font-weight: lighter;
+    margin-left: 2em;
   }
 }

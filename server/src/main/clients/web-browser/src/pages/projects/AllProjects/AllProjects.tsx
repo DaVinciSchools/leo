@@ -21,7 +21,8 @@ export function AllProjects() {
   }
 
   const [projects, setProjects] = useState<IProject[]>([]);
-  const [project, setProject] = useState<IProject | undefined>();
+  const [showProjectDetails, setShowProjectDetails] = useState(false);
+  const [projectDetails, setProjectDetails] = useState<IProject | undefined>();
 
   const service = createService(
     ProjectManagementService,
@@ -43,7 +44,11 @@ export function AllProjects() {
   }
 
   function showModal(project: pl_types.IProject) {
-    setProject(project);
+    setProjectDetails(undefined);
+    setShowProjectDetails(true);
+    service
+      .getProjectDetails({projectId: project.id})
+      .then(response => setProjectDetails(response.project!));
   }
 
   return (
@@ -69,19 +74,23 @@ export function AllProjects() {
           ))}
         </div>
         <Modal
-          open={project != null}
-          onOk={() => setProject(undefined)}
-          onCancel={() => setProject(undefined)}
+          open={showProjectDetails}
+          onOk={() => setShowProjectDetails(false)}
+          onCancel={() => setShowProjectDetails(false)}
+          cancelButtonProps={{style: {display: 'none'}}}
+          centered
+          style={{margin: '5%', minWidth: '60%'}}
         >
-          {project != null && (
+          {projectDetails != null && (
             <ProjectPage
-              id={project!.id!}
-              key={project!.id!}
-              name={project!.name!}
-              shortDescr={project!.shortDescr!}
-              longDescr={project!.longDescr!}
+              id={projectDetails!.id!}
+              key={projectDetails!.id!}
+              name={projectDetails!.name!}
+              shortDescr={projectDetails!.shortDescr!}
+              longDescr={projectDetails!.longDescr!}
+              milestones={projectDetails!.milestones!}
               updateProject={modifications =>
-                updateProject(project!, modifications)
+                updateProject(projectDetails!, modifications)
               }
               onDeletePost={() => {}}
               onSubmitPost={() => {}}

@@ -1,5 +1,7 @@
 package org.davincischools.leo.server.controllers;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.fasterxml.jackson.datatype.jdk8.WrappedIOException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -29,6 +31,7 @@ import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.T
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.ProjectDefinitionInputCategories;
 import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
+import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.project_management.DeletePostRequest;
@@ -39,6 +42,8 @@ import org.davincischools.leo.protos.project_management.GetEksRequest;
 import org.davincischools.leo.protos.project_management.GetEksResponse;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionRequest;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionResponse;
+import org.davincischools.leo.protos.project_management.GetProjectDetailsRequest;
+import org.davincischools.leo.protos.project_management.GetProjectDetailsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectPostsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectPostsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectsRequest;
@@ -283,6 +288,48 @@ public class ProjectManagementService {
 
   public static String quoteAndEscape(String s) {
     return "\"" + StringEscapeUtils.escapeJava(s) + "\"";
+  }
+
+  @PostMapping(value = "/api/protos/ProjectManagementService/GetProjectDetails")
+  @ResponseBody
+  public GetProjectDetailsResponse getProjectDetails(
+      @Authenticated HttpUser user,
+      @RequestBody Optional<GetProjectDetailsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(GetProjectDetailsResponse.getDefaultInstance());
+    }
+
+    return httpExecutors
+        .start(optionalRequest.orElse(GetProjectDetailsRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              checkArgument(request.hasProjectId());
+
+              ProjectWithMilestones project =
+                  db.getProjectRepository().findByProjectId(request.getProjectId()).orElse(null);
+              if (project == null) {
+                return user.returnNotFound(GetProjectDetailsResponse.getDefaultInstance());
+              }
+
+              if (!user.isAdmin()) {
+                if (user.isTeacher()) {
+                  // TODO: Verify the requested project's user is in their class.
+                } else if (user.isStudent()) {
+                  // Make sure the student is only querying their own projects.
+                  if (!Objects.equals(
+                      user.get().getId(), project.project().getProjectInput().getUserX().getId())) {
+                    return user.returnForbidden(GetProjectDetailsResponse.getDefaultInstance());
+                  }
+                }
+              }
+
+              return GetProjectDetailsResponse.newBuilder()
+                  .setProject(DataAccess.convertProjectWithMilestonesToProto(project))
+                  .build();
+            })
+        .finish();
   }
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjects")

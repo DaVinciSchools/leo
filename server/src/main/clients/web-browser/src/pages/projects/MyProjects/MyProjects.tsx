@@ -122,6 +122,7 @@ export function MyProjects() {
               shortDescr={project.shortDescr!}
               longDescr={project.longDescr!}
               posts={posts}
+              milestones={[]}
               updateProject={modifications =>
                 updateProject(project, modifications)
               }

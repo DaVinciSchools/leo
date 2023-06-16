@@ -13,6 +13,7 @@ service ProjectManagementService {
   rpc GetMotivations (GetMotivationsRequest) returns (GetMotivationsResponse) {}
   rpc GenerateProjects (GenerateProjectsRequest) returns (GenerateProjectsResponse) {}
 
+  rpc GetProjectDetails (GetProjectDetailsRequest) returns (GetProjectDetailsResponse) {}
   rpc GetProjects (GetProjectsRequest) returns (GetProjectsResponse) {}
   rpc UpdateProject (UpdateProjectRequest) returns (UpdateProjectResponse) {}
   rpc GetProjectDefinition (GetProjectDefinitionRequest) returns (GetProjectDefinitionResponse) {}
@@ -48,6 +49,14 @@ message GenerateProjectsRequest {
 
 message GenerateProjectsResponse {
   repeated pl_types.Project projects = 1;
+}
+
+message GetProjectDetailsRequest {
+  optional int32 project_id = 1;
+}
+
+message GetProjectDetailsResponse {
+  optional pl_types.Project project = 1;
 }
 
 message GetProjectsRequest {

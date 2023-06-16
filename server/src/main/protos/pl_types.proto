@@ -58,6 +58,20 @@ message Project {
   optional bool archived = 9;
   optional bool needs_review = 10;
   optional bool active = 11;
+
+  // The below fields are only populated for requests that include details.
+
+  message Milestone {
+    optional int32 id = 1;
+    optional string name = 2;
+
+    message Step {
+      optional int32 id = 1;
+      optional string name = 2;
+    }
+    repeated Step steps = 3;
+  }
+  repeated Milestone milestones = 12;
 }
 
 message School {
