@@ -17,6 +17,9 @@ import {Overview} from './pages/projects/Overview/Overview';
 import {Logout} from './pages/users/Logout/Logout';
 import {AllProjects} from './pages/projects/AllProjects/AllProjects';
 import {Accounts} from './pages/admin/Accounts/Accounts';
+import {StudentDashboard} from './pages/dashboards/StudentDashboard/StudentDashboard';
+import {TeacherDashboard} from './pages/dashboards/TeacherDashboard/TeacherDashboard';
+import {AdminDashboard} from './pages/dashboards/AdminDashboard/AdminDashboard';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -38,6 +41,24 @@ const router = createBrowserRouter([
       {
         path: 'accounts.html',
         element: <Accounts />,
+      },
+    ],
+  },
+  {
+    path: '/dashboards',
+    element: <DefaultPageNav />,
+    children: [
+      {
+        path: 'admin-dashboard.html',
+        element: <AdminDashboard />,
+      },
+      {
+        path: 'student-dashboard.html',
+        element: <StudentDashboard />,
+      },
+      {
+        path: 'teacher-dashboard.html',
+        element: <TeacherDashboard />,
       },
     ],
   },

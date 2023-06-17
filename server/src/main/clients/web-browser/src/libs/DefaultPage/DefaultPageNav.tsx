@@ -1,6 +1,6 @@
 import './DefaultPage.scss';
-import {Outlet} from 'react-router';
-import {Layout, Menu} from 'antd';
+import {Outlet, useNavigate} from 'react-router';
+import {Layout, Menu, MenuItemProps, MenuProps} from 'antd';
 import {
   AppstoreOutlined,
   DesktopOutlined,
@@ -11,25 +11,28 @@ import {
 } from '@ant-design/icons';
 import {getCurrentUser, sendToLogin} from '../authentication';
 import {Link} from 'react-router-dom';
-const Footer = Layout.Footer;
 import {useState} from 'react';
+
+const Footer = Layout.Footer;
 
 const {Header, Sider, Content} = Layout;
 
 enum MenuKeys {
   ADMIN,
-  ACCOUNTS,
-  ALL_PROJECTS,
-  DASHBOARD,
-  EDIT_DISTRICTS,
-  EDIT_SCHOOLS,
+  ADMIN_ACCOUNTS,
+  ADMIN_DISTRICTS,
+  ADMIN_SCHOOLS,
+  DASHBOARD_ADMIN,
+  DASHBOARD_STUDENT,
+  DASHBOARD_TEACHER,
   HOME,
-  IKIGAI_BUILDER,
   INTERNSHIPS,
   MY_ACCOUNT,
-  MY_PROJECTS,
-  OVERVIEW,
   PROJECTS,
+  PROJECTS_ALL_PROJECTS,
+  PROJECTS_MY_PROJECTS,
+  PROJECTS_OVERVIEW,
+  PROJECTS_PROJECT_BUILDER,
 }
 
 export function DefaultPageNav() {
@@ -38,7 +41,157 @@ export function DefaultPageNav() {
     return sendToLogin();
   }
 
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+
+  const topMenuItems: MenuProps['items'] = [
+    {label: 'Home', key: MenuKeys.HOME, icon: <HomeOutlined />},
+    {
+      label: /* Admin */ 'Dashboard',
+      key: MenuKeys.DASHBOARD_ADMIN,
+      icon: <AppstoreOutlined />,
+      style: {
+        display: user.isAdmin ? 'block' : 'none',
+      },
+    },
+    {
+      label: /* Student */ 'Dashboard',
+      key: MenuKeys.DASHBOARD_STUDENT,
+      icon: <AppstoreOutlined />,
+      style: {
+        display: user.isAdmin || user.isStudent ? 'block' : 'none',
+      },
+    },
+    {
+      label: /* Teacher */ 'Dashboard',
+      key: MenuKeys.DASHBOARD_TEACHER,
+      icon: <AppstoreOutlined />,
+      style: {
+        display: user.isAdmin || user.isTeacher ? 'block' : 'none',
+      },
+    },
+    {
+      label: 'Projects',
+      key: MenuKeys.PROJECTS,
+      icon: <RocketOutlined />,
+      children: [
+        {
+          label: 'Overview',
+          key: MenuKeys.PROJECTS_OVERVIEW,
+        },
+        {
+          label: 'My Projects',
+          key: MenuKeys.PROJECTS_MY_PROJECTS,
+        },
+        {
+          label: 'Project Builder',
+          key: MenuKeys.PROJECTS_PROJECT_BUILDER,
+        },
+        {
+          label: 'All Projects',
+          key: MenuKeys.PROJECTS_ALL_PROJECTS,
+        },
+      ],
+    },
+    {
+      label: 'Internships',
+      key: MenuKeys.INTERNSHIPS,
+      icon: <DesktopOutlined />,
+      style: {
+        display: user.isAdmin || user.isStudent ? 'block' : 'none',
+      },
+    },
+    {
+      label: 'Administration',
+      key: MenuKeys.ADMIN,
+      icon: <SettingOutlined />,
+      style: {
+        display: user.isAdmin ? 'block' : 'none',
+      },
+      children: [
+        {
+          label: 'Accounts',
+          key: MenuKeys.ADMIN_ACCOUNTS,
+        },
+        {label: 'Schools', key: MenuKeys.ADMIN_SCHOOLS},
+        {
+          label: 'Districts',
+          key: MenuKeys.ADMIN_DISTRICTS,
+        },
+      ],
+    },
+  ];
+
+  const bottomMenuItems: MenuProps['items'] = [
+    {
+      label: 'My Account',
+      key: MenuKeys.MY_ACCOUNT,
+      icon: <UserOutlined />,
+    },
+  ];
+
+  const menuItemClicked: MenuItemProps['onClick'] = ({key}) => {
+    switch (Number(key)) {
+      case MenuKeys.ADMIN: {
+        // not selectable.
+        break;
+      }
+      case MenuKeys.ADMIN_ACCOUNTS: {
+        navigate('/admin/accounts.html');
+        break;
+      }
+      case MenuKeys.ADMIN_DISTRICTS: {
+        navigate('/profiles/edit-districts.html');
+        break;
+      }
+      case MenuKeys.ADMIN_SCHOOLS: {
+        navigate('/profiles/edit-schools.html');
+        break;
+      }
+      case MenuKeys.DASHBOARD_ADMIN: {
+        navigate('/dashboards/admin-dashboard.html');
+        break;
+      }
+      case MenuKeys.DASHBOARD_STUDENT: {
+        navigate('/dashboards/student-dashboard.html');
+        break;
+      }
+      case MenuKeys.DASHBOARD_TEACHER: {
+        navigate('/dashboards/teacher-dashboard.html');
+        break;
+      }
+      case MenuKeys.HOME: {
+        break;
+      }
+      case MenuKeys.INTERNSHIPS: {
+        break;
+      }
+      case MenuKeys.MY_ACCOUNT: {
+        navigate('/users/my-account.html');
+        break;
+      }
+      case MenuKeys.PROJECTS: {
+        // not selectable.
+        break;
+      }
+      case MenuKeys.PROJECTS_ALL_PROJECTS: {
+        navigate('/projects/all-projects.html');
+        break;
+      }
+      case MenuKeys.PROJECTS_MY_PROJECTS: {
+        navigate('/projects/my-projects.html');
+        break;
+      }
+      case MenuKeys.PROJECTS_OVERVIEW: {
+        navigate('/projects/overview.html');
+        break;
+      }
+      case MenuKeys.PROJECTS_PROJECT_BUILDER: {
+        navigate('/projects/ikigai-builder.html');
+        break;
+      }
+    }
+  };
 
   return (
     <>
@@ -63,67 +216,20 @@ export function DefaultPageNav() {
               </Link>
             </Header>
             <Content>
-              <Menu mode="inline" className="top-menu">
-                <Menu.Item key={MenuKeys.HOME} icon={<HomeOutlined />}>
-                  Home
-                </Menu.Item>
-                <Menu.Item key={MenuKeys.DASHBOARD} icon={<AppstoreOutlined />}>
-                  Dashboard
-                </Menu.Item>
-                <Menu.SubMenu
-                  key={MenuKeys.PROJECTS}
-                  icon={<RocketOutlined />}
-                  title="Projects"
-                >
-                  <Menu.Item key={MenuKeys.OVERVIEW}>
-                    <Link to="/projects/overview.html">Overview</Link>
-                  </Menu.Item>
-                  <Menu.Item key={MenuKeys.MY_PROJECTS}>
-                    <Link to="/projects/my-projects.html">My Projects</Link>
-                  </Menu.Item>
-                  <Menu.Item key={MenuKeys.IKIGAI_BUILDER}>
-                    <Link to="/projects/ikigai-builder.html">
-                      Ikigai Builder
-                    </Link>
-                  </Menu.Item>
-                  <Menu.Item key={MenuKeys.ALL_PROJECTS}>
-                    <Link to="/projects/all-projects.html">All Projects</Link>
-                  </Menu.Item>
-                </Menu.SubMenu>
-                <Menu.Item
-                  key={MenuKeys.INTERNSHIPS}
-                  icon={<DesktopOutlined />}
-                >
-                  Internships
-                </Menu.Item>
-                <Menu.SubMenu
-                  key={MenuKeys.ADMIN}
-                  icon={<SettingOutlined />}
-                  title="Admin"
-                  style={{
-                    display: user.isAdmin ? 'block' : 'none',
-                  }}
-                >
-                  <Menu.Item key={MenuKeys.ACCOUNTS}>
-                    <Link to="/admin/accounts.html">Accounts</Link>
-                  </Menu.Item>
-                  <Menu.Item key={MenuKeys.EDIT_DISTRICTS}>
-                    <Link to="/profiles/edit-districts.html">
-                      Edit Districts
-                    </Link>
-                  </Menu.Item>
-                  <Menu.Item key={MenuKeys.EDIT_SCHOOLS}>
-                    <Link to="/profiles/edit-schools.html">Edit Schools</Link>
-                  </Menu.Item>
-                </Menu.SubMenu>
-              </Menu>
+              <Menu
+                mode="vertical"
+                className="top-menu"
+                items={topMenuItems}
+                onClick={menuItemClicked}
+              />
             </Content>
             <Footer>
-              <Menu mode="inline" className="top-menu">
-                <Menu.Item key={MenuKeys.MY_ACCOUNT} icon={<UserOutlined />}>
-                  <Link to="/users/my-account.html">My Account</Link>
-                </Menu.Item>
-              </Menu>
+              <Menu
+                mode="vertical"
+                className="bottom-menu"
+                items={bottomMenuItems}
+                onClick={menuItemClicked}
+              />
             </Footer>
           </Layout>
         </Sider>
