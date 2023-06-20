@@ -2,8 +2,7 @@ import './DefaultPage.scss';
 import {Outlet, useNavigate} from 'react-router';
 import {Layout, Menu, MenuItemProps, MenuProps} from 'antd';
 import {
-  AppstoreOutlined,
-  DesktopOutlined,
+  BookOutlined,
   HomeOutlined,
   RocketOutlined,
   SettingOutlined,
@@ -25,9 +24,8 @@ enum MenuKeys {
   DASHBOARD_ADMIN,
   DASHBOARD_STUDENT,
   DASHBOARD_TEACHER,
-  HOME,
-  INTERNSHIPS,
   MY_ACCOUNT,
+  PORTFOLIOS,
   PROJECTS,
   PROJECTS_ALL_PROJECTS,
   PROJECTS_MY_PROJECTS,
@@ -45,27 +43,26 @@ export function DefaultPageNav() {
   const [collapsed, setCollapsed] = useState(false);
 
   const topMenuItems: MenuProps['items'] = [
-    {label: 'Home', key: MenuKeys.HOME, icon: <HomeOutlined />},
     {
-      label: /* Admin */ 'Dashboard',
+      label: 'Admin Dashboard',
       key: MenuKeys.DASHBOARD_ADMIN,
-      icon: <AppstoreOutlined />,
+      icon: <HomeOutlined />,
       style: {
         display: user.isAdmin ? 'block' : 'none',
       },
     },
     {
-      label: /* Student */ 'Dashboard',
+      label: (user.isAdmin ? 'Student ' : '') + 'Dashboard',
       key: MenuKeys.DASHBOARD_STUDENT,
-      icon: <AppstoreOutlined />,
+      icon: <HomeOutlined />,
       style: {
         display: user.isAdmin || user.isStudent ? 'block' : 'none',
       },
     },
     {
-      label: /* Teacher */ 'Dashboard',
+      label: (user.isAdmin ? 'Teacher ' : '') + 'Dashboard',
       key: MenuKeys.DASHBOARD_TEACHER,
-      icon: <AppstoreOutlined />,
+      icon: <HomeOutlined />,
       style: {
         display: user.isAdmin || user.isTeacher ? 'block' : 'none',
       },
@@ -94,9 +91,9 @@ export function DefaultPageNav() {
       ],
     },
     {
-      label: 'Internships',
-      key: MenuKeys.INTERNSHIPS,
-      icon: <DesktopOutlined />,
+      label: 'Portfolios',
+      key: MenuKeys.PORTFOLIOS,
+      icon: <BookOutlined />,
       style: {
         display: user.isAdmin || user.isStudent ? 'block' : 'none',
       },
@@ -158,12 +155,6 @@ export function DefaultPageNav() {
       }
       case MenuKeys.DASHBOARD_TEACHER: {
         navigate('/dashboards/teacher-dashboard.html');
-        break;
-      }
-      case MenuKeys.HOME: {
-        break;
-      }
-      case MenuKeys.INTERNSHIPS: {
         break;
       }
       case MenuKeys.MY_ACCOUNT: {
