@@ -14,7 +14,7 @@ CREATE TABLE project__image
     image_id      INT      NOT NULL,
     CONSTRAINT project__image__image_id
         FOREIGN KEY (image_id)
-            REFERENCES image (id)
+            REFERENCES file_x (id)
             ON DELETE RESTRICT
             ON UPDATE RESTRICT,
 

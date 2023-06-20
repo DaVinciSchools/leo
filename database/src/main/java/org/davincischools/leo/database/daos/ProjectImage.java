@@ -19,13 +19,13 @@ public class ProjectImage implements Serializable {
   public static final String TABLE_NAME = "project__image";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_SELECTED_NAME = "selected";
-  private static final long serialVersionUID = -8775002159355192829L;
+  private static final long serialVersionUID = -4215191532036939149L;
 
   private ProjectImageId id;
 
   private Project project;
 
-  private Image image;
+  private FileX image;
 
   private Instant creationTime;
 
@@ -56,11 +56,11 @@ public class ProjectImage implements Serializable {
   @MapsId("imageId")
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "image_id", nullable = false)
-  public Image getImage() {
+  public FileX getImage() {
     return image;
   }
 
-  public ProjectImage setImage(Image image) {
+  public ProjectImage setImage(FileX image) {
     this.image = image;
     return this;
   }

@@ -9,23 +9,23 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 
-@Entity(name = Image.ENTITY_NAME)
-@Table(name = Image.TABLE_NAME, schema = "leo_temp")
-public class Image implements Serializable {
+@Entity(name = FileX.ENTITY_NAME)
+@Table(name = FileX.TABLE_NAME, schema = "leo_temp")
+public class FileX implements Serializable {
 
-  public static final String ENTITY_NAME = "Image";
-  public static final String TABLE_NAME = "image";
+  public static final String ENTITY_NAME = "FileX";
+  public static final String TABLE_NAME = "file_x";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
-  public static final String COLUMN_IMAGE_NAME = "image";
+  public static final String COLUMN_FILECONTENT_NAME = "file_content";
   public static final String COLUMN_MIMETYPE_NAME = "mime_type";
-  private static final long serialVersionUID = -3526002040327597487L;
+  private static final long serialVersionUID = 6045736978118048853L;
 
   private Integer id;
 
   private Instant creationTime;
 
-  private byte[] image;
+  private byte[] fileContent;
 
   private String mimeType;
 
@@ -36,7 +36,7 @@ public class Image implements Serializable {
     return id;
   }
 
-  public Image setId(Integer id) {
+  public FileX setId(Integer id) {
     this.id = id;
     return this;
   }
@@ -46,18 +46,18 @@ public class Image implements Serializable {
     return creationTime;
   }
 
-  public Image setCreationTime(Instant creationTime) {
+  public FileX setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
     return this;
   }
 
-  @Column(name = COLUMN_IMAGE_NAME, nullable = false)
-  public byte[] getImage() {
-    return image;
+  @Column(name = COLUMN_FILECONTENT_NAME, nullable = false)
+  public byte[] getFileContent() {
+    return fileContent;
   }
 
-  public Image setImage(byte[] image) {
-    this.image = image;
+  public FileX setFileContent(byte[] fileContent) {
+    this.fileContent = fileContent;
     return this;
   }
 
@@ -66,7 +66,7 @@ public class Image implements Serializable {
     return mimeType;
   }
 
-  public Image setMimeType(String mimeType) {
+  public FileX setMimeType(String mimeType) {
     this.mimeType = mimeType;
     return this;
   }

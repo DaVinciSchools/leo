@@ -39,8 +39,12 @@ public class ProjectImageId implements Serializable {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) {
+      return false;
+    }
     ProjectImageId entity = (ProjectImageId) o;
     return Objects.equals(this.imageId, entity.imageId)
         && Objects.equals(this.projectId, entity.projectId);

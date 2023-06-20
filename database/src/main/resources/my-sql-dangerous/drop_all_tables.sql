@@ -10,12 +10,12 @@ DROP TABLE IF EXISTS project_post;
 DROP TABLE IF EXISTS project_input_category;
 DROP TABLE IF EXISTS assignment__project_definition;
 
-DROP TABLE IF EXISTS knowledge_and_skill_assignment;
-DROP TABLE IF EXISTS knowledge_and_skill__assignment;
+DROP TABLE IF EXISTS knowledge_and_skill_assignment; -- Renamed
+DROP TABLE IF EXISTS knowledge_and_skill__assignment; -- Renamed
 DROP TABLE IF EXISTS assignment__knowledge_and_skill;
 
-DROP TABLE IF EXISTS project_cycle_step;
-DROP TABLE IF EXISTS project_cycle;
+DROP TABLE IF EXISTS project_cycle_step; -- Renamed.
+DROP TABLE IF EXISTS project_cycle; -- Renamed.
 DROP TABLE IF EXISTS project_milestone_step;
 DROP TABLE IF EXISTS project_milestone;
 
@@ -30,29 +30,30 @@ DROP TABLE IF EXISTS project_input;
 DROP TABLE IF EXISTS assignment;
 DROP TABLE IF EXISTS project_definition;
 
-DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS user; -- Renamed.
 DROP TABLE IF EXISTS user_x;
 
-DROP TABLE IF EXISTS teacher_school;
+DROP TABLE IF EXISTS teacher_school; -- Renamed.
 DROP TABLE IF EXISTS teacher__school;
 
-DROP TABLE IF EXISTS teacher_class;
+DROP TABLE IF EXISTS teacher_class; -- Renamed.
 DROP TABLE IF EXISTS teacher__class_x;
 
 DROP TABLE IF EXISTS student__school;
 
-DROP TABLE IF EXISTS student_class;
+DROP TABLE IF EXISTS student_class; -- Renamed.
 DROP TABLE IF EXISTS student__class_x;
 
-DROP TABLE IF EXISTS image;
+DROP TABLE IF EXISTS image; -- Renamed.
+DROP TABLE IF EXISTS file_x;
 
-DROP TABLE IF EXISTS class;
+DROP TABLE IF EXISTS class; -- Renamed.
 DROP TABLE IF EXISTS class_x;
 
 DROP TABLE IF EXISTS teacher;
 DROP TABLE IF EXISTS student;
 
-DROP TABLE IF EXISTS admin;
+DROP TABLE IF EXISTS admin; -- Renamed.
 DROP TABLE IF EXISTS admin_x;
 
 DROP TABLE IF EXISTS school;
