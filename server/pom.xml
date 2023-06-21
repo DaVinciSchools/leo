@@ -19,8 +19,8 @@
     <properties>
         <clients.directory>${basedir}/src/main/clients</clients.directory>
         <npm.binary.directory>${project.build.directory}/org.davincischools.leo/npm</npm.binary.directory>
-        <proto.version>3.23.1</proto.version>
-        <surefire.version>3.1.0</surefire.version>
+        <proto.version>3.23.2</proto.version>
+        <surefire.version>3.1.2</surefire.version>
     </properties>
 
     <dependencies>
@@ -83,7 +83,7 @@
         <dependency>
             <groupId>io.projectreactor.netty</groupId>
             <artifactId>reactor-netty-http</artifactId>
-            <version>1.1.7</version>
+            <version>1.1.8</version>
         </dependency>
     </dependencies>
 
