@@ -169,12 +169,25 @@
                             <arguments>install --ignore-scripts</arguments>
                         </configuration>
                     </execution>
+
+                    <!-- Install npm. -->
+                    <execution>
+                        <?m2e execute onConfiguration,onIncremental?>
+                        <id>npm-audit</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <arguments>audit --omit=dev --audit-level=high</arguments>
+                        </configuration>
+                    </execution>
                 </executions>
                 <configuration>
                     <!-- NOTE: nodeVersion need to remain in sync with
                          the versions in web-browser/package.json, commented
                          there. -->
-                    <nodeVersion>v18.14.2</nodeVersion>
+                    <nodeVersion>v18.16.1</nodeVersion>
                     <installDirectory>${npm.binary.directory}</installDirectory>
                     <workingDirectory>${clients.directory}/web-browser</workingDirectory>
                     <environmentVariables>
