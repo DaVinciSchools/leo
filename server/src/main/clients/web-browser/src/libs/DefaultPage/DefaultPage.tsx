@@ -6,11 +6,11 @@ import {
   QuestionCircleOutlined,
   SmileTwoTone,
 } from '@ant-design/icons';
-import {PropsWithChildren} from 'react';
+import {PropsWithChildren, ReactNode} from 'react';
 import {Popover} from 'antd';
 import {Link} from 'react-router-dom';
 
-export function DefaultPage(props: PropsWithChildren<{title: string}>) {
+export function DefaultPage(props: PropsWithChildren<{title: ReactNode}>) {
   const user = getCurrentUser();
 
   const avatarPanel =
@@ -41,7 +41,6 @@ export function DefaultPage(props: PropsWithChildren<{title: string}>) {
     <>
       <div className="page">
         <div className="page-header">
-          <div className="page-title">{props.title}</div>
           <div className="page-account">
             <QuestionCircleOutlined />
             <BellOutlined />
@@ -59,6 +58,7 @@ export function DefaultPage(props: PropsWithChildren<{title: string}>) {
             </Popover>
           </div>
         </div>
+        <div className="page-title">{props.title}</div>
         <div className="page-body">{props.children}</div>
       </div>
     </>

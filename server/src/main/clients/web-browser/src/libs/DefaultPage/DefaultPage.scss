@@ -16,15 +16,16 @@
   display: flex;
   flex-flow: row nowrap;
   gap: 0.5em;
-  justify-content: stretch;
+  justify-content: flex-end;
   width: 100%;
-  flex-shrink: 1;
+  border-bottom: lightgrey 1px solid;
+  padding-bottom: 0.5em;
 }
 
 .page-title {
   flex-grow: 1;
-  font-size: 2em;
-  font-weight: Bold;
+  font-size: 125%;
+  font-weight: bold;
   justify-content: flex-start;
   padding: 0;
   text-align: left;
