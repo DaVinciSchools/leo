@@ -20,6 +20,7 @@ import {Accounts} from './pages/admin/Accounts/Accounts';
 import {StudentDashboard} from './pages/dashboards/StudentDashboard/StudentDashboard';
 import {TeacherDashboard} from './pages/dashboards/TeacherDashboard/TeacherDashboard';
 import {AdminDashboard} from './pages/dashboards/AdminDashboard/AdminDashboard';
+import {RedirectToDashboard} from './pages/dashboards/RedirectToDashboard';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
         element: <Accounts />,
       },
     ],
+  },
+  {
+    path: '/dashboards/redirect.html',
+    element: <RedirectToDashboard />,
   },
   {
     path: '/dashboards',

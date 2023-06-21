@@ -10,7 +10,7 @@ export function AdminDashboard() {
 
   return (
     <>
-      <DefaultPage title="Dashboard">TODO</DefaultPage>
+      <DefaultPage title="Admin Dashboard">TODO</DefaultPage>
     </>
   );
 }

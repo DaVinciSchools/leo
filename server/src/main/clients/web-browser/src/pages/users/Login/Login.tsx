@@ -14,7 +14,7 @@ export function Login() {
         successAction={() => {
           navigate(
             queryParameters.get(LOGIN_RETURN_TO_PARAM) ||
-              '/projects/overview.html'
+              '/dashboards/redirect.html'
           );
         }}
       />

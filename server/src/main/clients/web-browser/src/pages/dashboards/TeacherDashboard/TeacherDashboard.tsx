@@ -10,7 +10,9 @@ export function TeacherDashboard() {
 
   return (
     <>
-      <DefaultPage title="Dashboard">TODO</DefaultPage>
+      <DefaultPage title={(user.isAdmin ? 'Teacher ' : '') + 'Dashboard'}>
+        TODO
+      </DefaultPage>
     </>
   );
 }
