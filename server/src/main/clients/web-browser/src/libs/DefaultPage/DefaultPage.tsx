@@ -50,9 +50,12 @@ export function DefaultPage(props: PropsWithChildren<{title: string}>) {
               placement="bottomRight"
               trigger="click"
             >
-              <span className="avatar-icon">
-                <SmileTwoTone />
-              </span>
+              <div className="page-account">
+                <span className="avatar-icon">
+                  <SmileTwoTone />
+                </span>
+                {user?.firstName ?? ''} {user?.lastName ?? ''}
+              </div>
             </Popover>
           </div>
         </div>
