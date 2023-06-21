@@ -25,7 +25,7 @@ export function DefaultPage(props: PropsWithChildren<{title: ReactNode}>) {
           </span>
         </div>
         <div className="email">{user?.emailAddress}</div>
-        <div className="sectionDiv" />
+        <div className="section-div" />
         <div className="menu">
           <Link to="/users/my-account.html">My Account</Link>
         </div>
