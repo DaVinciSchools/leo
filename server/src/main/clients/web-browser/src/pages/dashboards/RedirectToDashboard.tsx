@@ -11,11 +11,11 @@ export function RedirectToDashboard() {
   const navigate = useNavigate();
   useEffect(() => {
     if (user.isAdmin) {
-      navigate('dashboards/admin-dashboard.html');
+      navigate('/dashboards/admin-dashboard.html');
     } else if (user.isTeacher) {
-      navigate('dashboards/teacher-dashboard.html');
+      navigate('/dashboards/teacher-dashboard.html');
     } else {
-      navigate('dashboards/student-dashboard.html');
+      navigate('/dashboards/student-dashboard.html');
     }
   });
 
