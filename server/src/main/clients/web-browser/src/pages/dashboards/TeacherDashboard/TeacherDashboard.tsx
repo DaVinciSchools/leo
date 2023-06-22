@@ -7,7 +7,7 @@ import {Grid} from '@mui/material';
 import ClassTwoToneIcon from '@mui/icons-material/ClassTwoTone';
 import DescriptionTwoToneIcon from '@mui/icons-material/DescriptionTwoTone';
 import NotificationsTwoToneIcon from '@mui/icons-material/NotificationsTwoTone';
-import {TitledPaper} from '../../../libs/TitledBox/TitledPaper';
+import {TitledPaper} from '../../../libs/TitledPaper/TitledPaper';
 
 enum TabValue {
   ASSIGNMENTS,
