@@ -9,6 +9,7 @@ export function TitledPaper(
       title: ReactNode;
       icon?: ReactNode;
       highlightColor: string;
+      draggable?: boolean;
     } & PaperProps
   >
 ) {
@@ -17,10 +18,24 @@ export function TitledPaper(
       <Paper
         square
         className="titled-paper"
-        style={{borderBottom: `${props.highlightColor} solid 2px`}}
+        style={{
+          borderBottom: `${props.highlightColor} solid 2px`,
+          display: 'flex',
+          flexFlow: 'column nowrap',
+          height: '100%',
+          overflow: 'hidden',
+          width: '100%',
+        }}
         {...props}
       >
-        <Box padding={0.5} paddingX={1} className="titled-paper-title">
+        <Box
+          padding={0.5}
+          paddingX={1}
+          className="titled-paper-title"
+          style={{
+            cursor: props.draggable === true ? 'move' : undefined,
+          }}
+        >
           <span>{props.title}</span>
           <span style={{color: props.highlightColor}}>{props.icon ?? ''}</span>
         </Box>

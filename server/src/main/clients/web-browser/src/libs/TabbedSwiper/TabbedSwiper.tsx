@@ -33,26 +33,43 @@ export function TabbedSwiper<K>(props: {
 
   return (
     <>
-      <Tabs
-        value={activeTab}
-        onChange={(e, newValue) => setActiveTab(newValue)}
-        {...props.tabsProps}
+      <div
+        style={{
+          display: 'flex',
+          flexFlow: 'column nowrap',
+          height: '100%',
+        }}
       >
-        {props.tabs.map(tab => (
-          <Tab key={String(tab.key)} label={tab.label} {...props.tabProps} />
-        ))}
-      </Tabs>
-      <Swiper
-        onSwiper={setTabSwiper}
-        slidesPerView={1}
-        loop={true}
-        onSlideChange={swiper => setActiveTab(swiper.realIndex)}
-        {...props.swiperProps}
-      >
-        {props.tabs.map(tab => (
-          <SwiperSlide key={String(tab.key)}>{tab.content}</SwiperSlide>
-        ))}
-      </Swiper>
+        <Tabs
+          value={activeTab}
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          style={{flexShrink: 1}}
+          {...props.tabsProps}
+        >
+          {props.tabs.map(tab => (
+            <Tab key={String(tab.key)} label={tab.label} {...props.tabProps} />
+          ))}
+        </Tabs>
+        <Swiper
+          onSwiper={setTabSwiper}
+          slidesPerView={1}
+          loop={true}
+          onSlideChange={swiper => setActiveTab(swiper.realIndex)}
+          allowTouchMove={false}
+          style={{
+            alignSelf: 'stretch',
+            flexGrow: 1,
+            margin: '0',
+          }}
+          {...props.swiperProps}
+        >
+          {props.tabs.map(tab => (
+            <SwiperSlide key={String(tab.key)} style={{overflow: 'auto'}}>
+              {tab.content}
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
     </>
   );
 }
