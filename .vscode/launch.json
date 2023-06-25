@@ -10,7 +10,11 @@
             "request": "launch",
             "mainClass": "org.davincischools.leo.server.ServerApplication",
             "projectName": "project-leo-server",
-            "classPaths": ["$Auto", "${workspaceFolder}/server/target/classes"]
+            "classPaths": [
+                "$Auto",
+                "${workspaceFolder}/server/target/classes",
+                "${workspaceFolder}/server/src/main/resources",
+            ]
         },
         {
             "type": "java",
@@ -19,7 +23,11 @@
             "mainClass": "org.davincischools.leo.server.ServerApplication",
             "projectName": "project-leo-server",
             "args": "--react_port=3000",
-            "classPaths": ["$Auto", "${workspaceFolder}/server/target/classes"]
+            "classPaths": [
+                "$Auto",
+                "${workspaceFolder}/server/target/classes",
+                "${workspaceFolder}/server/src/main/resources",
+            ]
         }
     ]
 }
