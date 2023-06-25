@@ -85,7 +85,7 @@ export function TeacherDashboard() {
                           <TitledPaper
                             title="Notifications"
                             icon={<NotificationsTwoToneIcon />}
-                            highlightColor="green"
+                            highlightColor="orange"
                             draggable={true}
                           >
                             TODO

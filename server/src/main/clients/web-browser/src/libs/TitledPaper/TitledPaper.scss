@@ -1,3 +1,5 @@
+@use '../PersistedReactGridLayout/PersistedReactGridLayout';
+
 .titled-paper {
   border: rgba(5, 5, 5, 0.06) solid 1px;
 }
@@ -20,4 +22,3 @@
     align-content: center;
   }
 }
-

@@ -1,5 +1,10 @@
+import './PersistedReactGridLayout.scss';
+
 import {PropsWithChildren, ReactNode, useEffect, useRef, useState} from 'react';
 import ReactGridLayout from 'react-grid-layout';
+
+export const persistedGridDraggable = 'persisted-grid-draggable';
+export const persistedGridNotDraggable = 'persisted-grid-not-draggable';
 
 export function PersistedReactGridLayout(
   props: PropsWithChildren<{
@@ -20,7 +25,7 @@ export function PersistedReactGridLayout(
   const [lastDivContainer, setLastDivContainer] =
     useState<HTMLDivElement | null>();
 
-  // Thes are the calculated values as determined by the div container.
+  // These are the calculated values as determined by the div container.
   const [rowHeight, setRowHeight] = useState(1);
   const [rglWidth, setRglWidth] = useState(1);
   const [rglHeight, setRglHeight] = useState(1);
@@ -76,7 +81,6 @@ export function PersistedReactGridLayout(
       >
         <ReactGridLayout
           className="layout"
-          autoSize={true}
           layout={layout}
           cols={props.cols}
           rowHeight={rowHeight}
@@ -84,11 +88,11 @@ export function PersistedReactGridLayout(
           style={{width: rglWidth, height: rglHeight}}
           margin={[props?.gap?.x ?? 0, props?.gap?.y ?? 0]}
           containerPadding={[props?.padding?.x ?? 0, props?.padding?.y ?? 0]}
+          draggableHandle={'.' + persistedGridDraggable}
+          draggableCancel={'.' + persistedGridNotDraggable}
         >
           {props.panels.map(p => (
-            <div key={p.id} style={{overflow: 'auto'}}>
-              {p.panel}
-            </div>
+            <div key={p.id}>{p.panel}</div>
           ))}
         </ReactGridLayout>
       </div>
