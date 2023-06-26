@@ -3,9 +3,9 @@ import './TeacherDashboard.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
 import {TabbedSwiper} from '../../../libs/TabbedSwiper/TabbedSwiper';
-import ClassTwoToneIcon from '@mui/icons-material/ClassTwoTone';
 import DescriptionTwoToneIcon from '@mui/icons-material/DescriptionTwoTone';
 import NotificationsTwoToneIcon from '@mui/icons-material/NotificationsTwoTone';
+import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import {TitledPaper} from '../../../libs/TitledPaper/TitledPaper';
 import {PersistedReactGridLayout} from '../../../libs/PersistedReactGridLayout/PersistedReactGridLayout';
 
@@ -32,41 +32,55 @@ export function TeacherDashboard() {
                 content: (
                   <PersistedReactGridLayout
                     id="TeacherDashboard_Overview"
-                    cols={12}
-                    rows={12}
+                    cols={9}
+                    rows={9}
                     gap={{x: 10, y: 10}}
                     padding={{x: 10, y: 10}}
                     panels={[
                       {
-                        id: 'Classes',
+                        id: 'assignments',
                         panel: (
                           <TitledPaper
-                            title="Classes"
-                            icon={<ClassTwoToneIcon />}
-                            highlightColor="red"
+                            title="Assignments"
+                            icon={<DescriptionTwoToneIcon />}
+                            highlightColor="orange"
                             draggable={true}
                           >
                             TODO
                           </TitledPaper>
                         ),
-                        layout: {x: 0, y: 0, w: 4, h: 4},
+                        layout: {x: 0, y: 0, w: 5, h: 3},
                       },
                       {
-                        id: 'Assignments',
+                        id: 'assignment_stats',
                         panel: (
                           <TitledPaper
-                            title="Assignments"
-                            icon={<DescriptionTwoToneIcon />}
+                            title="Assignment Stats"
+                            icon={<QueryStatsIcon />}
                             highlightColor="blue"
                             draggable={true}
                           >
                             TODO
                           </TitledPaper>
                         ),
-                        layout: {x: 4, y: 0, w: 4, h: 4},
+                        layout: {x: 5, y: 0, w: 4, h: 3},
                       },
                       {
-                        id: 'Notifications',
+                        id: 'timeline',
+                        panel: (
+                          <TitledPaper
+                            title="Timeline"
+                            icon={<NotificationsTwoToneIcon />}
+                            highlightColor="black"
+                            draggable={true}
+                          >
+                            TODO
+                          </TitledPaper>
+                        ),
+                        layout: {x: 0, y: 3, w: 5, h: 6},
+                      },
+                      {
+                        id: 'notifications',
                         panel: (
                           <TitledPaper
                             title="Notifications"
@@ -77,21 +91,7 @@ export function TeacherDashboard() {
                             TODO
                           </TitledPaper>
                         ),
-                        layout: {x: 8, y: 0, w: 4, h: 4},
-                      },
-                      {
-                        id: 'Extra',
-                        panel: (
-                          <TitledPaper
-                            title="Notifications"
-                            icon={<NotificationsTwoToneIcon />}
-                            highlightColor="orange"
-                            draggable={true}
-                          >
-                            TODO
-                          </TitledPaper>
-                        ),
-                        layout: {x: 0, y: 4, w: 12, h: 8},
+                        layout: {x: 5, y: 3, w: 4, h: 6},
                       },
                     ]}
                   />
