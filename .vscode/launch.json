@@ -28,6 +28,27 @@
                 "${workspaceFolder}/server/target/classes",
                 "${workspaceFolder}/server/src/main/resources",
             ]
+        },
+        {
+            "type": "java",
+            "name": "Create Admin User",
+            "request": "launch",
+            "mainClass": "org.davincischools.leo.database.admin.AdminUtils",
+            "projectName": "project-leo-database",
+            "args": ["--createDistrict=Test District", "--createAdmin=${input:admin_email}"],
+            "classPaths": [
+                "$Auto",
+                "${workspaceFolder}/database/target/classes",
+                "${workspaceFolder}/database/src/main/resources",
+            ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "admin_email",
+            "type":"promptString",
+            "description": "Enter an admin e-mail username.",
+            "default": "admin@davincischools.org"
         }
     ]
 }
