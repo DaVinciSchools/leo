@@ -13,6 +13,7 @@ export function PersistedReactGridLayout(
       id: string;
       panel: ReactNode;
       layout: {x: number; y: number; w: number; h: number};
+      static?: boolean;
     }[];
     cols: number;
     rows: number;
@@ -32,7 +33,9 @@ export function PersistedReactGridLayout(
 
   // This is the layout extracted from the props.panels. It will be persisted across instances of this page.
   const [layout] = useState(
-    props.panels.map(p => Object.assign({i: p.id}, p.layout))
+    props.panels.map(p =>
+      Object.assign({i: p.id, static: p.static === true}, p.layout)
+    )
   );
 
   // This takes the dimensions of the div container and adjusts those of the RGL so that the diagram will remain consistent.

@@ -34,8 +34,8 @@ export function StudentDashboard() {
                   id="StudentDashboard_Overview"
                   cols={9}
                   rows={9}
-                  gap={{x: 10, y: 10}}
-                  padding={{x: 10, y: 10}}
+                  gap={{x: 20, y: 20}}
+                  padding={{x: 0, y: 20}}
                   panels={[
                     {
                       id: 'my_projects',
