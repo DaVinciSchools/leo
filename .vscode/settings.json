@@ -1,7 +1,6 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
     "java.configuration.updateBuildConfiguration": "automatic",
-    "editor.formatOnSave": false,
     "[javascript]": {
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "dbaeumer.vscode-eslint"
@@ -17,5 +16,20 @@
     "[typescriptreact]": {
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    }
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[java]": {
+        "editor.defaultFormatter": "redhat.java"
+    },
+    "eslint.format.enable": true,
+    "eslint.ignoreUntitled": true,
+    "eslint.options": {
+        "overrideConfigFile": "server/src/main/clients/web-browser/.eslintrc.json",
+        "ignorePath": "server/src/main/clients/web-browser/.eslintignore"
+    },
+    "java.sources.organizeImports.starThreshold": 999999,
+    "java.sources.organizeImports.staticStarThreshold": 999999,
+    "maven.pomfile.autoUpdateEffectivePOM": true,
 }

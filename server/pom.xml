@@ -10,6 +10,7 @@
     <description>Project Leo Server</description>
 
     <parent>
+        <?m2e execute onConfiguration,onIncremental?>
         <groupId>org.davincischools.leo</groupId>
         <artifactId>project-leo</artifactId>
         <version>0.0.1-SNAPSHOT</version>
@@ -128,6 +129,7 @@
                                 <!-- See note in 'generate-protobuf-java' for
                                      why we add this folder. -->
                                 <source>${project.build.sourceDirectory}/../java-protos</source>
+                                <source>${project.build.sourceDirectory}/../resources</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -149,7 +151,7 @@
                 <executions>
                     <!-- Install node executable. -->
                     <execution>
-                        <?m2e execute onConfiguration,onIncremental?>
+                        <?m2e execute onConfiguration?>
                         <id>install-node-and-npm</id>
                         <goals>
                             <goal>install-node-and-npm</goal>
@@ -159,7 +161,7 @@
 
                     <!-- Install npm. -->
                     <execution>
-                        <?m2e execute onConfiguration,onIncremental?>
+                        <?m2e execute onConfiguration?>
                         <id>npm-install</id>
                         <goals>
                             <goal>npm</goal>
@@ -172,7 +174,7 @@
 
                     <!-- Install npm. -->
                     <execution>
-                        <?m2e execute onConfiguration,onIncremental?>
+                        <?m2e ignore?>
                         <id>npm-audit</id>
                         <goals>
                             <goal>npm</goal>
