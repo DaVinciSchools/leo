@@ -1,71 +1,108 @@
 import './TeacherDashboard.scss';
 
-import ForumIcon from '@mui/icons-material/Forum';
-import NotificationsTwoToneIcon from '@mui/icons-material/NotificationsTwoTone';
-import QueryStatsIcon from '@mui/icons-material/QueryStats';
-import {TitledPaper} from '../../../libs/TitledPaper/TitledPaper';
-import {PersistedReactGridLayout} from '../../../libs/PersistedReactGridLayout/PersistedReactGridLayout';
+import {Autocomplete, Grid, TextField} from '@mui/material';
+import {useEffect, useState} from 'react';
+import {pl_types} from '../../../generated/protobuf-js';
+import IClassX = pl_types.IClassX;
+import IAssignment = pl_types.IAssignment;
 
 export function AssignmentsTab() {
+  const [classXs, setClassXs] = useState<IClassX[] | undefined>();
+  const [assignments, setAssignments] = useState<IAssignment[] | undefined>();
+
+  const [classX, setClassX] = useState<IClassX | null>(null);
+  const [assignment, setAssignment] = useState<IAssignment | null>(null);
+
+  useEffect(() => {
+    setTimeout(() => {
+      const sortedAssignments = [
+        {id: 3, name: 'Assignment 3', classX: {id: 2, name: 'Class B'}},
+        {id: 2, name: 'Assignment 2', classX: {id: 1, name: 'Class A'}},
+        {id: 4, name: 'Assignment 4', classX: {id: 3, name: 'Class C'}},
+        {id: 1, name: 'Assignment 1', classX: {id: 1, name: 'Class A'}},
+      ].sort(
+        (a, b) =>
+          a.classX!.name!.localeCompare(b.classX!.name!) ||
+          a.name!.localeCompare(b.name!)
+      );
+
+      const sortedUniqueClassXs: IClassX[] = [];
+      sortedAssignments.forEach(assignment => {
+        if (
+          sortedUniqueClassXs[sortedUniqueClassXs.length - 1]?.id !==
+          assignment.classX!.id!
+        ) {
+          sortedUniqueClassXs.push(assignment.classX!);
+        }
+      });
+
+      setClassXs(sortedUniqueClassXs);
+      setAssignments(sortedAssignments);
+    }, 2000);
+  });
+
   return (
     <>
-      <PersistedReactGridLayout
-        id="TeacherDashboard_Overview"
-        cols={9}
-        rows={9}
-        gap={{x: 20, y: 20}}
-        padding={{x: 0, y: 20}}
-        panels={[
-          {
-            id: 'assignments',
-            panel: <>Select Assignment: </>,
-            layout: {x: 0, y: 0, w: 5, h: 3},
-            static: true,
-          },
-          {
-            id: 'assignment_stats',
-            panel: (
-              <TitledPaper
-                title="Assignment Stats"
-                icon={<QueryStatsIcon />}
-                highlightColor="blue"
-                draggable={true}
-              >
-                TODO
-              </TitledPaper>
-            ),
-            layout: {x: 5, y: 0, w: 4, h: 3},
-          },
-          {
-            id: 'timeline',
-            panel: (
-              <TitledPaper
-                title="Timeline"
-                icon={<ForumIcon />}
-                highlightColor="black"
-                draggable={true}
-              >
-                TODO
-              </TitledPaper>
-            ),
-            layout: {x: 0, y: 3, w: 5, h: 6},
-          },
-          {
-            id: 'notifications',
-            panel: (
-              <TitledPaper
-                title="Notifications"
-                icon={<NotificationsTwoToneIcon />}
-                highlightColor="green"
-                draggable={true}
-              >
-                TODO
-              </TitledPaper>
-            ),
-            layout: {x: 5, y: 3, w: 4, h: 6},
-          },
-        ]}
-      />
+      <Grid container paddingY={2} spacing={2} columns={{xs: 6, md: 12}}>
+        <Grid item xs={6}>
+          <Autocomplete
+            id="class"
+            value={classX}
+            autoHighlight
+            options={classXs ?? []}
+            onChange={(e, value) => {
+              setClassX(value);
+              setAssignment(null);
+            }}
+            getOptionLabel={classX => classX.name!}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            disabled={assignments == null}
+            size="small"
+            fullWidth={true}
+            renderInput={params => (
+              <TextField
+                {...params}
+                label={
+                  assignments == null ? 'Loading Classes...' : 'Select Class'
+                }
+              />
+            )}
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <Autocomplete
+            id="assignment"
+            value={assignment}
+            autoHighlight
+            options={assignments ?? []}
+            onChange={(e, value) => {
+              setClassX(value?.classX ?? null);
+              setAssignment(value);
+            }}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            filterOptions={options =>
+              classX != null
+                ? options.filter(value => value.classX!.id! === classX.id!)
+                : options
+            }
+            groupBy={assignment => assignment.classX!.name!}
+            getOptionLabel={assignment => assignment.name!}
+            disabled={assignments == null}
+            size="small"
+            fullWidth={true}
+            renderInput={params => (
+              <TextField
+                {...params}
+                label={
+                  assignments == null
+                    ? 'Loading Assignments...'
+                    : 'Select Assignment'
+                }
+              />
+            )}
+          />
+        </Grid>
+      </Grid>
     </>
   );
 }
