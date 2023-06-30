@@ -1,1 +1,9 @@
 @use '../../../libs/DefaultPage/DefaultPage';
+@use '../../../libs/color';
+
+.section-label {
+  margin-top: 1em;
+  font-weight: bold;
+  padding-bottom: 3px;
+  border-bottom: color.$primary-800 solid 2px;
+}
