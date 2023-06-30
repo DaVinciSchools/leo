@@ -32,7 +32,7 @@ export function MyProjects() {
 
   useEffect(() => {
     service
-      .getProjects({userXId: user!.id, activeOnly: true})
+      .getProjects({userXId: user!.userXId, activeOnly: true})
       .then(response => {
         setProjects(response.projects);
       });

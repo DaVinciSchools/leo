@@ -30,7 +30,7 @@ export function AllProjects() {
   );
 
   useEffect(() => {
-    service.getProjects({userXId: user!.id}).then(response => {
+    service.getProjects({userXId: user!.userXId}).then(response => {
       setProjects(response.projects);
     });
   }, []);

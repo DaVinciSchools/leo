@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Create admin@testdistrict.edu User" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="project-leo-database" />
+    <option name="PROGRAM_PARAMETERS" value="--createDistrict=&quot;Test District&quot; --createAdmin=&quot;admin@testdistrict.edu&quot; --resetPassword=&quot;admin@testdistrict.edu&quot;" />
+    <selectedOptions>
+      <option name="spring.boot.profiles" visible="false" />
+    </selectedOptions>
+    <option name="SPRING_BOOT_MAIN_CLASS" value="org.davincischools.leo.database.admin.AdminUtils" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

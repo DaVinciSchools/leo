@@ -23,7 +23,7 @@ export function CommonAccountFields(props: {
       message: 'A password is required for new accounts.',
       validator: (rule: FormRule, value: string) => {
         if (
-          props.form.getFieldValue('id') == null &&
+          props.form.getFieldValue('userXId') == null &&
           (value == null || value === '')
         ) {
           return Promise.reject();

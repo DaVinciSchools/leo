@@ -300,7 +300,7 @@ public class AdminUtils {
                             emailAddress,
                             userX -> userX.setFirstName(firstName).setLastName(lastName));
                     db.addStudentPermission(
-                        u -> u.getStudent().setStudentId(id).setGrade(grade), student);
+                        u -> u.getStudent().setDistrictStudentId(id).setGrade(grade), student);
 
                     School school =
                         db.getSchoolRepository()
@@ -328,7 +328,7 @@ public class AdminUtils {
                 userX -> {
                   if (userX.getEncodedPassword().equals(Database.INVALID_ENCODED_PASSWORD)) {
                     UserUtils.setPassword(
-                        userX, userX.getLastName() + userX.getStudent().getStudentId());
+                        userX, userX.getLastName() + userX.getStudent().getDistrictStudentId());
                   }
                 })
             .toList();

@@ -44,8 +44,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class UserManagementService {
 
-  private Pattern PASSWORD_REQS = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,50}$");
-  private Pattern EMAIL_REQS = Pattern.compile("^[^@]+@[^@]+[.][^@]+$");
+  private final Pattern PASSWORD_REQS = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,50}$");
+  private final Pattern EMAIL_REQS = Pattern.compile("^[^@]+@[^@]+[.][^@]+$");
 
   @Autowired Database db;
   @Autowired EntityManager entityManager;
@@ -139,7 +139,8 @@ public class UserManagementService {
 
               // Make sure a user is only updating their own profile.
               if (!user.isAdmin()) {
-                if (!request.getUser().hasId() || request.getUser().getId() != user.get().getId()) {
+                if (!request.getUser().hasUserXId()
+                    || request.getUser().getUserXId() != user.get().getId()) {
                   return user.returnForbidden(UpsertUserResponse.getDefaultInstance());
                 }
               }
@@ -154,8 +155,10 @@ public class UserManagementService {
 
               // Possibly load the existing user.
               UserX userX =
-                  request.getUser().hasId()
-                      ? db.getUserXRepository().findById(request.getUser().getId()).orElse(null)
+                  request.getUser().hasUserXId()
+                      ? db.getUserXRepository()
+                          .findById(request.getUser().getUserXId())
+                          .orElse(null)
                       : null;
 
               // Only an admin can create a user.
@@ -267,7 +270,8 @@ public class UserManagementService {
                 if (request.getUser().getIsStudent()) {
                   userX
                       .getStudent()
-                      .setStudentId(request.hasStudentId() ? request.getStudentId() : null)
+                      .setDistrictStudentId(
+                          request.hasDistrictStudentId() ? request.getDistrictStudentId() : null)
                       .setGrade(request.hasStudentGrade() ? request.getStudentGrade() : null);
                 }
               }
@@ -367,8 +371,8 @@ public class UserManagementService {
 
     // Set student details.
     Optional.ofNullable(userX.getStudent())
-        .map(Student::getStudentId)
-        .ifPresent(details::setStudentId);
+        .map(Student::getDistrictStudentId)
+        .ifPresent(details::setDistrictStudentId);
     Optional.ofNullable(userX.getStudent())
         .map(Student::getGrade)
         .ifPresent(details::setStudentGrade);

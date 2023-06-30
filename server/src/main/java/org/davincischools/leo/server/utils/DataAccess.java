@@ -93,7 +93,7 @@ public class DataAccess {
   public static org.davincischools.leo.protos.pl_types.User convertFullUserXToProto(UserX user) {
     var userProto =
         org.davincischools.leo.protos.pl_types.User.newBuilder()
-            .setId(firstNonNull(user::getId, () -> -1))
+            .setUserXId(firstNonNull(user::getId, () -> -1))
             .setDistrictId(firstNonNull(user.getDistrict()::getId, () -> -1))
             .setFirstName(user.getFirstName())
             .setLastName(user.getLastName())
@@ -107,8 +107,8 @@ public class DataAccess {
   public static FullUserDetails convertFullUserXToDetailsProto(UserX userX) {
     var proto = FullUserDetails.newBuilder().setUser(convertFullUserXToProto(userX));
     if (HttpUser.isStudent(userX)) {
-      if (userX.getStudent().getStudentId() != null) {
-        proto.setStudentId(userX.getStudent().getStudentId());
+      if (userX.getStudent().getDistrictStudentId() != null) {
+        proto.setDistrictStudentId(userX.getStudent().getDistrictStudentId());
       }
       if (userX.getStudent().getGrade() != null) {
         proto.setStudentGrade(userX.getStudent().getGrade());

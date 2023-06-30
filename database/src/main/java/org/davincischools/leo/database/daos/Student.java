@@ -17,15 +17,15 @@ public class Student implements Serializable {
   public static final String TABLE_NAME = "student";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
-  public static final String COLUMN_STUDENTID_NAME = "student_id";
+  public static final String COLUMN_DISTRICTSTUDENTID_NAME = "district_student_id";
   public static final String COLUMN_GRADE_NAME = "grade";
-  private static final long serialVersionUID = 6486876479287914154L;
+  private static final long serialVersionUID = 8647835055418610467L;
 
   private Integer id;
 
   private Instant creationTime;
 
-  private Integer studentId;
+  private Integer districtStudentId;
 
   private Integer grade;
 
@@ -51,13 +51,13 @@ public class Student implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_STUDENTID_NAME)
-  public Integer getStudentId() {
-    return studentId;
+  @Column(name = COLUMN_DISTRICTSTUDENTID_NAME)
+  public Integer getDistrictStudentId() {
+    return districtStudentId;
   }
 
-  public Student setStudentId(Integer studentId) {
-    this.studentId = studentId;
+  public Student setDistrictStudentId(Integer districtStudentId) {
+    this.districtStudentId = districtStudentId;
     return this;
   }
 

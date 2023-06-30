@@ -94,7 +94,7 @@ export function Accounts() {
   function finish(values: FormData) {
     const newUserX: IUser = Object.assign(
       {},
-      {id: editingUser?.user?.id},
+      {userXId: editingUser?.user?.userXId},
       values ?? {}
     ) as IUser;
     const upsertRequest = {user: newUserX, ...values} as IUpsertUserRequest;
@@ -189,7 +189,7 @@ export function Accounts() {
               <Checkbox
                 onChange={() => {
                   if (form.getFieldValue('isStudent') === false) {
-                    form.setFieldValue('studentId', undefined);
+                    form.setFieldValue('districtStudentId', undefined);
                     form.setFieldValue('studentGrade', undefined);
                   }
                 }}
@@ -211,7 +211,7 @@ export function Accounts() {
                     pattern: new RegExp(/^[0-9]*$/),
                   },
                 ]}
-                name="studentId"
+                name="districtStudentId"
                 normalize={value => (value.length !== 0 ? value : undefined)}
               >
                 <Input placeholder="Student ID" maxLength={25} />
@@ -233,7 +233,7 @@ export function Accounts() {
               style={{display: editingUser != null ? undefined : 'none'}}
             >
               <Button type="primary" htmlType="submit" style={{width: '6em'}}>
-                {editingUser?.user?.id ?? 0 > 0 ? 'Save' : 'Add'}
+                {editingUser?.user?.userXId ?? 0 > 0 ? 'Save' : 'Add'}
               </Button>
               &nbsp;
               <Button
@@ -310,7 +310,7 @@ export function Accounts() {
             ]}
             dataSource={users.map(value => {
               return {
-                key: value.user!.id!,
+                key: value.user!.userXId!,
                 value: value,
                 firstName: value.user!.firstName!,
                 lastName: value.user!.lastName!,

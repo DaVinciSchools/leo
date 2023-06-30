@@ -31,7 +31,7 @@ export function MyAccount() {
 
   useEffect(() => {
     userService
-      .getUserDetails({userXId: user.id})
+      .getUserDetails({userXId: user.userXId})
       .then(response => setUserX(response.user?.user ?? {}));
   }, []);
 

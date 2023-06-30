@@ -174,17 +174,25 @@ public class ServerApplication {
                               Authentication authentication) -> {
                             // Return the user in the reply after authentication.
                             UserX userX = ((UserXDetails) authentication.getPrincipal()).getUserX();
-                            User user =
+                            User.Builder user =
                                 User.newBuilder()
-                                    .setId(userX.getId())
+                                    .setUserXId(userX.getId())
                                     .setDistrictId(userX.getDistrict().getId())
                                     .setEmailAddress(userX.getEmailAddress())
                                     .setFirstName(userX.getFirstName())
                                     .setLastName(userX.getLastName())
                                     .setIsAdmin(HttpUser.isAdmin(userX))
                                     .setIsTeacher(HttpUser.isTeacher(userX))
-                                    .setIsStudent(HttpUser.isStudent(userX))
-                                    .build();
+                                    .setIsStudent(HttpUser.isStudent(userX));
+                            if (user.getIsAdmin()) {
+                              user.setAdminId(userX.getAdminX().getId());
+                            }
+                            if (user.getIsTeacher()) {
+                              user.setTeacherId(userX.getTeacher().getId());
+                            }
+                            if (user.getIsStudent()) {
+                              user.setStudentId(userX.getStudent().getId());
+                            }
 
                             response.setContentType(
                                 ProtobufHttpMessageConverter.PROTOBUF.toString());
@@ -194,7 +202,7 @@ public class ServerApplication {
                             response.setHeader(
                                 ProtobufHttpMessageConverter.X_PROTOBUF_MESSAGE_HEADER,
                                 user.getDescriptorForType().getFullName());
-                            response.getOutputStream().write(user.toByteArray());
+                            response.getOutputStream().write(user.build().toByteArray());
                             response.setStatus(HttpServletResponse.SC_OK);
                           })
                       .failureUrl("/users/login.html?failed=true")

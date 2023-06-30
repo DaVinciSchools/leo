@@ -152,7 +152,7 @@ public class TestData {
         userX ->
             userX
                 .getStudent()
-                .setStudentId(studentId.getAndIncrement())
+                .setDistrictStudentId(studentId.getAndIncrement())
                 .setGrade(grade.getAndIncrement()),
         admin,
         teacher,

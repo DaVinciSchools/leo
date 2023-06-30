@@ -83,18 +83,23 @@ message School {
 }
 
 // Field names in this message and that of the
-// user_management.UpsertUserRequest message must be unique. The
-// Accounts.tsx form merges them together.
+// user_management.UpsertUserRequest message must be unique or mean the same
+// thing. The Accounts.tsx form merges them together.
 message User {
-  optional int32 id = 1;
+  optional int32 user_x_id = 1;
   optional int32 district_id = 2;
   optional string first_name = 3;
   optional string last_name = 4;
   optional string email_address = 5;
 
   optional bool is_admin = 6;
-  optional bool is_teacher = 7;
-  optional bool is_student = 8;
+  optional int32 admin_id = 7;
+
+  optional bool is_teacher = 8;
+  optional int32 teacher_id = 9;
+
+  optional bool is_student = 10;
+  optional int32 student_id = 11;
 }
 
 message Eks {
