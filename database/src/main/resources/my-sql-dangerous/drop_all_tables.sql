@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS assignment__project_definition;
 DROP TABLE IF EXISTS knowledge_and_skill_assignment; -- Renamed
 DROP TABLE IF EXISTS knowledge_and_skill__assignment; -- Renamed
 DROP TABLE IF EXISTS assignment__knowledge_and_skill;
+DROP TABLE IF EXISTS class_x__knowledge_and_skill;
 
 DROP TABLE IF EXISTS project_cycle_step; -- Renamed.
 DROP TABLE IF EXISTS project_cycle; -- Renamed.

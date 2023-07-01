@@ -22,6 +22,7 @@ import org.davincischools.leo.database.utils.repos.AdminXRepository;
 import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.AssignmentProjectDefinitionRepository;
 import org.davincischools.leo.database.utils.repos.AssignmentRepository;
+import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ClassXRepository;
 import org.davincischools.leo.database.utils.repos.DistrictRepository;
 import org.davincischools.leo.database.utils.repos.FileXRepository;
@@ -72,6 +73,7 @@ public class Database {
   @Autowired private AssignmentKnowledgeAndSkillRepository assignmentKnowledgeAndSkillRepository;
   @Autowired private AssignmentProjectDefinitionRepository assignmentProjectDefinitionRepository;
   @Autowired private AssignmentRepository assignmentRepository;
+  @Autowired private ClassXKnowledgeAndSkillRepository classXKnowledgeAndSkillRepository;
   @Autowired private ClassXRepository classXRepository;
   @Autowired private DistrictRepository districtRepository;
   @Autowired private FileXRepository fileXRepository;
@@ -118,6 +120,10 @@ public class Database {
 
   public ClassXRepository getClassXRepository() {
     return classXRepository;
+  }
+
+  public ClassXKnowledgeAndSkillRepository getClassXKnowledgeAndSkillRepository() {
+    return classXKnowledgeAndSkillRepository;
   }
 
   public DistrictRepository getDistrictRepository() {
