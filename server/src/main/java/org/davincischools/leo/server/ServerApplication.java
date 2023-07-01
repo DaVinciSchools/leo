@@ -15,11 +15,11 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.post_environment_processors.LoadCustomProjectLeoProperties;
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.User;
 import org.davincischools.leo.server.controllers.project_generators.ProjectGenerator;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutor;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorArgumentResolver;
-import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.davincischools.leo.server.utils.http_user.HttpUserArgumentResolver;
 import org.davincischools.leo.server.utils.http_user.HttpUserService;
 import org.davincischools.leo.server.utils.http_user.UserXDetails;
@@ -181,9 +181,9 @@ public class ServerApplication {
                                     .setEmailAddress(userX.getEmailAddress())
                                     .setFirstName(userX.getFirstName())
                                     .setLastName(userX.getLastName())
-                                    .setIsAdmin(HttpUser.isAdmin(userX))
-                                    .setIsTeacher(HttpUser.isTeacher(userX))
-                                    .setIsStudent(HttpUser.isStudent(userX));
+                                    .setIsAdmin(UserXRepository.isAdmin(userX))
+                                    .setIsTeacher(UserXRepository.isTeacher(userX))
+                                    .setIsStudent(UserXRepository.isStudent(userX));
                             if (user.getIsAdmin()) {
                               user.setAdminId(userX.getAdminX().getId());
                             }

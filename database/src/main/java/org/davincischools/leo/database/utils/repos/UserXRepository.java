@@ -1,8 +1,16 @@
 package org.davincischools.leo.database.utils.repos;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.base.Strings;
+import java.time.Instant;
 import java.util.EnumSet;
 import java.util.Optional;
+import java.util.function.Consumer;
+import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.UserX;
+import org.davincischools.leo.database.utils.EntityUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,24 +21,70 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserXRepository extends JpaRepository<UserX, Integer> {
 
+  public static final int MAX_EMAIL_ADDRESS_LENGTH =
+      EntityUtils.getColumn(UserX.class, UserX.COLUMN_EMAILADDRESS_NAME).length();
+  public static final int MAX_FIRST_NAME_LENGTH =
+      EntityUtils.getColumn(UserX.class, UserX.COLUMN_FIRSTNAME_NAME).length();
+  public static final int MAX_LAST_NAME_LENGTH =
+      EntityUtils.getColumn(UserX.class, UserX.COLUMN_LASTNAME_NAME).length();
+
+  public static final int MIN_PASSWORD_LENGTH = 8;
+  public static final String INVALID_ENCODED_PASSWORD = "INVALID ENCODED PASSWORD";
+
   enum Role {
     ADMIN,
     TEACHER,
     STUDENT
   }
 
-  public static EnumSet<Role> getRoles(UserX user) {
+  static boolean isAdmin(UserX userX) {
+    return userX.getAdminX() != null && userX.getAdminX().getId() != null;
+  }
+
+  static boolean isTeacher(UserX userX) {
+    return userX.getTeacher() != null && userX.getTeacher().getId() != null;
+  }
+
+  static boolean isStudent(UserX userX) {
+    return userX.getStudent() != null && userX.getStudent().getId() != null;
+  }
+
+  static EnumSet<Role> getRoles(UserX user) {
+    checkNotNull(user);
+
     EnumSet<Role> roles = EnumSet.noneOf(Role.class);
-    if (user.getAdminX() != null && user.getAdminX().getId() != null) {
+    if (isAdmin(user)) {
       roles.add(Role.ADMIN);
     }
-    if (user.getTeacher() != null && user.getTeacher().getId() != null) {
+    if (isTeacher(user)) {
       roles.add(Role.TEACHER);
     }
-    if (user.getStudent() != null && user.getStudent().getId() != null) {
+    if (isStudent(user)) {
       roles.add(Role.STUDENT);
     }
     return roles;
+  }
+
+  default UserX upsert(District district, String emailAddress, Consumer<UserX> modifier) {
+    checkNotNull(district);
+    checkArgument(!Strings.isNullOrEmpty(emailAddress));
+    checkNotNull(modifier);
+
+    UserX userX =
+        findByEmailAddress(emailAddress)
+            .orElseGet(
+                () ->
+                    new UserX()
+                        .setCreationTime(Instant.now())
+                        .setFirstName("First Name")
+                        .setLastName("Last Name")
+                        .setEncodedPassword(INVALID_ENCODED_PASSWORD))
+            .setDistrict(district)
+            .setEmailAddress(emailAddress);
+
+    modifier.accept(userX);
+
+    return saveAndFlush(userX);
   }
 
   @Query(

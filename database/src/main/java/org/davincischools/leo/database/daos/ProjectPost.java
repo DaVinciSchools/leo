@@ -24,7 +24,7 @@ public class ProjectPost implements Serializable {
   public static final String COLUMN_TITLE_NAME = "title";
   public static final String COLUMN_MESSAGE_NAME = "message";
   public static final String COLUMN_MESSAGEQUILL_NAME = "message_quill";
-  private static final long serialVersionUID = 6512570515062393159L;
+  private static final long serialVersionUID = 6767484256396797429L;
 
   private Integer id;
 

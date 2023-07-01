@@ -36,7 +36,7 @@ public class Project implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NEEDSREVIEW_NAME = "needs_review";
   public static final String COLUMN_ACTIVE_NAME = "active";
-  private static final long serialVersionUID = 3837028389251700234L;
+  private static final long serialVersionUID = 5260791171597976028L;
 
   private Integer id;
 

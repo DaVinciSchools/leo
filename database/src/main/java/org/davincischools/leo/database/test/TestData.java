@@ -1,8 +1,9 @@
 package org.davincischools.leo.database.test;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.davincischools.leo.database.admin.AdminUtils;
+import org.davincischools.leo.database.admin.AdminUtils.DaVinciSchoolsByNickname;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
@@ -44,13 +45,13 @@ public class TestData {
   private UserX student;
   private UserX admin;
 
-  private ClassX chemistryClassX;
-  private KnowledgeAndSkill chemistryEks1, chemistryEks2;
-  private Assignment chemistryAssignment1, chemistryAssignment2;
+  private ClassX chemistryClass;
+  private KnowledgeAndSkill chemistryPeriodicTableEks, chemistryValenceElectronsEks;
+  private Assignment chemistryPeriodicTableAssignment, chemistryValenceElectronsAssignment;
 
-  private ClassX programmingClassX;
-  private KnowledgeAndSkill programmingEks1, programmingEks2;
-  private Assignment programmingAssignment1, programmingAssignment2;
+  private ClassX programmingClass;
+  private KnowledgeAndSkill programmingSortEks, programmingContainerEks;
+  private Assignment programmingSortAssignment, programmingContainerAssignment;
 
   public TestData(@Autowired Database db) {
     this.db = db;
@@ -68,135 +69,161 @@ public class TestData {
     return admin;
   }
 
-  public ClassX getChemistryClassX() {
-    return chemistryClassX;
+  public ClassX getChemistryClass() {
+    return chemistryClass;
   }
 
-  public KnowledgeAndSkill getChemistryEks1() {
-    return chemistryEks1;
+  public KnowledgeAndSkill getChemistryPeriodicTableEks() {
+    return chemistryPeriodicTableEks;
   }
 
-  public KnowledgeAndSkill getChemistryEks2() {
-    return chemistryEks2;
+  public KnowledgeAndSkill getChemistryValenceElectronsEks() {
+    return chemistryValenceElectronsEks;
   }
 
-  public Assignment getChemistryAssignment1() {
-    return chemistryAssignment1;
+  public Assignment getChemistryPeriodicTableAssignment() {
+    return chemistryPeriodicTableAssignment;
   }
 
-  public Assignment getChemistryAssignment2() {
-    return chemistryAssignment2;
+  public Assignment getChemistryValenceElectronsAssignment() {
+    return chemistryValenceElectronsAssignment;
   }
 
-  public ClassX getProgrammingClassX() {
-    return programmingClassX;
+  public ClassX getProgrammingClass() {
+    return programmingClass;
   }
 
-  public KnowledgeAndSkill getProgrammingEks1() {
-    return programmingEks1;
+  public KnowledgeAndSkill getProgrammingSortEks() {
+    return programmingSortEks;
   }
 
-  public KnowledgeAndSkill getProgrammingEks2() {
-    return programmingEks2;
+  public KnowledgeAndSkill getProgrammingContainerEks() {
+    return programmingContainerEks;
   }
 
-  public Assignment getProgrammingAssignment1() {
-    return programmingAssignment1;
+  public Assignment getProgrammingSortAssignment() {
+    return programmingSortAssignment;
   }
 
-  public Assignment getProgrammingAssignment2() {
-    return programmingAssignment2;
+  public Assignment getProgrammingContainerAssignment() {
+    return programmingContainerAssignment;
   }
 
   public void addTestData() {
-    // Rather than delete what's there, which could be dangerous since it is
-    // possible that a misconfiguration could point this to a real database,
-    // we create new users each time with unique ids.
+    District district = db.getDistrictRepository().upsert("Wiseburn Unified School District");
 
-    District district = db.createDistrict("Wiseburn Unified School District");
+    for (var school : AdminUtils.DaVinciSchoolsByNickname.values()) {
+      db.getSchoolRepository()
+          .upsert(
+              district, school.name(), school.getName(), s -> s.setAddress(school.getAddress()));
+    }
+    School school =
+        db.getSchoolRepository()
+            .findByNickname(district.getId(), DaVinciSchoolsByNickname.DVS.name())
+            .orElseThrow();
 
-    db.createSchool(district, "DVC");
-    db.createSchool(district, "DVConnect");
-    db.createSchool(district, "DVD");
-    db.createSchool(district, "DVFlex");
-    db.createSchool(district, "DVRISE");
-    School school = db.createSchool(district, "DVS");
+    for (var xqCompetency : AdminUtils.XqCategoriesByNickname.values()) {
+      db.getKnowledgeAndSkillRepository().upsert(xqCompetency.name(), Type.XQ_COMPETENCY, k -> {});
+    }
 
     admin =
-        db.createUserX(
-            district,
-            "sahendrickson@gmail.com",
-            userX ->
-                UserUtils.setPassword(
-                    userX.setFirstName("Scott").setLastName("Hendrickson"), PASSWORD));
+        db.getUserXRepository()
+            .upsert(
+                district,
+                "admin@davincischools.org",
+                userX ->
+                    UserUtils.setPassword(
+                        db.getAdminXRepository()
+                            .upsert(userX.setFirstName("Admin").setLastName("Da Vinci")),
+                        PASSWORD));
 
     teacher =
-        db.createUserX(
-            district,
-            "seno@davincischools.org",
-            userX ->
-                UserUtils.setPassword(userX.setFirstName("Steven").setLastName("Eno"), PASSWORD));
+        db.getUserXRepository()
+            .upsert(
+                district,
+                "teacher@davincischools.org",
+                userX ->
+                    UserUtils.setPassword(
+                        db.getTeacherRepository()
+                            .upsert(userX.setFirstName("Teacher").setLastName("Da Vinci")),
+                        PASSWORD));
+    db.getTeacherSchoolRepository().upsert(teacher.getTeacher(), school);
 
     student =
-        db.createUserX(
-            district,
-            "swallis@davincischools.org",
-            userX ->
-                UserUtils.setPassword(userX.setFirstName("Steve").setLastName("Wallis"), PASSWORD));
+        db.getUserXRepository()
+            .upsert(
+                district,
+                "student@student.davincischools.org",
+                userX ->
+                    UserUtils.setPassword(
+                        db.getStudentRepository()
+                            .upsert(
+                                userX.setFirstName("Student").setLastName("Da Vinci"),
+                                student -> student.setDistrictStudentId(1234).setGrade(9)),
+                        PASSWORD));
+    db.getStudentSchoolRepository().upsert(student.getStudent(), school);
 
-    AtomicInteger grade = new AtomicInteger(9);
-    AtomicInteger studentId = new AtomicInteger(1000);
-    db.addAdminXPermission(admin);
-    db.addTeacherPermission(teacher);
-    db.addStudentPermission(
-        userX ->
-            userX
-                .getStudent()
-                .setDistrictStudentId(studentId.getAndIncrement())
-                .setGrade(grade.getAndIncrement()),
-        admin,
-        teacher,
-        student);
+    programmingClass =
+        db.getClassXRepository().upsert(school, "Intro to Programming", classX -> {});
+    db.getTeacherClassXRepository().upsert(teacher.getTeacher(), programmingClass);
+    db.getStudentClassXRepository().upsert(student.getStudent(), programmingClass);
 
-    db.addTeachersToSchool(school, teacher.getTeacher());
-    db.addStudentsToSchool(school, admin.getStudent(), teacher.getStudent(), student.getStudent());
+    programmingSortEks =
+        db.getKnowledgeAndSkillRepository()
+            .upsert(
+                "Sort Algorithms",
+                Type.EKS,
+                eks -> eks.setShortDescr("I understand different sort algorithms."));
+    programmingContainerEks =
+        db.getKnowledgeAndSkillRepository()
+            .upsert(
+                "Containers",
+                Type.EKS,
+                eks -> eks.setShortDescr("I understand Lists, Sets, and Maps."));
+    db.getClassXKnowledgeAndSkillRepository().upsert(programmingClass, programmingSortEks);
+    db.getClassXKnowledgeAndSkillRepository().upsert(programmingClass, programmingContainerEks);
 
-    programmingClassX = db.createClassX(school, "Intro to Programming", classX -> {});
-    db.addTeachersToClassX(programmingClassX, teacher.getTeacher());
-    db.addStudentsToClassX(
-        programmingClassX, admin.getStudent(), teacher.getStudent(), student.getStudent());
+    programmingSortAssignment =
+        db.getAssignmentRepository()
+            .upsert(programmingClass, "Understand sort algorithms.", a -> {});
+    db.getAssignmentKnowledgeAndSkillRepository()
+        .upsert(programmingSortAssignment, programmingSortEks);
 
-    programmingEks1 =
-        db.createKnowledgeAndSkill(
-            programmingClassX,
-            "Sort Algorithms",
-            "I understand and can implement different sort algorithms.",
-            Type.EKS);
-    programmingAssignment1 =
-        db.createAssignment(programmingClassX, "Implement sort algorithms.", programmingEks1);
+    programmingContainerAssignment =
+        db.getAssignmentRepository().upsert(programmingClass, "Understand containers.", a -> {});
+    db.getAssignmentKnowledgeAndSkillRepository()
+        .upsert(programmingContainerAssignment, programmingContainerEks);
 
-    programmingEks2 =
-        db.createKnowledgeAndSkill(
-            programmingClassX, "Containers", "I can use Lists, Sets, and Maps.", Type.EKS);
-    programmingAssignment2 =
-        db.createAssignment(programmingClassX, "Implement sort algorithms.", programmingEks1);
+    chemistryClass = db.getClassXRepository().upsert(school, "Intro to Chemistry", classX -> {});
+    db.getTeacherClassXRepository().upsert(teacher.getTeacher(), chemistryClass);
+    db.getStudentClassXRepository().upsert(student.getStudent(), chemistryClass);
 
-    chemistryClassX = db.createClassX(school, "Intro to Chemistry", classX -> {});
-    db.addTeachersToClassX(chemistryClassX, teacher.getTeacher());
-    db.addStudentsToClassX(
-        chemistryClassX, admin.getStudent(), teacher.getStudent(), student.getStudent());
+    chemistryPeriodicTableEks =
+        db.getKnowledgeAndSkillRepository()
+            .upsert(
+                "Periodic Table",
+                Type.EKS,
+                ks -> ks.setShortDescr("I know how to read a periodic table."));
+    chemistryValenceElectronsEks =
+        db.getKnowledgeAndSkillRepository()
+            .upsert(
+                "Valence Electrons",
+                Type.EKS,
+                ks ->
+                    ks.setShortDescr(
+                        "I can determine the number of valence electrons for each element."));
+    db.getClassXKnowledgeAndSkillRepository().upsert(chemistryClass, chemistryPeriodicTableEks);
+    db.getClassXKnowledgeAndSkillRepository().upsert(chemistryClass, chemistryValenceElectronsEks);
 
-    chemistryEks1 =
-        db.createKnowledgeAndSkill(
-            chemistryClassX, "Periodic Table", "I know how to read a periodic table.", Type.EKS);
-    chemistryAssignment1 = db.createAssignment(chemistryClassX, "Periodic Table", chemistryEks1);
+    chemistryPeriodicTableAssignment =
+        db.getAssignmentRepository().upsert(chemistryClass, "Reading the Periodic Table", a -> {});
+    db.getAssignmentKnowledgeAndSkillRepository()
+        .upsert(chemistryPeriodicTableAssignment, chemistryPeriodicTableEks);
 
-    chemistryEks2 =
-        db.createKnowledgeAndSkill(
-            chemistryClassX,
-            "Valence Electrons",
-            "I can determine the number of valence electrons for each element.",
-            Type.EKS);
-    chemistryAssignment2 = db.createAssignment(chemistryClassX, "Valence Electrons", chemistryEks2);
+    chemistryValenceElectronsAssignment =
+        db.getAssignmentRepository()
+            .upsert(chemistryClass, "Understand Valence Electrons", a -> {});
+    db.getAssignmentKnowledgeAndSkillRepository()
+        .upsert(chemistryValenceElectronsAssignment, chemistryValenceElectronsEks);
   }
 }

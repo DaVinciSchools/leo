@@ -110,7 +110,8 @@ public class Log implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_STATUS_NAME, nullable = false, length = 7)
+  @Lob
+  @Column(name = COLUMN_STATUS_NAME, nullable = false)
   public String getStatus() {
     return status;
   }

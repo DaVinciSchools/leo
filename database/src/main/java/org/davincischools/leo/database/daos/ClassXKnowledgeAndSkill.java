@@ -18,7 +18,7 @@ public class ClassXKnowledgeAndSkill implements Serializable {
   public static final String ENTITY_NAME = "ClassXKnowledgeAndSkill";
   public static final String TABLE_NAME = "class_x__knowledge_and_skill";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
-  private static final long serialVersionUID = -5293673776969585963L;
+  private static final long serialVersionUID = 2115481320097609757L;
 
   private ClassXKnowledgeAndSkillId id;
 

@@ -1,5 +1,7 @@
 package org.davincischools.leo.database.utils.repos;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.time.Instant;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
@@ -12,8 +14,10 @@ import org.springframework.stereotype.Repository;
 public interface ClassXKnowledgeAndSkillRepository
     extends JpaRepository<ClassXKnowledgeAndSkill, ClassXKnowledgeAndSkillId> {
 
-  default ClassXKnowledgeAndSkill saveClassXKnowledgeAndSkill(
-      ClassX classX, KnowledgeAndSkill knowledgeAndSkill) {
+  default ClassXKnowledgeAndSkill upsert(ClassX classX, KnowledgeAndSkill knowledgeAndSkill) {
+    checkNotNull(classX);
+    checkNotNull(knowledgeAndSkill);
+
     return saveAndFlush(
         new ClassXKnowledgeAndSkill()
             .setCreationTime(Instant.now())

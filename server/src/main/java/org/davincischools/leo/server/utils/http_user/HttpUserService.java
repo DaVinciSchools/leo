@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
@@ -61,7 +62,7 @@ public class HttpUserService {
       HttpServletResponse response,
       EntityManager entityManager) {
     Optional<UserX> userX = getAuthenticatedUserX(db, entityManager);
-    if (userX.isPresent() && HttpUser.isAdmin(userX.get())) {
+    if (userX.isPresent() && UserXRepository.isAdmin(userX.get())) {
       return new HttpUser(userX, request, response, true);
     }
     return new HttpUser(Optional.empty(), request, response, true);
@@ -75,7 +76,7 @@ public class HttpUserService {
       HttpServletResponse response,
       EntityManager entityManager) {
     Optional<UserX> userX = getAuthenticatedUserX(db, entityManager);
-    if (userX.isPresent() && HttpUser.isTeacher(userX.get())) {
+    if (userX.isPresent() && UserXRepository.isTeacher(userX.get())) {
       return new HttpUser(userX, request, response, true);
     }
     return new HttpUser(Optional.empty(), request, response, true);
@@ -89,7 +90,7 @@ public class HttpUserService {
       HttpServletResponse response,
       EntityManager entityManager) {
     Optional<UserX> userX = getAuthenticatedUserX(db, entityManager);
-    if (userX.isPresent() && HttpUser.isStudent(userX.get())) {
+    if (userX.isPresent() && UserXRepository.isStudent(userX.get())) {
       return new HttpUser(userX, request, response, true);
     }
     return new HttpUser(Optional.empty(), request, response, true);

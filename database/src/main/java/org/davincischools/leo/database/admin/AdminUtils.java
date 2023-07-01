@@ -9,8 +9,8 @@ import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -23,8 +23,8 @@ import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
+import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.ProjectDefinition;
-import org.davincischools.leo.database.daos.ProjectInputCategory;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.UserX;
@@ -32,6 +32,7 @@ import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserUtils;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository.ValueType;
+import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -40,8 +41,37 @@ import org.springframework.context.ApplicationContext;
 
 @SpringBootApplication(scanBasePackageClasses = {Database.class})
 public class AdminUtils {
+  public enum DaVinciSchoolsByNickname {
+    DVC("Da Vinci Communications High School", "201 N. Douglas St., El Segundo, CA 90245"),
+    DVConnect("Da Vinci Connect High School", "550 Continental Blvd., El Segundo, CA 90245"),
+    DVD("Da Vinci Design High School", "201 N. Douglas St., El Segundo, CA 90245"),
+    DVFlex("Da Vinci Flex High School", "Address TBD"),
+    DVRISE("Da Vinci Rise High School-Richstone", "13634 Cordary Avenue, Hawthorne, CA 90250"),
+    DVS("Da Vinci Science High School", "201 N. Douglas St., El Segundo, CA 90245");
 
-  private enum XqCategory {
+    private final String name;
+    private final String address;
+
+    DaVinciSchoolsByNickname(String name, String address) {
+      this.name = name;
+      this.address = address;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getAddress() {
+      return address;
+    }
+
+    public School createSchool(Database db, District district) {
+      return db.getSchoolRepository()
+          .upsert(district, this.name(), name, s -> s.setAddress(address));
+    }
+  }
+
+  public enum XqCategoriesByNickname {
     ID("Interdisciplinary"),
     HUM("Humanities"),
     STEAM("Science, Technology, Engineering, Arts, and Math (STEM)"),
@@ -49,7 +79,7 @@ public class AdminUtils {
 
     private final String name;
 
-    XqCategory(String name) {
+    XqCategoriesByNickname(String name) {
       this.name = name;
     }
 
@@ -63,6 +93,13 @@ public class AdminUtils {
   private static final Logger log = LogManager.getLogger();
 
   private record Error(String value, Exception e) {}
+
+  private static String createPassword() {
+    return new RandomStringGenerator.Builder()
+        .withinRange(new char[] {'a', 'z'}, new char[] {'0', '9'})
+        .build()
+        .generate(20);
+  }
 
   @Autowired private Database db;
 
@@ -93,14 +130,7 @@ public class AdminUtils {
   private District createDistrict() {
     checkArgument(createDistrict != null, "--createDistrict required.");
 
-    return db.createDistrict(createDistrict);
-  }
-
-  private static String createPassword() {
-    return new RandomStringGenerator.Builder()
-        .withinRange(new char[] {'a', 'z'}, new char[] {'0', '9'})
-        .build()
-        .generate(20);
+    return db.getDistrictRepository().upsert(createDistrict);
   }
 
   private void createAdmins() {
@@ -110,29 +140,17 @@ public class AdminUtils {
       String password = createPassword();
       District district = createDistrict();
       AtomicBoolean passwordUpdated = new AtomicBoolean(false);
-      UserX admin =
-          db.createUserX(
+      db.getUserXRepository()
+          .upsert(
               district,
               createAdmin,
               userX -> {
-                if (userX.getEncodedPassword().equals(Database.INVALID_ENCODED_PASSWORD)) {
+                db.getAdminXRepository().upsert(userX);
+                if (userX.getEncodedPassword().equals(UserXRepository.INVALID_ENCODED_PASSWORD)) {
                   UserUtils.setPassword(userX, password);
                   passwordUpdated.set(true);
                 }
               });
-      db.addAdminXPermission(admin);
-
-      // TODO: Later we don't want to do this. But, for development for now...
-      db.addStudentPermission(userX -> userX.getStudent(), admin);
-      db.addTeacherPermission(admin);
-      for (School school : db.getSchoolRepository().findAll()) {
-        db.addTeachersToSchool(school, admin.getTeacher());
-        db.addStudentsToSchool(school, admin.getStudent());
-      }
-      for (ClassX classX : db.getClassXRepository().findAll()) {
-        db.addTeachersToClassX(classX, admin.getTeacher());
-        db.addStudentsToClassX(classX, admin.getStudent());
-      }
 
       if (passwordUpdated.get()) {
         log.atWarn()
@@ -196,23 +214,26 @@ public class AdminUtils {
                     checkArgument(emailAddress.contains("@"), "Invalid e-mail address.");
 
                     UserX teacher =
-                        db.createUserX(
-                            district,
-                            emailAddress,
-                            userX -> userX.setFirstName(firstName).setLastName(lastName));
-                    db.addTeacherPermission(teacher);
-                    db.addStudentPermission(userX -> userX.getStudent(), teacher);
-
-                    School school = db.createSchool(district, schoolNickname);
-                    db.addTeachersToSchool(school, teacher.getTeacher());
+                        db.getUserXRepository()
+                            .upsert(
+                                district,
+                                emailAddress,
+                                userX ->
+                                    db.getTeacherRepository()
+                                        .upsert(userX)
+                                        .setFirstName(firstName)
+                                        .setLastName(lastName));
+                    School school =
+                        DaVinciSchoolsByNickname.valueOf(schoolNickname).createSchool(db, district);
+                    db.getTeacherSchoolRepository().upsert(teacher.getTeacher(), school);
 
                     if (cells.length >= 5) {
                       String className = cells[4];
+
                       checkArgument(!className.isEmpty(), "Class name required.");
 
-                      ClassX classX = db.createClassX(school, className, c -> {});
-                      db.addTeachersToClassX(classX, teacher.getTeacher());
-                      db.addStudentsToClassX(classX, teacher.getStudent());
+                      ClassX classX = db.getClassXRepository().upsert(school, className, c -> {});
+                      db.getTeacherClassXRepository().upsert(teacher.getTeacher(), classX);
 
                       for (int eksIndex : new int[] {5, 7}) {
                         if (cells.length >= eksIndex + 2) {
@@ -222,17 +243,15 @@ public class AdminUtils {
                           checkArgument(!eksName.isEmpty(), "EKS name required.");
                           checkArgument(!eksDescr.isEmpty(), "EKS description required.");
 
-                          db.createAssignment(
-                              classX,
-                              eksName,
-                              db.createKnowledgeAndSkill(classX, eksName, eksDescr, Type.EKS));
+                          KnowledgeAndSkill eks =
+                              db.getKnowledgeAndSkillRepository()
+                                  .upsert(eksName, Type.EKS, ks -> ks.setShortDescr(eksDescr));
+                          db.getClassXKnowledgeAndSkillRepository().upsert(classX, eks);
                         }
                       }
                     }
 
-                    db.addTeachersToSchool(school, teacher.getTeacher());
-
-                    log.atInfo().log("Imported: {}", line);
+                    log.atTrace().log("Imported: {}", line);
 
                     return teacher;
                   } catch (Exception e) {
@@ -245,7 +264,7 @@ public class AdminUtils {
             .parallel()
             .peek(
                 userX -> {
-                  if (userX.getEncodedPassword().equals(Database.INVALID_ENCODED_PASSWORD)) {
+                  if (userX.getEncodedPassword().equals(UserXRepository.INVALID_ENCODED_PASSWORD)) {
                     UserUtils.setPassword(userX, userX.getEmailAddress());
                   }
                 })
@@ -295,25 +314,29 @@ public class AdminUtils {
                     checkArgument(!schoolNickname.isEmpty(), "School nickname required.");
 
                     UserX student =
-                        db.createUserX(
-                            district,
-                            emailAddress,
-                            userX -> userX.setFirstName(firstName).setLastName(lastName));
-                    db.addStudentPermission(
-                        u -> u.getStudent().setDistrictStudentId(id).setGrade(grade), student);
+                        db.getUserXRepository()
+                            .upsert(
+                                district,
+                                emailAddress,
+                                userX ->
+                                    db.getStudentRepository()
+                                        .upsert(
+                                            userX, u -> u.setDistrictStudentId(id).setGrade(grade))
+                                        .setFirstName(firstName)
+                                        .setLastName(lastName));
 
                     School school =
-                        db.getSchoolRepository()
-                            .findByNickname(district.getId(), schoolNickname)
-                            .orElseThrow();
-                    db.addStudentsToSchool(
-                        db.getSchoolRepository()
-                            .findByNickname(district.getId(), schoolNickname)
-                            .orElseThrow(),
-                        student.getStudent());
+                        DaVinciSchoolsByNickname.valueOf(schoolNickname).createSchool(db, district);
+                    db.getStudentSchoolRepository().upsert(student.getStudent(), school);
+
                     db.getClassXRepository()
                         .findAllBySchool(school)
-                        .forEach(classX -> db.addStudentsToClassX(classX, student.getStudent()));
+                        .forEach(
+                            classX ->
+                                db.getStudentClassXRepository()
+                                    .upsert(student.getStudent(), classX));
+
+                    log.atTrace().log("Imported: {}", line);
 
                     return student;
                   } catch (Exception e) {
@@ -326,7 +349,7 @@ public class AdminUtils {
             .parallel()
             .peek(
                 userX -> {
-                  if (userX.getEncodedPassword().equals(Database.INVALID_ENCODED_PASSWORD)) {
+                  if (userX.getEncodedPassword().equals(UserXRepository.INVALID_ENCODED_PASSWORD)) {
                     UserUtils.setPassword(
                         userX, userX.getLastName() + userX.getStudent().getDistrictStudentId());
                   }
@@ -350,9 +373,9 @@ public class AdminUtils {
     checkArgument(importXqEks != null, "--importXqEks required.");
 
     District district = createDistrict();
+    School school = DaVinciSchoolsByNickname.DVRISE.createSchool(db, district);
 
     List<Error> errors = Collections.synchronizedList(new ArrayList<>());
-    School school = db.createSchool(district, "DVRISE");
     Set<Integer> classXIds = new HashSet<>();
 
     for (String line : Files.readLines(new File(importXqEks), StandardCharsets.UTF_8)) {
@@ -365,20 +388,30 @@ public class AdminUtils {
         String xqName = cells[0];
         String xqDescr = cells[1];
         String outcome = cells[2];
-        XqCategory xqCategory = XqCategory.valueOf(cells[3]);
+        XqCategoriesByNickname xqCategory = XqCategoriesByNickname.valueOf(cells[3]);
 
         checkArgument(!xqName.isEmpty(), "Title required.");
         checkArgument(!xqDescr.isEmpty(), "Description required.");
         checkArgument(!outcome.isEmpty(), "Outcome required.");
 
-        ClassX classX = db.createClassX(school, xqCategory.getName(), c -> {});
-        db.createAssignment(
-            classX,
-            xqName,
-            db.createKnowledgeAndSkill(classX, xqName, xqDescr, Type.XQ_COMPETENCY));
+        KnowledgeAndSkill knowledgeAndSkill =
+            db.getKnowledgeAndSkillRepository()
+                .upsert(
+                    xqCategory.getName() + ": " + xqName,
+                    Type.XQ_COMPETENCY,
+                    ks -> ks.setShortDescr(xqDescr));
+
+        ClassX classX =
+            db.getClassXRepository().upsert(school, xqName, c -> c.setShortDescr(xqDescr));
+        db.getClassXKnowledgeAndSkillRepository().upsert(classX, knowledgeAndSkill);
+
+        Assignment assignment =
+            db.getAssignmentRepository().upsert(classX, xqName, a -> a.setShortDescr(xqDescr));
+        db.getAssignmentKnowledgeAndSkillRepository().upsert(assignment, knowledgeAndSkill);
+
         classXIds.add(classX.getId());
 
-        log.atInfo().log("Imported: {}", line);
+        log.atTrace().log("Imported: {}", line);
       } catch (Exception e) {
         log.atError().withThrowable(e).log("Error: {}", line);
         errors.add(new Error(line, e));
@@ -387,14 +420,9 @@ public class AdminUtils {
     try {
       for (TeacherSchool teacherSchool : db.getTeacherSchoolRepository().findAll()) {
         if (teacherSchool.getSchool().getId().equals(school.getId())) {
-          UserX userX =
-              db.getUserXRepository()
-                  .findByTeacherId(teacherSchool.getTeacher().getId())
-                  .orElseThrow();
           for (int classXId : classXIds) {
             ClassX classX = new ClassX().setId(classXId);
-            db.addTeachersToClassX(classX, userX.getTeacher());
-            db.addStudentsToClassX(classX, userX.getStudent());
+            db.getTeacherClassXRepository().upsert(teacherSchool.getTeacher(), classX);
           }
         }
       }
@@ -434,9 +462,9 @@ public class AdminUtils {
 
         checkArgument(!title.equals("Title"), "Header row.");
 
-        db.createMotivation(title, descr);
+        db.getMotivationRepository().upsert(title, descr, m -> {});
 
-        log.atInfo().log("Imported: {}", line);
+        log.atTrace().log("Imported: {}", line);
       } catch (Exception e) {
         log.atError().withThrowable(e).log("Error: {}", line);
         errors.add(new Error(line, e));
@@ -457,91 +485,68 @@ public class AdminUtils {
   private void addIkigaiDiagramDescriptions() {
     log.atInfo().log("Creating Ikigai Diagram descriptions");
 
-    String projectDefinitionName = "2023-06-01 DVD Trial";
     ProjectDefinition projectDefinition =
-        db.getProjectDefinitionRepository()
-            .save(
-                db.getProjectDefinitionRepository()
-                    .findByName(projectDefinitionName)
-                    .orElseGet(() -> new ProjectDefinition().setCreationTime(Instant.now()))
-                    .setName(projectDefinitionName)
-                    .setTemplate(true));
+        db.getProjectDefinitionRepository().upsert("Generic Template", pd -> pd.setTemplate(true));
 
-    String careerInterestsTitle = "Career Interests";
     db.getProjectInputCategoryRepository()
-        .save(
-            db.getProjectInputCategoryRepository()
-                .findByTitle(careerInterestsTitle)
-                .orElseGet(() -> new ProjectInputCategory().setCreationTime(Instant.now()))
-                .setShortDescr("Career interests free text")
-                .setPosition(0)
-                .setTitle(careerInterestsTitle)
-                .setHint("Click to add careers.")
-                .setInputDescr("Enter career interests:")
-                .setInputPlaceholder("Career Interest")
-                .setQueryPrefix("You are passionate about a career in")
-                .setValueType(ValueType.FREE_TEXT.name())
-                .setMaxNumValues(4)
-                .setProjectDefinition(projectDefinition));
+        .upsert(
+            "Career Interests",
+            projectDefinition,
+            pic ->
+                pic.setPosition(0)
+                    .setShortDescr("Career interests free text.")
+                    .setHint("Click to add careers.")
+                    .setInputDescr("Enter career interests:")
+                    .setInputPlaceholder("Career Interest")
+                    .setQueryPrefix("You are passionate about a career in")
+                    .setValueType(ValueType.FREE_TEXT.name())
+                    .setMaxNumValues(4));
 
-    String motivationsTitle = "Motivations";
     db.getProjectInputCategoryRepository()
-        .save(
-            db.getProjectInputCategoryRepository()
-                .findByTitle(motivationsTitle)
-                .orElseGet(() -> new ProjectInputCategory().setCreationTime(Instant.now()))
-                .setShortDescr("Motivation selections")
-                .setPosition(1)
-                .setTitle(motivationsTitle)
-                .setHint("Click to add motivations.")
-                .setInputDescr("Select motivations:")
-                .setInputPlaceholder("Select a Motivation")
-                .setQueryPrefix("You are motivated by")
-                .setValueType(ValueType.MOTIVATION.name())
-                .setMaxNumValues(4)
-                .setProjectDefinition(projectDefinition));
+        .upsert(
+            "Motivations",
+            projectDefinition,
+            pic ->
+                pic.setPosition(1)
+                    .setShortDescr("Motivation selections.")
+                    .setHint("Click to add motivations.")
+                    .setInputDescr("Select motivations:")
+                    .setInputPlaceholder("Select a Motivation")
+                    .setQueryPrefix("You are motivated by")
+                    .setValueType(ValueType.MOTIVATION.name())
+                    .setMaxNumValues(4));
 
-    String eksTitle = "Knowledge and Skills";
     db.getProjectInputCategoryRepository()
-        .save(
-            db.getProjectInputCategoryRepository()
-                .findByTitle(eksTitle)
-                .orElseGet(() -> new ProjectInputCategory().setCreationTime(Instant.now()))
-                .setShortDescr("EKS selections")
-                .setPosition(2)
-                .setTitle(eksTitle)
-                .setHint("Click to add desired knowledge and skills.")
-                .setInputDescr("Select knowledge and skills:")
-                .setInputPlaceholder("Select a Knowledge and Skill")
-                .setQueryPrefix("You want to improve your ability to")
-                .setValueType(ValueType.EKS.name())
-                .setMaxNumValues(4)
-                .setProjectDefinition(projectDefinition));
+        .upsert(
+            "Knowledge and Skills",
+            projectDefinition,
+            pic ->
+                pic.setPosition(2)
+                    .setShortDescr("Knowledge and skill selections.")
+                    .setHint("Click to add desired knowledge and skills.")
+                    .setInputDescr("Select knowledge and skills:")
+                    .setInputPlaceholder("Select a Knowledge and Skill")
+                    .setQueryPrefix("You want to improve your ability to")
+                    .setValueType(ValueType.EKS.name())
+                    .setMaxNumValues(4));
 
-    String studentInterestsTitle = "Student Interests";
     db.getProjectInputCategoryRepository()
-        .save(
-            db.getProjectInputCategoryRepository()
-                .findByTitle(studentInterestsTitle)
-                .orElseGet(() -> new ProjectInputCategory().setCreationTime(Instant.now()))
-                .setShortDescr("Student interest free text")
-                .setPosition(3)
-                .setTitle(studentInterestsTitle)
-                .setHint("Click to add student interests.")
-                .setInputDescr("Enter student interests:")
-                .setInputPlaceholder("Student Interest")
-                .setQueryPrefix("You are passionate about")
-                .setValueType(ValueType.FREE_TEXT.name())
-                .setMaxNumValues(4)
-                .setProjectDefinition(projectDefinition));
+        .upsert(
+            "Student Interests",
+            projectDefinition,
+            pic ->
+                pic.setPosition(3)
+                    .setShortDescr("Student interest free text.")
+                    .setHint("Click to add student interests.")
+                    .setInputDescr("Enter student interests:")
+                    .setInputPlaceholder("Student Interest")
+                    .setQueryPrefix("You are passionate about")
+                    .setValueType(ValueType.FREE_TEXT.name())
+                    .setMaxNumValues(4));
 
     for (Assignment assignment : db.getAssignmentRepository().findAll()) {
       db.getAssignmentProjectDefinitionRepository()
-          .save(
-              db.getAssignmentProjectDefinitionRepository()
-                  .newAssignmentProjectDefinition(assignment, projectDefinition)
-                  .setCreationTime(Instant.now())
-                  .setSelected(true));
+          .upsert(assignment, projectDefinition, apd -> apd.setSelected(true));
     }
 
     log.atInfo().log("Done creating Ikigai Diagram descriptions");
@@ -553,16 +558,12 @@ public class AdminUtils {
       District district = createDistrict();
 
       // For now, just create one of each school.
-      db.createSchool(district, "DVC");
-      db.createSchool(district, "DVConnect");
-      db.createSchool(district, "DVD");
-      db.createSchool(district, "DVFlex");
-      db.createSchool(district, "DVRISE");
-      db.createSchool(district, "DVS");
+      Arrays.stream(DaVinciSchoolsByNickname.values())
+          .forEach(dvs -> dvs.createSchool(db, district));
     }
 
     if (!importTeachers.isEmpty()) {
-      log.atInfo().log("Importing teachers: {}", importStudents);
+      log.atInfo().log("Importing teachers: {}", importTeachers);
       importTeachers();
     }
     if (!importStudents.isEmpty()) {

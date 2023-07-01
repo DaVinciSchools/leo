@@ -8,23 +8,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.UserX;
+import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 
 public class HttpUser {
-
-  public static boolean isAdmin(UserX userX) {
-    return userX.getAdminX() != null && userX.getAdminX().getId() != null;
-  }
-
-  public static boolean isTeacher(UserX userX) {
-    return userX.getTeacher() != null && userX.getTeacher().getId() != null;
-  }
-
-  public static boolean isStudent(UserX userX) {
-    return userX.getStudent() != null && userX.getStudent().getId() != null;
-  }
 
   private final Optional<UserX> userX;
   private final HttpServletRequest request;
@@ -74,15 +63,15 @@ public class HttpUser {
   }
 
   public boolean isAdmin() {
-    return userX.isPresent() && isAdmin(userX.get());
+    return userX.isPresent() && UserXRepository.isAdmin(userX.get());
   }
 
   public boolean isTeacher() {
-    return userX.isPresent() && isTeacher(userX.get());
+    return userX.isPresent() && UserXRepository.isTeacher(userX.get());
   }
 
   public boolean isStudent() {
-    return userX.isPresent() && isStudent(userX.get());
+    return userX.isPresent() && UserXRepository.isStudent(userX.get());
   }
 
   public UserX get() {

@@ -1,5 +1,7 @@
 package org.davincischools.leo.database.utils.repos;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.time.Instant;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Teacher;
@@ -14,7 +16,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TeacherSchoolRepository extends JpaRepository<TeacherSchool, TeacherSchoolId> {
 
-  default TeacherSchool saveTeacherSchool(Teacher teacher, School school) {
+  default TeacherSchool upsert(Teacher teacher, School school) {
+    checkNotNull(teacher);
+    checkNotNull(school);
+
     return saveAndFlush(
         new TeacherSchool()
             .setCreationTime(Instant.now())

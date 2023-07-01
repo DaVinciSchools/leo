@@ -8,13 +8,6 @@ CREATE TABLE knowledge_and_skill
     short_descr       TEXT,
     short_descr_quill TEXT,
     long_descr        TEXT,
-    long_descr_quill  TEXT,
-
-    class_x_id        INT          NOT NULL,
-    CONSTRAINT knowledge_and_skill__class_x_id
-        FOREIGN KEY (class_x_id)
-            REFERENCES class_x (id)
-            ON DELETE RESTRICT
-            ON UPDATE RESTRICT
+    long_descr_quill  TEXT
 ) ENGINE InnoDB
   CHAR SET UTF8MB4;

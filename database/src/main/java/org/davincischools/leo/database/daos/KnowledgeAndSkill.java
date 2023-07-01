@@ -2,13 +2,10 @@ package org.davincischools.leo.database.daos;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
@@ -27,7 +24,7 @@ public class KnowledgeAndSkill implements Serializable {
   public static final String COLUMN_SHORTDESCRQUILL_NAME = "short_descr_quill";
   public static final String COLUMN_LONGDESCR_NAME = "long_descr";
   public static final String COLUMN_LONGDESCRQUILL_NAME = "long_descr_quill";
-  private static final long serialVersionUID = -4317071355813280224L;
+  private static final long serialVersionUID = -5836128139617290270L;
 
   private Integer id;
 
@@ -44,8 +41,6 @@ public class KnowledgeAndSkill implements Serializable {
   private String longDescr;
 
   private String longDescrQuill;
-
-  private ClassX classX;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -79,7 +74,8 @@ public class KnowledgeAndSkill implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_TYPE_NAME, nullable = false, length = 13)
+  @Lob
+  @Column(name = COLUMN_TYPE_NAME, nullable = false)
   public String getType() {
     return type;
   }
@@ -130,17 +126,6 @@ public class KnowledgeAndSkill implements Serializable {
 
   public KnowledgeAndSkill setLongDescrQuill(String longDescrQuill) {
     this.longDescrQuill = longDescrQuill;
-    return this;
-  }
-
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "class_x_id", nullable = false)
-  public ClassX getClassX() {
-    return classX;
-  }
-
-  public KnowledgeAndSkill setClassX(ClassX classX) {
-    this.classX = classX;
     return this;
   }
 }

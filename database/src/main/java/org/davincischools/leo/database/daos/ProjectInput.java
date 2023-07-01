@@ -23,7 +23,7 @@ public class ProjectInput implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_TIMEOUT_NAME = "timeout";
   public static final String COLUMN_STATE_NAME = "state";
-  private static final long serialVersionUID = -2951372818901188392L;
+  private static final long serialVersionUID = -3206920024776021304L;
 
   private Integer id;
 

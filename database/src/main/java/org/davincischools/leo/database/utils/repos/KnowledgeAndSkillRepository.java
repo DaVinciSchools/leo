@@ -1,6 +1,12 @@
 package org.davincischools.leo.database.utils.repos;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.base.Strings;
+import java.time.Instant;
 import java.util.Optional;
+import java.util.function.Consumer;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +19,22 @@ public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndS
   enum Type {
     EKS,
     XQ_COMPETENCY,
+  }
+
+  default KnowledgeAndSkill upsert(String name, Type type, Consumer<KnowledgeAndSkill> modifier) {
+    checkArgument(!Strings.isNullOrEmpty(name));
+    checkNotNull(type);
+    checkNotNull(modifier);
+
+    KnowledgeAndSkill knowledgeAndSkill =
+        findByNameAndType(name, type.name())
+            .orElseGet(() -> new KnowledgeAndSkill().setCreationTime(Instant.now()))
+            .setName(name)
+            .setType(type.name());
+
+    modifier.accept(knowledgeAndSkill);
+
+    return saveAndFlush(knowledgeAndSkill);
   }
 
   @Query("SELECT ks FROM KnowledgeAndSkill ks WHERE ks.type = (:type)")
@@ -32,7 +54,8 @@ public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndS
   @Query(
       "SELECT ks"
           + " FROM KnowledgeAndSkill ks"
-          + " WHERE ks.classX.id = (:classId)"
-          + " AND ks.name = (:name)")
-  Optional<KnowledgeAndSkill> findByName(@Param("classId") int classId, @Param("name") String name);
+          + " WHERE ks.name = (:name)"
+          + " AND ks.type = (:type)")
+  Optional<KnowledgeAndSkill> findByNameAndType(
+      @Param("name") String name, @Param("type") String type);
 }

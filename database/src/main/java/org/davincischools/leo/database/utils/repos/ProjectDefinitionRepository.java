@@ -1,7 +1,13 @@
 package org.davincischools.leo.database.utils.repos;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import java.time.Instant;
 import java.util.Optional;
+import java.util.function.Consumer;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectInputCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +17,20 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProjectDefinitionRepository extends JpaRepository<ProjectDefinition, Integer> {
+
+  default ProjectDefinition upsert(String name, Consumer<ProjectDefinition> modifier) {
+    checkArgument(!Strings.isNullOrEmpty(name));
+    checkNotNull(modifier);
+
+    ProjectDefinition projectDefinition =
+        findByName(name)
+            .orElseGet(() -> new ProjectDefinition().setCreationTime(Instant.now()))
+            .setName(name);
+
+    modifier.accept(projectDefinition);
+
+    return saveAndFlush(projectDefinition);
+  }
 
   // TODO: For development, remove.
   Optional<ProjectDefinition> findByName(String name);

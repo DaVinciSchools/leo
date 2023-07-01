@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.district_management.AddDistrictRequest;
@@ -40,10 +39,7 @@ public class DistrictManagementService {
 
     return httpExecutors
         .start(optionalRequest.orElse(GetDistrictsRequest.getDefaultInstance()))
-        .andThen(
-            (request, log) -> {
-              return getAllDistricts(-1);
-            })
+        .andThen((request, log) -> getAllDistricts(-1))
         .finish();
   }
 
@@ -63,7 +59,8 @@ public class DistrictManagementService {
         .andThen(
             (request, log) -> {
               if (request.hasDistrict()) {
-                District district = db.createDistrict(request.getDistrict().getName());
+                District district =
+                    db.getDistrictRepository().upsert(request.getDistrict().getName());
                 return getAllDistricts(district.getId());
               }
 
@@ -87,7 +84,7 @@ public class DistrictManagementService {
         .start(optionalRequest.orElse(UpdateDistrictRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              db.createDistrict(request.getDistrict().getName());
+              db.getDistrictRepository().upsert(request.getDistrict().getName());
               return getAllDistricts(-1);
             })
         .finish();
@@ -122,7 +119,7 @@ public class DistrictManagementService {
 
     response.setModifiedDistrictId(modifiedDistrictId);
     response.addAllDistricts(
-        StreamSupport.stream(db.getDistrictRepository().findAll().spliterator(), false)
+        db.getDistrictRepository().findAll().stream()
             .map(
                 district ->
                     org.davincischools.leo.protos.pl_types.District.newBuilder()

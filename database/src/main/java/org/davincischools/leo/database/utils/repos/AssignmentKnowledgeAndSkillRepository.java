@@ -1,5 +1,7 @@
 package org.davincischools.leo.database.utils.repos;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.time.Instant;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill;
@@ -12,8 +14,11 @@ import org.springframework.stereotype.Repository;
 public interface AssignmentKnowledgeAndSkillRepository
     extends JpaRepository<AssignmentKnowledgeAndSkill, AssignmentKnowledgeAndSkillId> {
 
-  default AssignmentKnowledgeAndSkill saveAssignmentKnowledgeAndSkill(
+  default AssignmentKnowledgeAndSkill upsert(
       Assignment assignment, KnowledgeAndSkill knowledgeAndSkill) {
+    checkNotNull(assignment);
+    checkNotNull(knowledgeAndSkill);
+
     return saveAndFlush(
         new AssignmentKnowledgeAndSkill()
             .setCreationTime(Instant.now())
