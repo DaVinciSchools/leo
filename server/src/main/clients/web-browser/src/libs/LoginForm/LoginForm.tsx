@@ -37,7 +37,6 @@ export function LoginForm(props: {successAction: (user: IUser) => void}) {
         method: 'POST',
         headers: addXsrfHeader({
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Response-Type': 'application/x-protobuf',
         }),
         body: new URLSearchParams(formValues),
         cache: 'no-cache',

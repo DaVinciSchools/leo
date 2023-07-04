@@ -30,24 +30,27 @@ public class InterestService {
             (request, log) -> {
               var response = RegisterInterestResponse.newBuilder();
 
-              db.getInterestRepository()
-                  .save(
-                      new Interest()
-                          .setCreationTime(Instant.now())
-                          .setFirstName(request.getFirstName())
-                          .setLastName(request.getLastName())
-                          .setEmailAddress(request.getEmailAddress())
-                          .setProfession(request.getProfession())
-                          .setReasonForInterest(request.getReasonForInterest())
-                          .setDistrictName(request.getDistrictName())
-                          .setSchoolName(request.getSchoolName())
-                          .setAddressLine1(request.getAddressLine1())
-                          .setAddressLine2(request.getAddressLine2())
-                          .setCity(request.getCity())
-                          .setState(request.getState())
-                          .setZipCode(request.getZipCode())
-                          .setNumTeachers(request.getNumTeachers())
-                          .setNumStudents(request.getNumStudents()));
+              Interest interest =
+                  db.getInterestRepository()
+                      .save(
+                          new Interest()
+                              .setCreationTime(Instant.now())
+                              .setFirstName(request.getFirstName())
+                              .setLastName(request.getLastName())
+                              .setEmailAddress(request.getEmailAddress())
+                              .setProfession(request.getProfession())
+                              .setReasonForInterest(request.getReasonForInterest())
+                              .setDistrictName(request.getDistrictName())
+                              .setSchoolName(request.getSchoolName())
+                              .setAddressLine1(request.getAddressLine1())
+                              .setAddressLine2(request.getAddressLine2())
+                              .setCity(request.getCity())
+                              .setState(request.getState())
+                              .setZipCode(request.getZipCode())
+                              .setNumTeachers(request.getNumTeachers())
+                              .setNumStudents(request.getNumStudents()));
+
+              response.setId(interest.getId());
 
               return response.build();
             })
