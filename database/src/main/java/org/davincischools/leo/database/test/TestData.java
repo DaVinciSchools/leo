@@ -1,5 +1,6 @@
 package org.davincischools.leo.database.test;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.admin.AdminUtils;
@@ -8,11 +9,14 @@ import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
+import org.davincischools.leo.database.daos.Motivation;
+import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserUtils;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
+import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository.ValueType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
@@ -41,6 +45,7 @@ public class TestData {
 
   private final Database db;
 
+  private District district;
   private UserX teacher;
   private UserX student;
   private UserX admin;
@@ -53,8 +58,20 @@ public class TestData {
   private KnowledgeAndSkill programmingSortEks, programmingContainerEks;
   private Assignment programmingSortAssignment, programmingContainerAssignment;
 
+  private ClassX danceClass;
+
+  private Motivation beCentralMotivation;
+  private Motivation excelMotivation;
+  private Motivation exploreMotivation;
+  private Motivation advanceMotivation;
+  private Motivation organizeMotivation;
+
   public TestData(@Autowired Database db) {
     this.db = db;
+  }
+
+  public District getDistrict() {
+    return district;
   }
 
   public UserX getTeacher() {
@@ -109,9 +126,45 @@ public class TestData {
     return programmingContainerAssignment;
   }
 
-  public void addTestData() {
-    District district = db.getDistrictRepository().upsert("Wiseburn Unified School District");
+  public ClassX getDanceClass() {
+    return danceClass;
+  }
 
+  public Motivation getBeCentralMotivation() {
+    return beCentralMotivation;
+  }
+
+  public Motivation getExcelMotivation() {
+    return excelMotivation;
+  }
+
+  public Motivation getExploreMotivation() {
+    return exploreMotivation;
+  }
+
+  public Motivation getAdvanceMotivation() {
+    return advanceMotivation;
+  }
+
+  public Motivation getOrganizeMotivation() {
+    return organizeMotivation;
+  }
+
+  /**
+   * This creates new entities each time it is called. So, using the getter methods will return
+   * different values for each test that can be used in isolation. The KnowledgeAndSkill table is
+   * the only exception because it's not tied to a district or school yet.
+   */
+  public void addTestData() {
+    // Rename and upsert a new district.
+    String districtName = "Project Leo School District";
+    db.getDistrictRepository()
+        .findByName(districtName)
+        .ifPresent(
+            d -> db.getDistrictRepository().save(d.setName(d.getName() + "-old." + d.getId())));
+    district = db.getDistrictRepository().upsert(districtName);
+
+    // Create schools.
     for (var school : AdminUtils.DaVinciSchoolsByNickname.values()) {
       db.getSchoolRepository()
           .upsert(
@@ -122,47 +175,110 @@ public class TestData {
             .findByNickname(district.getId(), DaVinciSchoolsByNickname.DVS.name())
             .orElseThrow();
 
+    // Create XQ Competencies.
+    // These are currently not unique per call.
     for (var xqCompetency : AdminUtils.XqCategoriesByNickname.values()) {
-      db.getKnowledgeAndSkillRepository().upsert(xqCompetency.name(), Type.XQ_COMPETENCY, k -> {});
+      db.getKnowledgeAndSkillRepository()
+          .upsert(
+              xqCompetency.getName() + ": " + xqCompetency.getExampleName(),
+              Type.XQ_COMPETENCY,
+              k -> k.setShortDescr(xqCompetency.getExampleDescription()));
     }
 
+    // Create motivations.
+    // These are currently not unique per call.
+    beCentralMotivation =
+        db.getMotivationRepository()
+            .upsert(
+                "Be Central",
+                "be a key person who holds things together and gives them meaning and/or direction",
+                m -> {});
+    excelMotivation =
+        db.getMotivationRepository()
+            .upsert(
+                "Excel",
+                "give your absolute best as you exceed performance and expectation",
+                m -> {});
+    exploreMotivation =
+        db.getMotivationRepository()
+            .upsert(
+                "Explore",
+                "press beyond the existing limits of your knowledge and experience to discover what"
+                    + " is unknown to you",
+                m -> {});
+    advanceMotivation =
+        db.getMotivationRepository()
+            .upsert("Advance", "make progress as you accomplish a series of goals", m -> {});
+    organizeMotivation =
+        db.getMotivationRepository()
+            .upsert("Organize", "set up a smooth-running operation", m -> {});
+
+    // Create users.
+    String email = "admin@projectleo.net";
+    db.getUserXRepository()
+        .findByEmailAddress(email)
+        .ifPresent(
+            u ->
+                db.getUserXRepository()
+                    .saveAndFlush(
+                        u.setEmailAddress(
+                            u.getEmailAddress().replace("@", "-old." + u.getId() + "@"))));
     admin =
         db.getUserXRepository()
             .upsert(
                 district,
-                "admin@davincischools.org",
+                email,
                 userX ->
                     UserUtils.setPassword(
                         db.getAdminXRepository()
-                            .upsert(userX.setFirstName("Admin").setLastName("Da Vinci")),
+                            .upsert(userX.setFirstName("Admin").setLastName("Project Leo")),
                         PASSWORD));
 
+    email = "teacher@projectleo.net";
+    db.getUserXRepository()
+        .findByEmailAddress(email)
+        .ifPresent(
+            u ->
+                db.getUserXRepository()
+                    .saveAndFlush(
+                        u.setEmailAddress(
+                            u.getEmailAddress().replace("@", "-old." + u.getId() + "@"))));
     teacher =
         db.getUserXRepository()
             .upsert(
                 district,
-                "teacher@davincischools.org",
+                email,
                 userX ->
                     UserUtils.setPassword(
                         db.getTeacherRepository()
-                            .upsert(userX.setFirstName("Teacher").setLastName("Da Vinci")),
+                            .upsert(userX.setFirstName("Teacher").setLastName("Project Leo")),
                         PASSWORD));
     db.getTeacherSchoolRepository().upsert(teacher.getTeacher(), school);
 
+    email = "student@projectleo.net";
+    db.getUserXRepository()
+        .findByEmailAddress(email)
+        .ifPresent(
+            u ->
+                db.getUserXRepository()
+                    .saveAndFlush(
+                        u.setEmailAddress(
+                            u.getEmailAddress().replace("@", "-old." + u.getId() + "@"))));
     student =
         db.getUserXRepository()
             .upsert(
                 district,
-                "student@student.davincischools.org",
+                email,
                 userX ->
                     UserUtils.setPassword(
                         db.getStudentRepository()
                             .upsert(
-                                userX.setFirstName("Student").setLastName("Da Vinci"),
+                                userX.setFirstName("Student").setLastName("Project Leo"),
                                 student -> student.setDistrictStudentId(1234).setGrade(9)),
                         PASSWORD));
     db.getStudentSchoolRepository().upsert(student.getStudent(), school);
 
+    // Create programming class.
     programmingClass =
         db.getClassXRepository().upsert(school, "Intro to Programming", classX -> {});
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), programmingClass);
@@ -185,15 +301,16 @@ public class TestData {
 
     programmingSortAssignment =
         db.getAssignmentRepository()
-            .upsert(programmingClass, "Understand sort algorithms.", a -> {});
+            .upsert(programmingClass, "Understand Sort Algorithms", a -> {});
     db.getAssignmentKnowledgeAndSkillRepository()
         .upsert(programmingSortAssignment, programmingSortEks);
 
     programmingContainerAssignment =
-        db.getAssignmentRepository().upsert(programmingClass, "Understand containers.", a -> {});
+        db.getAssignmentRepository().upsert(programmingClass, "Understand Containers", a -> {});
     db.getAssignmentKnowledgeAndSkillRepository()
         .upsert(programmingContainerAssignment, programmingContainerEks);
 
+    // Create chemistry class.
     chemistryClass = db.getClassXRepository().upsert(school, "Intro to Chemistry", classX -> {});
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), chemistryClass);
     db.getStudentClassXRepository().upsert(student.getStudent(), chemistryClass);
@@ -225,5 +342,87 @@ public class TestData {
             .upsert(chemistryClass, "Understand Valence Electrons", a -> {});
     db.getAssignmentKnowledgeAndSkillRepository()
         .upsert(chemistryValenceElectronsAssignment, chemistryValenceElectronsEks);
+
+    // Create an empty class.
+    danceClass = db.getClassXRepository().upsert(school, "Dance", classX -> {});
+    db.getTeacherClassXRepository().upsert(teacher.getTeacher(), danceClass);
+    db.getStudentClassXRepository().upsert(student.getStudent(), danceClass);
+
+    // Create a default project definition.
+    String projectDefinitionName = "Generic Template";
+    db.getProjectDefinitionRepository()
+        .findByName(projectDefinitionName)
+        .ifPresent(
+            pd ->
+                db.getProjectDefinitionRepository()
+                    .save(pd.setName(pd.getName() + "-old." + pd.getId()).setTemplate(false)));
+    ProjectDefinition projectDefinition =
+        db.getProjectDefinitionRepository()
+            .upsert(projectDefinitionName, pd -> pd.setTemplate(true));
+
+    db.getProjectInputCategoryRepository()
+        .upsert(
+            "Career Interests",
+            projectDefinition,
+            pic ->
+                pic.setPosition(0)
+                    .setShortDescr("Career interests free text.")
+                    .setHint("Click to add careers.")
+                    .setInputDescr("Enter career interests:")
+                    .setInputPlaceholder("Career Interest")
+                    .setQueryPrefix("You are passionate about a career in")
+                    .setValueType(ValueType.FREE_TEXT.name())
+                    .setMaxNumValues(4));
+
+    db.getProjectInputCategoryRepository()
+        .upsert(
+            "Motivations",
+            projectDefinition,
+            pic ->
+                pic.setPosition(1)
+                    .setShortDescr("Motivation selections.")
+                    .setHint("Click to add motivations.")
+                    .setInputDescr("Select motivations:")
+                    .setInputPlaceholder("Select a Motivation")
+                    .setQueryPrefix("You are motivated by")
+                    .setValueType(ValueType.MOTIVATION.name())
+                    .setMaxNumValues(4));
+
+    db.getProjectInputCategoryRepository()
+        .upsert(
+            "Knowledge and Skills",
+            projectDefinition,
+            pic ->
+                pic.setPosition(2)
+                    .setShortDescr("Knowledge and skill selections.")
+                    .setHint("Click to add desired knowledge and skills.")
+                    .setInputDescr("Select knowledge and skills:")
+                    .setInputPlaceholder("Select a Knowledge and Skill")
+                    .setQueryPrefix("You want to improve your ability to")
+                    .setValueType(ValueType.EKS.name())
+                    .setMaxNumValues(4));
+
+    db.getProjectInputCategoryRepository()
+        .upsert(
+            "Student Interests",
+            projectDefinition,
+            pic ->
+                pic.setPosition(3)
+                    .setShortDescr("Student interest free text.")
+                    .setHint("Click to add student interests.")
+                    .setInputDescr("Enter student interests:")
+                    .setInputPlaceholder("Student Interest")
+                    .setQueryPrefix("You are passionate about")
+                    .setValueType(ValueType.FREE_TEXT.name())
+                    .setMaxNumValues(4));
+
+    // Assign project definitions to assignments.
+    for (Assignment assignment :
+        ImmutableList.of(
+            programmingSortAssignment, programmingContainerAssignment,
+            chemistryPeriodicTableAssignment, chemistryValenceElectronsAssignment)) {
+      db.getAssignmentProjectDefinitionRepository()
+          .upsert(assignment, projectDefinition, apd -> apd.setSelected(true));
+    }
   }
 }

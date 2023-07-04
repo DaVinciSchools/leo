@@ -28,6 +28,7 @@ import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.UserX;
+import org.davincischools.leo.database.test.TestData;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserUtils;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
@@ -72,19 +73,44 @@ public class AdminUtils {
   }
 
   public enum XqCategoriesByNickname {
-    ID("Interdisciplinary"),
-    HUM("Humanities"),
-    STEAM("Science, Technology, Engineering, Arts, and Math (STEM)"),
-    SEL("Social, Emotional Learning (SS)");
+    ID(
+        "Interdisciplinary",
+        "Communication",
+        "Create arguments, support claims, and engage in critical dialogue"),
+    HUM(
+        "Humanities",
+        "Governments",
+        "Cultivate, refine, and leverage perspectiveson how governments work and how they could be"
+            + " improved"),
+    STEAM(
+        "Science, Technology, Engineering, Arts, and Math (STEM)",
+        "Scientific Thinking",
+        "Work with quantitative data to understand, represent, and predict relationships"),
+    SEL(
+        "Social, Emotional Learning (SS)",
+        "Relationship Building",
+        "Build and maintain healthy relationships");
 
     private final String name;
+    private final String exampleName;
+    private final String exampleDescription;
 
-    XqCategoriesByNickname(String name) {
+    XqCategoriesByNickname(String name, String exampleName, String exampleDescription) {
       this.name = name;
+      this.exampleName = exampleName;
+      this.exampleDescription = exampleDescription;
     }
 
-    private String getName() {
+    public String getName() {
       return name;
+    }
+
+    public String getExampleName() {
+      return exampleName;
+    }
+
+    public String getExampleDescription() {
+      return exampleDescription;
     }
   }
 
@@ -126,6 +152,9 @@ public class AdminUtils {
 
   @Value("${resetPassword:}")
   private List<String> resetPasswords;
+
+  @Value("${loadTestData}")
+  private String loadTestData;
 
   private District createDistrict() {
     checkArgument(createDistrict != null, "--createDistrict required.");
@@ -579,6 +608,10 @@ public class AdminUtils {
       importMotivations();
     }
     addIkigaiDiagramDescriptions();
+    if (loadTestData != null) {
+      log.atInfo().log("Loading test data");
+      new TestData(db).addTestData();
+    }
     if (!createAdmins.isEmpty()) {
       log.atInfo().log("Creating admin: {}", createAdmins);
       createAdmins();

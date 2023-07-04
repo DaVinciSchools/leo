@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Create admin@testdistrict.edu User" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+  <configuration default="false" name="Load Test Data" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" activateToolWindowBeforeRun="false">
     <module name="project-leo-database" />
-    <option name="PROGRAM_PARAMETERS" value="--createDistrict=&quot;Test District&quot; --createAdmin=&quot;admin@testdistrict.edu&quot; --resetPassword=&quot;admin@testdistrict.edu&quot;" />
+    <option name="PROGRAM_PARAMETERS" value="--loadTestData" />
     <selectedOptions>
       <option name="spring.boot.profiles" visible="false" />
     </selectedOptions>

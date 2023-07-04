@@ -29,19 +29,16 @@
         },
         {
             "type": "java",
-            "name": "Create admin@testdistrict.edu User",
+            "name": "Load Test Data",
             "request": "launch",
             "mainClass": "org.davincischools.leo.database.admin.AdminUtils",
             "projectName": "project-leo-database",
             "args": [
-                "--createDistrict=Test District",
-                "--createAdmin=admin@testdistrict.edu",
-                "--resetPassword=admin@testdistrict.edu"
+                "--loadTestData"
             ],
             "classPaths": [
                 "$Auto",
                 "${workspaceFolder}/database/target/classes",
-                "${workspaceFolder}/database/src/main/resources",
             ]
         }
     ]
