@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+import "pl_types.proto";
+
+option java_multiple_files = true;
+option java_package = "org.davincischools.leo.protos.assignment_management";
+
+package assignment_management;
+
+service AssignmentManagementService {
+  rpc GetAssignments (GetAssignmentsRequest) returns (GetAssignmentsResponse) {}
+  rpc CreateAssignment (CreateAssignmentRequest) returns (CreateAssignmentResponse) {}
+  rpc SaveAssignment (SaveAssignmentRequest) returns (SaveAssignmentResponse) {}
+  rpc DeleteAssignment (DeleteAssignmentRequest) returns (DeleteAssignmentResponse) {}
+}
+
+message GetAssignmentsRequest {
+  oneof user_id {
+    int32 teacher_id = 1;
+    int32 student_id = 2;
+  }
+}
+
+message GetAssignmentsResponse {
+  repeated pl_types.ClassX classXs = 1;
+  repeated pl_types.Assignment assignments = 2;
+}
+
+message CreateAssignmentRequest {
+  optional int32 class_x_id = 1;
+}
+
+message CreateAssignmentResponse {
+  optional pl_types.Assignment assignment = 1;
+}
+
+message SaveAssignmentRequest {
+  optional pl_types.Assignment assignment = 1;
+}
+
+message SaveAssignmentResponse {
+}
+
+message DeleteAssignmentRequest {
+  optional int32 assignment_id = 1;
+}
+
+message DeleteAssignmentResponse {
+}

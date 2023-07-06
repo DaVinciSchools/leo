@@ -31,7 +31,7 @@ export function TeacherDashboard() {
               {
                 key: TabValue.ASSIGNMENTS,
                 label: 'Assignments',
-                content: <AssignmentsTab />,
+                content: <AssignmentsTab user={user} />,
               },
             ]}
           />

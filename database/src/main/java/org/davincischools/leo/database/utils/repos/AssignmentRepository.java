@@ -33,14 +33,30 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Integer>
     return saveAndFlush(assignment);
   }
 
+  interface ClassXAssignment {
+
+    ClassX getClassX();
+
+    Assignment getAssignment();
+  }
+
+  /** Note: this includes all classes, even when there's no assignment. */
   @Query(
-      "SELECT a"
-          + " FROM Assignment a"
-          + " JOIN FETCH a.classX"
-          + " JOIN FETCH StudentClassX sc"
+      "SELECT sc.classX AS classX, a AS assignment"
+          + " FROM StudentClassX sc"
+          + " LEFT JOIN Assignment a"
           + " ON sc.classX.id = a.classX.id"
           + " WHERE sc.student.id = (:studentId)")
-  Iterable<Assignment> findAllByStudentId(@Param("studentId") int studentId);
+  Iterable<ClassXAssignment> findAllByStudentId(@Param("studentId") int studentId);
+
+  /** Note: this includes all classes, even when there's no assignment. */
+  @Query(
+      "SELECT tc.classX AS classX, a AS assignment"
+          + " FROM TeacherClassX tc"
+          + " LEFT JOIN Assignment a"
+          + " ON tc.classX.id = a.classX.id"
+          + " WHERE tc.teacher.id = (:teacherId)")
+  Iterable<ClassXAssignment> findAllByTeacherId(@Param("teacherId") int teacherId);
 
   @Query(
       "SELECT a"

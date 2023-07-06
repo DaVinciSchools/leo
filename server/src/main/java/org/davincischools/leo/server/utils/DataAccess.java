@@ -26,7 +26,7 @@ import org.davincischools.leo.protos.user_management.FullUserDetails;
 public class DataAccess {
 
   @SafeVarargs
-  public static <T> T firstNonNull(Callable<T>... values) throws NullPointerException {
+  public static <T> T coalesce(Callable<T>... values) throws NullPointerException {
     return Stream.of(values)
         .map(
             value -> {
@@ -41,60 +41,11 @@ public class DataAccess {
         .orElseThrow(NullPointerException::new);
   }
 
-  public static String getShortDescr(Object daoWithNameAndShortDescAndLongDescr) {
-    return firstNonNull(
-        () ->
-            (String)
-                daoWithNameAndShortDescAndLongDescr
-                    .getClass()
-                    .getMethod("getShortDescr")
-                    .invoke(daoWithNameAndShortDescAndLongDescr),
-        () ->
-            (String)
-                daoWithNameAndShortDescAndLongDescr
-                    .getClass()
-                    .getMethod("getName")
-                    .invoke(daoWithNameAndShortDescAndLongDescr));
-  }
-
-  public static String getLongDescr(Object daoWithNameAndShortDescAndLongDescr) {
-    return firstNonNull(
-        () ->
-            (String)
-                daoWithNameAndShortDescAndLongDescr
-                    .getClass()
-                    .getMethod("getLongDescr")
-                    .invoke(daoWithNameAndShortDescAndLongDescr),
-        () ->
-            (String)
-                daoWithNameAndShortDescAndLongDescr
-                    .getClass()
-                    .getMethod("getShortDescr")
-                    .invoke(daoWithNameAndShortDescAndLongDescr),
-        () ->
-            (String)
-                daoWithNameAndShortDescAndLongDescr
-                    .getClass()
-                    .getMethod("getName")
-                    .invoke(daoWithNameAndShortDescAndLongDescr));
-  }
-
-  public static String getStepsDescr(Object daoWithNameAndShortDescAndLongDescr) {
-    return firstNonNull(
-        () ->
-            (String)
-                daoWithNameAndShortDescAndLongDescr
-                    .getClass()
-                    .getMethod("getStepsDescr")
-                    .invoke(daoWithNameAndShortDescAndLongDescr),
-        () -> "");
-  }
-
   public static org.davincischools.leo.protos.pl_types.User convertFullUserXToProto(UserX user) {
     var userProto =
         org.davincischools.leo.protos.pl_types.User.newBuilder()
-            .setUserXId(firstNonNull(user::getId, () -> -1))
-            .setDistrictId(firstNonNull(user.getDistrict()::getId, () -> -1))
+            .setUserXId(coalesce(user::getId, () -> -1))
+            .setDistrictId(coalesce(user.getDistrict()::getId, () -> -1))
             .setFirstName(user.getFirstName())
             .setLastName(user.getLastName())
             .setEmailAddress(user.getEmailAddress())
@@ -127,8 +78,8 @@ public class DataAccess {
 
   public static org.davincischools.leo.protos.pl_types.School convertSchoolToProto(School school) {
     return org.davincischools.leo.protos.pl_types.School.newBuilder()
-        .setId(firstNonNull(school::getId, () -> -1))
-        .setDistrictId(firstNonNull(school.getDistrict()::getId, () -> -1))
+        .setId(coalesce(school::getId, () -> -1))
+        .setDistrictId(coalesce(school.getDistrict()::getId, () -> -1))
         .setName(school.getName())
         .setAddress(Strings.nullToEmpty(school.getAddress()))
         .build();
@@ -144,20 +95,20 @@ public class DataAccess {
 
   public static org.davincischools.leo.protos.pl_types.ClassX convertClassToProto(ClassX classX) {
     return org.davincischools.leo.protos.pl_types.ClassX.newBuilder()
-        .setId(firstNonNull(classX::getId, () -> -1))
+        .setId(coalesce(classX::getId, () -> -1))
         .setName(classX.getName())
-        .setShortDescr(getShortDescr(classX))
-        .setLongDescr(getLongDescr(classX))
+        .setShortDescr(coalesce(classX::getShortDescr, () -> ""))
+        .setLongDescr(coalesce(classX::getLongDescr, () -> ""))
         .build();
   }
 
   public static org.davincischools.leo.protos.pl_types.Assignment convertAssignmentToProto(
       ClassX classX, Assignment assignment) {
     return org.davincischools.leo.protos.pl_types.Assignment.newBuilder()
-        .setId(firstNonNull(assignment::getId, () -> -1))
+        .setId(coalesce(assignment::getId, () -> -1))
         .setName(assignment.getName())
-        .setShortDescr(getShortDescr(assignment))
-        .setLongDescr(getLongDescr(assignment))
+        .setShortDescr(coalesce(assignment::getShortDescr, () -> ""))
+        .setLongDescr(coalesce(assignment::getLongDescr, () -> ""))
         .setClassX(convertClassToProto(classX))
         .build();
   }
@@ -165,15 +116,15 @@ public class DataAccess {
   public static org.davincischools.leo.protos.pl_types.Project convertProjectToProto(
       Project project) {
     return org.davincischools.leo.protos.pl_types.Project.newBuilder()
-        .setId(firstNonNull(project::getId, () -> -1))
+        .setId(coalesce(project::getId, () -> -1))
         .setName(project.getName())
-        .setShortDescr(getShortDescr(project))
-        .setLongDescr(getLongDescr(project))
-        .setStepsDescr(getStepsDescr(project))
+        .setShortDescr(coalesce(project::getShortDescr, () -> ""))
+        .setLongDescr(coalesce(project::getLongDescr, () -> ""))
+        .setStepsDescr(coalesce(project::getStepsDescr, () -> ""))
         .setFavorite(Boolean.TRUE.equals(project.getFavorite()))
         .setThumbsState(
-            ThumbsState.valueOf(firstNonNull(project::getThumbsState, ThumbsState.UNSET::name)))
-        .setThumbsStateReason(firstNonNull(project::getThumbsStateReason, () -> ""))
+            ThumbsState.valueOf(coalesce(project::getThumbsState, ThumbsState.UNSET::name)))
+        .setThumbsStateReason(coalesce(project::getThumbsStateReason, () -> ""))
         .setArchived(Boolean.TRUE.equals(project.getArchived()))
         .setNeedsReview(Boolean.TRUE.equals(project.getNeedsReview()))
         .setActive(Boolean.TRUE.equals(project.getActive()))
@@ -228,7 +179,7 @@ public class DataAccess {
     return org.davincischools.leo.protos.pl_types.Eks.newBuilder()
         .setId(kas.getId())
         .setName(kas.getName())
-        .setShortDescr(getShortDescr(kas))
+        .setShortDescr(coalesce(kas::getShortDescr, () -> ""))
         .build();
   }
 
@@ -237,7 +188,7 @@ public class DataAccess {
     return org.davincischools.leo.protos.pl_types.XqCompetency.newBuilder()
         .setId(kas.getId())
         .setName(kas.getName())
-        .setShortDescr(getShortDescr(kas))
+        .setShortDescr(coalesce(kas::getShortDescr, () -> ""))
         .build();
   }
 }
