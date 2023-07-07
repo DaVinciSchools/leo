@@ -239,7 +239,7 @@ function DropdownSelectInput(props: {
               {Array.from(props.options).map(([key, value]) => (
                 <option key={key} value={key}>
                   <>
-                    {value.name!} - <i>{value.description!}</i>
+                    {value.name!} - <i>{value.shortDescr!}</i>
                   </>
                 </option>
               ))}
@@ -377,7 +377,7 @@ export function IkigaiBuilder() {
                       <FreeTextInput
                         id={`${category.htmlId}`}
                         key={category.input.category!.id!}
-                        shortTitle={category.input.category!.title!}
+                        shortTitle={category.input.category!.name!}
                         hint={category.input.category!.hint!}
                         placeholder={category.input.category!.placeholder!}
                         values={categoryValues[index] as string[]}
@@ -395,7 +395,7 @@ export function IkigaiBuilder() {
                       <DropdownSelectInput
                         id={`${category.htmlId}`}
                         key={category.input.category!.id!}
-                        shortTitle={category.input.category!.title!}
+                        shortTitle={category.input.category!.name!}
                         hint={category.input.category!.hint!}
                         placeholder={category.input.category!.placeholder!}
                         values={categoryValues[index] as number[]}

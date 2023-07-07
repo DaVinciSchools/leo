@@ -9,7 +9,7 @@ message Assignment {
   optional int32 id = 1;
   optional string name = 3;
   optional string short_descr = 4;
-  optional string long_descr = 5;
+  optional string long_descr_html = 5;
 
   optional ClassX class_x = 2;
 }
@@ -18,7 +18,7 @@ message ClassX {
   optional int32 id = 1;
   optional string name = 2;
   optional string short_descr = 3;
-  optional string long_descr = 4;
+  optional string long_descr_html = 4;
 }
 
 message District {
@@ -37,7 +37,7 @@ message KnowledgeAndSkill {
   optional Type type = 2;
   optional string name = 3;
   optional string short_descr = 4;
-  optional string long_descr = 5;
+  optional string long_descr_html = 5;
 }
 
 message Project {
@@ -50,14 +50,13 @@ message Project {
   optional int32 id = 1;
   optional string name = 2;
   optional string short_descr = 3;
-  optional string long_descr = 4;
-  optional string steps_descr = 5;
-  optional bool favorite = 6;
-  optional ThumbsState thumbs_state = 7;
-  optional string thumbs_state_reason = 8;
-  optional bool archived = 9;
-  optional bool needs_review = 10;
-  optional bool active = 11;
+  optional string long_descr_html = 4;
+  optional bool favorite = 5;
+  optional ThumbsState thumbs_state = 6;
+  optional string thumbs_state_reason = 7;
+  optional bool archived = 8;
+  optional bool needs_review = 9;
+  optional bool active = 10;
 
   // The below fields are only populated for requests that include details.
 
@@ -141,11 +140,11 @@ message ProjectInputCategory {
   message Option {
     optional int32 id = 1;
     optional string name = 2;
-    optional string description = 3;
+    optional string short_descr = 3;
   }
 
   optional int32 id = 1;
-  optional string title = 2;
+  optional string name = 2;
   optional string short_descr = 3;
   optional string hint = 4;
   optional string placeholder = 5;
@@ -159,7 +158,7 @@ message ProjectInputCategory {
 message ProjectPost {
   optional int32 id = 1;
   optional User user = 2;
-  optional string title = 3;
-  optional string message = 4;
+  optional string name = 3;
+  optional string message_html = 4;
   optional int32 post_epoch_sec = 5;
 }

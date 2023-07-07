@@ -393,7 +393,10 @@ public class ProjectManagementService {
 
               // TODO: Just assume there's a single definition.
               ProjectDefinition definitionDao =
-                  Iterables.getOnlyElement(db.getProjectDefinitionRepository().findAll());
+                  Iterables.getOnlyElement(
+                      db.getProjectDefinitionRepository().findAll().stream()
+                          .filter(ProjectDefinition::getTemplate)
+                          .toList());
               ProjectDefinitionInputCategories definition =
                   db.getProjectDefinitionRepository()
                       .getProjectDefinition(definitionDao.getId())
@@ -407,7 +410,7 @@ public class ProjectManagementService {
                         .getCategoryBuilder()
                         .setId(category.getId())
                         .setShortDescr(category.getShortDescr())
-                        .setTitle(category.getTitle())
+                        .setName(category.getName())
                         .setHint(category.getHint())
                         .setPlaceholder(category.getInputPlaceholder())
                         .setValueType(
@@ -421,7 +424,7 @@ public class ProjectManagementService {
                           Option.newBuilder()
                               .setId(i.getId())
                               .setName(i.getName())
-                              .setDescription(i.getShortDescr()),
+                              .setShortDescr(i.getShortDescr()),
                       inputCategory);
                   case XQ_COMPETENCY -> populateOptions(
                       db.getKnowledgeAndSkillRepository().findAll(Type.XQ_COMPETENCY.name()),
@@ -429,7 +432,7 @@ public class ProjectManagementService {
                           Option.newBuilder()
                               .setId(i.getId())
                               .setName(i.getName())
-                              .setDescription(i.getShortDescr()),
+                              .setShortDescr(i.getShortDescr()),
                       inputCategory);
                   case MOTIVATION -> populateOptions(
                       db.getMotivationRepository().findAll(),
@@ -437,7 +440,7 @@ public class ProjectManagementService {
                           Option.newBuilder()
                               .setId(i.getId())
                               .setName(i.getName())
-                              .setDescription(i.getShortDescr()),
+                              .setShortDescr(i.getShortDescr()),
                       inputCategory);
                 }
               }
@@ -565,8 +568,8 @@ public class ProjectManagementService {
                               .setCreationTime(Instant.now())
                               .setUserX(user.get())
                               .setProject(new Project().setId(request.getProjectId()))
-                              .setTitle(request.getTitle())
-                              .setMessage(request.getMessage()));
+                              .setName(request.getName())
+                              .setMessageHtml(request.getMessageHtml()));
 
               return PostMessageResponse.newBuilder().setProjectPostId(post.getId()).build();
             })

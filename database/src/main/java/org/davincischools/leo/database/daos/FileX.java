@@ -17,13 +17,16 @@ public class FileX implements Serializable {
   public static final String TABLE_NAME = "file_x";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_FILECONTENT_NAME = "file_content";
   public static final String COLUMN_MIMETYPE_NAME = "mime_type";
-  private static final long serialVersionUID = 6045736978118048853L;
+  private static final long serialVersionUID = 4926085486314440970L;
 
   private Integer id;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   private byte[] fileContent;
 
@@ -48,6 +51,16 @@ public class FileX implements Serializable {
 
   public FileX setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public FileX setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 

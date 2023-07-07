@@ -21,26 +21,29 @@ public class ProjectInputCategory implements Serializable {
   public static final String TABLE_NAME = "project_input_category";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_POSITION_NAME = "position";
-  public static final String COLUMN_TITLE_NAME = "title";
+  public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_HINT_NAME = "hint";
   public static final String COLUMN_INPUTDESCR_NAME = "input_descr";
   public static final String COLUMN_INPUTPLACEHOLDER_NAME = "input_placeholder";
   public static final String COLUMN_QUERYPREFIX_NAME = "query_prefix";
   public static final String COLUMN_VALUETYPE_NAME = "value_type";
   public static final String COLUMN_MAXNUMVALUES_NAME = "max_num_values";
-  private static final long serialVersionUID = -5764083503818819240L;
+  private static final long serialVersionUID = -6713144105788781857L;
 
   private Integer id;
 
   private Instant creationTime;
 
+  private Instant deleted;
+
   private String shortDescr;
 
   private Integer position;
 
-  private String title;
+  private String name;
 
   private String hint;
 
@@ -78,6 +81,16 @@ public class ProjectInputCategory implements Serializable {
     return this;
   }
 
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public ProjectInputCategory setDeleted(Instant deleted) {
+    this.deleted = deleted;
+    return this;
+  }
+
   @Column(name = COLUMN_SHORTDESCR_NAME, nullable = false)
   public String getShortDescr() {
     return shortDescr;
@@ -98,13 +111,13 @@ public class ProjectInputCategory implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_TITLE_NAME, nullable = false)
-  public String getTitle() {
-    return title;
+  @Column(name = COLUMN_NAME_NAME, nullable = false)
+  public String getName() {
+    return name;
   }
 
-  public ProjectInputCategory setTitle(String title) {
-    this.title = title;
+  public ProjectInputCategory setName(String name) {
+    this.name = name;
     return this;
   }
 

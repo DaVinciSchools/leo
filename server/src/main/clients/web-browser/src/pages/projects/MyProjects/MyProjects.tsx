@@ -60,17 +60,21 @@ export function MyProjects() {
     setProjects(newProjects);
   }
 
-  function postMessage(title: string, message: string) {
+  function postMessage(name: string, messageHtml: string) {
     service
-      .postMessage({projectId: project!.id!, title: title, message: message})
+      .postMessage({
+        projectId: project!.id!,
+        name: name,
+        messageHtml: messageHtml,
+      })
       .then(response => {
         if (project!.id! === projectId.current) {
           const newPosts: IProjectPost[] = [
             ...(posts ?? []),
             {
               id: response.projectPostId!,
-              title: title,
-              message: message,
+              name: name,
+              messageHtml: messageHtml,
               user: user!,
             },
           ];
@@ -120,7 +124,7 @@ export function MyProjects() {
               key={project.id!}
               name={project.name!}
               shortDescr={project.shortDescr!}
-              longDescr={project.longDescr!}
+              longDescrHtml={project.longDescrHtml!}
               posts={posts}
               milestones={[]}
               updateProject={modifications =>

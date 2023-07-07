@@ -62,17 +62,17 @@ public class OpenAi3V2ProjectGenerator implements ProjectGenerator {
         .setRole("user")
         .setContent(
             String.format(
-                "Generate %s projects that would fit the system criteria. Return a JSON array of"
-                    + " project entries. For each project entry, return 1) a \"title\" property"
-                    + " containing a title, then 2) a \"name\" property containing a short"
-                    + " declarative command statement that summarizes the project, then"
-                    + " 3) a \"short_descr\" property that contains a sentence or two"
-                    + " describing the project, then 4) a \"long_descr\" property"
-                    + " containing a multiple paragraphs with a very detailed explanation"
-                    + " of the entire project, then 5) a \"milestones\" array property that"
-                    + " contains objects representing milestones with a \"name\" property"
-                    + " and a \"steps\" array property. Do not include any text outside"
-                    + " of the json object.",
+                "Generate %s projects that would fit the system criteria. Return a JSON object"
+                    + " with a \"projects\" array. For each \"projects\" array object, return 1)"
+                    + " a \"name\" property containing a short declarative command statement that"
+                    + " summarizes the project in plain text, then 2) a \"short_descr\" property"
+                    + " that contains a sentence describing the project in plain text, then 3) a"
+                    + " \"long_descr_html\" property containing multiple paragraphs with a very"
+                    + " detailed explanation of the entire project formatted with HTML, then 4)"
+                    + " a \"milestones\" array property that contains objects representing"
+                    + " milestones with a \"name\" property in plain text and a \"steps\" array"
+                    + " property in plain text. Do not include any text other than the json"
+                    + " object.",
                 numberOfProjects));
 
     return httpExecutors
@@ -119,7 +119,11 @@ public class OpenAi3V2ProjectGenerator implements ProjectGenerator {
       OpenAiProjectsWithSteps.Builder projectsWithSteps = OpenAiProjectsWithSteps.newBuilder();
       JsonFormat.parser()
           .ignoringUnknownFields()
-          .merge("{ projects: " + responseContent + " }", projectsWithSteps);
+          .merge(
+              responseContent.startsWith("{")
+                  ? responseContent
+                  : "{ projects: " + responseContent + " }",
+              projectsWithSteps);
 
       List<Project> projects = new ArrayList<>();
       AtomicInteger position = new AtomicInteger(0);
@@ -134,7 +138,7 @@ public class OpenAi3V2ProjectGenerator implements ProjectGenerator {
                         .setGenerator(OpenAi3V2ProjectGenerator.class.getName())
                         .setName(projectWithSteps.getName())
                         .setShortDescr(projectWithSteps.getShortDescr())
-                        .setLongDescr(projectWithSteps.getLongDescr()));
+                        .setLongDescrHtml(projectWithSteps.getLongDescrHtml()));
         for (Milestone milestone : projectWithSteps.getMilestonesList()) {
           ProjectMilestone projectMilestone =
               db.getProjectMilestoneRepository()

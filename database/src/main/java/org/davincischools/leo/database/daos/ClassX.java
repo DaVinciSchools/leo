@@ -27,26 +27,23 @@ public class ClassX implements Serializable {
   public static final String TABLE_NAME = "class_x";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
-  public static final String COLUMN_SHORTDESCRQUILL_NAME = "short_descr_quill";
-  public static final String COLUMN_LONGDESCR_NAME = "long_descr";
-  public static final String COLUMN_LONGDESCRQUILL_NAME = "long_descr_quill";
-  private static final long serialVersionUID = 1357362916288047247L;
+  public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
+  private static final long serialVersionUID = -4108492211704023918L;
 
   private Integer id;
 
   private Instant creationTime;
 
+  private Instant deleted;
+
   private String name;
 
   private String shortDescr;
 
-  private String shortDescrQuill;
-
-  private String longDescr;
-
-  private String longDescrQuill;
+  private String longDescrHtml;
 
   private School school;
 
@@ -72,6 +69,16 @@ public class ClassX implements Serializable {
     return this;
   }
 
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public ClassX setDeleted(Instant deleted) {
+    this.deleted = deleted;
+    return this;
+  }
+
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
@@ -94,35 +101,13 @@ public class ClassX implements Serializable {
   }
 
   @Lob
-  @Column(name = COLUMN_SHORTDESCRQUILL_NAME)
-  public String getShortDescrQuill() {
-    return shortDescrQuill;
+  @Column(name = COLUMN_LONGDESCRHTML_NAME)
+  public String getLongDescrHtml() {
+    return longDescrHtml;
   }
 
-  public ClassX setShortDescrQuill(String shortDescrQuill) {
-    this.shortDescrQuill = shortDescrQuill;
-    return this;
-  }
-
-  @Lob
-  @Column(name = COLUMN_LONGDESCR_NAME)
-  public String getLongDescr() {
-    return longDescr;
-  }
-
-  public ClassX setLongDescr(String longDescr) {
-    this.longDescr = longDescr;
-    return this;
-  }
-
-  @Lob
-  @Column(name = COLUMN_LONGDESCRQUILL_NAME)
-  public String getLongDescrQuill() {
-    return longDescrQuill;
-  }
-
-  public ClassX setLongDescrQuill(String longDescrQuill) {
-    this.longDescrQuill = longDescrQuill;
+  public ClassX setLongDescrHtml(String longDescrHtml) {
+    this.longDescrHtml = longDescrHtml;
     return this;
   }
 

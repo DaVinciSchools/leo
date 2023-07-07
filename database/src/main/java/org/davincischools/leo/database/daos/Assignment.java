@@ -21,26 +21,23 @@ public class Assignment implements Serializable {
   public static final String TABLE_NAME = "assignment";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
-  public static final String COLUMN_SHORTDESCRQUILL_NAME = "short_descr_quill";
-  public static final String COLUMN_LONGDESCR_NAME = "long_descr";
-  public static final String COLUMN_LONGDESCRQUILL_NAME = "long_descr_quill";
-  private static final long serialVersionUID = -5593488569946604602L;
+  public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
+  private static final long serialVersionUID = -947512661891497306L;
 
   private Integer id;
 
   private Instant creationTime;
 
+  private Instant deleted;
+
   private String name;
 
   private String shortDescr;
 
-  private String shortDescrQuill;
-
-  private String longDescr;
-
-  private String longDescrQuill;
+  private String longDescrHtml;
 
   private ClassX classX;
 
@@ -66,6 +63,16 @@ public class Assignment implements Serializable {
     return this;
   }
 
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public Assignment setDeleted(Instant deleted) {
+    this.deleted = deleted;
+    return this;
+  }
+
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
@@ -88,35 +95,13 @@ public class Assignment implements Serializable {
   }
 
   @Lob
-  @Column(name = COLUMN_SHORTDESCRQUILL_NAME)
-  public String getShortDescrQuill() {
-    return shortDescrQuill;
+  @Column(name = COLUMN_LONGDESCRHTML_NAME)
+  public String getLongDescrHtml() {
+    return longDescrHtml;
   }
 
-  public Assignment setShortDescrQuill(String shortDescrQuill) {
-    this.shortDescrQuill = shortDescrQuill;
-    return this;
-  }
-
-  @Lob
-  @Column(name = COLUMN_LONGDESCR_NAME)
-  public String getLongDescr() {
-    return longDescr;
-  }
-
-  public Assignment setLongDescr(String longDescr) {
-    this.longDescr = longDescr;
-    return this;
-  }
-
-  @Lob
-  @Column(name = COLUMN_LONGDESCRQUILL_NAME)
-  public String getLongDescrQuill() {
-    return longDescrQuill;
-  }
-
-  public Assignment setLongDescrQuill(String longDescrQuill) {
-    this.longDescrQuill = longDescrQuill;
+  public Assignment setLongDescrHtml(String longDescrHtml) {
+    this.longDescrHtml = longDescrHtml;
     return this;
   }
 

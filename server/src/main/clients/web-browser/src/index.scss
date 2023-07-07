@@ -157,3 +157,13 @@ button {
         /* To be added */
     }
 }
+
+.ql-container .ql-editor {
+  :first-child {
+    margin-top: 0;
+  }
+
+  p {
+    margin-top: 1em;
+  }
+}

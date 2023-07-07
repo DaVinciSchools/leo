@@ -2,6 +2,7 @@ CREATE TABLE interest
 (
     id                  INT PRIMARY KEY AUTO_INCREMENT,
     creation_time       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted             DATETIME,
 
     first_name          VARCHAR(255) NOT NULL,
     last_name           VARCHAR(255) NOT NULL,

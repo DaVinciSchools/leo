@@ -1,4 +1,5 @@
 import './ProjectPage.scss';
+import 'react-quill/dist/quill.bubble.css';
 
 import {Button, Card, Form, Input} from 'antd';
 import {pl_types} from '../../generated/protobuf-js';
@@ -6,24 +7,25 @@ import {ChangeEvent, useState} from 'react';
 import {CloseCircleTwoTone} from '@ant-design/icons';
 import IProject = pl_types.IProject;
 import IProjectPost = pl_types.IProjectPost;
+import ReactQuill, {Value} from 'react-quill';
 
 export function ProjectPage(props: {
   id: number;
   name: string;
   shortDescr: string;
-  longDescr: string;
+  longDescrHtml: string;
   milestones: pl_types.Project.IMilestone[];
   posts: IProjectPost[] | undefined;
   updateProject: (update: IProject) => void;
-  onSubmitPost: (title: string, message: string) => void;
+  onSubmitPost: (name: string, message: string) => void;
   onDeletePost: (post: IProjectPost) => void;
   editable: boolean;
 }) {
-  const [title, setTitle] = useState('');
-  const [message, setMessage] = useState('');
+  const [name, setName] = useState('');
+  const [longDescrHtml, setLongDescrHtml] = useState<Value>('');
 
-  function submitPost(values: {title: string; message: string}) {
-    props.onSubmitPost(values.title, values.message);
+  function submitPost(values: {name: string; message: string}) {
+    props.onSubmitPost(values.name, values.message);
   }
 
   return (
@@ -32,13 +34,17 @@ export function ProjectPage(props: {
         <div className="title">{props.name}</div>
         <div className="short-descr">
           <span className="label">Description:</span>
-          <div>{props.shortDescr}</div>
+          <div className="description">{props.shortDescr}</div>
         </div>
         <div className="long-descr">
           <span className="label">Details:</span>
-          {props.longDescr
-            .split('\n')
-            .map(line => line.split('\r').map(line => <div>{line}</div>))}
+          <ReactQuill
+            theme={'bubble'}
+            preserveWhitespace={true}
+            value={props.longDescrHtml ?? ''}
+            readOnly={true}
+            className="long-descr-html"
+          />
         </div>
         <div>
           {props.milestones?.length > 0 && (
@@ -67,7 +73,7 @@ export function ProjectPage(props: {
               <Card
                 title={
                   <>
-                    {post.title ?? ''}
+                    {post.name ?? ''}
                     <div className="post-user-info">
                       {post.user?.lastName ?? ''}, {post.user?.firstName ?? ''}
                     </div>
@@ -80,7 +86,12 @@ export function ProjectPage(props: {
                   />
                 }
               >
-                {post?.message ?? ''}
+                <ReactQuill
+                  theme={'bubble'}
+                  preserveWhitespace={true}
+                  value={post?.messageHtml ?? ''}
+                  readOnly={true}
+                />
               </Card>
             </>
           ))}
@@ -91,21 +102,19 @@ export function ProjectPage(props: {
               <Form.Item name="title" style={{margin: '0 0'}}>
                 <Input
                   placeholder="Title"
-                  value={title}
+                  value={name}
                   maxLength={255}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setTitle(e.target.value)
+                    setName(e.target.value)
                   }
                 />
               </Form.Item>
               <Form.Item name="message" style={{margin: '0 0'}}>
-                <Input.TextArea
-                  placeholder="Message"
-                  rows={5}
-                  value={message}
-                  onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                    setMessage(e.target.value)
-                  }
+                <ReactQuill
+                  theme="snow"
+                  preserveWhitespace={true}
+                  value={longDescrHtml}
+                  onChange={setLongDescrHtml}
                 />
               </Form.Item>
               <Form.Item style={{textAlign: 'end', margin: '0 0'}}>

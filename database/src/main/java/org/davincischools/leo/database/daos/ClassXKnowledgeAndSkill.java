@@ -18,7 +18,8 @@ public class ClassXKnowledgeAndSkill implements Serializable {
   public static final String ENTITY_NAME = "ClassXKnowledgeAndSkill";
   public static final String TABLE_NAME = "class_x__knowledge_and_skill";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
-  private static final long serialVersionUID = 2115481320097609757L;
+  public static final String COLUMN_DELETED_NAME = "deleted";
+  private static final long serialVersionUID = 4161823318519247657L;
 
   private ClassXKnowledgeAndSkillId id;
 
@@ -27,6 +28,8 @@ public class ClassXKnowledgeAndSkill implements Serializable {
   private KnowledgeAndSkill knowledgeAndSkill;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   @EmbeddedId
   public ClassXKnowledgeAndSkillId getId() {
@@ -69,6 +72,16 @@ public class ClassXKnowledgeAndSkill implements Serializable {
 
   public ClassXKnowledgeAndSkill setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public ClassXKnowledgeAndSkill setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 }

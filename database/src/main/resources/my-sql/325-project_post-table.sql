@@ -2,10 +2,10 @@ CREATE TABLE project_post
 (
     id            INT PRIMARY KEY AUTO_INCREMENT,
     creation_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted       DATETIME,
 
-    title         VARCHAR(255),
-    message       TEXT,
-    message_quill TEXT,
+    name          VARCHAR(255),
+    message_html  TEXT,
 
     user_x_id     INT      NOT NULL,
     CONSTRAINT project_post__user_x_id

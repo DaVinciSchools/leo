@@ -2,6 +2,7 @@ CREATE TABLE log
 (
     id                    INT PRIMARY KEY AUTO_INCREMENT,
     creation_time         DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted               DATETIME,
 
     user_x_id             INT,
     status                ENUM('ERROR', 'SUCCESS') NOT NULL,

@@ -61,7 +61,7 @@ export function AllProjects() {
               key={project.id!}
               name={project.name!}
               shortDescr={project.shortDescr!}
-              longDescr={project.longDescr!}
+              longDescrHtml={project.longDescrHtml!}
               active={project.active ?? false}
               favorite={project.favorite ?? false}
               thumbsState={project.thumbsState ?? ThumbsState.UNSET}
@@ -87,7 +87,7 @@ export function AllProjects() {
               key={projectDetails!.id!}
               name={projectDetails!.name!}
               shortDescr={projectDetails!.shortDescr!}
-              longDescr={projectDetails!.longDescr!}
+              longDescrHtml={projectDetails!.longDescrHtml!}
               milestones={projectDetails!.milestones!}
               updateProject={modifications =>
                 updateProject(projectDetails!, modifications)

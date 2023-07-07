@@ -21,17 +21,17 @@ public class ProjectPostComment implements Serializable {
   public static final String TABLE_NAME = "project_post_comment";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
-  public static final String COLUMN_COMMENT_NAME = "comment";
-  public static final String COLUMN_COMMENTQUILL_NAME = "comment_quill";
-  private static final long serialVersionUID = -4804076276016969780L;
+  public static final String COLUMN_DELETED_NAME = "deleted";
+  public static final String COLUMN_COMMENTHTML_NAME = "comment_html";
+  private static final long serialVersionUID = 5927806603324710803L;
 
   private Integer id;
 
   private Instant creationTime;
 
-  private String comment;
+  private Instant deleted;
 
-  private String commentQuill;
+  private String commentHtml;
 
   private UserX userX;
 
@@ -59,25 +59,24 @@ public class ProjectPostComment implements Serializable {
     return this;
   }
 
-  @Lob
-  @Column(name = COLUMN_COMMENT_NAME)
-  public String getComment() {
-    return comment;
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
   }
 
-  public ProjectPostComment setComment(String comment) {
-    this.comment = comment;
+  public ProjectPostComment setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 
   @Lob
-  @Column(name = COLUMN_COMMENTQUILL_NAME)
-  public String getCommentQuill() {
-    return commentQuill;
+  @Column(name = COLUMN_COMMENTHTML_NAME)
+  public String getCommentHtml() {
+    return commentHtml;
   }
 
-  public ProjectPostComment setCommentQuill(String commentQuill) {
-    this.commentQuill = commentQuill;
+  public ProjectPostComment setCommentHtml(String commentHtml) {
+    this.commentHtml = commentHtml;
     return this;
   }
 

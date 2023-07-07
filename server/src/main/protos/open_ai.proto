@@ -207,11 +207,10 @@ message OpenAiProjectsWithSteps {
       repeated string steps = 2;
     }
 
-    optional string title = 1;
-    optional string name = 2;
-    optional string short_descr = 3;
-    optional string long_descr = 4;
-    repeated Milestone milestones = 5;
+    optional string name = 1;
+    optional string short_descr = 2;
+    optional string long_descr_html = 3;
+    repeated Milestone milestones = 4;
   }
 
   repeated OpenAiProjectWithSteps projects = 1;

@@ -98,7 +98,7 @@ public class DataAccess {
         .setId(coalesce(classX::getId, () -> -1))
         .setName(classX.getName())
         .setShortDescr(coalesce(classX::getShortDescr, () -> ""))
-        .setLongDescr(coalesce(classX::getLongDescr, () -> ""))
+        .setLongDescrHtml(coalesce(classX::getLongDescrHtml, () -> ""))
         .build();
   }
 
@@ -108,7 +108,7 @@ public class DataAccess {
         .setId(coalesce(assignment::getId, () -> -1))
         .setName(assignment.getName())
         .setShortDescr(coalesce(assignment::getShortDescr, () -> ""))
-        .setLongDescr(coalesce(assignment::getLongDescr, () -> ""))
+        .setLongDescrHtml(coalesce(assignment::getLongDescrHtml, () -> ""))
         .setClassX(convertClassToProto(classX))
         .build();
   }
@@ -119,14 +119,12 @@ public class DataAccess {
         .setId(coalesce(project::getId, () -> -1))
         .setName(project.getName())
         .setShortDescr(coalesce(project::getShortDescr, () -> ""))
-        .setLongDescr(coalesce(project::getLongDescr, () -> ""))
-        .setStepsDescr(coalesce(project::getStepsDescr, () -> ""))
+        .setLongDescrHtml(coalesce(project::getLongDescrHtml, () -> ""))
         .setFavorite(Boolean.TRUE.equals(project.getFavorite()))
         .setThumbsState(
             ThumbsState.valueOf(coalesce(project::getThumbsState, ThumbsState.UNSET::name)))
         .setThumbsStateReason(coalesce(project::getThumbsStateReason, () -> ""))
         .setArchived(Boolean.TRUE.equals(project.getArchived()))
-        .setNeedsReview(Boolean.TRUE.equals(project.getNeedsReview()))
         .setActive(Boolean.TRUE.equals(project.getActive()))
         .build();
   }
@@ -169,8 +167,8 @@ public class DataAccess {
       ProjectPost projectPost) {
     return org.davincischools.leo.protos.pl_types.ProjectPost.newBuilder()
         .setUser(convertFullUserXToProto(projectPost.getUserX()))
-        .setTitle(projectPost.getTitle())
-        .setMessage(projectPost.getMessage())
+        .setName(projectPost.getName())
+        .setMessageHtml(projectPost.getMessageHtml())
         .setPostEpochSec((int) projectPost.getCreationTime().getEpochSecond())
         .build();
   }

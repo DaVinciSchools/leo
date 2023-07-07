@@ -18,7 +18,8 @@ public class AssignmentKnowledgeAndSkill implements Serializable {
   public static final String ENTITY_NAME = "AssignmentKnowledgeAndSkill";
   public static final String TABLE_NAME = "assignment__knowledge_and_skill";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
-  private static final long serialVersionUID = 1101861380724784094L;
+  public static final String COLUMN_DELETED_NAME = "deleted";
+  private static final long serialVersionUID = 9140061631536112253L;
 
   private AssignmentKnowledgeAndSkillId id;
 
@@ -27,6 +28,8 @@ public class AssignmentKnowledgeAndSkill implements Serializable {
   private KnowledgeAndSkill knowledgeAndSkill;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   @EmbeddedId
   public AssignmentKnowledgeAndSkillId getId() {
@@ -69,6 +72,16 @@ public class AssignmentKnowledgeAndSkill implements Serializable {
 
   public AssignmentKnowledgeAndSkill setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public AssignmentKnowledgeAndSkill setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 }

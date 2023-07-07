@@ -95,8 +95,8 @@ message GetProjectPostsResponse {
 
 message PostMessageRequest {
   optional int32 project_id = 1;
-  optional string title = 2;
-  optional string message = 3;
+  optional string name = 2;
+  optional string message_html = 3;
 }
 
 message PostMessageResponse {

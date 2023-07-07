@@ -18,8 +18,9 @@ public class ProjectImage implements Serializable {
   public static final String ENTITY_NAME = "ProjectImage";
   public static final String TABLE_NAME = "project__image";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_SELECTED_NAME = "selected";
-  private static final long serialVersionUID = -4215191532036939149L;
+  private static final long serialVersionUID = -2942920408442790371L;
 
   private ProjectImageId id;
 
@@ -28,6 +29,8 @@ public class ProjectImage implements Serializable {
   private FileX image;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   private Boolean selected;
 
@@ -72,6 +75,16 @@ public class ProjectImage implements Serializable {
 
   public ProjectImage setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public ProjectImage setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 

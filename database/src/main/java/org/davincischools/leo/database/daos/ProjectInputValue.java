@@ -28,13 +28,16 @@ public class ProjectInputValue implements Serializable {
   public static final String TABLE_NAME = "project_input_value";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_FREETEXTVALUE_NAME = "free_text_value";
-  private static final long serialVersionUID = -8810454056494351635L;
+  private static final long serialVersionUID = -8423782124835571817L;
 
   private Integer id;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   private ProjectInput projectInput;
 
@@ -67,6 +70,16 @@ public class ProjectInputValue implements Serializable {
 
   public ProjectInputValue setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public ProjectInputValue setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 

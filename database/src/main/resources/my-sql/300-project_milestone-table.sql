@@ -1,18 +1,17 @@
 CREATE TABLE project_milestone
 (
-    id                INT PRIMARY KEY AUTO_INCREMENT,
-    creation_time     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id              INT PRIMARY KEY AUTO_INCREMENT,
+    creation_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted         DATETIME,
 
     -- Indicates the relative location on the milestone.
-    position          INT          NOT NULL,
+    position        INT          NOT NULL,
 
-    name              VARCHAR(255) NOT NULL,
-    short_descr       TEXT,
-    short_descr_quill TEXT,
-    long_descr        TEXT,
-    long_descr_quill  TEXT,
+    name            VARCHAR(255) NOT NULL,
+    short_descr     TEXT,
+    long_descr_html TEXT,
 
-    project_id        INT          NOT NULL,
+    project_id      INT          NOT NULL,
     CONSTRAINT project_milestone__project_id
         FOREIGN KEY (project_id)
             REFERENCES project (id)

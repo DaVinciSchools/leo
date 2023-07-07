@@ -21,12 +21,15 @@ public class District implements Serializable {
   public static final String TABLE_NAME = "district";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
-  private static final long serialVersionUID = 6111701080089524300L;
+  private static final long serialVersionUID = 1466837326446276572L;
 
   private Integer id;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   private String name;
 
@@ -49,6 +52,16 @@ public class District implements Serializable {
 
   public District setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public District setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 

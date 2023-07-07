@@ -18,26 +18,23 @@ public class Motivation implements Serializable {
   public static final String TABLE_NAME = "motivation";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
-  public static final String COLUMN_SHORTDESCRQUILL_NAME = "short_descr_quill";
-  public static final String COLUMN_LONGDESCR_NAME = "long_descr";
-  public static final String COLUMN_LONGDESCRQUILL_NAME = "long_descr_quill";
-  private static final long serialVersionUID = -6909221563602437995L;
+  public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
+  private static final long serialVersionUID = 5754441756297337682L;
 
   private Integer id;
 
   private Instant creationTime;
 
+  private Instant deleted;
+
   private String name;
 
   private String shortDescr;
 
-  private String shortDescrQuill;
-
-  private String longDescr;
-
-  private String longDescrQuill;
+  private String longDescrHtml;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,6 +55,16 @@ public class Motivation implements Serializable {
 
   public Motivation setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public Motivation setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 
@@ -83,35 +90,13 @@ public class Motivation implements Serializable {
   }
 
   @Lob
-  @Column(name = COLUMN_SHORTDESCRQUILL_NAME)
-  public String getShortDescrQuill() {
-    return shortDescrQuill;
+  @Column(name = COLUMN_LONGDESCRHTML_NAME)
+  public String getLongDescrHtml() {
+    return longDescrHtml;
   }
 
-  public Motivation setShortDescrQuill(String shortDescrQuill) {
-    this.shortDescrQuill = shortDescrQuill;
-    return this;
-  }
-
-  @Lob
-  @Column(name = COLUMN_LONGDESCR_NAME)
-  public String getLongDescr() {
-    return longDescr;
-  }
-
-  public Motivation setLongDescr(String longDescr) {
-    this.longDescr = longDescr;
-    return this;
-  }
-
-  @Lob
-  @Column(name = COLUMN_LONGDESCRQUILL_NAME)
-  public String getLongDescrQuill() {
-    return longDescrQuill;
-  }
-
-  public Motivation setLongDescrQuill(String longDescrQuill) {
-    this.longDescrQuill = longDescrQuill;
+  public Motivation setLongDescrHtml(String longDescrHtml) {
+    this.longDescrHtml = longDescrHtml;
     return this;
   }
 }

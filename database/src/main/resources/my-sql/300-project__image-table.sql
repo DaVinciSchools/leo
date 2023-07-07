@@ -1,6 +1,7 @@
 CREATE TABLE project__image
 (
     creation_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted       DATETIME,
 
     selected      BOOLEAN,
 

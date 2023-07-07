@@ -24,15 +24,15 @@ public interface ProjectInputCategoryRepository
   }
 
   default ProjectInputCategory upsert(
-      String title, ProjectDefinition projectDefinition, Consumer<ProjectInputCategory> modifier) {
-    checkArgument(!Strings.isNullOrEmpty(title));
+      String name, ProjectDefinition projectDefinition, Consumer<ProjectInputCategory> modifier) {
+    checkArgument(!Strings.isNullOrEmpty(name));
     checkNotNull(projectDefinition);
     checkNotNull(modifier);
 
     ProjectInputCategory projectInputCategory =
-        findByTitle(title)
+        findByName(name)
             .orElseGet(() -> new ProjectInputCategory().setCreationTime(Instant.now()))
-            .setTitle(title)
+            .setName(name)
             .setProjectDefinition(projectDefinition);
 
     modifier.accept(projectInputCategory);
@@ -41,5 +41,5 @@ public interface ProjectInputCategoryRepository
   }
 
   // TODO: For development, remove.
-  Optional<ProjectInputCategory> findByTitle(String title);
+  Optional<ProjectInputCategory> findByName(String name);
 }

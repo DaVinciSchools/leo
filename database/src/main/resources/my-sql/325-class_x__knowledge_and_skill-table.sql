@@ -1,6 +1,7 @@
 CREATE TABLE class_x__knowledge_and_skill
 (
     creation_time          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted                DATETIME,
 
     class_x_id             INT      NOT NULL,
     CONSTRAINT class_x__knowledge_and_skill__class_x_id

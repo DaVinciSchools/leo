@@ -183,7 +183,7 @@ public class AssignmentManagementService {
                       assignment
                           .setName(request.getAssignment().getName())
                           .setShortDescr(request.getAssignment().getShortDescr())
-                          .setLongDescr(request.getAssignment().getLongDescr()));
+                          .setLongDescrHtml(request.getAssignment().getLongDescrHtml()));
 
               return response.build();
             })
@@ -207,18 +207,16 @@ public class AssignmentManagementService {
               }
 
               Assignment assignment =
-                  db.getAssignmentRepository()
-                      .findById(request.getAssignmentId())
-                      .orElseThrow();
+                  db.getAssignmentRepository().findById(request.getAssignmentId()).orElseThrow();
 
               if (!user.isAdmin()
                   && !(user.isTeacher()
-                  && db.getTeacherClassXRepository()
-                  .findById(
-                      new TeacherClassXId()
-                          .setTeacherId(user.get().getTeacher().getId())
-                          .setClassXId(assignment.getClassX().getId()))
-                  .isPresent())) {
+                      && db.getTeacherClassXRepository()
+                          .findById(
+                              new TeacherClassXId()
+                                  .setTeacherId(user.get().getTeacher().getId())
+                                  .setClassXId(assignment.getClassX().getId()))
+                          .isPresent())) {
                 return user.returnForbidden(response.build());
               }
 

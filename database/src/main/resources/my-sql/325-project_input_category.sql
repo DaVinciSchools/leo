@@ -2,6 +2,7 @@ CREATE TABLE project_input_category
 (
     id                    INT PRIMARY KEY AUTO_INCREMENT,
     creation_time         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted               DATETIME,
 
     short_descr           VARCHAR(255) NOT NULL,
 
@@ -11,7 +12,7 @@ CREATE TABLE project_input_category
 
     -- Attributes for the visual display of the category in the diagram.
     -- Displayed at the top of the category circle.
-    title                 VARCHAR(255) NOT NULL,
+    name                  VARCHAR(255) NOT NULL,
     -- Text on the category circle before values are selected.
     hint                  VARCHAR(255) NOT NULL,
     -- Text above the inputs to describe what's being entered.

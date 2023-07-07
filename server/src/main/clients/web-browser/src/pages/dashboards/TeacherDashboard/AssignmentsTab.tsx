@@ -39,7 +39,7 @@ export function AssignmentsTab(props: {user: IUser}) {
   const [classX, setClassX] = useState<IClassX | null>(null);
   const [name, setName] = useState('');
   const [shortDescr, setShortDescr] = useState('');
-  const [longDescr, setLongDescr] = useState<Value>('');
+  const [longDescrHtml, setLongDescrHtml] = useState<Value>('');
 
   const classXSorter = (a: IClassX, b: IClassX) =>
     (a?.name ?? '').localeCompare(b?.name ?? '');
@@ -56,7 +56,7 @@ export function AssignmentsTab(props: {user: IUser}) {
     setClassX(newAssignment?.classX ?? null);
     setName(newAssignment?.name ?? '');
     setShortDescr(newAssignment?.shortDescr ?? '');
-    setLongDescr(newAssignment?.longDescr ?? '');
+    setLongDescrHtml(newAssignment?.longDescrHtml ?? '');
   }
 
   // Any change to be written back to the database.
@@ -70,13 +70,13 @@ export function AssignmentsTab(props: {user: IUser}) {
       assignment.classX = classX;
       assignment.name = name;
       assignment.shortDescr = shortDescr;
-      assignment.longDescr = String(longDescr);
+      assignment.longDescrHtml = String(longDescrHtml);
 
       saveAssignmentTimeout.current = setTimeout(() => {
         saveAssignment();
       }, 1000);
     }
-  }, [classX, name, shortDescr, longDescr]);
+  }, [classX, name, shortDescr, longDescrHtml]);
 
   // Changes that affect labels in the select assignment dropdown.
   useEffect(() => {
@@ -255,8 +255,8 @@ export function AssignmentsTab(props: {user: IUser}) {
           <ReactQuill
             theme="snow"
             preserveWhitespace={true}
-            value={longDescr}
-            onChange={setLongDescr}
+            value={longDescrHtml}
+            onChange={setLongDescrHtml}
             onBlur={saveAssignment}
             readOnly={assignment == null}
           />

@@ -1,6 +1,7 @@
 package org.davincischools.leo.server.controllers.project_generators;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -225,7 +226,8 @@ public class OpenAi3V1ProjectGenerator implements ProjectGenerator {
                         .setGenerator(OpenAi3V1ProjectGenerator.class.getName())
                         .setName(normalizeAndCheckString(pieces_of_information[0]))
                         .setShortDescr(normalizeAndCheckString(pieces_of_information[1]))
-                        .setLongDescr(normalizeAndCheckString(pieces_of_information[2]))));
+                        .setLongDescrHtml(
+                            escapeHtml4(normalizeAndCheckString(pieces_of_information[2])))));
       } catch (Throwable e) {
         log.setStatus(Status.ERROR);
         log.addNote("Could not parse project text because \"%s\": %s", e.getMessage(), projectText);

@@ -17,13 +17,16 @@ public class ProjectDefinition implements Serializable {
   public static final String TABLE_NAME = "project_definition";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_TEMPLATE_NAME = "template";
-  private static final long serialVersionUID = 5968778993173851096L;
+  private static final long serialVersionUID = -5230276565786200439L;
 
   private Integer id;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   private String name;
 
@@ -48,6 +51,16 @@ public class ProjectDefinition implements Serializable {
 
   public ProjectDefinition setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public ProjectDefinition setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 

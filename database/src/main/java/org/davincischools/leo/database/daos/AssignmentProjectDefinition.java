@@ -18,8 +18,9 @@ public class AssignmentProjectDefinition implements Serializable {
   public static final String ENTITY_NAME = "AssignmentProjectDefinition";
   public static final String TABLE_NAME = "assignment__project_definition";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_SELECTED_NAME = "selected";
-  private static final long serialVersionUID = 4950335854922340024L;
+  private static final long serialVersionUID = 7898261928448484961L;
 
   private AssignmentProjectDefinitionId id;
 
@@ -28,6 +29,8 @@ public class AssignmentProjectDefinition implements Serializable {
   private ProjectDefinition projectDefinition;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   private Boolean selected;
 
@@ -72,6 +75,16 @@ public class AssignmentProjectDefinition implements Serializable {
 
   public AssignmentProjectDefinition setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public AssignmentProjectDefinition setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 

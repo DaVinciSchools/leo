@@ -18,7 +18,8 @@ public class TeacherSchool implements Serializable {
   public static final String ENTITY_NAME = "TeacherSchool";
   public static final String TABLE_NAME = "teacher__school";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
-  private static final long serialVersionUID = -153882485788152869L;
+  public static final String COLUMN_DELETED_NAME = "deleted";
+  private static final long serialVersionUID = 3880196199101576570L;
 
   private TeacherSchoolId id;
 
@@ -27,6 +28,8 @@ public class TeacherSchool implements Serializable {
   private School school;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   @EmbeddedId
   public TeacherSchoolId getId() {
@@ -69,6 +72,16 @@ public class TeacherSchool implements Serializable {
 
   public TeacherSchool setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public TeacherSchool setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 }

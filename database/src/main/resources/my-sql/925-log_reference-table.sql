@@ -2,6 +2,7 @@ CREATE TABLE log_reference
 (
     id               INT PRIMARY KEY AUTO_INCREMENT,
     creation_time    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted          DATETIME,
 
     log_id           INT      NOT NULL,
     CONSTRAINT log_reference__log_id

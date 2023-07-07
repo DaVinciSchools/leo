@@ -2,6 +2,7 @@ CREATE TABLE project_input_value
 (
     id                           INT PRIMARY KEY AUTO_INCREMENT,
     creation_time                DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted                      DATETIME,
 
     project_input_id             INT      NOT NULL,
     FOREIGN KEY (project_input_id)

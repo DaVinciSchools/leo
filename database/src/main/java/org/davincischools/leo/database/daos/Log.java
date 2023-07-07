@@ -21,6 +21,7 @@ public class Log implements Serializable {
   public static final String TABLE_NAME = "log";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_STATUS_NAME = "status";
   public static final String COLUMN_NOTES_NAME = "notes";
   public static final String COLUMN_CALLER_NAME = "caller";
@@ -37,11 +38,13 @@ public class Log implements Serializable {
   public static final String COLUMN_LASTINPUT_NAME = "last_input";
   public static final String COLUMN_LASTINPUTTYPE_NAME = "last_input_type";
   public static final String COLUMN_LASTINPUTTIME_NAME = "last_input_time";
-  private static final long serialVersionUID = -1127760289233684756L;
+  private static final long serialVersionUID = 3693479977665926251L;
 
   private Integer id;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   private UserX userX;
 
@@ -96,6 +99,16 @@ public class Log implements Serializable {
 
   public Log setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public Log setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 

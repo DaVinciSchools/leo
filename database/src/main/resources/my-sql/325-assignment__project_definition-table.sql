@@ -1,6 +1,7 @@
 CREATE TABLE assignment__project_definition
 (
     creation_time         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted               DATETIME,
 
     selected              BOOLEAN,
 

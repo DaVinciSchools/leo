@@ -1,6 +1,7 @@
 CREATE TABLE assignment__knowledge_and_skill
 (
     creation_time          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted                DATETIME,
 
     assignment_id          INT      NOT NULL,
     CONSTRAINT assignment__knowledge_and_skill__assignment_id

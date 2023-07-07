@@ -32,15 +32,18 @@ public class UserX implements Serializable {
   public static final String TABLE_NAME = "user_x";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_FIRSTNAME_NAME = "first_name";
   public static final String COLUMN_LASTNAME_NAME = "last_name";
   public static final String COLUMN_EMAILADDRESS_NAME = "email_address";
   public static final String COLUMN_ENCODEDPASSWORD_NAME = "encoded_password";
-  private static final long serialVersionUID = 1623331932844911934L;
+  private static final long serialVersionUID = -4707654659918773802L;
 
   private Integer id;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   private String firstName;
 
@@ -77,6 +80,16 @@ public class UserX implements Serializable {
 
   public UserX setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public UserX setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 

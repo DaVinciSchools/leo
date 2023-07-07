@@ -1,6 +1,7 @@
 CREATE TABLE student__class_x
 (
     creation_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted       DATETIME,
 
     student_id    INT      NOT NULL,
     CONSTRAINT student__class_x__student_id

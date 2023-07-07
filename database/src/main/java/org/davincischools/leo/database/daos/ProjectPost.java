@@ -21,20 +21,20 @@ public class ProjectPost implements Serializable {
   public static final String TABLE_NAME = "project_post";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
-  public static final String COLUMN_TITLE_NAME = "title";
-  public static final String COLUMN_MESSAGE_NAME = "message";
-  public static final String COLUMN_MESSAGEQUILL_NAME = "message_quill";
-  private static final long serialVersionUID = 6767484256396797429L;
+  public static final String COLUMN_DELETED_NAME = "deleted";
+  public static final String COLUMN_NAME_NAME = "name";
+  public static final String COLUMN_MESSAGEHTML_NAME = "message_html";
+  private static final long serialVersionUID = 6525477675978236832L;
 
   private Integer id;
 
   private Instant creationTime;
 
-  private String title;
+  private Instant deleted;
 
-  private String message;
+  private String name;
 
-  private String messageQuill;
+  private String messageHtml;
 
   private UserX userX;
 
@@ -62,35 +62,34 @@ public class ProjectPost implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_TITLE_NAME)
-  public String getTitle() {
-    return title;
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
   }
 
-  public ProjectPost setTitle(String title) {
-    this.title = title;
+  public ProjectPost setDeleted(Instant deleted) {
+    this.deleted = deleted;
+    return this;
+  }
+
+  @Column(name = COLUMN_NAME_NAME)
+  public String getName() {
+    return name;
+  }
+
+  public ProjectPost setName(String name) {
+    this.name = name;
     return this;
   }
 
   @Lob
-  @Column(name = COLUMN_MESSAGE_NAME)
-  public String getMessage() {
-    return message;
+  @Column(name = COLUMN_MESSAGEHTML_NAME)
+  public String getMessageHtml() {
+    return messageHtml;
   }
 
-  public ProjectPost setMessage(String message) {
-    this.message = message;
-    return this;
-  }
-
-  @Lob
-  @Column(name = COLUMN_MESSAGEQUILL_NAME)
-  public String getMessageQuill() {
-    return messageQuill;
-  }
-
-  public ProjectPost setMessageQuill(String messageQuill) {
-    this.messageQuill = messageQuill;
+  public ProjectPost setMessageHtml(String messageHtml) {
+    this.messageHtml = messageHtml;
     return this;
   }
 

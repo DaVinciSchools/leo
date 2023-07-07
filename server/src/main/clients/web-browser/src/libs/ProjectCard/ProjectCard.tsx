@@ -18,7 +18,7 @@ export function ProjectCard(props: {
   id: number;
   name: string;
   shortDescr: string;
-  longDescr: string;
+  longDescrHtml: string;
   active: boolean;
   favorite: boolean;
   thumbsState: ThumbsState;

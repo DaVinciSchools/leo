@@ -17,11 +17,14 @@ public class AdminX implements Serializable {
   public static final String TABLE_NAME = "admin_x";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
-  private static final long serialVersionUID = 5663052448147292200L;
+  public static final String COLUMN_DELETED_NAME = "deleted";
+  private static final long serialVersionUID = -5537376562698055615L;
 
   private Integer id;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,6 +45,16 @@ public class AdminX implements Serializable {
 
   public AdminX setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public AdminX setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 }
