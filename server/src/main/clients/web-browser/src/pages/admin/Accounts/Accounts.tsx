@@ -24,8 +24,13 @@ import UserManagementService = user_management.UserManagementService;
 import IFullUserDetails = user_management.IFullUserDetails;
 import IUpsertUserRequest = user_management.IUpsertUserRequest;
 import IUser = pl_types.IUser;
+import {
+  HandleError,
+  HandleErrorType,
+} from '../../../libs/HandleError/HandleError';
 
 export function Accounts() {
+  const [handleError, setHandleError] = useState<HandleErrorType>();
   const user = getCurrentUser();
   if (user == null || !user.isAdmin) {
     return sendToLogin();
@@ -68,7 +73,7 @@ export function Accounts() {
         setUsers(response.users);
         setTotalUsers(response.totalUsers!);
       })
-      .catch(error => setErrorMessage(error.message ?? 'unknown error'));
+      .catch(setHandleError);
   }, [page, pageSize, searchText, showSearchForAccount]);
 
   useEffect(() => {
@@ -106,11 +111,12 @@ export function Accounts() {
         }
         setEditingUser(undefined);
       })
-      .catch(reason => setErrorMessage(reason.message ?? 'unknown error'));
+      .catch(reason => setHandleError({error: reason, reload: false}));
   }
 
   return (
     <>
+      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage title="Accounts">
         <div className="space-filler" style={{height: '2em'}}>
           <div

@@ -13,8 +13,13 @@ import ProjectManagementService = project_management.ProjectManagementService;
 import ThumbsState = pl_types.Project.ThumbsState;
 import {Modal} from 'antd';
 import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
+import {
+  HandleError,
+  HandleErrorType,
+} from '../../../libs/HandleError/HandleError';
 
 export function AllProjects() {
+  const [handleError, setHandleError] = useState<HandleErrorType>();
   const user = getCurrentUser();
   if (user == null) {
     return sendToLogin();
@@ -30,13 +35,18 @@ export function AllProjects() {
   );
 
   useEffect(() => {
-    service.getProjects({userXId: user!.userXId}).then(response => {
-      setProjects(response.projects);
-    });
+    service
+      .getProjects({userXId: user!.userXId})
+      .then(response => {
+        setProjects(response.projects);
+      })
+      .catch(setHandleError);
   }, []);
 
   function updateProject(project: IProject, modifications: IProject) {
-    service.updateProject({id: project.id!, modifications: modifications});
+    service
+      .updateProject({id: project.id!, modifications: modifications})
+      .catch(setHandleError);
 
     const newProjects = [...projects];
     Object.assign(project, modifications);
@@ -48,11 +58,16 @@ export function AllProjects() {
     setShowProjectDetails(true);
     service
       .getProjectDetails({projectId: project.id})
-      .then(response => setProjectDetails(response.project!));
+      .then(response => setProjectDetails(response.project!))
+      .catch(reason => {
+        setShowProjectDetails(false);
+        setHandleError({error: reason, reload: false});
+      });
   }
 
   return (
     <>
+      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage title="All Projects">
         <div>
           {projects.map(project => (

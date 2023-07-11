@@ -11,6 +11,10 @@ import IDistrict = pl_types.IDistrict;
 import {Display, SelectFromList} from '../../../SelectFromList/SelectFromList';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
+import {
+  HandleError,
+  HandleErrorType,
+} from '../../../libs/HandleError/HandleError';
 
 export function SelectDistrictFromList(props: {
   id: string;
@@ -36,6 +40,7 @@ export function SelectDistrictFromList(props: {
 }
 
 export function EditDistricts() {
+  const [handleError, setHandleError] = useState<HandleErrorType>();
   const user = getCurrentUser();
   if (user == null) {
     return sendToLogin();
@@ -53,13 +58,15 @@ export function EditDistricts() {
   function addDistrict() {
     districtManagementService
       .addDistrict({district: {name: districtName}})
-      .then(processDistrictInformationResponse);
+      .then(processDistrictInformationResponse)
+      .catch(setHandleError);
   }
 
   function updateDistrict() {
     districtManagementService
       .updateDistrict({district: {id: districtId, name: districtName}})
-      .then(processDistrictInformationResponse);
+      .then(processDistrictInformationResponse)
+      .catch(setHandleError);
   }
 
   function removeDistrict() {
@@ -67,7 +74,8 @@ export function EditDistricts() {
       .removeDistrict({
         districtId: districtId,
       })
-      .then(processDistrictInformationResponse);
+      .then(processDistrictInformationResponse)
+      .catch(setHandleError);
   }
 
   function processDistrictInformationResponse(
@@ -80,11 +88,13 @@ export function EditDistricts() {
   useEffect(() => {
     districtManagementService
       .getDistricts({})
-      .then(processDistrictInformationResponse);
+      .then(processDistrictInformationResponse)
+      .catch(setHandleError);
   }, []);
 
   return (
     <>
+      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage title="Edit Districts">
         <table className="form-table">
           <tbody>

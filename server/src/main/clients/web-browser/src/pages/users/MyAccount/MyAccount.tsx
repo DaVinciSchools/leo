@@ -9,8 +9,13 @@ import {Button, Form} from 'antd';
 import {createService} from '../../../libs/protos';
 import UserManagementService = user_management.UserManagementService;
 import IUpsertUserRequest = user_management.IUpsertUserRequest;
+import {
+  HandleError,
+  HandleErrorType,
+} from '../../../libs/HandleError/HandleError';
 
 export function MyAccount() {
+  const [handleError, setHandleError] = useState<HandleErrorType>();
   const user = getCurrentUser();
   if (user == null) {
     return sendToLogin();
@@ -32,7 +37,8 @@ export function MyAccount() {
   useEffect(() => {
     userService
       .getUserDetails({userXId: user.userXId})
-      .then(response => setUserX(response.user?.user ?? {}));
+      .then(response => setUserX(response.user?.user ?? {}))
+      .catch(setHandleError);
   }, []);
 
   useEffect(() => {
@@ -53,13 +59,12 @@ export function MyAccount() {
           setUserX(response.user?.user ?? {});
         }
       })
-      .catch(reason =>
-        setErrorMessage('Unknown error: ' + (reason.message ?? 'update failed'))
-      );
+      .catch(reason => setHandleError({error: reason, reload: false}));
   }
 
   return (
     <>
+      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage title="My Account">
         <div className="space-filler">
           <div

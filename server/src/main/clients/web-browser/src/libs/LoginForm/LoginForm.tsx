@@ -12,11 +12,13 @@ import {addXsrfHeader, login} from '../authentication';
 import {pl_types} from '../protos';
 import {useEffect, useState} from 'react';
 import IUser = pl_types.IUser;
-import {errorMessage} from '../errors';
+import {HandleError, HandleErrorType} from '../HandleError/HandleError';
 
 const AUTHORIZATION_FAILURE = 'Authentication failure. Please try again.';
 
 export function LoginForm(props: {successAction: (user: IUser) => void}) {
+  const [handleError, setHandleError] = useState<HandleErrorType>();
+
   const [loginForm] = Form.useForm();
   const [disabled, setDisabled] = useState(false);
   const queryParameters = new URLSearchParams(window.location.search);
@@ -44,12 +46,12 @@ export function LoginForm(props: {successAction: (user: IUser) => void}) {
       })
         .then(response => {
           if (!response.ok) {
-            setFailure('Response not ok: ' + response.statusText);
+            setHandleError(response);
           } else if (response.redirected) {
             if (new URL(response.url).searchParams.get('failed') != null) {
               setFailure(AUTHORIZATION_FAILURE);
             } else {
-              setFailure('Unexpected redirect: ' + response.url);
+              setHandleError(response);
             }
           } else if (response.body != null) {
             response.body
@@ -61,17 +63,17 @@ export function LoginForm(props: {successAction: (user: IUser) => void}) {
                   login(user);
                   props.successAction(user);
                 } catch (e) {
-                  setFailure('Unknown error: ' + errorMessage(e));
+                  setHandleError(e);
                 }
               })
-              .catch(e => setFailure('Unknown error: ' + e.message));
+              .catch(setHandleError);
           } else {
-            setFailure('Unknown error: response had no body');
+            setHandleError({name: 'Error', message: 'Response had no body.'});
           }
         })
-        .catch(e => setFailure('Unknown error: ' + e.message));
+        .catch(setHandleError);
     } catch (e) {
-      setFailure('Unknown error: ' + errorMessage(e));
+      setHandleError(e);
     }
   }
 
@@ -79,12 +81,13 @@ export function LoginForm(props: {successAction: (user: IUser) => void}) {
     setDisabled(true);
     setFailure('');
     doSubmit(formValues)
-      .catch(e => setFailure('Unknown error: ' + e))
+      .catch(setHandleError)
       .finally(() => setDisabled(false));
   }
 
   return (
     <>
+      <HandleError error={handleError} setError={setHandleError} />
       <div className="space-filler" />
       <div className="logo">
         <Link to="/">

@@ -13,6 +13,10 @@ import {MinusCircleOutlined, PlusCircleOutlined} from '@ant-design/icons';
 import ProjectManagementService = project_management.ProjectManagementService;
 import {useNavigate} from 'react-router';
 import ISelectionOption = pl_types.ProjectInputCategory.IOption;
+import {
+  HandleError,
+  HandleErrorType,
+} from '../../../libs/HandleError/HandleError';
 
 const {Content} = Layout;
 
@@ -273,6 +277,7 @@ type Category = {
 };
 
 export function IkigaiBuilder() {
+  const [handleError, setHandleError] = useState<HandleErrorType>();
   const user = getCurrentUser();
   if (user == null) {
     return sendToLogin();
@@ -295,7 +300,8 @@ export function IkigaiBuilder() {
     );
     service
       .getProjectDefinition({})
-      .then(response => setProjectDefinition(response.definition!));
+      .then(response => setProjectDefinition(response.definition!))
+      .catch(setHandleError);
   }, []);
   useEffect(() => {
     if (projectDefinition != null) {
@@ -325,7 +331,7 @@ export function IkigaiBuilder() {
   //       userXId: user!.userXId!,
   //     })
   //     .then(response => setLovesSuggestions(response.suggestions))
-  //     .catch(() => setLovesSuggestions([]))
+  //     .catch(setHandleError);
   //     .finally(() => setLovesGetRelatedSuggestionsEnabled(true));
   // }
 
@@ -339,6 +345,7 @@ export function IkigaiBuilder() {
 
     service
       .generateProjects({definition: projectDefinition})
+      .catch(reason => setHandleError({error: reason, reload: false}))
       .finally(() => navigate('/projects/all-projects.html'));
   }
 
@@ -350,6 +357,7 @@ export function IkigaiBuilder() {
 
   return (
     <>
+      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage title="Ikigai Project Builder">
         <Layout style={{height: '100%'}}>
           <Content style={{borderRight: '#F0781F solid 1px', padding: '0.5em'}}>

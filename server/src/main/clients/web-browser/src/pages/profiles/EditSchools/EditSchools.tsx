@@ -19,6 +19,10 @@ import {
 } from '../../../SelectMultipleFromList/SelectMultipleFromList';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
+import {
+  HandleError,
+  HandleErrorType,
+} from '../../../libs/HandleError/HandleError';
 
 export function SelectSchoolFromList(props: {
   id: string;
@@ -94,6 +98,7 @@ export function SelectMultipleSchoolsFromList(props: {
 }
 
 export function EditSchools() {
+  const [handleError, setHandleError] = useState<HandleErrorType>();
   const user = getCurrentUser();
   if (user == null) {
     return sendToLogin();
@@ -113,10 +118,13 @@ export function EditSchools() {
   );
 
   useEffect(() => {
-    districtManagementService.getDistricts({}).then(response => {
-      setDistricts(new Map(response.districts.map(v => [v.id!, v!])));
-      setDistrictId(response.modifiedDistrictId!);
-    });
+    districtManagementService
+      .getDistricts({})
+      .then(response => {
+        setDistricts(new Map(response.districts.map(v => [v.id!, v!])));
+        setDistrictId(response.modifiedDistrictId!);
+      })
+      .catch(setHandleError);
   }, []);
 
   const schoolManagementService = createService(
@@ -128,7 +136,8 @@ export function EditSchools() {
     if (districtId !== -1) {
       schoolManagementService
         .getSchools({districtId: districtId})
-        .then(processSchoolInformationResponse);
+        .then(processSchoolInformationResponse)
+        .catch(setHandleError);
     }
   }, [districtId]);
 
@@ -142,7 +151,8 @@ export function EditSchools() {
           address: address,
         },
       })
-      .then(processSchoolInformationResponse);
+      .then(processSchoolInformationResponse)
+      .catch(setHandleError);
   }
 
   function removeSchool() {
@@ -151,7 +161,8 @@ export function EditSchools() {
         districtId: districtId,
         schoolId: schoolId,
       })
-      .then(processSchoolInformationResponse);
+      .then(processSchoolInformationResponse)
+      .catch(setHandleError);
   }
 
   function processSchoolInformationResponse(
@@ -164,6 +175,7 @@ export function EditSchools() {
 
   return (
     <>
+      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage title="Edit Schools">
         <table className="form-table">
           <tbody>

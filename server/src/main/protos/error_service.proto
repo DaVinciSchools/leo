@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.davincischools.leo.protos.error_service";
+
+package error_service;
+
+service ErrorService {
+  rpc ReportError (ReportErrorRequest) returns (ReportErrorResponse) {}
+}
+
+message ReportErrorRequest {
+  optional string name = 1;
+  optional string message = 2;
+  optional string stack = 3;
+  optional string url = 4;
+
+  message Request {
+    optional string url = 1;
+    optional bytes body = 2;
+  }
+
+  message Response {
+    optional int32 status = 1;
+    optional string status_text = 2;
+    optional string url = 3;
+    optional bytes body = 4;
+  }
+
+  optional Request request = 5;
+  optional Response response = 6;
+}
+
+message ReportErrorResponse {
+  optional string failure_reason = 1;
+}

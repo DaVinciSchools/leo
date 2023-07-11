@@ -4,12 +4,14 @@ import GetSuggestionsRequest = partial_text_openai_prompt.GetSuggestionsRequest;
 import GetSuggestionsResponse = partial_text_openai_prompt.GetSuggestionsResponse;
 import {useState} from 'react';
 import {CgSearch, CgSearchLoading} from 'react-icons/cg';
+import {HandleError, HandleErrorType} from '../libs/HandleError/HandleError';
 
 export function PartialTextOpenAiPrompt(props: {
   id: string;
   initialSuggestions: string[];
   prompt: GetSuggestionsRequest.Prompt;
 }) {
+  const [handleError, setHandleError] = useState<HandleErrorType>();
   const [enabled, setEnabled] = useState(true);
   const [suggestions, setSuggestions] = useState(props.initialSuggestions);
 
@@ -41,15 +43,16 @@ export function PartialTextOpenAiPrompt(props: {
         input.value = '';
         setSuggestions(response.suggestions);
       })
-      .catch((reason: unknown) => {
+      .catch(reason => {
         setSuggestions([]);
-        console.log(reason);
+        setHandleError({error: reason, reload: false});
       })
       .finally(() => setEnabled(true));
   }
 
   return (
     <>
+      <HandleError error={handleError} setError={setHandleError} />
       <div className="partial-text-form-elements">
         <input
           id={props.id}

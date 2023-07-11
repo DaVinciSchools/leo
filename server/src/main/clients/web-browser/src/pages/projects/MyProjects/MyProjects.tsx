@@ -13,8 +13,13 @@ import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
 import {ItemType} from 'antd/es/menu/hooks/useItems';
 import IProjectPost = pl_types.IProjectPost;
+import {
+  HandleError,
+  HandleErrorType,
+} from '../../../libs/HandleError/HandleError';
 
 export function MyProjects() {
+  const [handleError, setHandleError] = useState<HandleErrorType>();
   const user = getCurrentUser();
   if (user == null) {
     return sendToLogin();
@@ -35,7 +40,8 @@ export function MyProjects() {
       .getProjects({userXId: user!.userXId, activeOnly: true})
       .then(response => {
         setProjects(response.projects);
-      });
+      })
+      .catch(setHandleError);
   }, []);
 
   useEffect(() => {
@@ -44,11 +50,14 @@ export function MyProjects() {
       setPosts(undefined);
     } else {
       projectId.current = project.id!;
-      service.getProjectPosts({projectId: project!.id!}).then(response => {
-        if (project.id! === projectId.current) {
-          setPosts(response.projectPosts);
-        }
-      });
+      service
+        .getProjectPosts({projectId: project!.id!})
+        .then(response => {
+          if (project.id! === projectId.current) {
+            setPosts(response.projectPosts);
+          }
+        })
+        .catch(reason => setHandleError({error: reason, reload: false}));
     }
   }, [project]);
 
@@ -80,22 +89,27 @@ export function MyProjects() {
           ];
           setPosts(newPosts);
         }
-      });
+      })
+      .catch(reason => setHandleError({error: reason, reload: false}));
   }
 
   function deletePost(post: pl_types.IProjectPost) {
-    service.deletePost({id: post.id!}).then(() => {
-      if (project!.id! === projectId.current) {
-        const newPosts: IProjectPost[] = [...(posts ?? [])].filter(
-          p => p.id !== post.id
-        );
-        setPosts(newPosts);
-      }
-    });
+    service
+      .deletePost({id: post.id!})
+      .then(() => {
+        if (project!.id! === projectId.current) {
+          const newPosts: IProjectPost[] = [...(posts ?? [])].filter(
+            p => p.id !== post.id
+          );
+          setPosts(newPosts);
+        }
+      })
+      .catch(reason => setHandleError({error: reason, reload: false}));
   }
 
   return (
     <>
+      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage title="My Projects">
         <div style={{width: '100%'}}>
           <Dropdown.Button

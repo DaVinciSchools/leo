@@ -1,0 +1,11 @@
+@use '../color';
+
+.error-action-links {
+  color: color.$primary-800;
+  cursor: pointer;
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 1em;
+  justify-content: space-around;
+  text-decoration: underline;
+}

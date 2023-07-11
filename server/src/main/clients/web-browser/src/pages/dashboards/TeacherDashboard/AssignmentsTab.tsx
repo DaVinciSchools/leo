@@ -24,8 +24,13 @@ import ReactQuill, {Value} from 'react-quill';
 import {createService} from '../../../libs/protos';
 import AssignmentManagementService = assignment_management.AssignmentManagementService;
 import IUser = pl_types.IUser;
+import {
+  HandleError,
+  HandleErrorType,
+} from '../../../libs/HandleError/HandleError';
 
 export function AssignmentsTab(props: {user: IUser}) {
+  const [handleError, setHandleError] = useState<HandleErrorType>();
   const [classXs, setClassXs] = useState<IClassX[]>([]);
   const [assignments, setAssignments] = useState<IAssignment[] | undefined>();
   const [saveStatus, setSaveStatus] = useState<'Saved' | 'Saving...'>('Saved');
@@ -92,7 +97,9 @@ export function AssignmentsTab(props: {user: IUser}) {
         AssignmentManagementService,
         'AssignmentManagementService'
       );
-      service.saveAssignment({assignment: assignmentRef.current});
+      service
+        .saveAssignment({assignment: assignmentRef.current})
+        .catch(setHandleError);
       setSaveStatus('Saved');
     }
   }
@@ -110,7 +117,7 @@ export function AssignmentsTab(props: {user: IUser}) {
         setClassXs(response.classXs);
         setAssignments(response.assignments);
       })
-      .catch(error => console.log('Error: ' + JSON.stringify(error)));
+      .catch(setHandleError);
   }, []);
 
   function createNewAssignment(classXId: number) {
@@ -124,7 +131,7 @@ export function AssignmentsTab(props: {user: IUser}) {
         setAssignments((assignments ?? []).concat([response.assignment!]));
         setAssignment(response.assignment!);
       })
-      .catch(error => console.log('Error: ' + JSON.stringify(error)));
+      .catch(reason => setHandleError({error: reason, reload: false}));
   }
 
   function deleteAssignment() {
@@ -144,11 +151,12 @@ export function AssignmentsTab(props: {user: IUser}) {
           (assignments ?? []).filter(a => a.id !== assignment?.id)
         );
       })
-      .catch(error => console.log('Error: ' + JSON.stringify(error)));
+      .catch(reason => setHandleError({error: reason, reload: false}));
   }
 
   return (
     <>
+      <HandleError error={handleError} setError={setHandleError} />
       <Grid container paddingY={2} spacing={2} columns={{xs: 6, md: 12}}>
         <Grid item xs={12} className="section-heading">
           <div className="section-title">Select Assignment:</div>

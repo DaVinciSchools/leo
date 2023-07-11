@@ -13,18 +13,21 @@ import {interest_service} from '../generated/protobuf-js';
 import InterestService = interest_service.InterestService;
 import {createService} from '../libs/protos';
 import RegisterInterestRequest = interest_service.RegisterInterestRequest;
+import {HandleError, HandleErrorType} from '../libs/HandleError/HandleError';
+
+const selectProfession = 'Select Profession';
+const otherProfession = 'Other (please describe below)';
+const defaultProfessions = [
+  'K-12 District Leader/Administrator',
+  'K-12 Educator',
+  'Higher Education Leader/Administrator',
+  'Higher Education Faculty Member',
+  'Student',
+  otherProfession,
+];
 
 export function Root() {
-  const selectProfession = 'Select Profession';
-  const otherProfession = 'Other (please describe below)';
-  const defaultProfessions = [
-    'K-12 District Leader/Administrator',
-    'K-12 Educator',
-    'Higher Education Leader/Administrator',
-    'Higher Education Faculty Member',
-    'Student',
-    otherProfession,
-  ];
+  const [handleError, setHandleError] = useState<HandleErrorType>();
 
   const [interestForm] = Form.useForm();
   const [interestFormOpen, setInterestFormOpen] = useState(false);
@@ -40,13 +43,12 @@ export function Root() {
       professionSelection !== otherProfession
         ? professionSelection
         : professionDescr;
-    interestService
-      .registerInterest(request)
-      .catch(error => console.log(error));
+    interestService.registerInterest(request).catch(setHandleError);
   }
 
   return (
     <>
+      <HandleError error={handleError} setError={setHandleError} />
       <header>
         <Link to="/" className="header-section header-section-left">
           <img src="/images/logo-white-on-orange.svg" />
