@@ -68,7 +68,7 @@ public class UserManagementService {
               var pagedUsers =
                   db.getUserXRepository()
                       .findAllByDistrictId(
-                          user.get().getDistrict().getId(),
+                          user.get().orElseThrow().getDistrict().getId(),
                           "%" + request.getSearchText().toLowerCase() + "%",
                           PageRequest.of(
                               request.getPage(),
@@ -106,7 +106,7 @@ public class UserManagementService {
               // If not an admin, make sure the user is getting their own profile.
               int userId = request.getUserXId();
               if (!user.isAdmin()) {
-                if (userId != user.get().getId()) {
+                if (userId != user.get().orElseThrow().getId()) {
                   return user.returnForbidden(GetUserDetailsResponse.getDefaultInstance());
                 }
               }
@@ -140,7 +140,7 @@ public class UserManagementService {
               // Make sure a user is only updating their own profile.
               if (!user.isAdmin()) {
                 if (!request.getUser().hasUserXId()
-                    || request.getUser().getUserXId() != user.get().getId()) {
+                    || request.getUser().getUserXId() != user.get().orElseThrow().getId()) {
                   return user.returnForbidden(UpsertUserResponse.getDefaultInstance());
                 }
               }
@@ -169,7 +169,8 @@ public class UserManagementService {
                 userX =
                     new UserX()
                         .setCreationTime(Instant.now())
-                        .setDistrict(new District().setId(user.get().getDistrict().getId()));
+                        .setDistrict(
+                            new District().setId(user.get().orElseThrow().getDistrict().getId()));
               }
 
               // Change / set the password.

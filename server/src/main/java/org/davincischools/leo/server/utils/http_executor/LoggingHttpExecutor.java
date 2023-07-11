@@ -68,9 +68,8 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
   LoggingHttpExecutor(@Autowired Database db, @Autowired HttpUser user, String caller, R input) {
     this.db = checkNotNull(db);
     this.log = new Log().setCreationTime(Instant.now());
-    if (user.isPresent()) {
-      log.setUserX(user.get());
-    }
+
+    user.get().ifPresent(log::setUserX);
 
     originalRequest = input;
     lastSuccessfulInput = input;

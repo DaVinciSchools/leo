@@ -167,7 +167,7 @@ public class ProjectManagementService {
                       new ProjectInput()
                           .setCreationTime(Instant.now())
                           .setProjectDefinition(definition.definition())
-                          .setUserX(user.get())
+                          .setUserX(user.get().orElseThrow())
                           .setState(State.PROCESSING.name())
                           .setTimeout(Instant.now().plus(Duration.ofMinutes(10))),
                       new ArrayList<>(),
@@ -319,7 +319,8 @@ public class ProjectManagementService {
                 } else if (user.isStudent()) {
                   // Make sure the student is only querying their own projects.
                   if (!Objects.equals(
-                      user.get().getId(), project.project().getProjectInput().getUserX().getId())) {
+                      user.get().orElseThrow().getId(),
+                      project.project().getProjectInput().getUserX().getId())) {
                     return user.returnForbidden(GetProjectDetailsResponse.getDefaultInstance());
                   }
                 }
@@ -354,7 +355,7 @@ public class ProjectManagementService {
                 // TODO: Verify the requested user is in their class.
               } else if (user.isStudent()) {
                 // Make sure the student is only querying about their own projects.
-                if (userId != user.get().getId()) {
+                if (userId != user.get().orElseThrow().getId()) {
                   return user.returnForbidden(GetProjectsResponse.getDefaultInstance());
                 }
               }
@@ -489,7 +490,8 @@ public class ProjectManagementService {
               } else if (user.isStudent()) {
                 // Make sure the student is only updating their own projects.
                 if (!Objects.equals(
-                    project.getProjectInput().getUserX().getId(), user.get().getId())) {
+                    project.getProjectInput().getUserX().getId(),
+                    user.get().orElseThrow().getId())) {
                   return user.returnForbidden(UpdateProjectResponse.getDefaultInstance());
                 }
               }
@@ -566,7 +568,7 @@ public class ProjectManagementService {
                       .save(
                           new ProjectPost()
                               .setCreationTime(Instant.now())
-                              .setUserX(user.get())
+                              .setUserX(user.get().orElseThrow())
                               .setProject(new Project().setId(request.getProjectId()))
                               .setName(request.getName())
                               .setMessageHtml(request.getMessageHtml()));

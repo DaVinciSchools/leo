@@ -57,7 +57,8 @@ public class AssignmentManagementService {
                   if (!user.isAdmin()
                       && (!user.isTeacher()
                           || !Objects.equals(
-                              user.get().getTeacher().getId(), request.getTeacherId()))) {
+                              user.get().orElseThrow().getTeacher().getId(),
+                              request.getTeacherId()))) {
                     return user.returnForbidden(response.build());
                   }
                   assignments =
@@ -68,7 +69,8 @@ public class AssignmentManagementService {
                   if (!user.isAdmin()
                       && (!user.isStudent()
                           || !Objects.equals(
-                              user.get().getStudent().getId(), request.getStudentId()))) {
+                              user.get().orElseThrow().getStudent().getId(),
+                              request.getStudentId()))) {
                     return user.returnForbidden(response.build());
                   }
                   assignments =
@@ -122,7 +124,7 @@ public class AssignmentManagementService {
                       && db.getTeacherClassXRepository()
                           .findById(
                               new TeacherClassXId()
-                                  .setTeacherId(user.get().getTeacher().getId())
+                                  .setTeacherId(user.get().orElseThrow().getTeacher().getId())
                                   .setClassXId(request.getClassXId()))
                           .isPresent())) {
                 return user.returnForbidden(response.build());
@@ -172,7 +174,7 @@ public class AssignmentManagementService {
                       && db.getTeacherClassXRepository()
                           .findById(
                               new TeacherClassXId()
-                                  .setTeacherId(user.get().getTeacher().getId())
+                                  .setTeacherId(user.get().orElseThrow().getTeacher().getId())
                                   .setClassXId(assignment.getClassX().getId()))
                           .isPresent())) {
                 return user.returnForbidden(response.build());
@@ -214,7 +216,7 @@ public class AssignmentManagementService {
                       && db.getTeacherClassXRepository()
                           .findById(
                               new TeacherClassXId()
-                                  .setTeacherId(user.get().getTeacher().getId())
+                                  .setTeacherId(user.get().orElseThrow().getTeacher().getId())
                                   .setClassXId(assignment.getClassX().getId()))
                           .isPresent())) {
                 return user.returnForbidden(response.build());
