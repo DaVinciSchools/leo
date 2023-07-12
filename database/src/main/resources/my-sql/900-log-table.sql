@@ -7,6 +7,7 @@ CREATE TABLE log
     user_x_id             INT,
     status                ENUM('ERROR', 'SUCCESS') NOT NULL,
     notes                 MEDIUMTEXT,
+    issue_link            VARCHAR(255),
 
     caller                MEDIUMTEXT,
     request               MEDIUMTEXT NOT NULL,

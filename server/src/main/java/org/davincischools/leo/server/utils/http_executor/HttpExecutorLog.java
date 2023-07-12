@@ -12,5 +12,7 @@ public interface HttpExecutorLog {
 
   HttpExecutorLog addProject(Project project);
 
+  HttpExecutorLog setIssueLink(String issueLink);
+
   HttpExecutorLog setStatus(LogRepository.Status status);
 }

@@ -53,11 +53,18 @@ export function HandleError(props: {
 
   const [subject, setSubject] = useState('');
   const [logErrorStatus, setLogErrorStatus] = useState(LogErrorStatus.LOGGING);
+  const [issueLink, setIssueLink] = useState('');
   const [logErrorBody, setLogErrorBody] = useState('');
   const [errorBody, setErrorBody] = useState('');
   const [mailToLink, setMailToLink] = useState(baseMailToLink);
 
   useEffect(() => {
+    setMailToLink(baseMailToLink);
+
+    if (!props.error || !subject) {
+      return;
+    }
+
     const assembledMailToLink =
       baseMailToLink +
       '&subject=' +
@@ -67,7 +74,7 @@ export function HandleError(props: {
 
 --- Error ---
 
-${logErrorBody + errorBody}`);
+${issueLink + logErrorBody + errorBody}`);
 
     setMailToLink(
       assembledMailToLink.length > maximumEmailUrlLength
@@ -76,7 +83,7 @@ ${logErrorBody + errorBody}`);
             .replace(/%.?$/, '') + '...'
         : assembledMailToLink
     );
-  }, [subject, logErrorBody, errorBody]);
+  }, [subject, issueLink, logErrorBody, errorBody]);
 
   useEffect(() => {
     setSubject(
@@ -90,6 +97,7 @@ ${logErrorBody + errorBody}`);
 Error: ${reportErrorRequest.name ?? 'Unknown'}
 From: ${window.location.href}
   To: ${reportErrorRequest?.request?.url ?? 'Unknown'}
+ Via: ${reportErrorRequest?.response?.url ?? 'Unknown'}
 
 Message:
 ${reportErrorRequest.message ?? 'Unknown'}
@@ -99,10 +107,11 @@ ${reportErrorRequest.stack ?? 'Unknown'}`);
   }, [reportErrorRequest]);
 
   useEffect(() => {
-    setReportErrorRequest({});
-    setErrorReload(true);
-    setLogErrorBody('');
     setLogErrorStatus(LogErrorStatus.LOGGING);
+    setReportErrorRequest({});
+    setIssueLink('');
+    setLogErrorBody('');
+    setErrorReload(true);
 
     if (props.error != null) {
       let reportErrorRequest: error_service.IReportErrorRequest = {};
@@ -115,7 +124,7 @@ ${reportErrorRequest.stack ?? 'Unknown'}`);
       ) {
         error = error.error;
       }
-      if (typeof error === 'object') {
+      if (error != null && typeof error === 'object') {
         const embeddedReportErrorRequest:
           | error_service.IReportErrorRequest
           | undefined = (
@@ -151,6 +160,9 @@ ${reportErrorRequest.stack ?? 'Unknown'}`);
       createService(error_service.ErrorService, 'ErrorService')
         .reportError(reportErrorRequest)
         .then(response => {
+          if (response.issueLink) {
+            setIssueLink(`Issue Link: ${response.issueLink}\n\n`);
+          }
           if (!response.failureReason) {
             setLogErrorStatus(LogErrorStatus.LOGGED);
           } else {

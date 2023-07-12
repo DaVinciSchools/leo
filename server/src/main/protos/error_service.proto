@@ -33,4 +33,5 @@ message ReportErrorRequest {
 
 message ReportErrorResponse {
   optional string failure_reason = 1;
+  optional string issue_link = 2;
 }

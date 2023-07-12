@@ -94,6 +94,13 @@ openai.api.key=<your_open_ai_api_key>
 # spring.datasource.username=temp
 # spring.datasource.password=temp
 # spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# Add the following properties to post bugs to JIRA.
+#
+# atlassian.username.email=<account_for_jira_api>
+# atlassian.api.token=<token_for_jira_api>
+# atlassian.reporter.email=<default_reporter_email>
+# atlassian.assignee.email=<default_assignee_email>
 ```
 
 Properties can also be set using environment variables. For instance,

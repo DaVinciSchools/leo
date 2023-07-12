@@ -93,6 +93,7 @@ function createNewService<Service>(
             `From: ${window.location.href}
   To: ${fullUrl}
  Via: ${fetchResponse.url}
+
 Headers:
 ${headers.sort().join('\n')}` +
               (reason.message && '\nOriginal Message: ' + reason.message)

@@ -1,0 +1,152 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.davincischools.leo.protos.jira";
+
+package jira;
+
+// Definitions from:
+// https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro
+
+message ErrorResponse {
+  repeated string error_messages = 1;
+  map<string, string> errors = 2;
+  optional int32 status = 3;
+}
+
+message LoginInfo {
+  optional int32 failed_login_count = 1;
+  optional int32 login_count = 2;
+  optional string last_failed_login_time = 3;
+  optional string previous_login_time = 4;
+}
+
+message CurrentUserResponse {
+  optional string self = 1;  // URI
+  optional string name = 2;
+  optional LoginInfo login_info = 3;
+}
+
+message LoginRequest {
+  optional string username = 1;
+  optional string password = 2;
+}
+
+message LoginResponse {
+  message Session {
+    optional string name = 1;  // E.g., JSESSIONID
+    optional string value = 2;
+  }
+
+  optional Session session = 1;
+  optional LoginInfo login_info = 2;
+}
+
+message Parent {
+  optional string key = 1;
+}
+
+message Worklog {
+  message Add {
+    optional string time_spent = 1;
+    optional string started = 2;
+  }
+
+  optional Add add = 1;
+}
+
+message Update {
+  repeated Worklog worklog = 1;
+}
+
+message Project {
+  optional string id = 1;
+  optional string key = 2;
+}
+
+message IssueType {
+  optional string id = 1;
+  optional string name = 2;
+}
+
+message Assignee {
+  optional string id = 1;
+}
+
+message Reporter {
+  optional string id = 1;
+}
+
+message Priority {
+  optional string id = 1;
+}
+
+message TimeTracking {
+  optional string original_estimate = 1;
+  optional string remaining_estimate = 2;
+}
+
+message Security {
+  optional string id = 1;
+}
+
+message Version {
+  optional string id = 1;
+}
+
+message Component {
+  optional string id = 1;
+}
+
+message Error {
+  optional string priority = 1;
+}
+
+message FindUsersAndGroupsRequest {
+  optional string query = 1;
+  optional int32 max_results = 2;
+  optional bool case_insensitive = 3;
+}
+
+message FindUsersAndGroupsResponse {
+  message FoundUsers {
+    message UserPickerUser {
+      optional string accountId = 1;
+      optional string html = 2;
+    }
+    repeated UserPickerUser users = 1;
+  }
+  optional FoundUsers users = 1;
+  optional ErrorResponse project_leo_error = 2;
+}
+
+message CreateIssueRequest {
+  optional Update update = 1;
+
+  message Fields {
+    optional Project project = 1;
+    optional string summary = 2;
+    optional IssueType issuetype = 3;
+    optional Assignee assignee = 4;
+    optional Reporter reporter = 5;
+    optional Priority priority = 6;
+    repeated string labels = 7;
+    optional TimeTracking timetracking = 8;
+    optional Security security = 9;
+    repeated Version versions = 10;
+    optional string environment = 11;
+    optional string description = 12;
+    optional string duedate = 13;  // E.g., "2011-03-11"
+    repeated Version fix_versions = 14;
+    repeated Component components = 15;
+    optional Parent parent = 16;
+  }
+  optional Fields fields = 2;
+}
+
+message CreateIssueResponse {
+  optional string id = 1;
+  optional string key = 2;  // Issue identifier, e.g., PL-2
+  optional string self = 3;  // URL to issue.
+  optional ErrorResponse project_leo_error = 4;
+}

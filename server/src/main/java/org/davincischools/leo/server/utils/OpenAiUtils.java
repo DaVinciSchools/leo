@@ -85,7 +85,7 @@ public class OpenAiUtils {
               HttpClient client =
                   HttpClient.create()
                       .responseTimeout(Duration.ofSeconds(120))
-                      .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 120 * 100)
+                      .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 120 * 1000)
                       .option(ChannelOption.SO_KEEPALIVE, true)
                       .doOnConnected(
                           conn ->

@@ -24,6 +24,7 @@ public class Log implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_STATUS_NAME = "status";
   public static final String COLUMN_NOTES_NAME = "notes";
+  public static final String COLUMN_ISSUELINK_NAME = "issue_link";
   public static final String COLUMN_CALLER_NAME = "caller";
   public static final String COLUMN_REQUEST_NAME = "request";
   public static final String COLUMN_REQUESTTYPE_NAME = "request_type";
@@ -38,7 +39,7 @@ public class Log implements Serializable {
   public static final String COLUMN_LASTINPUT_NAME = "last_input";
   public static final String COLUMN_LASTINPUTTYPE_NAME = "last_input_type";
   public static final String COLUMN_LASTINPUTTIME_NAME = "last_input_time";
-  private static final long serialVersionUID = 3693479977665926251L;
+  private static final long serialVersionUID = 5976262087182680929L;
 
   private Integer id;
 
@@ -51,6 +52,8 @@ public class Log implements Serializable {
   private String status;
 
   private String notes;
+
+  private String issueLink;
 
   private String caller;
 
@@ -142,6 +145,16 @@ public class Log implements Serializable {
 
   public Log setNotes(String notes) {
     this.notes = notes;
+    return this;
+  }
+
+  @Column(name = COLUMN_ISSUELINK_NAME)
+  public String getIssueLink() {
+    return issueLink;
+  }
+
+  public Log setIssueLink(String issueLink) {
+    this.issueLink = issueLink;
     return this;
   }
 

@@ -105,6 +105,11 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
     return this;
   }
 
+  public HttpExecutorLog setIssueLink(String issueLink) {
+    log.setIssueLink(issueLink);
+    return this;
+  }
+
   @Override
   public HttpExecutorLog setStatus(LogRepository.Status status) {
     log.setStatus(status.name());
