@@ -119,10 +119,10 @@ public class ErrorService {
               + request.getUrl()
               + "\n"
               + "_To:_ "
-              + request.getResponse().getUrl()
+              + request.getRequest().getUrl()
               + "\n"
               + "_Via:_ "
-              + request.getRequest().getUrl()
+              + request.getResponse().getUrl()
               + "\n"
               + "\n\n");
       description.append(
@@ -146,7 +146,7 @@ public class ErrorService {
                           .setReporter(Reporter.newBuilder().setId(reporterAccountId.get()))
                           .setAssignee(Assignee.newBuilder().setId(assigneeAccountId.get()))
                           .setIssuetype(IssueType.newBuilder().setName("Bug").build())
-                          .setParent(Parent.newBuilder().setKey(/*Automated Bugs*/ "PL-85"))
+                          .setParent(Parent.newBuilder().setKey(/* Automated Bugs */ "PL-85"))
                           .setSummary(
                               org.apache.logging.log4j.util.Strings.left(
                                   (request.getName() + ": " + request.getUrl())
