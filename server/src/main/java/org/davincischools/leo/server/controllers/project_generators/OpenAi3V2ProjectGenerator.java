@@ -145,7 +145,7 @@ public class OpenAi3V2ProjectGenerator implements ProjectGenerator {
                   .save(
                       new ProjectMilestone()
                           .setCreationTime(Instant.now())
-                          .setPosition(position.incrementAndGet())
+                          .setPosition((float) position.incrementAndGet())
                           .setName(milestone.getName())
                           .setProject(project));
           for (String step : milestone.getStepsList()) {
@@ -153,7 +153,7 @@ public class OpenAi3V2ProjectGenerator implements ProjectGenerator {
                 .save(
                     new ProjectMilestoneStep()
                         .setCreationTime(Instant.now())
-                        .setPosition(position.incrementAndGet())
+                        .setPosition((float) position.incrementAndGet())
                         .setName(step)
                         .setProjectMilestone(projectMilestone));
           }

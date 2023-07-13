@@ -19,7 +19,7 @@ public class ClassXKnowledgeAndSkill implements Serializable {
   public static final String TABLE_NAME = "class_x__knowledge_and_skill";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = 4161823318519247657L;
+  private static final long serialVersionUID = 8259268893393495982L;
 
   private ClassXKnowledgeAndSkillId id;
 

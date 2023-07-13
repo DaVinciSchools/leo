@@ -20,7 +20,7 @@ public class ProjectImage implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_SELECTED_NAME = "selected";
-  private static final long serialVersionUID = -2942920408442790371L;
+  private static final long serialVersionUID = 7678361934313093812L;
 
   private ProjectImageId id;
 
@@ -32,7 +32,7 @@ public class ProjectImage implements Serializable {
 
   private Instant deleted;
 
-  private Boolean selected;
+  private Instant selected;
 
   @EmbeddedId
   public ProjectImageId getId() {
@@ -89,11 +89,11 @@ public class ProjectImage implements Serializable {
   }
 
   @Column(name = COLUMN_SELECTED_NAME)
-  public Boolean getSelected() {
+  public Instant getSelected() {
     return selected;
   }
 
-  public ProjectImage setSelected(Boolean selected) {
+  public ProjectImage setSelected(Instant selected) {
     this.selected = selected;
     return this;
   }

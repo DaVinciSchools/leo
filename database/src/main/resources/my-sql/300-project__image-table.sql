@@ -3,7 +3,9 @@ CREATE TABLE project__image
     creation_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted       DATETIME,
 
-    selected      BOOLEAN,
+    -- The most recent timestamp is the selected project image.
+    -- If this is non-null it means that it has been selected in the past.
+    selected      DATETIME,
 
     project_id    INT      NOT NULL,
     CONSTRAINT project__image__project_id

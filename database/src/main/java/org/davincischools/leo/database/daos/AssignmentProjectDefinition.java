@@ -20,7 +20,7 @@ public class AssignmentProjectDefinition implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_SELECTED_NAME = "selected";
-  private static final long serialVersionUID = 7898261928448484961L;
+  private static final long serialVersionUID = 342095742240434029L;
 
   private AssignmentProjectDefinitionId id;
 
@@ -32,7 +32,7 @@ public class AssignmentProjectDefinition implements Serializable {
 
   private Instant deleted;
 
-  private Boolean selected;
+  private Instant selected;
 
   @EmbeddedId
   public AssignmentProjectDefinitionId getId() {
@@ -89,11 +89,11 @@ public class AssignmentProjectDefinition implements Serializable {
   }
 
   @Column(name = COLUMN_SELECTED_NAME)
-  public Boolean getSelected() {
+  public Instant getSelected() {
     return selected;
   }
 
-  public AssignmentProjectDefinition setSelected(Boolean selected) {
+  public AssignmentProjectDefinition setSelected(Instant selected) {
     this.selected = selected;
     return this;
   }

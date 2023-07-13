@@ -9,6 +9,7 @@ import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -522,7 +523,7 @@ public class AdminUtils {
             "Career Interests",
             projectDefinition,
             pic ->
-                pic.setPosition(0)
+                pic.setPosition(0f)
                     .setShortDescr("Career interests free text.")
                     .setHint("Click to add careers.")
                     .setInputDescr("Enter career interests:")
@@ -536,7 +537,7 @@ public class AdminUtils {
             "Motivations",
             projectDefinition,
             pic ->
-                pic.setPosition(1)
+                pic.setPosition(1f)
                     .setShortDescr("Motivation selections.")
                     .setHint("Click to add motivations.")
                     .setInputDescr("Select motivations:")
@@ -550,7 +551,7 @@ public class AdminUtils {
             "Knowledge and Skills",
             projectDefinition,
             pic ->
-                pic.setPosition(2)
+                pic.setPosition(2f)
                     .setShortDescr("Knowledge and skill selections.")
                     .setHint("Click to add desired knowledge and skills.")
                     .setInputDescr("Select knowledge and skills:")
@@ -564,7 +565,7 @@ public class AdminUtils {
             "Student Interests",
             projectDefinition,
             pic ->
-                pic.setPosition(3)
+                pic.setPosition(3f)
                     .setShortDescr("Student interest free text.")
                     .setHint("Click to add student interests.")
                     .setInputDescr("Enter student interests:")
@@ -575,7 +576,7 @@ public class AdminUtils {
 
     for (Assignment assignment : db.getAssignmentRepository().findAll()) {
       db.getAssignmentProjectDefinitionRepository()
-          .upsert(assignment, projectDefinition, apd -> apd.setSelected(true));
+          .upsert(assignment, projectDefinition, apd -> apd.setSelected(Instant.now()));
     }
 
     log.atInfo().log("Done creating Ikigai Diagram descriptions");

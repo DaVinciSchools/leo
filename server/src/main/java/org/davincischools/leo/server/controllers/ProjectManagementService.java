@@ -199,7 +199,7 @@ public class ProjectManagementService {
                             .setCreationTime(Instant.now())
                             .setProjectInput(state.input)
                             .setProjectInputCategory(category)
-                            .setPosition(position.getAndIncrement());
+                            .setPosition((float) position.getAndIncrement());
 
                 Builder<ProjectInputValue> projectInputValues = ImmutableList.builder();
                 switch (ValueType.valueOf(category.getValueType())) {

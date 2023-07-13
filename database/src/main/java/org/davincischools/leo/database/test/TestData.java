@@ -1,6 +1,7 @@
 package org.davincischools.leo.database.test;
 
 import com.google.common.collect.ImmutableList;
+import java.time.Instant;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.admin.AdminUtils;
@@ -365,7 +366,7 @@ public class TestData {
             "Career Interests",
             projectDefinition,
             pic ->
-                pic.setPosition(0)
+                pic.setPosition(0f)
                     .setShortDescr("Career interests free text.")
                     .setHint("Click to add careers.")
                     .setInputDescr("Enter career interests:")
@@ -379,7 +380,7 @@ public class TestData {
             "Motivations",
             projectDefinition,
             pic ->
-                pic.setPosition(1)
+                pic.setPosition(1f)
                     .setShortDescr("Motivation selections.")
                     .setHint("Click to add motivations.")
                     .setInputDescr("Select motivations:")
@@ -393,7 +394,7 @@ public class TestData {
             "Knowledge and Skills",
             projectDefinition,
             pic ->
-                pic.setPosition(2)
+                pic.setPosition(2f)
                     .setShortDescr("Knowledge and skill selections.")
                     .setHint("Click to add desired knowledge and skills.")
                     .setInputDescr("Select knowledge and skills:")
@@ -407,7 +408,7 @@ public class TestData {
             "Student Interests",
             projectDefinition,
             pic ->
-                pic.setPosition(3)
+                pic.setPosition(3f)
                     .setShortDescr("Student interest free text.")
                     .setHint("Click to add student interests.")
                     .setInputDescr("Enter student interests:")
@@ -422,7 +423,7 @@ public class TestData {
             programmingSortAssignment, programmingContainerAssignment,
             chemistryPeriodicTableAssignment, chemistryValenceElectronsAssignment)) {
       db.getAssignmentProjectDefinitionRepository()
-          .upsert(assignment, projectDefinition, apd -> apd.setSelected(true));
+          .upsert(assignment, projectDefinition, apd -> apd.setSelected(Instant.now()));
     }
   }
 }

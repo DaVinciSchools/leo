@@ -26,7 +26,7 @@ public class ProjectMilestoneStep implements Serializable {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = -3700801614989302754L;
+  private static final long serialVersionUID = 1694696130484181251L;
 
   private Integer id;
 
@@ -34,7 +34,7 @@ public class ProjectMilestoneStep implements Serializable {
 
   private Instant deleted;
 
-  private Integer position;
+  private Float position;
 
   private String name;
 
@@ -77,11 +77,11 @@ public class ProjectMilestoneStep implements Serializable {
   }
 
   @Column(name = COLUMN_POSITION_NAME, nullable = false)
-  public Integer getPosition() {
+  public Float getPosition() {
     return position;
   }
 
-  public ProjectMilestoneStep setPosition(Integer position) {
+  public ProjectMilestoneStep setPosition(Float position) {
     this.position = position;
     return this;
   }

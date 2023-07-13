@@ -31,7 +31,7 @@ public class ProjectInputCategory implements Serializable {
   public static final String COLUMN_QUERYPREFIX_NAME = "query_prefix";
   public static final String COLUMN_VALUETYPE_NAME = "value_type";
   public static final String COLUMN_MAXNUMVALUES_NAME = "max_num_values";
-  private static final long serialVersionUID = -6713144105788781857L;
+  private static final long serialVersionUID = 6568217635833965876L;
 
   private Integer id;
 
@@ -41,7 +41,7 @@ public class ProjectInputCategory implements Serializable {
 
   private String shortDescr;
 
-  private Integer position;
+  private Float position;
 
   private String name;
 
@@ -102,11 +102,11 @@ public class ProjectInputCategory implements Serializable {
   }
 
   @Column(name = COLUMN_POSITION_NAME, nullable = false)
-  public Integer getPosition() {
+  public Float getPosition() {
     return position;
   }
 
-  public ProjectInputCategory setPosition(Integer position) {
+  public ProjectInputCategory setPosition(Float position) {
     this.position = position;
     return this;
   }

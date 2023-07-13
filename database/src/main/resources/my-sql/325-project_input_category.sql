@@ -6,9 +6,9 @@ CREATE TABLE project_input_category
 
     short_descr           VARCHAR(255) NOT NULL,
 
-    -- Indicates the relative location on the Ikigai diagram.
+    -- Indicates the relative position among Ikigai diagram inputs.
     -- The smallest value starts to the right and greater values rotate clockwise.
-    position              INT          NOT NULL,
+    position              FLOAT        NOT NULL,
 
     -- Attributes for the visual display of the category in the diagram.
     -- Displayed at the top of the category circle.

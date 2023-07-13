@@ -4,8 +4,8 @@ CREATE TABLE project_milestone_step
     creation_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted              DATETIME,
 
-    -- Indicates the relative location in the milestone.
-    position             INT          NOT NULL,
+    -- Indicates the relative position among a milestone's steps.
+    position             FLOAT        NOT NULL,
 
     name                 VARCHAR(255) NOT NULL,
     short_descr          TEXT,

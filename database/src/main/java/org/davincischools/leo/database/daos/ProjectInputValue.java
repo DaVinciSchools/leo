@@ -31,7 +31,7 @@ public class ProjectInputValue implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_FREETEXTVALUE_NAME = "free_text_value";
-  private static final long serialVersionUID = -8423782124835571817L;
+  private static final long serialVersionUID = -593206953956622226L;
 
   private Integer id;
 
@@ -43,7 +43,7 @@ public class ProjectInputValue implements Serializable {
 
   private ProjectInputCategory projectInputCategory;
 
-  private Integer position;
+  private Float position;
 
   private String freeTextValue;
 
@@ -106,11 +106,11 @@ public class ProjectInputValue implements Serializable {
   }
 
   @Column(name = COLUMN_POSITION_NAME, nullable = false)
-  public Integer getPosition() {
+  public Float getPosition() {
     return position;
   }
 
-  public ProjectInputValue setPosition(Integer position) {
+  public ProjectInputValue setPosition(Float position) {
     this.position = position;
     return this;
   }

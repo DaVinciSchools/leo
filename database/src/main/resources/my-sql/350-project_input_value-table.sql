@@ -16,8 +16,8 @@ CREATE TABLE project_input_value
         ON DELETE RESTRICT
         ON UPDATE RESTRICT,
 
-    -- Indicates the relative sort order of the values.
-    position                     INT      NOT NULL,
+    -- Indicates the relative position among a project's input values.
+    position                     FLOAT    NOT NULL,
 
     -- The type and which ONE field is set below is indicated in the project_input_category.
 
