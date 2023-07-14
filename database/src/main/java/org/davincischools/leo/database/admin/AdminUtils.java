@@ -81,7 +81,7 @@ public class AdminUtils {
     HUM(
         "Humanities",
         "Governments",
-        "Cultivate, refine, and leverage perspectiveson how governments work and how they could be"
+        "Cultivate, refine, and leverage perspectives on how governments work and how they could be"
             + " improved"),
     STEAM(
         "Science, Technology, Engineering, Arts, and Math (STEM)",

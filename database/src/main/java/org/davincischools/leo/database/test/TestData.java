@@ -31,7 +31,7 @@ public class TestData {
 
   @Component
   @Profile("!" + TestDatabase.USE_EXTERNAL_DATABASE_PROFILE)
-  public class LoadTestDataOnStartup implements ApplicationListener<ContextRefreshedEvent> {
+  public static class LoadTestDataOnStartup implements ApplicationListener<ContextRefreshedEvent> {
 
     private static final Logger logger = LogManager.getLogger();
 
@@ -232,8 +232,21 @@ public class TestData {
                 userX ->
                     UserUtils.setPassword(
                         db.getAdminXRepository()
-                            .upsert(userX.setFirstName("Admin").setLastName("Project Leo")),
+                            .upsert(
+                                db.getTeacherRepository()
+                                    .upsert(
+                                        db.getStudentRepository()
+                                            .upsert(
+                                                userX
+                                                    .setFirstName("Admin")
+                                                    .setLastName("Project Leo"),
+                                                student ->
+                                                    student
+                                                        .setDistrictStudentId(1111)
+                                                        .setGrade(12)))),
                         PASSWORD));
+    db.getTeacherSchoolRepository().upsert(admin.getTeacher(), school);
+    db.getStudentSchoolRepository().upsert(admin.getStudent(), school);
 
     email = "teacher@projectleo.net";
     db.getUserXRepository()
@@ -282,7 +295,9 @@ public class TestData {
     // Create programming class.
     programmingClass =
         db.getClassXRepository().upsert(school, "Intro to Programming", classX -> {});
+    db.getTeacherClassXRepository().upsert(admin.getTeacher(), programmingClass);
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), programmingClass);
+    db.getStudentClassXRepository().upsert(admin.getStudent(), programmingClass);
     db.getStudentClassXRepository().upsert(student.getStudent(), programmingClass);
 
     programmingSortEks =
@@ -313,7 +328,9 @@ public class TestData {
 
     // Create chemistry class.
     chemistryClass = db.getClassXRepository().upsert(school, "Intro to Chemistry", classX -> {});
+    db.getTeacherClassXRepository().upsert(admin.getTeacher(), chemistryClass);
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), chemistryClass);
+    db.getStudentClassXRepository().upsert(admin.getStudent(), chemistryClass);
     db.getStudentClassXRepository().upsert(student.getStudent(), chemistryClass);
 
     chemistryPeriodicTableEks =
@@ -346,7 +363,9 @@ public class TestData {
 
     // Create an empty class.
     danceClass = db.getClassXRepository().upsert(school, "Dance", classX -> {});
+    db.getTeacherClassXRepository().upsert(admin.getTeacher(), danceClass);
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), danceClass);
+    db.getStudentClassXRepository().upsert(admin.getStudent(), danceClass);
     db.getStudentClassXRepository().upsert(student.getStudent(), danceClass);
 
     // Create a default project definition.
