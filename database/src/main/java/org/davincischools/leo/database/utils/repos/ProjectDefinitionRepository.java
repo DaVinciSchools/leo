@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectInputCategory;
+import org.davincischools.leo.database.daos.UserX;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,13 +19,14 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProjectDefinitionRepository extends JpaRepository<ProjectDefinition, Integer> {
 
-  default ProjectDefinition upsert(String name, Consumer<ProjectDefinition> modifier) {
+  default ProjectDefinition upsert(String name, UserX userX, Consumer<ProjectDefinition> modifier) {
     checkArgument(!Strings.isNullOrEmpty(name));
     checkNotNull(modifier);
 
     ProjectDefinition projectDefinition =
         findByName(name)
             .orElseGet(() -> new ProjectDefinition().setCreationTime(Instant.now()))
+            .setUserX(userX)
             .setName(name);
 
     modifier.accept(projectDefinition);

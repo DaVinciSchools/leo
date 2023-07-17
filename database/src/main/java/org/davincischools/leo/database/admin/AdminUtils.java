@@ -26,6 +26,7 @@ import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.ProjectDefinition;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.UserX;
@@ -33,7 +34,7 @@ import org.davincischools.leo.database.test.TestData;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserUtils;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
-import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository.ValueType;
+import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -515,9 +516,102 @@ public class AdminUtils {
   private void addIkigaiDiagramDescriptions(UserX creator) {
     log.atInfo().log("Creating Ikigai Diagram descriptions");
 
+    // Create new project definitions.
+    {
+      ProjectDefinitionCategoryType careerInterestsType =
+          db.getProjectDefinitionCategoryTypeRepository()
+              .upsert(
+                  "Career Interests",
+                  type ->
+                      type.setShortDescr("Career interests free text.")
+                          .setHint("Click to add careers.")
+                          .setInputDescr("Enter career interests:")
+                          .setInputPlaceholder("Career Interest")
+                          .setQueryPrefix("You are passionate about a career in")
+                          .setValueType(ValueType.FREE_TEXT.name()));
+
+      ProjectDefinitionCategoryType motivationType =
+          db.getProjectDefinitionCategoryTypeRepository()
+              .upsert(
+                  "Motivations",
+                  type ->
+                      type.setShortDescr("Motivation selections.")
+                          .setHint("Click to add motivations.")
+                          .setInputDescr("Select motivations:")
+                          .setInputPlaceholder("Select a Motivation")
+                          .setQueryPrefix("You are motivated by")
+                          .setValueType(ValueType.MOTIVATION.name()));
+
+      ProjectDefinitionCategoryType ksType =
+          db.getProjectDefinitionCategoryTypeRepository()
+              .upsert(
+                  "Knowledge and Skills",
+                  type ->
+                      type.setShortDescr("Knowledge and skill selections.")
+                          .setHint("Click to add desired knowledge and skills.")
+                          .setInputDescr("Select knowledge and skills:")
+                          .setInputPlaceholder("Select a Knowledge and Skill")
+                          .setQueryPrefix("You want to improve your ability to")
+                          .setValueType(ValueType.EKS.name()));
+
+      ProjectDefinitionCategoryType xqType =
+          db.getProjectDefinitionCategoryTypeRepository()
+              .upsert(
+                  "XQ Competencies",
+                  type ->
+                      type.setShortDescr("XQ competency selections.")
+                          .setHint("Click to add desired XQ competency.")
+                          .setInputDescr("Select XQ Competency:")
+                          .setInputPlaceholder("Select a XQ Competency")
+                          .setQueryPrefix("You want to improve your ability to")
+                          .setValueType(ValueType.XQ_COMPETENCY.name()));
+
+      ProjectDefinitionCategoryType studentInterestsType =
+          db.getProjectDefinitionCategoryTypeRepository()
+              .upsert(
+                  "Student Interests",
+                  type ->
+                      type.setShortDescr("Student interest free text.")
+                          .setHint("Click to add student interests.")
+                          .setInputDescr("Enter student interests:")
+                          .setInputPlaceholder("Student Interest")
+                          .setQueryPrefix("You are passionate about")
+                          .setValueType(ValueType.FREE_TEXT.name()));
+
+      ProjectDefinition projectDefinition =
+          db.getProjectDefinitionRepository()
+              .upsert(
+                  "Definition with Knowledge and Skills",
+                  creator,
+                  def -> def.setCreationTime(Instant.now()));
+      db.getProjectDefinitionCategoryRepository()
+          .upsert(
+              projectDefinition,
+              careerInterestsType,
+              entity -> entity.setPosition(1f).setMaxNumValues(4));
+      db.getProjectDefinitionCategoryRepository()
+          .upsert(
+              projectDefinition,
+              motivationType,
+              entity -> entity.setPosition(2f).setMaxNumValues(4));
+      db.getProjectDefinitionCategoryRepository()
+          .upsert(projectDefinition, ksType, entity -> entity.setPosition(3f).setMaxNumValues(4));
+      db.getProjectDefinitionCategoryRepository()
+          .upsert(
+              projectDefinition,
+              studentInterestsType,
+              entity -> entity.setPosition(4f).setMaxNumValues(4));
+
+      for (Assignment assignment : db.getAssignmentRepository().findAll()) {
+        db.getAssignmentProjectDefinitionRepository()
+            .upsert(assignment, projectDefinition, apd -> apd.setSelected(Instant.now()));
+      }
+    }
+
+    // Create old project definitions.
     ProjectDefinition projectDefinition =
         db.getProjectDefinitionRepository()
-            .upsert("Generic Template", pd -> pd.setUserX(creator).setTemplate(true));
+            .upsert("Generic Template", creator, pd -> pd.setTemplate(true));
 
     db.getProjectInputCategoryRepository()
         .upsert(

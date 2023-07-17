@@ -28,8 +28,8 @@ import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
+import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.ProjectDefinitionInputCategories;
-import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
@@ -392,11 +392,11 @@ public class ProjectManagementService {
               GetProjectDefinitionResponse.Builder response =
                   GetProjectDefinitionResponse.newBuilder();
 
-              // TODO: Just assume there's a single definition.
+              // TODO: Just assume there's a single templated definition.
               ProjectDefinition definitionDao =
                   Iterables.getOnlyElement(
                       db.getProjectDefinitionRepository().findAll().stream()
-                          .filter(ProjectDefinition::getTemplate)
+                          .filter(pd -> Boolean.TRUE.equals(pd.getTemplate()))
                           .toList());
               ProjectDefinitionInputCategories definition =
                   db.getProjectDefinitionRepository()

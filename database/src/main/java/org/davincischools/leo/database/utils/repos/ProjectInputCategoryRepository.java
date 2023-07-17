@@ -12,17 +12,12 @@ import org.davincischools.leo.database.daos.ProjectInputCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+@Deprecated
 @Repository
 public interface ProjectInputCategoryRepository
     extends JpaRepository<ProjectInputCategory, Integer> {
 
-  enum ValueType {
-    FREE_TEXT,
-    EKS,
-    XQ_COMPETENCY,
-    MOTIVATION
-  }
-
+  @Deprecated
   default ProjectInputCategory upsert(
       String name, ProjectDefinition projectDefinition, Consumer<ProjectInputCategory> modifier) {
     checkArgument(!Strings.isNullOrEmpty(name));
@@ -41,5 +36,6 @@ public interface ProjectInputCategoryRepository
   }
 
   // TODO: For development, remove.
+  @Deprecated
   Optional<ProjectInputCategory> findByName(String name);
 }

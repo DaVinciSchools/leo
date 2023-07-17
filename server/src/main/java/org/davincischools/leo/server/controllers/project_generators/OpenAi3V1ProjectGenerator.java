@@ -22,7 +22,7 @@ import org.davincischools.leo.database.daos.ProjectInputCategory;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.LogRepository.Status;
-import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository.ValueType;
+import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.protos.open_ai.OpenAiMessage;
 import org.davincischools.leo.protos.open_ai.OpenAiRequest;
 import org.davincischools.leo.protos.open_ai.OpenAiResponse;

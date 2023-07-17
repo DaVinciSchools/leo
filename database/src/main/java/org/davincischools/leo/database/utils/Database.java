@@ -15,6 +15,8 @@ import org.davincischools.leo.database.utils.repos.LogReferenceRepository;
 import org.davincischools.leo.database.utils.repos.LogRepository;
 import org.davincischools.leo.database.utils.repos.MotivationRepository;
 import org.davincischools.leo.database.utils.repos.PortfolioRepository;
+import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryRepository;
+import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository;
 import org.davincischools.leo.database.utils.repos.ProjectImageRepository;
 import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository;
@@ -57,13 +59,18 @@ public class Database {
   @Autowired private LogRepository logRepository;
   @Autowired private MotivationRepository motivationRepository;
   @Autowired private PortfolioRepository portfolioRepository;
-  @Autowired private ProjectMilestoneRepository projectMilestoneRepository;
-  @Autowired private ProjectMilestoneStepRepository projectMilestoneStepRepository;
+  @Autowired private ProjectDefinitionCategoryRepository projectDefinitionCategoryRepository;
+
+  @Autowired
+  private ProjectDefinitionCategoryTypeRepository projectDefinitionCategoryTypeRepository;
+
   @Autowired private ProjectDefinitionRepository projectDefinitionRepository;
   @Autowired private ProjectImageRepository projectImageRepository;
-  @Autowired private ProjectInputCategoryRepository projectInputCategoryRepository;
+  @Deprecated @Autowired private ProjectInputCategoryRepository projectInputCategoryRepository;
   @Autowired private ProjectInputRepository projectInputRepository;
   @Autowired private ProjectInputValueRepository projectInputValueRepository;
+  @Autowired private ProjectMilestoneRepository projectMilestoneRepository;
+  @Autowired private ProjectMilestoneStepRepository projectMilestoneStepRepository;
   @Autowired private ProjectPostCommentRepository projectPostCommentRepository;
   @Autowired private ProjectPostRepository projectPostRepository;
   @Autowired private ProjectRepository projectRepository;
@@ -92,19 +99,19 @@ public class Database {
     return assignmentRepository;
   }
 
-  public ClassXRepository getClassXRepository() {
-    return classXRepository;
-  }
-
   public ClassXKnowledgeAndSkillRepository getClassXKnowledgeAndSkillRepository() {
     return classXKnowledgeAndSkillRepository;
+  }
+
+  public ClassXRepository getClassXRepository() {
+    return classXRepository;
   }
 
   public DistrictRepository getDistrictRepository() {
     return districtRepository;
   }
 
-  public FileXRepository getImageRepository() {
+  public FileXRepository getFileXRepository() {
     return fileXRepository;
   }
 
@@ -132,12 +139,12 @@ public class Database {
     return portfolioRepository;
   }
 
-  public ProjectMilestoneRepository getProjectMilestoneRepository() {
-    return projectMilestoneRepository;
+  public ProjectDefinitionCategoryRepository getProjectDefinitionCategoryRepository() {
+    return projectDefinitionCategoryRepository;
   }
 
-  public ProjectMilestoneStepRepository getProjectMilestoneStepRepository() {
-    return projectMilestoneStepRepository;
+  public ProjectDefinitionCategoryTypeRepository getProjectDefinitionCategoryTypeRepository() {
+    return projectDefinitionCategoryTypeRepository;
   }
 
   public ProjectDefinitionRepository getProjectDefinitionRepository() {
@@ -148,6 +155,7 @@ public class Database {
     return projectImageRepository;
   }
 
+  @Deprecated
   public ProjectInputCategoryRepository getProjectInputCategoryRepository() {
     return projectInputCategoryRepository;
   }
@@ -158,6 +166,14 @@ public class Database {
 
   public ProjectInputValueRepository getProjectInputValueRepository() {
     return projectInputValueRepository;
+  }
+
+  public ProjectMilestoneRepository getProjectMilestoneRepository() {
+    return projectMilestoneRepository;
+  }
+
+  public ProjectMilestoneStepRepository getProjectMilestoneStepRepository() {
+    return projectMilestoneStepRepository;
   }
 
   public ProjectPostCommentRepository getProjectPostCommentRepository() {
