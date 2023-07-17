@@ -154,7 +154,7 @@ public class AdminUtils {
   @Value("${resetPassword:}")
   private List<String> resetPasswords;
 
-  @Value("${loadTestData}")
+  @Value("${loadTestData:false}")
   private String loadTestData;
 
   private District createDistrict() {
@@ -512,11 +512,12 @@ public class AdminUtils {
     log.atInfo().log("Done importing motivations.");
   }
 
-  private void addIkigaiDiagramDescriptions() {
+  private void addIkigaiDiagramDescriptions(UserX creator) {
     log.atInfo().log("Creating Ikigai Diagram descriptions");
 
     ProjectDefinition projectDefinition =
-        db.getProjectDefinitionRepository().upsert("Generic Template", pd -> pd.setTemplate(true));
+        db.getProjectDefinitionRepository()
+            .upsert("Generic Template", pd -> pd.setUserX(creator).setTemplate(true));
 
     db.getProjectInputCategoryRepository()
         .upsert(
@@ -608,10 +609,13 @@ public class AdminUtils {
       log.atInfo().log("Importing Motivations: {}", importMotivations);
       importMotivations();
     }
-    addIkigaiDiagramDescriptions();
-    if (loadTestData != null) {
+    if (!Objects.equals(loadTestData, "false")) {
       log.atInfo().log("Loading test data");
       new TestData(db).addTestData();
+    } else {
+      checkArgument(!createAdmins.isEmpty(), "--createAdmin required.");
+      UserX userX = db.getUserXRepository().findByEmailAddress(createAdmins.get(0)).orElseThrow();
+      addIkigaiDiagramDescriptions(userX);
     }
     if (!createAdmins.isEmpty()) {
       log.atInfo().log("Creating admin: {}", createAdmins);

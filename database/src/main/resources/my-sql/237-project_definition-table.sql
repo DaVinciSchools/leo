@@ -5,6 +5,13 @@ CREATE TABLE project_definition
     deleted       DATETIME,
 
     name          VARCHAR(255) NOT NULL,
-    template      BOOLEAN
+    template      BOOLEAN,
+
+    user_x_id     INT          NOT NULL,
+    CONSTRAINT project_definition__user_x_id
+        FOREIGN KEY (user_x_id)
+            REFERENCES user_x (id)
+            ON DELETE RESTRICT
+            ON UPDATE RESTRICT
 ) ENGINE InnoDB
   CHAR SET UTF8MB4;

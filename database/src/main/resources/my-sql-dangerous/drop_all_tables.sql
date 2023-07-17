@@ -27,8 +27,9 @@ DROP TABLE IF EXISTS project;
 
 DROP TABLE IF EXISTS ikigai_input;
 DROP TABLE IF EXISTS project_input;
-
+DROP TABLE IF EXISTS project_definition_category;
 DROP TABLE IF EXISTS assignment;
+DROP TABLE IF EXISTS project_definition_category_type;
 DROP TABLE IF EXISTS project_definition;
 
 DROP TABLE IF EXISTS user; -- Renamed.

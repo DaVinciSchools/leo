@@ -1,3 +1,5 @@
+-- TODO: Remove after refactor.
+
 CREATE TABLE project_input_category
 (
     id                    INT PRIMARY KEY AUTO_INCREMENT,

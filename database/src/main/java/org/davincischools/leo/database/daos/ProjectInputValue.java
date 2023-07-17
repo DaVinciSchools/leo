@@ -19,7 +19,6 @@ import java.time.Instant;
     name = ProjectInputValue.TABLE_NAME,
     schema = "leo_temp",
     indexes = {
-      @Index(name = "project_input_id", columnList = "project_input_id"),
       @Index(name = "project_input_category_id", columnList = "project_input_category_id")
     })
 public class ProjectInputValue implements Serializable {
@@ -31,7 +30,7 @@ public class ProjectInputValue implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_FREETEXTVALUE_NAME = "free_text_value";
-  private static final long serialVersionUID = -593206953956622226L;
+  private static final long serialVersionUID = 2138494411047959251L;
 
   private Integer id;
 
@@ -39,11 +38,13 @@ public class ProjectInputValue implements Serializable {
 
   private Instant deleted;
 
+  @Deprecated private Float position;
+
   private ProjectInput projectInput;
 
-  private ProjectInputCategory projectInputCategory;
+  @Deprecated private ProjectInputCategory projectInputCategory;
 
-  private Float position;
+  private ProjectDefinitionCategory projectDefinitionCategory;
 
   private String freeTextValue;
 
@@ -83,6 +84,18 @@ public class ProjectInputValue implements Serializable {
     return this;
   }
 
+  @Deprecated
+  @Column(name = COLUMN_POSITION_NAME, nullable = false)
+  public Float getPosition() {
+    return position;
+  }
+
+  @Deprecated
+  public ProjectInputValue setPosition(Float position) {
+    this.position = position;
+    return this;
+  }
+
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_input_id", nullable = false)
   public ProjectInput getProjectInput() {
@@ -94,24 +107,28 @@ public class ProjectInputValue implements Serializable {
     return this;
   }
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "project_input_category_id", nullable = false)
+  @Deprecated
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "project_input_category_id")
   public ProjectInputCategory getProjectInputCategory() {
     return projectInputCategory;
   }
 
+  @Deprecated
   public ProjectInputValue setProjectInputCategory(ProjectInputCategory projectInputCategory) {
     this.projectInputCategory = projectInputCategory;
     return this;
   }
 
-  @Column(name = COLUMN_POSITION_NAME, nullable = false)
-  public Float getPosition() {
-    return position;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "project_definition_category_id")
+  public ProjectDefinitionCategory getProjectDefinitionCategory() {
+    return projectDefinitionCategory;
   }
 
-  public ProjectInputValue setPosition(Float position) {
-    this.position = position;
+  public ProjectInputValue setProjectDefinitionCategory(
+      ProjectDefinitionCategory projectDefinitionCategory) {
+    this.projectDefinitionCategory = projectDefinitionCategory;
     return this;
   }
 

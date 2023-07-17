@@ -20,7 +20,7 @@ public class AssignmentProjectDefinition implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_SELECTED_NAME = "selected";
-  private static final long serialVersionUID = 342095742240434029L;
+  private static final long serialVersionUID = -9070081268016012169L;
 
   private AssignmentProjectDefinitionId id;
 

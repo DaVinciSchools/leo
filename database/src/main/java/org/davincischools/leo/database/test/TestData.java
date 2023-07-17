@@ -378,7 +378,7 @@ public class TestData {
                     .save(pd.setName(pd.getName() + "-old." + pd.getId()).setTemplate(false)));
     ProjectDefinition projectDefinition =
         db.getProjectDefinitionRepository()
-            .upsert(projectDefinitionName, pd -> pd.setTemplate(true));
+            .upsert(projectDefinitionName, pd -> pd.setUserX(admin).setTemplate(true));
 
     db.getProjectInputCategoryRepository()
         .upsert(

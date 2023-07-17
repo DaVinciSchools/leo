@@ -39,7 +39,7 @@ public class Log implements Serializable {
   public static final String COLUMN_LASTINPUT_NAME = "last_input";
   public static final String COLUMN_LASTINPUTTYPE_NAME = "last_input_type";
   public static final String COLUMN_LASTINPUTTIME_NAME = "last_input_time";
-  private static final long serialVersionUID = 5976262087182680929L;
+  private static final long serialVersionUID = 3142108779852199719L;
 
   private Integer id;
 

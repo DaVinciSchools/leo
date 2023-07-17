@@ -2,9 +2,12 @@ package org.davincischools.leo.database.daos;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
@@ -20,7 +23,7 @@ public class ProjectDefinition implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_TEMPLATE_NAME = "template";
-  private static final long serialVersionUID = -5230276565786200439L;
+  private static final long serialVersionUID = 8581690092126044634L;
 
   private Integer id;
 
@@ -31,6 +34,8 @@ public class ProjectDefinition implements Serializable {
   private String name;
 
   private Boolean template;
+
+  private UserX userX;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -81,6 +86,17 @@ public class ProjectDefinition implements Serializable {
 
   public ProjectDefinition setTemplate(Boolean template) {
     this.template = template;
+    return this;
+  }
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_x_id", nullable = false)
+  public UserX getUserX() {
+    return userX;
+  }
+
+  public ProjectDefinition setUserX(UserX userX) {
+    this.userX = userX;
     return this;
   }
 }

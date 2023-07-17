@@ -2,37 +2,31 @@ package org.davincischools.leo.database.daos;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 
-@Deprecated
-@Entity(name = ProjectInputCategory.ENTITY_NAME)
-@Table(name = ProjectInputCategory.TABLE_NAME, schema = "leo_temp")
-public class ProjectInputCategory implements Serializable {
+@Entity(name = ProjectDefinitionCategoryType.ENTITY_NAME)
+@Table(name = ProjectDefinitionCategoryType.TABLE_NAME, schema = "leo_temp")
+public class ProjectDefinitionCategoryType implements Serializable {
 
-  public static final String ENTITY_NAME = "ProjectInputCategory";
-  public static final String TABLE_NAME = "project_input_category";
+  public static final String ENTITY_NAME = "ProjectDefinitionCategoryType";
+  public static final String TABLE_NAME = "project_definition_category_type";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
-  public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_HINT_NAME = "hint";
   public static final String COLUMN_INPUTDESCR_NAME = "input_descr";
   public static final String COLUMN_INPUTPLACEHOLDER_NAME = "input_placeholder";
   public static final String COLUMN_QUERYPREFIX_NAME = "query_prefix";
   public static final String COLUMN_VALUETYPE_NAME = "value_type";
-  public static final String COLUMN_MAXNUMVALUES_NAME = "max_num_values";
-  private static final long serialVersionUID = 6568217635833965876L;
+  private static final long serialVersionUID = -7633310181316823729L;
 
   private Integer id;
 
@@ -41,8 +35,6 @@ public class ProjectInputCategory implements Serializable {
   private Instant deleted;
 
   private String shortDescr;
-
-  private Float position;
 
   private String name;
 
@@ -56,10 +48,6 @@ public class ProjectInputCategory implements Serializable {
 
   private String valueType;
 
-  private Integer maxNumValues;
-
-  private ProjectDefinition projectDefinition;
-
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -67,7 +55,7 @@ public class ProjectInputCategory implements Serializable {
     return id;
   }
 
-  public ProjectInputCategory setId(Integer id) {
+  public ProjectDefinitionCategoryType setId(Integer id) {
     this.id = id;
     return this;
   }
@@ -77,7 +65,7 @@ public class ProjectInputCategory implements Serializable {
     return creationTime;
   }
 
-  public ProjectInputCategory setCreationTime(Instant creationTime) {
+  public ProjectDefinitionCategoryType setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
     return this;
   }
@@ -87,7 +75,7 @@ public class ProjectInputCategory implements Serializable {
     return deleted;
   }
 
-  public ProjectInputCategory setDeleted(Instant deleted) {
+  public ProjectDefinitionCategoryType setDeleted(Instant deleted) {
     this.deleted = deleted;
     return this;
   }
@@ -97,18 +85,8 @@ public class ProjectInputCategory implements Serializable {
     return shortDescr;
   }
 
-  public ProjectInputCategory setShortDescr(String shortDescr) {
+  public ProjectDefinitionCategoryType setShortDescr(String shortDescr) {
     this.shortDescr = shortDescr;
-    return this;
-  }
-
-  @Column(name = COLUMN_POSITION_NAME, nullable = false)
-  public Float getPosition() {
-    return position;
-  }
-
-  public ProjectInputCategory setPosition(Float position) {
-    this.position = position;
     return this;
   }
 
@@ -117,7 +95,7 @@ public class ProjectInputCategory implements Serializable {
     return name;
   }
 
-  public ProjectInputCategory setName(String name) {
+  public ProjectDefinitionCategoryType setName(String name) {
     this.name = name;
     return this;
   }
@@ -127,7 +105,7 @@ public class ProjectInputCategory implements Serializable {
     return hint;
   }
 
-  public ProjectInputCategory setHint(String hint) {
+  public ProjectDefinitionCategoryType setHint(String hint) {
     this.hint = hint;
     return this;
   }
@@ -137,7 +115,7 @@ public class ProjectInputCategory implements Serializable {
     return inputDescr;
   }
 
-  public ProjectInputCategory setInputDescr(String inputDescr) {
+  public ProjectDefinitionCategoryType setInputDescr(String inputDescr) {
     this.inputDescr = inputDescr;
     return this;
   }
@@ -147,7 +125,7 @@ public class ProjectInputCategory implements Serializable {
     return inputPlaceholder;
   }
 
-  public ProjectInputCategory setInputPlaceholder(String inputPlaceholder) {
+  public ProjectDefinitionCategoryType setInputPlaceholder(String inputPlaceholder) {
     this.inputPlaceholder = inputPlaceholder;
     return this;
   }
@@ -157,7 +135,7 @@ public class ProjectInputCategory implements Serializable {
     return queryPrefix;
   }
 
-  public ProjectInputCategory setQueryPrefix(String queryPrefix) {
+  public ProjectDefinitionCategoryType setQueryPrefix(String queryPrefix) {
     this.queryPrefix = queryPrefix;
     return this;
   }
@@ -168,29 +146,8 @@ public class ProjectInputCategory implements Serializable {
     return valueType;
   }
 
-  public ProjectInputCategory setValueType(String valueType) {
+  public ProjectDefinitionCategoryType setValueType(String valueType) {
     this.valueType = valueType;
-    return this;
-  }
-
-  @Column(name = COLUMN_MAXNUMVALUES_NAME, nullable = false)
-  public Integer getMaxNumValues() {
-    return maxNumValues;
-  }
-
-  public ProjectInputCategory setMaxNumValues(Integer maxNumValues) {
-    this.maxNumValues = maxNumValues;
-    return this;
-  }
-
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "project_definition_id", nullable = false)
-  public ProjectDefinition getProjectDefinition() {
-    return projectDefinition;
-  }
-
-  public ProjectInputCategory setProjectDefinition(ProjectDefinition projectDefinition) {
-    this.projectDefinition = projectDefinition;
     return this;
   }
 }
