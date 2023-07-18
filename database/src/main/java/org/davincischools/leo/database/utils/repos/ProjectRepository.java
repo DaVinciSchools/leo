@@ -24,7 +24,7 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
           + " FROM Project p"
           + " INNER JOIN FETCH p.projectInput pi"
           + " WHERE pi.userX.id = (:userXId)")
-  Iterable<Project> findAllByUserXId(@Param("userXId") int userXId);
+  List<Project> findAllByUserXId(@Param("userXId") int userXId);
 
   @Query(
       "SELECT p"
@@ -32,7 +32,7 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
           + " INNER JOIN FETCH p.projectInput pi"
           + " WHERE pi.userX.id = (:userXId)"
           + " AND p.active")
-  Iterable<Project> findAllActiveByUserXId(@Param("userXId") int userXId);
+  List<Project> findAllActiveByUserXId(@Param("userXId") int userXId);
 
   @Query("SELECT p FROM Project p INNER JOIN FETCH p.projectInput WHERE p.id = (:projectId)")
   Optional<Project> findById(@Param("projectId") int projectId);
@@ -48,7 +48,7 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
           + " ON m.id = s.projectMilestone.id"
           + " WHERE p.id = (:projectId)"
           + " ORDER BY m.position, s.position")
-  Iterable<Object[]> _internal_findByProjectId(@Param("projectId") int projectId);
+  List<Object[]> _internal_findByProjectId(@Param("projectId") int projectId);
 
   default Optional<ProjectWithMilestones> findByProjectId(int projectId) {
     ProjectWithMilestones result = null;

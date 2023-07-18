@@ -1,5 +1,6 @@
 package org.davincischools.leo.database.utils.repos;
 
+import java.util.List;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,5 +17,5 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
           + " INNER JOIN pp.project p"
           + " INNER JOIN p.projectInput"
           + " WHERE p.id = (:projectId)")
-  Iterable<ProjectPost> findAllByProjectId(@Param("projectId") int projectId);
+  List<ProjectPost> findAllByProjectId(@Param("projectId") int projectId);
 }

@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
@@ -38,10 +39,10 @@ public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndS
   }
 
   @Query("SELECT ks FROM KnowledgeAndSkill ks WHERE ks.type = (:type)")
-  Iterable<KnowledgeAndSkill> findAll(@Param("type") String type);
+  List<KnowledgeAndSkill> findAll(@Param("type") String type);
 
   @Query("SELECT ks FROM KnowledgeAndSkill ks WHERE ks.id IN (:id) AND ks.type = (:type)")
-  Iterable<KnowledgeAndSkill> findAllByIdsAndType(
+  List<KnowledgeAndSkill> findAllByIdsAndType(
       @Param("id") Iterable<Integer> ids, @Param("type") String type);
 
   @Query(
@@ -49,7 +50,7 @@ public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndS
           + " INNER JOIN FETCH AssignmentKnowledgeAndSkill aks"
           + " ON aks.knowledgeAndSkill.id = ks.id"
           + " WHERE aks.assignment.id = (:assignmentId)")
-  Iterable<KnowledgeAndSkill> findAllByAssignmentId(@Param("assignmentId") int assignmentId);
+  List<KnowledgeAndSkill> findAllByAssignmentId(@Param("assignmentId") int assignmentId);
 
   @Query(
       "SELECT ks"

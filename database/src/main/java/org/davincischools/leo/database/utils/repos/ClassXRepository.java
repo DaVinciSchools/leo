@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.davincischools.leo.database.daos.ClassX;
@@ -36,5 +37,5 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
   @Query("SELECT c FROM ClassX c WHERE c.school.id = (:schoolId) AND c.name = (:name)")
   Optional<ClassX> findByName(@Param("schoolId") int schoolId, @Param("name") String name);
 
-  Iterable<ClassX> findAllBySchool(School school);
+  List<ClassX> findAllBySchool(School school);
 }

@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.davincischools.leo.database.daos.Assignment;
@@ -47,7 +48,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Integer>
           + " LEFT JOIN Assignment a"
           + " ON sc.classX.id = a.classX.id"
           + " WHERE sc.student.id = (:studentId)")
-  Iterable<ClassXAssignment> findAllByStudentId(@Param("studentId") int studentId);
+  List<ClassXAssignment> findAllByStudentId(@Param("studentId") int studentId);
 
   /** Note: this includes all classes, even when there's no assignment. */
   @Query(
@@ -56,7 +57,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Integer>
           + " LEFT JOIN Assignment a"
           + " ON tc.classX.id = a.classX.id"
           + " WHERE tc.teacher.id = (:teacherId)")
-  Iterable<ClassXAssignment> findAllByTeacherId(@Param("teacherId") int teacherId);
+  List<ClassXAssignment> findAllByTeacherId(@Param("teacherId") int teacherId);
 
   @Query(
       "SELECT a"

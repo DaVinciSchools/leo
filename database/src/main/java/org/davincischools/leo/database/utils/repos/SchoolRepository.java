@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
@@ -41,7 +42,7 @@ public interface SchoolRepository extends JpaRepository<School, Integer> {
     return saveAndFlush(school);
   }
 
-  Iterable<School> findAllByDistrictId(Integer districtId);
+  List<School> findAllByDistrictId(Integer districtId);
 
   @Query(
       "SELECT s"
@@ -65,5 +66,5 @@ public interface SchoolRepository extends JpaRepository<School, Integer> {
           + " INNER JOIN FETCH TeacherSchool ts"
           + " ON ts.school.id = s.id"
           + " WHERE ts.teacher.id = (:teacherId)")
-  Iterable<School> findAllByTeacherId(@Param("teacherId") int teacherId);
+  List<School> findAllByTeacherId(@Param("teacherId") int teacherId);
 }

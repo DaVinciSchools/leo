@@ -36,5 +36,5 @@ public interface MotivationRepository extends JpaRepository<Motivation, Integer>
   Optional<Motivation> findByName(String name);
 
   @Query("SELECT m FROM Motivation m WHERE m.id IN (:ids)")
-  Iterable<Motivation> findAllByIds(@Param("ids") List<Integer> ids);
+  List<Motivation> findAllByIds(@Param("ids") List<Integer> ids);
 }

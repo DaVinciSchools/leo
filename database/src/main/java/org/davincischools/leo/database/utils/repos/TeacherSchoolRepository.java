@@ -3,6 +3,7 @@ package org.davincischools.leo.database.utils.repos;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.time.Instant;
+import java.util.List;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.daos.TeacherSchool;
@@ -37,5 +38,5 @@ public interface TeacherSchoolRepository extends JpaRepository<TeacherSchool, Te
       @Param("teacherId") int teacherId, @Param("schoolIds") Iterable<Integer> schoolIdsToKeep);
 
   @Query("SELECT ts.school FROM TeacherSchool ts WHERE ts.teacher.id = (:teacherId)")
-  Iterable<School> findSchoolsByTeacherId(@Param("teacherId") int teacherId);
+  List<School> findSchoolsByTeacherId(@Param("teacherId") int teacherId);
 }

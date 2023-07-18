@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.davincischools.leo.database.daos.ProjectDefinition;
@@ -46,7 +47,7 @@ public interface ProjectDefinitionRepository extends JpaRepository<ProjectDefini
           + " ON d.id = i.projectDefinition.id"
           + " WHERE d.id = (:projectDefinitionId)"
           + " ORDER BY i.position ASC")
-  Iterable<Object[]> _internal_getProjectDefinition(
+  List<Object[]> _internal_getProjectDefinition(
       @Param("projectDefinitionId") int projectDefinitionId);
 
   default Optional<ProjectDefinitionInputCategories> getProjectDefinition(int projectDefinitionId) {

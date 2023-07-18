@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Strings;
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.davincischools.leo.database.daos.District;
@@ -121,7 +122,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
           + " LEFT JOIN FETCH u.teacher"
           + " LEFT JOIN FETCH u.student"
           + " WHERE u.district.id = (:districtId)")
-  Iterable<UserX> findAllByDistrictId(@Param("districtId") int districtId);
+  List<UserX> findAllByDistrictId(@Param("districtId") int districtId);
 
   @Query(
       "SELECT u FROM UserX u"
