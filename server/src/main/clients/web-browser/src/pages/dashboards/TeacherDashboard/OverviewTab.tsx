@@ -15,7 +15,7 @@ export function OverviewTab() {
         cols={9}
         rows={9}
         gap={{x: 20, y: 20}}
-        padding={{x: 0, y: 20}}
+        padding={{x: 3, y: 20}}
         panels={[
           {
             id: 'assignments',

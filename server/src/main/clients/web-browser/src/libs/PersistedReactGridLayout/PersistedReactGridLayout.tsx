@@ -86,8 +86,8 @@ export function PersistedReactGridLayout(
           className="layout"
           layout={layout}
           cols={props.cols}
-          rowHeight={rowHeight}
-          width={rglWidth}
+          rowHeight={rowHeight - 1}
+          width={rglWidth - 2}
           style={{width: rglWidth, height: rglHeight}}
           margin={[props?.gap?.x ?? 0, props?.gap?.y ?? 0]}
           containerPadding={[props?.padding?.x ?? 0, props?.padding?.y ?? 0]}
