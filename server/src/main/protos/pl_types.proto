@@ -115,8 +115,11 @@ message XqCompetency {
 
 message ProjectDefinition {
   optional int32 id = 1;
+  optional string name = 2;
+  optional bool template = 3;
+  optional bool selected = 4;
   // Sorted by position already.
-  repeated ProjectInputValue inputs = 2;
+  repeated ProjectInputValue inputs = 5;
 }
 
 message ProjectInputValue {

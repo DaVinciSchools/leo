@@ -21,7 +21,6 @@ import java.util.function.Supplier;
 import org.apache.commons.text.StringEscapeUtils;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.Project;
-import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputCategory;
 import org.davincischools.leo.database.daos.ProjectInputValue;
@@ -29,6 +28,7 @@ import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
+import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.ProjectDefinitionInputCategories;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
@@ -38,6 +38,8 @@ import org.davincischools.leo.protos.project_management.DeletePostRequest;
 import org.davincischools.leo.protos.project_management.DeletePostResponse;
 import org.davincischools.leo.protos.project_management.GenerateProjectsRequest;
 import org.davincischools.leo.protos.project_management.GenerateProjectsResponse;
+import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionsRequest;
+import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionsResponse;
 import org.davincischools.leo.protos.project_management.GetEksRequest;
 import org.davincischools.leo.protos.project_management.GetEksResponse;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionRequest;
@@ -393,7 +395,7 @@ public class ProjectManagementService {
                   GetProjectDefinitionResponse.newBuilder();
 
               // TODO: Just assume there's a single templated definition.
-              ProjectDefinition definitionDao =
+              var definitionDao =
                   Iterables.getOnlyElement(
                       db.getProjectDefinitionRepository().findAll().stream()
                           .filter(pd -> Boolean.TRUE.equals(pd.getTemplate()))
@@ -443,6 +445,67 @@ public class ProjectManagementService {
                               .setName(i.getName())
                               .setShortDescr(i.getShortDescr()),
                       inputCategory);
+                }
+              }
+
+              return response.build();
+            })
+        .finish();
+  }
+
+  @PostMapping(value = "/api/protos/ProjectManagementService/GetAssignmentProjectDefinitions")
+  @ResponseBody
+  public GetAssignmentProjectDefinitionsResponse getAssignmentProjectDefinitions(
+      @Authenticated HttpUser user,
+      @RequestBody Optional<GetAssignmentProjectDefinitionsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(GetAssignmentProjectDefinitionsResponse.getDefaultInstance());
+    }
+
+    return httpExecutors
+        .start(optionalRequest.orElse(GetAssignmentProjectDefinitionsRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              GetAssignmentProjectDefinitionsResponse.Builder response =
+                  GetAssignmentProjectDefinitionsResponse.newBuilder();
+
+              List<FullProjectDefinition> fullDefinitions =
+                  db.getProjectDefinitionRepository()
+                      .findFullProjectDefinitionsByAssignmentId(request.getAssignmentId());
+
+              FullProjectDefinition selectedFullDefinition =
+                  fullDefinitions.stream()
+                      .max(
+                          (a, b) ->
+                              (a.selected() != null ? a.selected() : Instant.MIN)
+                                  .compareTo(b.selected() != null ? b.selected() : Instant.MIN))
+                      .orElse(null);
+
+              for (FullProjectDefinition fullDefinition : fullDefinitions) {
+                var definitionProto =
+                    response
+                        .addDefinitionsBuilder()
+                        .setId(fullDefinition.definition().getId())
+                        .setName(fullDefinition.definition().getName())
+                        .setSelected(fullDefinition == selectedFullDefinition)
+                        .setTemplate(
+                            Boolean.TRUE.equals(fullDefinition.definition().getTemplate()));
+                for (var categoryDao : fullDefinition.categories()) {
+                  var type = categoryDao.getProjectDefinitionCategoryType();
+                  definitionProto
+                      .addInputsBuilder()
+                      .getCategoryBuilder()
+                      .setId(categoryDao.getId())
+                      .setShortDescr(type.getShortDescr())
+                      .setName(type.getName())
+                      .setHint(type.getHint())
+                      .setPlaceholder(type.getInputPlaceholder())
+                      .setValueType(
+                          org.davincischools.leo.protos.pl_types.ProjectInputCategory.ValueType
+                              .valueOf(
+                                  categoryDao.getProjectDefinitionCategoryType().getValueType()));
                 }
               }
 

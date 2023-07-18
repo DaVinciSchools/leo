@@ -17,22 +17,29 @@ import {
   TextField,
 } from '@mui/material';
 import {useEffect, useRef, useState} from 'react';
-import {assignment_management, pl_types} from '../../../generated/protobuf-js';
-import IClassX = pl_types.IClassX;
-import IAssignment = pl_types.IAssignment;
+import {
+  assignment_management,
+  pl_types,
+  project_management,
+} from '../../../generated/protobuf-js';
 import ReactQuill, {Value} from 'react-quill';
 import {createService} from '../../../libs/protos';
-import AssignmentManagementService = assignment_management.AssignmentManagementService;
-import IUser = pl_types.IUser;
 import {
   HandleError,
   HandleErrorType,
 } from '../../../libs/HandleError/HandleError';
+import IClassX = pl_types.IClassX;
+import IAssignment = pl_types.IAssignment;
+import AssignmentManagementService = assignment_management.AssignmentManagementService;
+import IUser = pl_types.IUser;
+import IProjectDefinition = pl_types.IProjectDefinition;
+import ProjectManagementService = project_management.ProjectManagementService;
+import IProjectInputValue = pl_types.IProjectInputValue;
 
 export function AssignmentsTab(props: {user: IUser}) {
   const [handleError, setHandleError] = useState<HandleErrorType>();
   const [classXs, setClassXs] = useState<IClassX[]>([]);
-  const [assignments, setAssignments] = useState<IAssignment[] | undefined>();
+  const [assignments, setAssignments] = useState<IAssignment[] | null>(null);
   const [saveStatus, setSaveStatus] = useState<'Saved' | 'Saving...'>('Saved');
   const [showDeleteAssignment, setShowDeleteAssignment] = useState(false);
   const [showCreateAssignment, setShowCreateAssignment] = useState(false);
@@ -46,11 +53,25 @@ export function AssignmentsTab(props: {user: IUser}) {
   const [shortDescr, setShortDescr] = useState('');
   const [longDescrHtml, setLongDescrHtml] = useState<Value>('');
 
+  // Used to track the project definition.
+  const [projectDefinitions, setProjectDefinitions] = useState<
+    IProjectDefinition[] | null
+  >(null);
+  const [projectDefinition, setProjectDefinition] =
+    useState<IProjectDefinition | null>(null);
+  const [categories, setCategories] = useState<IProjectInputValue[]>([]);
+
   const classXSorter = (a: IClassX, b: IClassX) =>
     (a?.name ?? '').localeCompare(b?.name ?? '');
   const assignmentSorter = (a: IAssignment, b: IAssignment) =>
     classXSorter(a?.classX ?? {}, b?.classX ?? {}) ||
     (a?.name ?? '').localeCompare(b?.name ?? '');
+  const projectDefinitionSorter = (
+    a: IProjectDefinition,
+    b: IProjectDefinition
+  ) =>
+    (b.template === true ? 1 : -1) - (a.template === true ? 1 : -1) ||
+    (a.name ?? '').localeCompare(b.name ?? '');
 
   function setAssignment(newAssignment: IAssignment | null) {
     if (assignment != null) {
@@ -93,11 +114,7 @@ export function AssignmentsTab(props: {user: IUser}) {
     saveAssignmentTimeout.current = undefined;
 
     if (assignmentRef.current != null) {
-      const service = createService(
-        AssignmentManagementService,
-        'AssignmentManagementService'
-      );
-      service
+      createService(AssignmentManagementService, 'AssignmentManagementService')
         .saveAssignment({assignment: assignmentRef.current})
         .catch(setHandleError);
       setSaveStatus('Saved');
@@ -105,11 +122,36 @@ export function AssignmentsTab(props: {user: IUser}) {
   }
 
   useEffect(() => {
-    const service = createService(
-      AssignmentManagementService,
-      'AssignmentManagementService'
-    );
-    service
+    if (assignment == null) {
+      setProjectDefinitions(null);
+      setProjectDefinition(null);
+      return;
+    }
+    createService(ProjectManagementService, 'ProjectManagementService')
+      .getAssignmentProjectDefinitions({assignmentId: assignment.id!})
+      .then(response => {
+        setProjectDefinitions(response.definitions);
+        setProjectDefinition(null);
+        for (const definition of response.definitions) {
+          if (definition.selected) {
+            setProjectDefinition(definition);
+            break;
+          }
+        }
+      })
+      .catch(setHandleError);
+  }, [assignment]);
+
+  useEffect(() => {
+    if (projectDefinition?.inputs == null) {
+      setCategories([]);
+      return;
+    }
+    setCategories(projectDefinition.inputs);
+  }, [projectDefinition]);
+
+  useEffect(() => {
+    createService(AssignmentManagementService, 'AssignmentManagementService')
       .getAssignments({
         teacherId: props.user.teacherId!,
       })
@@ -121,11 +163,7 @@ export function AssignmentsTab(props: {user: IUser}) {
   }, []);
 
   function createNewAssignment(classXId: number) {
-    const service = createService(
-      AssignmentManagementService,
-      'AssignmentManagementService'
-    );
-    service
+    createService(AssignmentManagementService, 'AssignmentManagementService')
       .createAssignment({classXId: classXId})
       .then(response => {
         setAssignments((assignments ?? []).concat([response.assignment!]));
@@ -139,11 +177,7 @@ export function AssignmentsTab(props: {user: IUser}) {
       return;
     }
 
-    const service = createService(
-      AssignmentManagementService,
-      'AssignmentManagementService'
-    );
-    service
+    createService(AssignmentManagementService, 'AssignmentManagementService')
       .deleteAssignment({assignmentId: assignment!.id!})
       .then(() => {
         setAssignment(null);
@@ -171,7 +205,7 @@ export function AssignmentsTab(props: {user: IUser}) {
             getOptionLabel={assignment =>
               assignment?.name ?? '(Unnamed Assignment)'
             }
-            isOptionEqualToValue={(option, value) => option.id === value.id}
+            isOptionEqualToValue={(option, value) => option?.id === value?.id}
             groupBy={assignment =>
               assignment?.classX?.name ?? '(Unnamed Class)'
             }
@@ -235,7 +269,7 @@ export function AssignmentsTab(props: {user: IUser}) {
             }}
             renderInput={params => <TextField {...params} label="Class" />}
             loading={assignments == null}
-            loadingText="Loading Assignments..."
+            loadingText="Loading Classes..."
           />
         </Grid>
         <Grid item xs={8}>
@@ -270,8 +304,75 @@ export function AssignmentsTab(props: {user: IUser}) {
           />
         </Grid>
         <Grid item xs={12} className="section-heading">
-          <div className="section-title">Edit Ikigai Project Definition:</div>
-          TODO
+          <div className="section-title">
+            Edit Ikigai Project Definition:{' '}
+            <span
+              style={{color: 'red', fontWeight: 'normal', fontStyle: 'italic'}}
+            >
+              TODO: Changes here are NOT saved yet.
+            </span>
+          </div>
+        </Grid>
+        <Grid item xs={5}>
+          <Autocomplete
+            id="projectDefinition"
+            value={projectDefinition}
+            autoHighlight
+            options={(projectDefinitions ?? []).sort(projectDefinitionSorter)}
+            onChange={(e, value) => setProjectDefinition(value ?? null)}
+            getOptionLabel={projectDefinition =>
+              projectDefinition?.name ?? '(Unnamed Ikigai Configuration)'
+            }
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            groupBy={projectDefinition =>
+              projectDefinition?.template === true
+                ? 'Templates'
+                : 'My Ikigai Configurations'
+            }
+            disabled={(projectDefinitions ?? []).length === 0}
+            size="small"
+            fullWidth={true}
+            renderOption={(props, option) => {
+              return (
+                <li {...props} key={option.id}>
+                  {option?.name ?? '(Unnamed Ikigai Configuration)'}
+                </li>
+              );
+            }}
+            renderInput={params => (
+              <TextField {...params} label="Select Ikigai Configuration" />
+            )}
+            loading={projectDefinitions == null}
+            loadingText="Select Assignment"
+          />
+        </Grid>
+        <Grid item xs={7}>
+          <Grid container rowGap={2} margin={0} columns={{xs: 6}} width="100%">
+            <Grid item xs={7}>
+              <TextField
+                required
+                label="Name"
+                value={projectDefinition?.name ?? ''}
+                onChange={e => setName(e.target.value)}
+                disabled={true}
+                size="small"
+                fullWidth={true}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              {categories.length > 0 ? (
+                <ol style={{margin: 0, paddingLeft: '40px'}}>
+                  {categories.map(category => (
+                    <li key={category.category?.id}>
+                      {category.category?.name}
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p style={{margin: 0, paddingLeft: '40px'}}>No Categories</p>
+              )}
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
       <Dialog
