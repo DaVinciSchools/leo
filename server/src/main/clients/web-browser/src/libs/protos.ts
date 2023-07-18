@@ -61,16 +61,23 @@ function createNewService<Service>(
     })
       .then((response: Response) => {
         fetchResponse = response;
+        if (!response.ok) {
+          const error = new Error(String(response));
+          error.name =
+            'Unexpected status code: ' +
+            response.status +
+            ' - ' +
+            response.statusText;
+          throw error;
+        }
         if (
-          !response.ok ||
           !(response.headers.get('Content-Type') ?? '').startsWith(
             'application/x-protobuf'
           )
         ) {
-          const error = new Error();
-          error.name = '';
-          error.message = '';
-          error.stack = '';
+          const error = new Error(String(response));
+          error.name =
+            'Unexpected content type: ' + response.headers.get('Content-Type');
           throw error;
         }
         return response;
@@ -81,6 +88,7 @@ function createNewService<Service>(
       .catch(reason => {
         if (!(reason instanceof Error)) {
           reason = new Error(JSON.stringify(reason));
+          reason.name = 'Unexpected error of unknown type';
         }
 
         if (fetchResponse) {
