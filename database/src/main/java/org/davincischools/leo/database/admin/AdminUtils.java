@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import org.apache.commons.text.RandomStringGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +28,9 @@ import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.ProjectDefinition;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
+import org.davincischools.leo.database.daos.ProjectInputCategory;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.UserX;
@@ -113,6 +117,162 @@ public class AdminUtils {
 
     public String getExampleDescription() {
       return exampleDescription;
+    }
+  }
+
+  public static class ProjectDefinitionCategoryTypeBuilder {
+
+    private static final AtomicInteger position = new AtomicInteger();
+
+    private final Database db;
+    private final ProjectDefinitionCategoryType type;
+
+    public ProjectDefinitionCategoryTypeBuilder(Database db, ProjectDefinitionCategoryType type) {
+      this.db = db;
+      this.type = type;
+    }
+
+    public void addBothCategories(ProjectDefinition projectDefinition) {
+      addProjectDefinitionCategory(projectDefinition, entry -> {});
+      addProjectInputCategory(projectDefinition, entry -> {});
+    }
+
+    public ProjectDefinitionCategory addProjectDefinitionCategory(
+        ProjectDefinition projectDefinition, Consumer<ProjectDefinitionCategory> modifier) {
+      ProjectDefinitionCategory pdc =
+          db.getProjectDefinitionCategoryRepository()
+              .upsert(
+                  projectDefinition,
+                  type,
+                  pdc2 -> pdc2.setPosition((float) position.getAndIncrement()).setMaxNumValues(4));
+      modifier.accept(pdc);
+      db.getProjectDefinitionCategoryRepository().saveAndFlush(pdc);
+      return pdc;
+    }
+
+    @Deprecated
+    public ProjectInputCategory addProjectInputCategory(
+        ProjectDefinition projectDefinition, Consumer<ProjectInputCategory> modifier) {
+      ProjectInputCategory pic =
+          new ProjectInputCategory()
+              .setCreationTime(Instant.now())
+              .setName(type.getName())
+              .setProjectDefinition(projectDefinition)
+              .setPosition((float) position.getAndIncrement())
+              .setShortDescr(type.getShortDescr())
+              .setHint(type.getHint())
+              .setInputDescr(type.getInputDescr())
+              .setInputPlaceholder(type.getInputPlaceholder())
+              .setQueryPrefix(type.getQueryPrefix())
+              .setValueType(type.getValueType())
+              .setMaxNumValues(4);
+      modifier.accept(pic);
+      db.getProjectInputCategoryRepository().saveAndFlush(pic);
+      return pic;
+    }
+  }
+
+  public static class ProjectDefinitionCategoryTypes {
+    private final Database db;
+
+    private final ProjectDefinitionCategoryTypeBuilder careerInterestType;
+    private final ProjectDefinitionCategoryTypeBuilder motivationType;
+    private final ProjectDefinitionCategoryTypeBuilder eksType;
+    private final ProjectDefinitionCategoryTypeBuilder xqType;
+    private final ProjectDefinitionCategoryTypeBuilder studentInterestsType;
+
+    public ProjectDefinitionCategoryTypes(Database db) {
+      this.db = db;
+
+      careerInterestType =
+          new ProjectDefinitionCategoryTypeBuilder(
+              db,
+              db.getProjectDefinitionCategoryTypeRepository()
+                  .upsert(
+                      "Career Interests",
+                      type ->
+                          type.setShortDescr("Career interests free text.")
+                              .setHint("Click to add careers.")
+                              .setInputDescr("Enter career interests:")
+                              .setInputPlaceholder("Career Interest")
+                              .setQueryPrefix("You are passionate about a career in")
+                              .setValueType(ValueType.FREE_TEXT.name())));
+
+      motivationType =
+          new ProjectDefinitionCategoryTypeBuilder(
+              db,
+              db.getProjectDefinitionCategoryTypeRepository()
+                  .upsert(
+                      "Motivations",
+                      type ->
+                          type.setShortDescr("Motivation selections.")
+                              .setHint("Click to add motivations.")
+                              .setInputDescr("Select motivations:")
+                              .setInputPlaceholder("Select a Motivation")
+                              .setQueryPrefix("You are motivated by")
+                              .setValueType(ValueType.MOTIVATION.name())));
+
+      eksType =
+          new ProjectDefinitionCategoryTypeBuilder(
+              db,
+              db.getProjectDefinitionCategoryTypeRepository()
+                  .upsert(
+                      "Knowledge and Skills",
+                      type ->
+                          type.setShortDescr("Knowledge and skill selections.")
+                              .setHint("Click to add desired knowledge and skills.")
+                              .setInputDescr("Select knowledge and skills:")
+                              .setInputPlaceholder("Select a Knowledge and Skill")
+                              .setQueryPrefix("You want to improve your ability to")
+                              .setValueType(ValueType.EKS.name())));
+
+      xqType =
+          new ProjectDefinitionCategoryTypeBuilder(
+              db,
+              db.getProjectDefinitionCategoryTypeRepository()
+                  .upsert(
+                      "XQ Competencies",
+                      type ->
+                          type.setShortDescr("XQ competency selections.")
+                              .setHint("Click to add desired XQ competency.")
+                              .setInputDescr("Select XQ Competency:")
+                              .setInputPlaceholder("Select a XQ Competency")
+                              .setQueryPrefix("You want to improve your ability to")
+                              .setValueType(ValueType.XQ_COMPETENCY.name())));
+
+      studentInterestsType =
+          new ProjectDefinitionCategoryTypeBuilder(
+              db,
+              db.getProjectDefinitionCategoryTypeRepository()
+                  .upsert(
+                      "Student Interests",
+                      type ->
+                          type.setShortDescr("Student interest free text.")
+                              .setHint("Click to add student interests.")
+                              .setInputDescr("Enter student interests:")
+                              .setInputPlaceholder("Student Interest")
+                              .setQueryPrefix("You are passionate about")
+                              .setValueType(ValueType.FREE_TEXT.name())));
+    }
+
+    public ProjectDefinitionCategoryTypeBuilder getCareerInterestType() {
+      return careerInterestType;
+    }
+
+    public ProjectDefinitionCategoryTypeBuilder getMotivationType() {
+      return motivationType;
+    }
+
+    public ProjectDefinitionCategoryTypeBuilder getEksType() {
+      return eksType;
+    }
+
+    public ProjectDefinitionCategoryTypeBuilder getXqType() {
+      return xqType;
+    }
+
+    public ProjectDefinitionCategoryTypeBuilder getStudentInterestsType() {
+      return studentInterestsType;
     }
   }
 
@@ -513,165 +673,54 @@ public class AdminUtils {
     log.atInfo().log("Done importing motivations.");
   }
 
-  private void addIkigaiDiagramDescriptions(UserX creator) {
+  public static void addIkigaiDiagramDescriptions(
+      Database db, UserX creator, Iterable<Assignment> assignments) {
     log.atInfo().log("Creating Ikigai Diagram descriptions");
 
-    // Create new project definitions.
-    {
-      ProjectDefinitionCategoryType careerInterestsType =
-          db.getProjectDefinitionCategoryTypeRepository()
-              .upsert(
-                  "Career Interests",
-                  type ->
-                      type.setShortDescr("Career interests free text.")
-                          .setHint("Click to add careers.")
-                          .setInputDescr("Enter career interests:")
-                          .setInputPlaceholder("Career Interest")
-                          .setQueryPrefix("You are passionate about a career in")
-                          .setValueType(ValueType.FREE_TEXT.name()));
+    ProjectDefinitionCategoryTypes types = new ProjectDefinitionCategoryTypes(db);
 
-      ProjectDefinitionCategoryType motivationType =
-          db.getProjectDefinitionCategoryTypeRepository()
-              .upsert(
-                  "Motivations",
-                  type ->
-                      type.setShortDescr("Motivation selections.")
-                          .setHint("Click to add motivations.")
-                          .setInputDescr("Select motivations:")
-                          .setInputPlaceholder("Select a Motivation")
-                          .setQueryPrefix("You are motivated by")
-                          .setValueType(ValueType.MOTIVATION.name()));
-
-      ProjectDefinitionCategoryType ksType =
-          db.getProjectDefinitionCategoryTypeRepository()
-              .upsert(
-                  "Knowledge and Skills",
-                  type ->
-                      type.setShortDescr("Knowledge and skill selections.")
-                          .setHint("Click to add desired knowledge and skills.")
-                          .setInputDescr("Select knowledge and skills:")
-                          .setInputPlaceholder("Select a Knowledge and Skill")
-                          .setQueryPrefix("You want to improve your ability to")
-                          .setValueType(ValueType.EKS.name()));
-
-      ProjectDefinitionCategoryType xqType =
-          db.getProjectDefinitionCategoryTypeRepository()
-              .upsert(
-                  "XQ Competencies",
-                  type ->
-                      type.setShortDescr("XQ competency selections.")
-                          .setHint("Click to add desired XQ competency.")
-                          .setInputDescr("Select XQ Competency:")
-                          .setInputPlaceholder("Select a XQ Competency")
-                          .setQueryPrefix("You want to improve your ability to")
-                          .setValueType(ValueType.XQ_COMPETENCY.name()));
-
-      ProjectDefinitionCategoryType studentInterestsType =
-          db.getProjectDefinitionCategoryTypeRepository()
-              .upsert(
-                  "Student Interests",
-                  type ->
-                      type.setShortDescr("Student interest free text.")
-                          .setHint("Click to add student interests.")
-                          .setInputDescr("Enter student interests:")
-                          .setInputPlaceholder("Student Interest")
-                          .setQueryPrefix("You are passionate about")
-                          .setValueType(ValueType.FREE_TEXT.name()));
-
-      ProjectDefinition projectDefinition =
-          db.getProjectDefinitionRepository()
-              .upsert(
-                  "Definition with Knowledge and Skills",
-                  creator,
-                  def -> def.setCreationTime(Instant.now()));
-      db.getProjectDefinitionCategoryRepository()
-          .upsert(
-              projectDefinition,
-              careerInterestsType,
-              entity -> entity.setPosition(1f).setMaxNumValues(4));
-      db.getProjectDefinitionCategoryRepository()
-          .upsert(
-              projectDefinition,
-              motivationType,
-              entity -> entity.setPosition(2f).setMaxNumValues(4));
-      db.getProjectDefinitionCategoryRepository()
-          .upsert(projectDefinition, ksType, entity -> entity.setPosition(3f).setMaxNumValues(4));
-      db.getProjectDefinitionCategoryRepository()
-          .upsert(
-              projectDefinition,
-              studentInterestsType,
-              entity -> entity.setPosition(4f).setMaxNumValues(4));
-
-      for (Assignment assignment : db.getAssignmentRepository().findAll()) {
-        db.getAssignmentProjectDefinitionRepository()
-            .upsert(assignment, projectDefinition, apd -> apd.setSelected(Instant.now()));
-      }
-    }
-
-    // Create old project definitions.
-    ProjectDefinition projectDefinition =
+    // Create project definitions.
+    ProjectDefinition ksDefinition =
         db.getProjectDefinitionRepository()
-            .upsert("Generic Template", creator, pd -> pd.setTemplate(true));
+            .upsert(
+                "Knowledge and Skills + Motivations",
+                creator,
+                def -> def.setCreationTime(Instant.now()));
+    types.getCareerInterestType().addBothCategories(ksDefinition);
+    types.getMotivationType().addBothCategories(ksDefinition);
+    types.getEksType().addBothCategories(ksDefinition);
+    types.getStudentInterestsType().addBothCategories(ksDefinition);
 
-    db.getProjectInputCategoryRepository()
-        .upsert(
-            "Career Interests",
-            projectDefinition,
-            pic ->
-                pic.setPosition(0f)
-                    .setShortDescr("Career interests free text.")
-                    .setHint("Click to add careers.")
-                    .setInputDescr("Enter career interests:")
-                    .setInputPlaceholder("Career Interest")
-                    .setQueryPrefix("You are passionate about a career in")
-                    .setValueType(ValueType.FREE_TEXT.name())
-                    .setMaxNumValues(4));
+    ProjectDefinition xqDefinition =
+        db.getProjectDefinitionRepository()
+            .upsert("XQ Competencies", creator, def -> def.setCreationTime(Instant.now()));
+    types.getCareerInterestType().addBothCategories(xqDefinition);
+    types.getXqType().addBothCategories(xqDefinition);
+    types.getStudentInterestsType().addBothCategories(xqDefinition);
 
-    db.getProjectInputCategoryRepository()
-        .upsert(
-            "Motivations",
-            projectDefinition,
-            pic ->
-                pic.setPosition(1f)
-                    .setShortDescr("Motivation selections.")
-                    .setHint("Click to add motivations.")
-                    .setInputDescr("Select motivations:")
-                    .setInputPlaceholder("Select a Motivation")
-                    .setQueryPrefix("You are motivated by")
-                    .setValueType(ValueType.MOTIVATION.name())
-                    .setMaxNumValues(4));
+    ProjectDefinition requirementDefinition =
+        db.getProjectDefinitionRepository()
+            .upsert("Requirements Template", creator, pd -> pd.setTemplate(true));
+    types.getEksType().addBothCategories(requirementDefinition);
+    types.getXqType().addBothCategories(requirementDefinition);
+    types.getMotivationType().addBothCategories(requirementDefinition);
+    types.getStudentInterestsType().addBothCategories(requirementDefinition);
 
-    db.getProjectInputCategoryRepository()
-        .upsert(
-            "Knowledge and Skills",
-            projectDefinition,
-            pic ->
-                pic.setPosition(2f)
-                    .setShortDescr("Knowledge and skill selections.")
-                    .setHint("Click to add desired knowledge and skills.")
-                    .setInputDescr("Select knowledge and skills:")
-                    .setInputPlaceholder("Select a Knowledge and Skill")
-                    .setQueryPrefix("You want to improve your ability to")
-                    .setValueType(ValueType.EKS.name())
-                    .setMaxNumValues(4));
-
-    db.getProjectInputCategoryRepository()
-        .upsert(
-            "Student Interests",
-            projectDefinition,
-            pic ->
-                pic.setPosition(3f)
-                    .setShortDescr("Student interest free text.")
-                    .setHint("Click to add student interests.")
-                    .setInputDescr("Enter student interests:")
-                    .setInputPlaceholder("Student Interest")
-                    .setQueryPrefix("You are passionate about")
-                    .setValueType(ValueType.FREE_TEXT.name())
-                    .setMaxNumValues(4));
-
-    for (Assignment assignment : db.getAssignmentRepository().findAll()) {
-      db.getAssignmentProjectDefinitionRepository()
-          .upsert(assignment, projectDefinition, apd -> apd.setSelected(Instant.now()));
+    int assignmentCount = 0;
+    for (Assignment assignment : assignments) {
+      ++assignmentCount;
+      int projectDefinitionCount = 0;
+      for (ProjectDefinition projectDefinition :
+          new ProjectDefinition[] {ksDefinition, xqDefinition, requirementDefinition}) {
+        ++projectDefinitionCount;
+        var apd =
+            db.getAssignmentProjectDefinitionRepository()
+                .upsert(assignment, projectDefinition, entity -> {});
+        if ((assignmentCount % 3) == (projectDefinitionCount % 3)) {
+          db.getAssignmentProjectDefinitionRepository()
+              .saveAndFlush(apd.setSelected(Instant.now()));
+        }
+      }
     }
 
     log.atInfo().log("Done creating Ikigai Diagram descriptions");
@@ -709,7 +758,7 @@ public class AdminUtils {
     } else {
       checkArgument(!createAdmins.isEmpty(), "--createAdmin required.");
       UserX userX = db.getUserXRepository().findByEmailAddress(createAdmins.get(0)).orElseThrow();
-      addIkigaiDiagramDescriptions(userX);
+      addIkigaiDiagramDescriptions(db, userX, db.getAssignmentRepository().findAll());
     }
     if (!createAdmins.isEmpty()) {
       log.atInfo().log("Creating admin: {}", createAdmins);
