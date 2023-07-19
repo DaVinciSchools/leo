@@ -752,6 +752,10 @@ public class AdminUtils {
       log.atInfo().log("Importing Motivations: {}", importMotivations);
       importMotivations();
     }
+    if (!createAdmins.isEmpty()) {
+      log.atInfo().log("Creating admin: {}", createAdmins);
+      createAdmins();
+    }
     if (!Objects.equals(loadTestData, "false")) {
       log.atInfo().log("Loading test data");
       new TestData(db).addTestData();
@@ -759,10 +763,6 @@ public class AdminUtils {
       checkArgument(!createAdmins.isEmpty(), "--createAdmin required.");
       UserX userX = db.getUserXRepository().findByEmailAddress(createAdmins.get(0)).orElseThrow();
       addIkigaiDiagramDescriptions(db, userX, db.getAssignmentRepository().findAll());
-    }
-    if (!createAdmins.isEmpty()) {
-      log.atInfo().log("Creating admin: {}", createAdmins);
-      createAdmins();
     }
     if (!resetPasswords.isEmpty()) {
       log.atInfo().log("Resetting passwords: {}", resetPasswords);
