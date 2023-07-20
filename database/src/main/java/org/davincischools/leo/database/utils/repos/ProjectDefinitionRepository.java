@@ -38,6 +38,10 @@ public interface ProjectDefinitionRepository extends JpaRepository<ProjectDefini
       ProjectDefinition definition,
       ProjectDefinitionCategory category) {}
 
+  @Deprecated
+  record FullProjectInputDefinitionRow(
+      ProjectDefinition definition, ProjectInputCategory category) {}
+
   default ProjectDefinition upsert(String name, UserX userX, Consumer<ProjectDefinition> modifier) {
     checkArgument(!Strings.isNullOrEmpty(name));
     checkNotNull(modifier);
@@ -59,14 +63,16 @@ public interface ProjectDefinitionRepository extends JpaRepository<ProjectDefini
   @Deprecated
   @Query(
       """
-SELECT d, i
-FROM ProjectDefinition d
-LEFT JOIN FETCH ProjectInputCategory i
-ON d.id = i.projectDefinition.id
-WHERE d.id = (:projectDefinitionId)
-ORDER BY i.position, i.id
-      """)
-  List<Object[]> _internal_getProjectDefinition(
+          SELECT
+              new org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository$FullProjectInputDefinitionRow(
+                  d, i)
+          FROM ProjectDefinition d
+          LEFT JOIN FETCH ProjectInputCategory i
+          ON d.id = i.projectDefinition.id
+          WHERE d.id = (:projectDefinitionId)
+          ORDER BY i.position, i.id
+                """)
+  List<FullProjectInputDefinitionRow> getProjectDefinitionRows(
       @Param("projectDefinitionId") int projectDefinitionId);
 
   @Deprecated
@@ -74,9 +80,9 @@ ORDER BY i.position, i.id
     ProjectDefinition definition = null;
     ImmutableList.Builder<ProjectInputCategory> inputCategories = ImmutableList.builder();
 
-    for (Object[] values : _internal_getProjectDefinition(projectDefinitionId)) {
-      definition = (ProjectDefinition) values[0];
-      inputCategories.add((ProjectInputCategory) values[1]);
+    for (FullProjectInputDefinitionRow row : getProjectDefinitionRows(projectDefinitionId)) {
+      definition = row.definition();
+      inputCategories.add(row.category());
     }
 
     if (definition != null) {

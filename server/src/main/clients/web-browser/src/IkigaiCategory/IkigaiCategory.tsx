@@ -16,7 +16,8 @@ export function IkigaiCategory(props: {
   center: {x: number; y: number};
   diameter: number;
   maxDiameter: number;
-  alpha: number;
+  backgroundAlpha: number;
+  contentAlpha: number;
   radians: number;
   textRadians?: number;
   distance: number;
@@ -129,10 +130,11 @@ export function IkigaiCategory(props: {
         borderRadius: '50%',
         transform: `scale(${scale}, ${scale})`,
         visibility: 'visible',
-        backgroundColor: `hsla(${props.hue}, 100%, 75%, ${props.alpha})`,
+        backgroundColor: `hsla(${props.hue}, 100%, 75%, ${props.backgroundAlpha})`,
         borderStyle: 'solid',
         borderWidth: '1px',
-        borderColor: `hsla(${props.hue}, 100%, 80%, ${props.alpha})`,
+        borderColor: `hsla(${props.hue}, 100%, 80%, ${props.backgroundAlpha})`,
+        opacity: props.contentAlpha,
       });
     }
   }

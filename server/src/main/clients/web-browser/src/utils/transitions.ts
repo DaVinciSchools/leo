@@ -51,6 +51,13 @@ export function doTransition(
   const startTime = Date.now();
   const endTime = startTime + durationMs;
 
+  if (durationMs === 0) {
+    for (const transition of transitions) {
+      transition.setFn(transition.end);
+    }
+    return Promise.resolve();
+  }
+
   // Initialize values.
   for (const transition of transitions) {
     transition.setFn(transition.begin);

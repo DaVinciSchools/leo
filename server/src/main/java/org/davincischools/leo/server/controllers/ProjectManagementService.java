@@ -394,15 +394,26 @@ public class ProjectManagementService {
               GetProjectDefinitionResponse.Builder response =
                   GetProjectDefinitionResponse.newBuilder();
 
-              // TODO: Just assume there's a single templated definition.
-              var definitionDao =
-                  Iterables.getOnlyElement(
-                      db.getProjectDefinitionRepository().findAll().stream()
-                          .filter(pd -> Boolean.TRUE.equals(pd.getTemplate()))
-                          .toList());
+              FullProjectDefinition definitionDao =
+                  db
+                      .getProjectDefinitionRepository()
+                      .findFullProjectDefinitionsByAssignmentId(request.getAssignmentId())
+                      .stream()
+                      .min(
+                          Comparator.comparing(
+                                  (FullProjectDefinition def) ->
+                                      def.selected() != null ? def.selected() : Instant.MIN)
+                              .reversed()
+                              .thenComparing(def -> def.definition().getId()))
+                      .orElse(null);
+
+              if (definitionDao == null) {
+                return response.build();
+              }
+
               ProjectDefinitionInputCategories definition =
                   db.getProjectDefinitionRepository()
-                      .getProjectDefinition(definitionDao.getId())
+                      .getProjectDefinition(definitionDao.definition().getId())
                       .orElseThrow();
 
               response.getDefinitionBuilder().setId(definition.definition().getId());

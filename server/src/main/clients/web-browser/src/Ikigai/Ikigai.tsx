@@ -6,7 +6,8 @@ import {SpinButton, SpinButtonFunctions} from './SpinButton/SpinButton';
 
 enum VisibleState {
   WAITING_FOR_RENDER,
-  ANIMATING_TO_VISIBLE,
+  RENDERED,
+  ANIMATING,
   VISIBLE,
 }
 
@@ -36,7 +37,8 @@ export function Ikigai(
   }>
 ) {
   const visibleAlpha = 0.2;
-  const showDurationMs = 750;
+  const showLongDurationMs = 750;
+  const showShortDurationMs = 325;
   const processingStepDurationMs = 750;
   const processingStepDelayMs = 250;
   const processingStepIncrement = Math.PI / 4;
@@ -48,7 +50,8 @@ export function Ikigai(
   const [categoryDiameter, setCategoryDiameter] = useState(0);
   const [distanceToCategoryCenter, setDistanceToCategoryCenter] = useState(0);
   const [radians, setRadians] = useState(props.radians);
-  const [alpha, setAlpha] = useState(0);
+  const [backgroundAlpha, setBackgroundAlpha] = useState(0);
+  const [contentAlpha, setContentAlpha] = useState(0);
 
   const spinButton = createRef<SpinButtonFunctions>();
   const [spinButtonEnabled, setSpinButtonEnabled] = useState(false);
@@ -77,13 +80,9 @@ export function Ikigai(
       // Delay a little to let the initial rendering finish.
       waitForFirstRenderingTimerId.current = setTimeout(() => {
         if (visibleState.current === VisibleState.WAITING_FOR_RENDER) {
-          visibleState.current = VisibleState.ANIMATING_TO_VISIBLE;
-          const size = getSize(containerRef.current);
-          showDiagram(showDurationMs, size.width, size.height).finally(() => {
-            visibleState.current = VisibleState.VISIBLE;
-            rerenderNeeded();
-          });
+          visibleState.current = VisibleState.RENDERED;
         }
+        setForceRerenderState(forceRerenderCounter.current++);
       }, 500);
     } else {
       setForceRerenderState(forceRerenderCounter.current++);
@@ -96,7 +95,8 @@ export function Ikigai(
     HTMLElement | undefined
   >();
   useEffect(() => {
-    if (containerRef.current !== resizeObserving) {
+    /* eslint-disable-next-line eqeqeq */
+    if (containerRef.current != resizeObserving) {
       if (resizeObserving != null) {
         resizeObserver.unobserve(resizeObserving);
         setResizeObserving(undefined);
@@ -104,8 +104,8 @@ export function Ikigai(
       if (containerRef.current != null) {
         setResizeObserving(containerRef.current);
         resizeObserver.observe(containerRef.current);
-        rerenderNeeded();
       }
+      rerenderNeeded();
     }
   }, [containerRef.current]);
 
@@ -114,44 +114,88 @@ export function Ikigai(
   const centerX = size.width / 2;
   const centerY = size.height / 2;
 
-  function showDiagram(
-    durationMs: number,
-    width: number,
-    height: number
-  ): Promise<void> {
-    return doTransition(
-      durationMs,
-      {
-        setFn: setRadians,
-        begin: (props.radiansOffset ?? props.radians) - 4 * Math.PI,
-        end: props.radiansOffset ?? props.radians,
-      },
-      {
-        setFn: setDistanceToCategoryCenter,
-        begin: 0,
-        end: props.distanceToCategoryCenter(width, height),
-      },
-      {
-        setFn: setAlpha,
-        begin: 0,
-        end: visibleAlpha,
-      },
-      {
-        setFn: setCategoryDiameter,
-        begin: 0,
-        end: props.categoryDiameter(width, height),
+  function showDiagram(width: number, height: number): Promise<void> {
+    switch (visibleState.current) {
+      case VisibleState.WAITING_FOR_RENDER:
+      case VisibleState.ANIMATING:
+        return Promise.resolve();
+      case VisibleState.RENDERED: {
+        // Use the long animation.
+        visibleState.current = VisibleState.ANIMATING;
+        return (
+          doTransition(
+            showLongDurationMs,
+            {
+              setFn: setRadians,
+              begin: (props.radiansOffset ?? props.radians) - 4 * Math.PI,
+              end: props.radiansOffset ?? props.radians,
+            },
+            {
+              setFn: setDistanceToCategoryCenter,
+              begin: 0,
+              end: props.distanceToCategoryCenter(width, height),
+            },
+            {
+              setFn: setBackgroundAlpha,
+              begin: 0,
+              end: visibleAlpha,
+            },
+            {
+              setFn: setContentAlpha,
+              begin: 0,
+              end: 1,
+            },
+            {
+              setFn: setCategoryDiameter,
+              begin: 0,
+              end: props.categoryDiameter(width, height),
+            }
+          ) as Promise<void>
+        ).finally(() => {
+          visibleState.current = VisibleState.VISIBLE;
+        });
       }
-    ) as Promise<void>;
+      case VisibleState.VISIBLE: {
+        // Use the quick animation.
+        visibleState.current = VisibleState.ANIMATING;
+        setDistanceToCategoryCenter(
+          props.distanceToCategoryCenter(width, height)
+        );
+        setCategoryDiameter(props.categoryDiameter(width, height));
+        return (
+          doTransition(
+            showShortDurationMs,
+            {
+              setFn: setRadians,
+              begin: (props.radiansOffset ?? props.radians) - 2 * Math.PI,
+              end: props.radiansOffset ?? props.radians,
+            },
+            {
+              setFn: setBackgroundAlpha,
+              begin: 0,
+              end: visibleAlpha,
+            },
+            {
+              setFn: setContentAlpha,
+              begin: 0,
+              end: 1,
+            }
+          ) as Promise<void>
+        ).finally(() => {
+          visibleState.current = VisibleState.VISIBLE;
+        });
+      }
+    }
   }
 
   useEffect(() => {
     if (props.showSpinButton) {
       spinButton.current
-        ?.show(showDurationMs)
+        ?.show(showLongDurationMs)
         .finally(() => setSpinButtonEnabled(true));
     } else {
       spinButton.current
-        ?.hide(showDurationMs)
+        ?.hide(showLongDurationMs)
         .finally(() => setSpinButtonEnabled(false));
     }
   }, [props.showSpinButton]);
@@ -165,13 +209,23 @@ export function Ikigai(
       setFn: setRadians,
       begin: startRadians - processingStepIncrement,
       end: startRadians,
-      fractionFn: overshootTransition(-0.25, 0.7),
+      fractionFn: overshootTransition(-0.15, 0.7),
     }).finally(() => {
       setTimeout(() => {
         doProcessingStep(startRadians + processingStepIncrement);
       }, processingStepDelayMs);
     });
   }
+
+  useEffect(() => {
+    if (props.categoryElementIds.length > 0) {
+      const size = getSize(containerRef.current);
+      showDiagram(size.width, size.height).finally(() => {
+        visibleState.current = VisibleState.VISIBLE;
+        rerenderNeeded();
+      });
+    }
+  }, [props.categoryElementIds]);
 
   useEffect(() => {
     if (props.processing !== false) {
@@ -205,13 +259,14 @@ export function Ikigai(
     >
       {props.categoryElementIds.map((categoryElementId, index) => (
         <IkigaiCategory
-          id={props.id + '.' + index}
-          key={index}
+          id={props.id + '.' + categoryElementId}
+          key={categoryElementId}
           center={{x: centerX, y: centerY}}
           diameter={useCategoryDiameter}
           maxDiameter={props.categoryDiameter(size.width, size.height)}
           hue={index * (360 / props.categoryElementIds.length)}
-          alpha={alpha}
+          backgroundAlpha={backgroundAlpha}
+          contentAlpha={contentAlpha}
           radians={
             radians +
             ((2 * Math.PI) / props.categoryElementIds.length) * index +

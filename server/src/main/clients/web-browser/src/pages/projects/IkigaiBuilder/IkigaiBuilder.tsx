@@ -3,6 +3,7 @@ import {Input, Layout, Modal} from 'antd';
 import {Ikigai} from '../../../Ikigai/Ikigai';
 import {ChangeEvent, useEffect, useState} from 'react';
 import {
+  assignment_management,
   createService,
   pl_types,
   project_management,
@@ -17,6 +18,10 @@ import {
   HandleError,
   HandleErrorType,
 } from '../../../libs/HandleError/HandleError';
+import IAssignment = pl_types.IAssignment;
+import AssignmentManagementService = assignment_management.AssignmentManagementService;
+import {Autocomplete, TextField} from '@mui/material';
+import IClassX = pl_types.IClassX;
 
 const {Content} = Layout;
 
@@ -29,6 +34,7 @@ function FreeTextInput(props: {
   onValuesUpdated: (values: string[]) => void;
   maxNumberOfValues: number;
 }) {
+  const [handleError, setHandleError] = useState<HandleErrorType>();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingValues, setEditingValues] = useState<string[]>([]);
 
@@ -71,7 +77,12 @@ function FreeTextInput(props: {
 
   return (
     <>
-      <div id={props.id} onClick={onClick}>
+      <HandleError error={handleError} setError={setHandleError} />
+      <div
+        id={props.id}
+        onClick={onClick}
+        style={{overflow: 'hidden', width: 0, height: 0}}
+      >
         <div className="panel">
           <div className="title">{props.shortTitle}</div>
           {props.values.length > 0 ? (
@@ -200,7 +211,11 @@ function DropdownSelectInput(props: {
 
   return (
     <>
-      <div id={props.id} onClick={onClick}>
+      <div
+        id={props.id}
+        onClick={onClick}
+        style={{overflow: 'hidden', width: 0, height: 0}}
+      >
         <div className="panel">
           <div className="title">{props.shortTitle}</div>
           <div className="body">
@@ -283,57 +298,61 @@ export function IkigaiBuilder() {
     return sendToLogin();
   }
 
+  const classXSorter = (a: IClassX, b: IClassX) =>
+    (a?.name ?? '').localeCompare(b?.name ?? '');
+  const assignmentSorter = (a: IAssignment, b: IAssignment) =>
+    classXSorter(a?.classX ?? {}, b?.classX ?? {}) ||
+    (a?.name ?? '').localeCompare(b?.name ?? '');
+
   const [processing, setProcessing] = useState(false);
   const navigate = useNavigate();
 
-  const [projectDefinition, setProjectDefinition] = useState<
-    pl_types.IProjectDefinition | undefined
-  >();
+  const [assignments, setAssignments] = useState<IAssignment[] | null>(null);
+  const [assignment, setAssignment] = useState<IAssignment | null>(null);
+  const [projectDefinition, setProjectDefinition] =
+    useState<pl_types.IProjectDefinition | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryValues, setCategoryValues] = useState<(string | number)[][]>(
     []
   );
+
   useEffect(() => {
-    const service = createService(
-      ProjectManagementService,
-      'ProjectManagementService'
-    );
-    service
-      .getProjectDefinition({})
-      .then(response => setProjectDefinition(response.definition!))
+    createService(AssignmentManagementService, 'AssignmentManagementService')
+      .getAssignments({
+        teacherId: user.isStudent ? undefined : user.teacherId,
+        studentId: user.isStudent ? user.studentId : undefined,
+      })
+      .then(response => {
+        setAssignments(response.assignments);
+      })
       .catch(setHandleError);
   }, []);
+
   useEffect(() => {
-    if (projectDefinition != null) {
-      setCategories(
-        projectDefinition.inputs!.map<Category>((input, index) => ({
-          htmlId: `ikigaiCategory${index}`,
-          input: input,
-        }))
-      );
-      setCategoryValues([...projectDefinition.inputs!.map(() => [])]);
-    } else {
+    if (assignment == null) {
+      setProjectDefinition(null);
+      return;
+    }
+    createService(ProjectManagementService, 'ProjectManagementService')
+      .getProjectDefinition({assignmentId: assignment?.id})
+      .then(response => setProjectDefinition(response.definition ?? null))
+      .catch(setHandleError);
+  }, [assignment]);
+
+  useEffect(() => {
+    if (projectDefinition == null) {
       setCategories([]);
       setCategoryValues([]);
+      return;
     }
+    setCategories(
+      projectDefinition.inputs!.map<Category>((input, index) => ({
+        htmlId: `ikigaiCategory.${projectDefinition.id}.${index}`,
+        input: input,
+      }))
+    );
+    setCategoryValues([...projectDefinition.inputs!.map(() => [])]);
   }, [projectDefinition]);
-
-  // function getLovesRelatedSuggestions() {
-  //   const partialTextOpenAiPromptService = createService(
-  //     PartialTextOpenAiPromptService,
-  //     'PartialTextOpenAiPromptService'
-  //   );
-  //   setLovesGetRelatedSuggestionsEnabled(false);
-  //   partialTextOpenAiPromptService
-  //     .getSuggestions({
-  //       partialText: modalLovesValue,
-  //       prompt: Prompt.SUGGEST_THINGS_YOU_LOVE,
-  //       userXId: user!.userXId!,
-  //     })
-  //     .then(response => setLovesSuggestions(response.suggestions))
-  //     .catch(setHandleError);
-  //     .finally(() => setLovesGetRelatedSuggestionsEnabled(true));
-  // }
 
   function onSpinClick() {
     setProcessing(true);
@@ -358,9 +377,60 @@ export function IkigaiBuilder() {
   return (
     <>
       <HandleError error={handleError} setError={setHandleError} />
-      <DefaultPage title="Ikigai Project Builder">
+      <DefaultPage
+        title={
+          <>
+            <div
+              style={{
+                display: 'flex',
+                flexFlow: 'row nowrap',
+                gap: '1em',
+                alignItems: 'center',
+              }}
+            >
+              <span style={{whiteSpace: 'nowrap'}}>Ikigai Project Builder</span>
+              <Autocomplete
+                id="assignment"
+                value={assignment}
+                autoHighlight
+                options={(assignments ?? []).sort(assignmentSorter)}
+                onChange={(e, value) => setAssignment(value)}
+                getOptionLabel={assignment =>
+                  assignment?.name ?? '(Unnamed Assignment)'
+                }
+                isOptionEqualToValue={(option, value) =>
+                  option?.id === value?.id
+                }
+                groupBy={assignment =>
+                  assignment?.classX?.name ?? '(Unnamed Class)'
+                }
+                disabled={assignments == null}
+                size="small"
+                fullWidth={true}
+                renderOption={(props, option) => {
+                  return (
+                    <li {...props} key={option.id}>
+                      {option?.name ?? '(Unnamed Assignment)'}
+                    </li>
+                  );
+                }}
+                renderInput={params => (
+                  <TextField {...params} label="Select Assignment" />
+                )}
+                loading={assignments == null}
+                loadingText="Loading Assignments..."
+              />
+            </div>
+          </>
+        }
+      >
         <Layout style={{height: '100%'}}>
-          <Content style={{borderRight: '#F0781F solid 1px', padding: '0.5em'}}>
+          {categories.length === 0 && (
+            <Content className="select-assignment">
+              Select an assignment above...
+            </Content>
+          )}
+          <Content style={{padding: '0.5em'}}>
             <Ikigai
               id="ikigai-builder"
               categoryDiameter={(width, height) => Math.min(width, height) / 2}
@@ -383,7 +453,7 @@ export function IkigaiBuilder() {
                   case pl_types.ProjectInputCategory.ValueType.FREE_TEXT:
                     return (
                       <FreeTextInput
-                        id={`${category.htmlId}`}
+                        id={category.htmlId}
                         key={category.input.category!.id!}
                         shortTitle={category.input.category!.name!}
                         hint={category.input.category!.hint!}
@@ -401,7 +471,7 @@ export function IkigaiBuilder() {
                   default:
                     return (
                       <DropdownSelectInput
-                        id={`${category.htmlId}`}
+                        id={category.htmlId}
                         key={category.input.category!.id!}
                         shortTitle={category.input.category!.name!}
                         hint={category.input.category!.hint!}
