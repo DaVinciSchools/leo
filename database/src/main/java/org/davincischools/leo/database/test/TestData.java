@@ -15,6 +15,7 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserUtils;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
@@ -35,7 +36,7 @@ public class TestData {
     @Autowired TestData testData;
 
     @Override
-    public void onApplicationEvent(ContextRefreshedEvent event) {
+    public void onApplicationEvent(@NotNull ContextRefreshedEvent event) {
       testData.addTestData();
       logger.atInfo().log("Added test data to the test database.");
     }
@@ -242,8 +243,6 @@ public class TestData {
                                                         .setDistrictStudentId(1111)
                                                         .setGrade(12)))),
                         PASSWORD));
-    db.getTeacherSchoolRepository().upsert(admin.getTeacher(), school);
-    db.getStudentSchoolRepository().upsert(admin.getStudent(), school);
 
     email = "teacher@projectleo.net";
     db.getUserXRepository()
@@ -292,9 +291,7 @@ public class TestData {
     // Create programming class.
     programmingClass =
         db.getClassXRepository().upsert(school, "Intro to Programming", classX -> {});
-    db.getTeacherClassXRepository().upsert(admin.getTeacher(), programmingClass);
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), programmingClass);
-    db.getStudentClassXRepository().upsert(admin.getStudent(), programmingClass);
     db.getStudentClassXRepository().upsert(student.getStudent(), programmingClass);
 
     programmingSortEks =
@@ -325,9 +322,7 @@ public class TestData {
 
     // Create chemistry class.
     chemistryClass = db.getClassXRepository().upsert(school, "Intro to Chemistry", classX -> {});
-    db.getTeacherClassXRepository().upsert(admin.getTeacher(), chemistryClass);
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), chemistryClass);
-    db.getStudentClassXRepository().upsert(admin.getStudent(), chemistryClass);
     db.getStudentClassXRepository().upsert(student.getStudent(), chemistryClass);
 
     chemistryPeriodicTableEks =
@@ -360,9 +355,7 @@ public class TestData {
 
     // Create an empty class.
     danceClass = db.getClassXRepository().upsert(school, "Dance", classX -> {});
-    db.getTeacherClassXRepository().upsert(admin.getTeacher(), danceClass);
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), danceClass);
-    db.getStudentClassXRepository().upsert(admin.getStudent(), danceClass);
     db.getStudentClassXRepository().upsert(student.getStudent(), danceClass);
 
     // Create project definitions.
@@ -374,5 +367,8 @@ public class TestData {
             programmingContainerAssignment,
             chemistryPeriodicTableAssignment,
             chemistryValenceElectronsAssignment));
+
+    // Add the admin to all schools and classes
+    AdminUtils.addAdminToDistrictSchoolsAndClasses(db, admin);
   }
 }

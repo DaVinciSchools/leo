@@ -331,17 +331,21 @@ public class AdminUtils {
       String password = createPassword();
       District district = createDistrict();
       AtomicBoolean passwordUpdated = new AtomicBoolean(false);
-      db.getUserXRepository()
-          .upsert(
-              district,
-              createAdmin,
-              userX -> {
-                db.getAdminXRepository().upsert(userX);
-                if (userX.getEncodedPassword().equals(UserXRepository.INVALID_ENCODED_PASSWORD)) {
-                  UserUtils.setPassword(userX, password);
-                  passwordUpdated.set(true);
-                }
-              });
+      UserX userX =
+          db.getUserXRepository()
+              .upsert(
+                  district,
+                  createAdmin,
+                  userX2 -> {
+                    db.getAdminXRepository().upsert(userX2);
+                    if (userX2
+                        .getEncodedPassword()
+                        .equals(UserXRepository.INVALID_ENCODED_PASSWORD)) {
+                      UserUtils.setPassword(userX2, password);
+                      passwordUpdated.set(true);
+                    }
+                  });
+      addAdminToDistrictSchoolsAndClasses(db, userX);
 
       if (passwordUpdated.get()) {
         log.atWarn()
@@ -352,6 +356,26 @@ public class AdminUtils {
                 password);
       }
     }
+  }
+
+  // TODO: For now admins are teachers and students of all schools and classes in their district.
+  public static void addAdminToDistrictSchoolsAndClasses(Database db, UserX admin) {
+    db.getTeacherRepository().upsert(admin);
+    db.getStudentRepository().upsert(admin, entity -> {});
+    Set<Integer> schoolIds = new HashSet<>();
+    for (School school : db.getSchoolRepository().findAll()) {
+      if (Objects.equals(school.getDistrict().getId(), admin.getDistrict().getId())) {
+        schoolIds.add(school.getId());
+        db.getTeacherSchoolRepository().upsert(admin.getTeacher(), school);
+      }
+    }
+    for (ClassX classX : db.getClassXRepository().findAll()) {
+      if (schoolIds.contains(classX.getSchool().getId())) {
+        db.getTeacherClassXRepository().upsert(admin.getTeacher(), classX);
+        db.getStudentClassXRepository().upsert(admin.getStudent(), classX);
+      }
+    }
+    db.getUserXRepository().save(admin);
   }
 
   private void resetPasswords() {
