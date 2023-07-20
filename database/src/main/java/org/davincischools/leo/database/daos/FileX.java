@@ -2,9 +2,12 @@ package org.davincischools.leo.database.daos;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
@@ -20,7 +23,7 @@ public class FileX implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_FILECONTENT_NAME = "file_content";
   public static final String COLUMN_MIMETYPE_NAME = "mime_type";
-  private static final long serialVersionUID = 4926085486314440970L;
+  private static final long serialVersionUID = 6776854485777926787L;
 
   private Integer id;
 
@@ -31,6 +34,8 @@ public class FileX implements Serializable {
   private byte[] fileContent;
 
   private String mimeType;
+
+  private UserX userX;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -81,6 +86,17 @@ public class FileX implements Serializable {
 
   public FileX setMimeType(String mimeType) {
     this.mimeType = mimeType;
+    return this;
+  }
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_x_id", nullable = false)
+  public UserX getUserX() {
+    return userX;
+  }
+
+  public FileX setUserX(UserX userX) {
+    this.userX = userX;
     return this;
   }
 }
