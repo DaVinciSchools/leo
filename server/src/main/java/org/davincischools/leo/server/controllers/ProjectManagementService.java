@@ -56,7 +56,6 @@ import org.davincischools.leo.protos.project_management.PostMessageRequest;
 import org.davincischools.leo.protos.project_management.PostMessageResponse;
 import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
 import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
-import org.davincischools.leo.server.controllers.project_generators.OpenAi3V1ProjectGenerator;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V2ProjectGenerator;
 import org.davincischools.leo.server.utils.DataAccess;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
@@ -80,7 +79,6 @@ public class ProjectManagementService {
       GenerateProjectsResponse.Builder response) {}
 
   @Autowired Database db;
-  @Autowired OpenAi3V1ProjectGenerator openAi3V1ProjectGenerator;
   @Autowired OpenAi3V2ProjectGenerator openAi3V2ProjectGenerator;
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetEks")
@@ -249,10 +247,7 @@ public class ProjectManagementService {
         .andThen(
             (state, log) -> {
               List<Project> projects =
-                  ImmutableList.of(
-                          // openAi3V1ProjectGenerator,
-                          openAi3V2ProjectGenerator)
-                      .stream()
+                  ImmutableList.of(openAi3V2ProjectGenerator).stream()
                       .parallel()
                       .map(
                           generator -> {
