@@ -2,6 +2,8 @@ package org.davincischools.leo.server.controllers.project_generators;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.List;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
@@ -16,19 +18,21 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class OpenAi3V1ProjectGenerator {
+
   private static final Joiner COMMA_AND_JOINER = Joiner.on(", and ");
+  private static final Joiner SEMICOLON_JOINER = Joiner.on("; ");
 
   // Initialize OpenAI query by adding the system role content.
   static OpenAiRequest.Builder getInitialAiRequest(
       GenerateProjectsState state, OpenAiRequest.Builder request) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("You are a senior student who wants to spend 60 hours to build a project. ");
+    List<String> requirements = new ArrayList<>();
     for (int i = 0; i < state.definition().categories().size(); ++i) {
       ProjectDefinitionCategory category = state.definition().categories().get(i);
       ProjectDefinitionCategoryType type = category.getProjectDefinitionCategoryType();
       ImmutableList<ProjectInputValue> values = state.values().get(i);
 
-      sb.append(type.getQueryPrefix()).append(' ');
+      StringBuilder sb = new StringBuilder();
+      sb.append(i + 1).append(") ").append(type.getQueryPrefix()).append(' ');
       switch (ValueType.valueOf(type.getValueType())) {
         case FREE_TEXT -> sb.append(
             COMMA_AND_JOINER.join(
@@ -51,14 +55,18 @@ public class OpenAi3V1ProjectGenerator {
                     .map(ProjectManagementService::quoteAndEscape)
                     .toList()));
       }
-      sb.append(". ");
+      requirements.add(sb.toString());
     }
 
     request
         .setModel(OpenAiUtils.GPT_3_5_TURBO_MODEL)
         .addMessagesBuilder()
         .setRole("system")
-        .setContent(sb.toString());
+        .setContent(
+            "You are a senior student who wants to spend 60 hours to build a project."
+                + " Each project MUST address ALL of the following requirements: "
+                + SEMICOLON_JOINER.join(requirements)
+                + ".");
     return request;
   }
 }

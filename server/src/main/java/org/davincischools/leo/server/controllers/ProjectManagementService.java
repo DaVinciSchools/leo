@@ -303,7 +303,9 @@ public class ProjectManagementService {
               checkArgument(request.hasProjectId());
 
               ProjectWithMilestones project =
-                  db.getProjectRepository().findByProjectId(request.getProjectId()).orElse(null);
+                  db.getProjectRepository()
+                      .findFullProjectById(request.getProjectId())
+                      .orElse(null);
               if (project == null) {
                 return user.returnNotFound(GetProjectDetailsResponse.getDefaultInstance());
               }
@@ -357,10 +359,10 @@ public class ProjectManagementService {
               var response = GetProjectsResponse.newBuilder();
 
               response.addAllProjects(
-                  Streams.stream(
-                          request.getActiveOnly()
-                              ? db.getProjectRepository().findAllActiveByUserXId(userId)
-                              : db.getProjectRepository().findAllByUserXId(userId))
+                  db
+                      .getProjectRepository()
+                      .findProjectsByUserXId(userId, request.getActiveOnly())
+                      .stream()
                       .map(DataAccess::convertProjectToProto)
                       .toList());
 

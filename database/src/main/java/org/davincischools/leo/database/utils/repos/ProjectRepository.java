@@ -1,5 +1,6 @@
 package org.davincischools.leo.database.utils.repos;
 
+import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -19,64 +20,70 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
 
   record ProjectWithMilestones(Project project, List<MilestoneWithSteps> milestones) {}
 
-  @Query(
-      "SELECT p"
-          + " FROM Project p"
-          + " INNER JOIN FETCH p.projectInput pi"
-          + " WHERE pi.userX.id = (:userXId)")
-  List<Project> findAllByUserXId(@Param("userXId") int userXId);
+  record ProjectMilestoneStepRow(
+      Project project, ProjectMilestone milestone, ProjectMilestoneStep step) {}
 
   @Query(
-      "SELECT p"
-          + " FROM Project p"
-          + " INNER JOIN FETCH p.projectInput pi"
-          + " WHERE pi.userX.id = (:userXId)"
-          + " AND p.active")
-  List<Project> findAllActiveByUserXId(@Param("userXId") int userXId);
-
-  @Query("SELECT p FROM Project p INNER JOIN FETCH p.projectInput WHERE p.id = (:projectId)")
-  Optional<Project> findById(@Param("projectId") int projectId);
+      """
+      SELECT p, m, s
+          FROM Project p
+          LEFT JOIN FETCH p.projectInput pi
+          LEFT JOIN FETCH p.projectInput.userX
+          LEFT JOIN ProjectMilestone m
+          ON p.id = m.project.id
+          LEFT JOIN ProjectMilestoneStep s
+          ON m.id = s.projectMilestone.id
+          WHERE p.id = :projectId
+          ORDER BY p.creationTime DESC, m.position, s.position""")
+  List<ProjectMilestoneStepRow> findFullProjectRowsByProjectId(@Param("projectId") int projectId);
 
   @Query(
-      "SELECT p, m, s"
-          + " FROM Project p"
-          + " LEFT JOIN FETCH p.projectInput pi"
-          + " LEFT JOIN FETCH p.projectInput.userX"
-          + " LEFT JOIN ProjectMilestone m"
-          + " ON p.id = m.project.id"
-          + " LEFT JOIN ProjectMilestoneStep s"
-          + " ON m.id = s.projectMilestone.id"
-          + " WHERE p.id = (:projectId)"
-          + " ORDER BY m.position, s.position")
-  List<Object[]> _internal_findByProjectId(@Param("projectId") int projectId);
+      """
+          SELECT p
+          FROM Project p
+          LEFT JOIN FETCH p.projectInput pi
+          LEFT JOIN FETCH p.projectInput.userX
+          WHERE pi.userX.id = :userXId
+          AND ((:activeOnly <> TRUE) OR p.active)
+          ORDER BY p.creationTime DESC""")
+  List<Project> findProjectsByUserXId(
+      @Param("userXId") int userXId, @Param("activeOnly") boolean activeOnly);
 
-  default Optional<ProjectWithMilestones> findByProjectId(int projectId) {
-    ProjectWithMilestones result = null;
-    MilestoneWithSteps lastMilestone = null;
-    for (Object[] row : _internal_findByProjectId(projectId)) {
-      Project project = (Project) row[0];
-      ProjectMilestone milestone = (ProjectMilestone) row[1];
-      ProjectMilestoneStep step = (ProjectMilestoneStep) row[2];
+  default Optional<ProjectWithMilestones> findFullProjectById(int projectId) {
+    return Optional.ofNullable(
+        Iterables.getOnlyElement(
+            splitIntoProjectsWithMilestones(findFullProjectRowsByProjectId(projectId)), null));
+  }
 
-      if (result == null) {
-        result = new ProjectWithMilestones(project, new ArrayList<>());
+  private List<ProjectWithMilestones> splitIntoProjectsWithMilestones(
+      List<ProjectMilestoneStepRow> rows) {
+    ProjectWithMilestones projectWithMilestones = null;
+    MilestoneWithSteps milestoneWithSteps = null;
+
+    List<ProjectWithMilestones> projectsWithMilestones = new ArrayList<>();
+
+    for (ProjectMilestoneStepRow row : rows) {
+      if (projectWithMilestones == null
+          || !Objects.equals(row.project().getId(), projectWithMilestones.project().getId())) {
+        milestoneWithSteps = null;
+        projectsWithMilestones.add(
+            projectWithMilestones = new ProjectWithMilestones(row.project(), new ArrayList<>()));
       }
-
-      if (milestone == null) {
-        break;
+      if (row.milestone() == null) {
+        continue;
       }
-
-      if (lastMilestone == null
-          || !Objects.equals(lastMilestone.milestone().getId(), milestone.getId())) {
-        result
+      if (milestoneWithSteps == null
+          || !Objects.equals(row.milestone().getId(), milestoneWithSteps.milestone().getId())) {
+        projectWithMilestones
             .milestones()
-            .add(lastMilestone = new MilestoneWithSteps(milestone, new ArrayList<>()));
+            .add(milestoneWithSteps = new MilestoneWithSteps(row.milestone(), new ArrayList<>()));
       }
-
-      if (step != null) {
-        lastMilestone.steps().add(step);
+      if (row.step() == null) {
+        continue;
       }
+      milestoneWithSteps.steps().add(row.step());
     }
-    return Optional.ofNullable(result);
+
+    return projectsWithMilestones;
   }
 }
