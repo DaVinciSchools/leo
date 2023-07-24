@@ -38,6 +38,7 @@ export function AllProjects() {
     service
       .getProjects({userXId: user!.userXId})
       .then(response => {
+        response.projects.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
         setProjects(response.projects);
       })
       .catch(setHandleError);
