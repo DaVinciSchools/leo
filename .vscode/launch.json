@@ -6,18 +6,20 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Server",
+            "name": "Server - Standalone",
             "request": "launch",
             "mainClass": "org.davincischools.leo.server.ServerApplication",
             "projectName": "project-leo-server",
             "classPaths": [
                 "$Auto",
                 "${workspaceFolder}/server/target/classes",
-            ]
+                "${workspaceFolder}/server/src/main/resources",
+            ],
+            "envFile": "${workspaceFolder}/server/src/main/resources/application.properties"
         },
         {
             "type": "java",
-            "name": "Server + React Server",
+            "name": "Server - w/ React Server",
             "request": "launch",
             "mainClass": "org.davincischools.leo.server.ServerApplication",
             "projectName": "project-leo-server",
@@ -25,7 +27,9 @@
             "classPaths": [
                 "$Auto",
                 "${workspaceFolder}/server/target/classes",
-            ]
+                "${workspaceFolder}/server/src/main/resources",
+            ],
+            "envFile": "${workspaceFolder}/server/src/main/resources/application.properties"
         },
         {
             "type": "java",
@@ -39,7 +43,19 @@
             "classPaths": [
                 "$Auto",
                 "${workspaceFolder}/database/target/classes",
-            ]
+                "${workspaceFolder}/server/src/main/resources",
+            ],
+            "envFile": "${workspaceFolder}/server/src/main/resources/application.properties"
+        },
+        {
+            "name": "React Server",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}/server/src/main/clients/web-browser",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "start",
+            ],
         }
     ]
 }
