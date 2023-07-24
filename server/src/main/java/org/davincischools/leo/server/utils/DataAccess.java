@@ -17,6 +17,7 @@ import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.MilestoneWithSteps;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
@@ -111,6 +112,30 @@ public class DataAccess {
         .setLongDescrHtml(coalesce(assignment::getLongDescrHtml, () -> ""))
         .setClassX(convertClassToProto(classX))
         .build();
+  }
+
+  public static org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder
+      convertFullProjectDefinition(FullProjectDefinition fullProjectdefinition) {
+    var projectDefinitionProto =
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.newBuilder()
+            .setId(fullProjectdefinition.definition().getId())
+            .setName(fullProjectdefinition.definition().getName())
+            .setTemplate(Boolean.TRUE.equals(fullProjectdefinition.definition().getTemplate()));
+    for (var categoryDao : fullProjectdefinition.categories()) {
+      var type = categoryDao.getProjectDefinitionCategoryType();
+      projectDefinitionProto
+          .addInputsBuilder()
+          .getCategoryBuilder()
+          .setId(categoryDao.getId())
+          .setShortDescr(type.getShortDescr())
+          .setName(type.getName())
+          .setHint(type.getHint())
+          .setPlaceholder(type.getInputPlaceholder())
+          .setValueType(
+              org.davincischools.leo.protos.pl_types.ProjectInputCategory.ValueType.valueOf(
+                  categoryDao.getProjectDefinitionCategoryType().getValueType()));
+    }
+    return projectDefinitionProto;
   }
 
   public static org.davincischools.leo.protos.pl_types.Project convertProjectToProto(

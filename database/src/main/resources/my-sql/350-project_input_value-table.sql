@@ -4,8 +4,7 @@ CREATE TABLE project_input_value
     creation_time                  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted                        DATETIME,
 
-    -- TODO: Remove after refactor.
-    -- Indicates the relative position among a project's input values.
+    -- Indicates the relative position among values within the same category.
     position                       FLOAT    NOT NULL,
 
     project_input_id               INT      NOT NULL,
@@ -15,15 +14,7 @@ CREATE TABLE project_input_value
             ON DELETE RESTRICT
             ON UPDATE RESTRICT,
 
-    -- TODO: Remove after refactor.
-    project_input_category_id      INT,
-    FOREIGN KEY (project_input_category_id)
-        REFERENCES project_input_category (id)
-        ON DELETE RESTRICT
-        ON UPDATE RESTRICT,
-
-    -- TODO: Require non-null.
-    project_definition_category_id INT,
+    project_definition_category_id INT      NOT NULL,
     CONSTRAINT project_input_value__project_definition_category_id
         FOREIGN KEY (project_definition_category_id)
             REFERENCES project_definition_category (id)

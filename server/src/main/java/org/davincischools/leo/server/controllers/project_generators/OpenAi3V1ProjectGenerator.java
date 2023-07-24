@@ -4,7 +4,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.Motivation;
-import org.davincischools.leo.database.daos.ProjectInputCategory;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.protos.open_ai.OpenAiRequest;
@@ -22,12 +23,13 @@ public class OpenAi3V1ProjectGenerator {
       GenerateProjectsState state, OpenAiRequest.Builder request) {
     StringBuilder sb = new StringBuilder();
     sb.append("You are a senior student who wants to spend 60 hours to build a project. ");
-    for (int i = 0; i < state.definition().inputCategories().size(); ++i) {
-      ProjectInputCategory category = state.definition().inputCategories().get(i);
+    for (int i = 0; i < state.definition().categories().size(); ++i) {
+      ProjectDefinitionCategory category = state.definition().categories().get(i);
+      ProjectDefinitionCategoryType type = category.getProjectDefinitionCategoryType();
       ImmutableList<ProjectInputValue> values = state.values().get(i);
 
-      sb.append(category.getQueryPrefix()).append(' ');
-      switch (ValueType.valueOf(category.getValueType())) {
+      sb.append(type.getQueryPrefix()).append(' ');
+      switch (ValueType.valueOf(type.getValueType())) {
         case FREE_TEXT -> sb.append(
             COMMA_AND_JOINER.join(
                 values.stream()

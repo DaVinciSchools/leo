@@ -18,6 +18,7 @@ public class Interest implements Serializable {
   public static final String TABLE_NAME = "interest";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
+  public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_FIRSTNAME_NAME = "first_name";
   public static final String COLUMN_LASTNAME_NAME = "last_name";
   public static final String COLUMN_EMAILADDRESS_NAME = "email_address";
@@ -32,11 +33,13 @@ public class Interest implements Serializable {
   public static final String COLUMN_ZIPCODE_NAME = "zip_code";
   public static final String COLUMN_NUMTEACHERS_NAME = "num_teachers";
   public static final String COLUMN_NUMSTUDENTS_NAME = "num_students";
-  private static final long serialVersionUID = 1089097917992088909L;
+  private static final long serialVersionUID = -8664429159167609494L;
 
   private Integer id;
 
   private Instant creationTime;
+
+  private Instant deleted;
 
   private String firstName;
 
@@ -85,6 +88,16 @@ public class Interest implements Serializable {
 
   public Interest setCreationTime(Instant creationTime) {
     this.creationTime = creationTime;
+    return this;
+  }
+
+  @Column(name = COLUMN_DELETED_NAME)
+  public Instant getDeleted() {
+    return deleted;
+  }
+
+  public Interest setDeleted(Instant deleted) {
+    this.deleted = deleted;
     return this;
   }
 

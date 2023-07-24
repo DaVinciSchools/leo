@@ -19,7 +19,6 @@ import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryRepo
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository;
 import org.davincischools.leo.database.utils.repos.ProjectImageRepository;
-import org.davincischools.leo.database.utils.repos.ProjectInputCategoryRepository;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository;
 import org.davincischools.leo.database.utils.repos.ProjectInputValueRepository;
 import org.davincischools.leo.database.utils.repos.ProjectMilestoneRepository;
@@ -66,7 +65,6 @@ public class Database {
 
   @Autowired private ProjectDefinitionRepository projectDefinitionRepository;
   @Autowired private ProjectImageRepository projectImageRepository;
-  @Deprecated @Autowired private ProjectInputCategoryRepository projectInputCategoryRepository;
   @Autowired private ProjectInputRepository projectInputRepository;
   @Autowired private ProjectInputValueRepository projectInputValueRepository;
   @Autowired private ProjectMilestoneRepository projectMilestoneRepository;
@@ -153,11 +151,6 @@ public class Database {
 
   public ProjectImageRepository getProjectImageRepository() {
     return projectImageRepository;
-  }
-
-  @Deprecated
-  public ProjectInputCategoryRepository getProjectInputCategoryRepository() {
-    return projectInputCategoryRepository;
   }
 
   public ProjectInputRepository getProjectInputRepository() {

@@ -18,6 +18,7 @@ service ProjectManagementService {
   rpc UpdateProject (UpdateProjectRequest) returns (UpdateProjectResponse) {}
   rpc GetProjectDefinition (GetProjectDefinitionRequest) returns (GetProjectDefinitionResponse) {}
   rpc GetAssignmentProjectDefinitions (GetAssignmentProjectDefinitionsRequest) returns (GetAssignmentProjectDefinitionsResponse) {}
+  rpc GetAssignmentProjectDefinition (GetAssignmentProjectDefinitionRequest) returns (GetAssignmentProjectDefinitionResponse) {}
   rpc GetProjectPosts (GetProjectPostsRequest) returns (GetProjectPostsResponse) {}
   rpc PostMessage (PostMessageRequest) returns (PostMessageResponse) {}
   rpc DeletePost (DeletePostRequest) returns (DeletePostResponse) {}
@@ -92,6 +93,14 @@ message GetAssignmentProjectDefinitionsRequest {
 
 message GetAssignmentProjectDefinitionsResponse {
   repeated pl_types.ProjectDefinition definitions = 1;
+}
+
+message GetAssignmentProjectDefinitionRequest {
+  optional int32 assignment_id = 1;
+}
+
+message GetAssignmentProjectDefinitionResponse {
+  optional pl_types.ProjectDefinition definition = 1;
 }
 
 message GetProjectPostsRequest {

@@ -7,7 +7,7 @@ DROP TABLE IF EXISTS project_post_comment;
 DROP TABLE IF EXISTS project_input_value;
 DROP TABLE IF EXISTS portfolio;
 DROP TABLE IF EXISTS project_post;
-DROP TABLE IF EXISTS project_input_category;
+DROP TABLE IF EXISTS project_input_category; -- Renamed
 DROP TABLE IF EXISTS assignment__project_definition;
 
 DROP TABLE IF EXISTS knowledge_and_skill_assignment; -- Renamed

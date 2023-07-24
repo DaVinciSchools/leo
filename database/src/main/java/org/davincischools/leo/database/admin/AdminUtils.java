@@ -30,7 +30,6 @@ import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
-import org.davincischools.leo.database.daos.ProjectInputCategory;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.UserX;
@@ -134,7 +133,6 @@ public class AdminUtils {
 
     public void addBothCategories(ProjectDefinition projectDefinition) {
       addProjectDefinitionCategory(projectDefinition, entry -> {});
-      addProjectInputCategory(projectDefinition, entry -> {});
     }
 
     public ProjectDefinitionCategory addProjectDefinitionCategory(
@@ -148,27 +146,6 @@ public class AdminUtils {
       modifier.accept(pdc);
       db.getProjectDefinitionCategoryRepository().saveAndFlush(pdc);
       return pdc;
-    }
-
-    @Deprecated
-    public ProjectInputCategory addProjectInputCategory(
-        ProjectDefinition projectDefinition, Consumer<ProjectInputCategory> modifier) {
-      ProjectInputCategory pic =
-          new ProjectInputCategory()
-              .setCreationTime(Instant.now())
-              .setName(type.getName())
-              .setProjectDefinition(projectDefinition)
-              .setPosition((float) position.getAndIncrement())
-              .setShortDescr(type.getShortDescr())
-              .setHint(type.getHint())
-              .setInputDescr(type.getInputDescr())
-              .setInputPlaceholder(type.getInputPlaceholder())
-              .setQueryPrefix(type.getQueryPrefix())
-              .setValueType(type.getValueType())
-              .setMaxNumValues(4);
-      modifier.accept(pic);
-      db.getProjectInputCategoryRepository().saveAndFlush(pic);
-      return pic;
     }
   }
 

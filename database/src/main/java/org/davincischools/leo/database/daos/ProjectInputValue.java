@@ -6,7 +6,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
@@ -15,12 +14,7 @@ import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = ProjectInputValue.ENTITY_NAME)
-@Table(
-    name = ProjectInputValue.TABLE_NAME,
-    schema = "leo_temp",
-    indexes = {
-      @Index(name = "project_input_category_id", columnList = "project_input_category_id")
-    })
+@Table(name = ProjectInputValue.TABLE_NAME, schema = "leo_temp")
 public class ProjectInputValue implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectInputValue";
@@ -30,7 +24,7 @@ public class ProjectInputValue implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_FREETEXTVALUE_NAME = "free_text_value";
-  private static final long serialVersionUID = 2138494411047959251L;
+  private static final long serialVersionUID = 3742236058601084502L;
 
   private Integer id;
 
@@ -38,11 +32,9 @@ public class ProjectInputValue implements Serializable {
 
   private Instant deleted;
 
-  @Deprecated private Float position;
+  private Float position;
 
   private ProjectInput projectInput;
-
-  @Deprecated private ProjectInputCategory projectInputCategory;
 
   private ProjectDefinitionCategory projectDefinitionCategory;
 
@@ -84,13 +76,11 @@ public class ProjectInputValue implements Serializable {
     return this;
   }
 
-  @Deprecated
   @Column(name = COLUMN_POSITION_NAME, nullable = false)
   public Float getPosition() {
     return position;
   }
 
-  @Deprecated
   public ProjectInputValue setPosition(Float position) {
     this.position = position;
     return this;
@@ -107,21 +97,8 @@ public class ProjectInputValue implements Serializable {
     return this;
   }
 
-  @Deprecated
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "project_input_category_id")
-  public ProjectInputCategory getProjectInputCategory() {
-    return projectInputCategory;
-  }
-
-  @Deprecated
-  public ProjectInputValue setProjectInputCategory(ProjectInputCategory projectInputCategory) {
-    this.projectInputCategory = projectInputCategory;
-    return this;
-  }
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "project_definition_category_id")
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "project_definition_category_id", nullable = false)
   public ProjectDefinitionCategory getProjectDefinitionCategory() {
     return projectDefinitionCategory;
   }

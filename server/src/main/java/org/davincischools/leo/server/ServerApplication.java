@@ -18,6 +18,7 @@ import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.User;
 import org.davincischools.leo.server.controllers.project_generators.ProjectGenerator;
+import org.davincischools.leo.server.utils.QueryWithNullsToRecordConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutor;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorArgumentResolver;
 import org.davincischools.leo.server.utils.http_user.HttpUserArgumentResolver;
@@ -28,6 +29,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.http.HttpMethod;
@@ -252,6 +254,10 @@ public class ServerApplication {
   }
 
   public static void main(String[] args) throws IOException {
+    // Hibernate annoyingly fails if a column is null when returning a record from a query.
+    ((DefaultConversionService) DefaultConversionService.getSharedInstance())
+        .addConverter(new QueryWithNullsToRecordConverter());
+
     // Load custom Project Leo properties into the environment.
     ConfigurableEnvironment environment = new StandardEnvironment();
     LoadCustomProjectLeoProperties.loadCustomProjectLeoProperties(environment);

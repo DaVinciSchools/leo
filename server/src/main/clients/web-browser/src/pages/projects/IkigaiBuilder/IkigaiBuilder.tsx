@@ -334,7 +334,7 @@ export function IkigaiBuilder() {
       return;
     }
     createService(ProjectManagementService, 'ProjectManagementService')
-      .getProjectDefinition({assignmentId: assignment?.id})
+      .getAssignmentProjectDefinition({assignmentId: assignment?.id})
       .then(response => setProjectDefinition(response.definition ?? null))
       .catch(setHandleError);
   }, [assignment]);
@@ -357,15 +357,13 @@ export function IkigaiBuilder() {
   function onSpinClick() {
     setProcessing(true);
 
-    const service = createService(
-      ProjectManagementService,
-      'ProjectManagementService'
-    );
-
-    service
-      .generateProjects({definition: projectDefinition})
-      .catch(reason => setHandleError({error: reason, reload: false}))
-      .finally(() => navigate('/projects/all-projects.html'));
+    createService(ProjectManagementService, 'ProjectManagementService')
+      .generateProjects({
+        definition: projectDefinition,
+        assignmentId: assignment?.id,
+      })
+      .then(() => navigate('/projects/all-projects.html'))
+      .catch(setHandleError);
   }
 
   function updateCategoryValues(index: number, values: (string | number)[]) {
