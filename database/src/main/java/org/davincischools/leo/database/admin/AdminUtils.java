@@ -131,10 +131,6 @@ public class AdminUtils {
       this.type = type;
     }
 
-    public void addBothCategories(ProjectDefinition projectDefinition) {
-      addProjectDefinitionCategory(projectDefinition, entry -> {});
-    }
-
     public ProjectDefinitionCategory addProjectDefinitionCategory(
         ProjectDefinition projectDefinition, Consumer<ProjectDefinitionCategory> modifier) {
       ProjectDefinitionCategory pdc =
@@ -687,25 +683,27 @@ public class AdminUtils {
                 "Knowledge and Skills + Motivations",
                 creator,
                 def -> def.setCreationTime(Instant.now()));
-    types.getCareerInterestType().addBothCategories(ksDefinition);
-    types.getMotivationType().addBothCategories(ksDefinition);
-    types.getEksType().addBothCategories(ksDefinition);
-    types.getStudentInterestsType().addBothCategories(ksDefinition);
+    types.getCareerInterestType().addProjectDefinitionCategory(ksDefinition, entity -> {});
+    types.getMotivationType().addProjectDefinitionCategory(ksDefinition, entity -> {});
+    types.getEksType().addProjectDefinitionCategory(ksDefinition, entity -> {});
+    types.getStudentInterestsType().addProjectDefinitionCategory(ksDefinition, entity -> {});
 
     ProjectDefinition xqDefinition =
         db.getProjectDefinitionRepository()
             .upsert("XQ Competencies", creator, def -> def.setCreationTime(Instant.now()));
-    types.getCareerInterestType().addBothCategories(xqDefinition);
-    types.getXqType().addBothCategories(xqDefinition);
-    types.getStudentInterestsType().addBothCategories(xqDefinition);
+    types.getCareerInterestType().addProjectDefinitionCategory(xqDefinition, entity -> {});
+    types.getXqType().addProjectDefinitionCategory(xqDefinition, entity -> {});
+    types.getStudentInterestsType().addProjectDefinitionCategory(xqDefinition, entity -> {});
 
     ProjectDefinition requirementDefinition =
         db.getProjectDefinitionRepository()
             .upsert("Requirements Template", creator, pd -> pd.setTemplate(true));
-    types.getEksType().addBothCategories(requirementDefinition);
-    types.getXqType().addBothCategories(requirementDefinition);
-    types.getMotivationType().addBothCategories(requirementDefinition);
-    types.getStudentInterestsType().addBothCategories(requirementDefinition);
+    types.getEksType().addProjectDefinitionCategory(requirementDefinition, entity -> {});
+    types.getXqType().addProjectDefinitionCategory(requirementDefinition, entity -> {});
+    types.getMotivationType().addProjectDefinitionCategory(requirementDefinition, entity -> {});
+    types
+        .getStudentInterestsType()
+        .addProjectDefinitionCategory(requirementDefinition, entity -> {});
 
     int assignmentCount = 0;
     for (Assignment assignment : assignments) {
