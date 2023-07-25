@@ -53,8 +53,7 @@ public class DataAccess {
             .setIsTeacher(UserXRepository.isTeacher(user))
             .setIsStudent(UserXRepository.isStudent(user));
     if (user.getDistrict() != null) {
-      userProto.setDistrictId(
-          coalesce(() -> user.getDistrict().getId(), () -> -1));
+      userProto.setDistrictId(coalesce(() -> user.getDistrict().getId(), () -> -1));
     }
     return userProto.build();
   }
