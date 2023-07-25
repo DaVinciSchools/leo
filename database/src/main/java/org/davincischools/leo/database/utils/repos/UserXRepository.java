@@ -35,7 +35,8 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
   enum Role {
     ADMIN,
     TEACHER,
-    STUDENT
+    STUDENT,
+    DEMO
   }
 
   static boolean isAdmin(UserX userX) {
@@ -48,6 +49,10 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
 
   static boolean isStudent(UserX userX) {
     return userX.getStudent() != null && userX.getStudent().getId() != null;
+  }
+
+  static boolean isDemo(UserX userX) {
+    return !isAdmin(userX) && !isTeacher(userX) && !isStudent(userX);
   }
 
   static EnumSet<Role> getRoles(UserX user) {
@@ -63,11 +68,13 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
     if (isStudent(user)) {
       roles.add(Role.STUDENT);
     }
+    if (isDemo(user)) {
+      roles.add(Role.DEMO);
+    }
     return roles;
   }
 
   default UserX upsert(District district, String emailAddress, Consumer<UserX> modifier) {
-    checkNotNull(district);
     checkArgument(!Strings.isNullOrEmpty(emailAddress));
     checkNotNull(modifier);
 

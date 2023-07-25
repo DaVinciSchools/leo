@@ -99,6 +99,8 @@ message User {
 
   optional bool is_student = 10;
   optional int32 student_id = 11;
+
+  optional bool is_demo = 12;
 }
 
 message Eks {

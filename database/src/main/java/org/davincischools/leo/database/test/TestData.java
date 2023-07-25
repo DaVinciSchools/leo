@@ -1,5 +1,6 @@
 package org.davincischools.leo.database.test;
 
+import java.time.Instant;
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,6 +9,7 @@ import org.davincischools.leo.database.admin.AdminUtils.DaVinciSchoolsByNickname
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
+import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.School;
@@ -48,6 +50,7 @@ public class TestData {
   private UserX teacher;
   private UserX student;
   private UserX admin;
+  private UserX demo;
 
   private ClassX chemistryClass;
   private KnowledgeAndSkill chemistryPeriodicTableEks, chemistryValenceElectronsEks;
@@ -287,6 +290,34 @@ public class TestData {
                                 student -> student.setDistrictStudentId(1234).setGrade(9)),
                         PASSWORD));
     db.getStudentSchoolRepository().upsert(student.getStudent(), school);
+
+    email = "demo@projectleo.net";
+    db.getUserXRepository()
+        .findByEmailAddress(email)
+        .ifPresent(
+            u ->
+                db.getUserXRepository()
+                    .saveAndFlush(
+                        u.setEmailAddress(
+                            u.getEmailAddress().replace("@", "-old." + u.getId() + "@"))));
+    demo =
+        db.getUserXRepository()
+            .upsert(
+                /* district= */ null,
+                email,
+                userX ->
+                    UserUtils.setPassword(
+                            userX.setFirstName("Demo").setLastName("Project Leo"), PASSWORD)
+                        .setInterest(
+                            db.getInterestRepository()
+                                .save(
+                                    new Interest()
+                                        .setCreationTime(Instant.now())
+                                        .setFirstName(userX.getFirstName())
+                                        .setLastName(userX.getLastName())
+                                        .setEmailAddress(userX.getEmailAddress())
+                                        .setProfession("")
+                                        .setReasonForInterest(""))));
 
     // Create programming class.
     programmingClass =

@@ -24,6 +24,7 @@ import java.time.Instant;
       @Index(name = "admin_x_id", columnList = "admin_x_id", unique = true),
       @Index(name = "teacher_id", columnList = "teacher_id", unique = true),
       @Index(name = "student_id", columnList = "student_id", unique = true),
+      @Index(name = "interest_id", columnList = "interest_id", unique = true),
       @Index(name = "user_x__email_address", columnList = "email_address")
     })
 public class UserX implements Serializable {
@@ -37,7 +38,7 @@ public class UserX implements Serializable {
   public static final String COLUMN_LASTNAME_NAME = "last_name";
   public static final String COLUMN_EMAILADDRESS_NAME = "email_address";
   public static final String COLUMN_ENCODEDPASSWORD_NAME = "encoded_password";
-  private static final long serialVersionUID = -4707654659918773802L;
+  private static final long serialVersionUID = -8483564968144944481L;
 
   private Integer id;
 
@@ -60,6 +61,8 @@ public class UserX implements Serializable {
   private Teacher teacher;
 
   private Student student;
+
+  private Interest interest;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -175,6 +178,17 @@ public class UserX implements Serializable {
 
   public UserX setStudent(Student student) {
     this.student = student;
+    return this;
+  }
+
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "interest_id")
+  public Interest getInterest() {
+    return interest;
+  }
+
+  public UserX setInterest(Interest interest) {
+    this.interest = interest;
     return this;
   }
 }

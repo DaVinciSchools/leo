@@ -46,13 +46,16 @@ public class DataAccess {
     var userProto =
         org.davincischools.leo.protos.pl_types.User.newBuilder()
             .setUserXId(coalesce(user::getId, () -> -1))
-            .setDistrictId(coalesce(user.getDistrict()::getId, () -> -1))
             .setFirstName(user.getFirstName())
             .setLastName(user.getLastName())
             .setEmailAddress(user.getEmailAddress())
             .setIsAdmin(UserXRepository.isAdmin(user))
             .setIsTeacher(UserXRepository.isTeacher(user))
             .setIsStudent(UserXRepository.isStudent(user));
+    if (user.getDistrict() != null) {
+      userProto.setDistrictId(
+          coalesce(() -> user.getDistrict().getId(), () -> -1));
+    }
     return userProto.build();
   }
 

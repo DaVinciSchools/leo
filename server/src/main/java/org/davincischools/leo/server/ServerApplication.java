@@ -181,13 +181,16 @@ public class ServerApplication {
                             User.Builder user =
                                 User.newBuilder()
                                     .setUserXId(userX.getId())
-                                    .setDistrictId(userX.getDistrict().getId())
                                     .setEmailAddress(userX.getEmailAddress())
                                     .setFirstName(userX.getFirstName())
                                     .setLastName(userX.getLastName())
                                     .setIsAdmin(UserXRepository.isAdmin(userX))
                                     .setIsTeacher(UserXRepository.isTeacher(userX))
-                                    .setIsStudent(UserXRepository.isStudent(userX));
+                                    .setIsStudent(UserXRepository.isStudent(userX))
+                                    .setIsDemo(UserXRepository.isDemo(userX));
+                            if (userX.getDistrict() != null) {
+                              user.setDistrictId(userX.getDistrict().getId());
+                            }
                             if (user.getIsAdmin()) {
                               user.setAdminId(userX.getAdminX().getId());
                             }

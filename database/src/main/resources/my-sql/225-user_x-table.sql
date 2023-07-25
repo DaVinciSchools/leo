@@ -14,7 +14,7 @@ CREATE TABLE user_x
     -- From org.springframework.security.crypto.factory.PasswordEncoderFactories.
     encoded_password TEXT                NOT NULL,
 
-    district_id      INT,
+    district_id      INT, -- Nullable for demo users.
     CONSTRAINT user_x__district_id
         FOREIGN KEY (district_id)
             REFERENCES district (id)
@@ -40,6 +40,13 @@ CREATE TABLE user_x
         FOREIGN KEY (student_id)
             REFERENCES student (id)
             ON DELETE RESTRICT
-            ON UPDATE RESTRICT
+            ON UPDATE RESTRICT,
+
+    interest_id      INT UNIQUE,
+    CONSTRAINT user_x__interest_id
+        FOREIGN KEY (interest_id)
+            REFERENCES interest (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE
 ) ENGINE InnoDB
   CHAR SET UTF8MB4;
