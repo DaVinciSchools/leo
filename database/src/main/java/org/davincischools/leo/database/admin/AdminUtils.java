@@ -153,6 +153,7 @@ public class AdminUtils {
     private final ProjectDefinitionCategoryTypeBuilder eksType;
     private final ProjectDefinitionCategoryTypeBuilder xqType;
     private final ProjectDefinitionCategoryTypeBuilder studentInterestsType;
+    private final ProjectDefinitionCategoryTypeBuilder assignmentTopicType;
 
     public ProjectDefinitionCategoryTypes(Database db) {
       this.db = db;
@@ -165,6 +166,7 @@ public class AdminUtils {
                       "Career Interests",
                       type ->
                           type.setShortDescr("Career interests free text.")
+                              .setIncludeInDemo(true)
                               .setHint("Click to add careers.")
                               .setInputDescr("Enter career interests:")
                               .setInputPlaceholder("Career Interest")
@@ -179,6 +181,7 @@ public class AdminUtils {
                       "Motivations",
                       type ->
                           type.setShortDescr("Motivation selections.")
+                              .setIncludeInDemo(true)
                               .setHint("Click to add motivations.")
                               .setInputDescr("Select motivations:")
                               .setInputPlaceholder("Select a Motivation")
@@ -221,10 +224,26 @@ public class AdminUtils {
                       "Student Interests",
                       type ->
                           type.setShortDescr("Student interest free text.")
+                              .setIncludeInDemo(true)
                               .setHint("Click to add student interests.")
                               .setInputDescr("Enter student interests:")
                               .setInputPlaceholder("Student Interest")
                               .setQueryPrefix("You are passionate about")
+                              .setValueType(ValueType.FREE_TEXT.name())));
+
+      assignmentTopicType =
+          new ProjectDefinitionCategoryTypeBuilder(
+              db,
+              db.getProjectDefinitionCategoryTypeRepository()
+                  .upsert(
+                      "Assignment Topic",
+                      type ->
+                          type.setShortDescr("Assignment topic for project.")
+                              .setIncludeInDemo(true)
+                              .setHint("Click to add assignment topic.")
+                              .setInputDescr("Enter assignment topic:")
+                              .setInputPlaceholder("Assignment Topic")
+                              .setQueryPrefix("The project MUST help the student learn about")
                               .setValueType(ValueType.FREE_TEXT.name())));
     }
 
@@ -246,6 +265,10 @@ public class AdminUtils {
 
     public ProjectDefinitionCategoryTypeBuilder getStudentInterestsType() {
       return studentInterestsType;
+    }
+
+    public ProjectDefinitionCategoryTypeBuilder getAssignmentTopicType() {
+      return assignmentTopicType;
     }
   }
 

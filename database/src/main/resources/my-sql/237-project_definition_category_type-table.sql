@@ -5,6 +5,7 @@ CREATE TABLE project_definition_category_type
     deleted           DATETIME,
 
     short_descr       VARCHAR(255) NOT NULL,
+    include_in_demo   BOOLEAN,
 
     -- Attributes for the visual display of the category in the diagram.
     -- Displayed at the top of the category circle.

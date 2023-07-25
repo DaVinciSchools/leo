@@ -20,13 +20,14 @@ public class ProjectDefinitionCategoryType implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
+  public static final String COLUMN_INCLUDEINDEMO_NAME = "include_in_demo";
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_HINT_NAME = "hint";
   public static final String COLUMN_INPUTDESCR_NAME = "input_descr";
   public static final String COLUMN_INPUTPLACEHOLDER_NAME = "input_placeholder";
   public static final String COLUMN_QUERYPREFIX_NAME = "query_prefix";
   public static final String COLUMN_VALUETYPE_NAME = "value_type";
-  private static final long serialVersionUID = -7633310181316823729L;
+  private static final long serialVersionUID = -435361062134755130L;
 
   private Integer id;
 
@@ -35,6 +36,8 @@ public class ProjectDefinitionCategoryType implements Serializable {
   private Instant deleted;
 
   private String shortDescr;
+
+  private Boolean includeInDemo;
 
   private String name;
 
@@ -87,6 +90,16 @@ public class ProjectDefinitionCategoryType implements Serializable {
 
   public ProjectDefinitionCategoryType setShortDescr(String shortDescr) {
     this.shortDescr = shortDescr;
+    return this;
+  }
+
+  @Column(name = COLUMN_INCLUDEINDEMO_NAME)
+  public Boolean getIncludeInDemo() {
+    return includeInDemo;
+  }
+
+  public ProjectDefinitionCategoryType setIncludeInDemo(Boolean includeInDemo) {
+    this.includeInDemo = includeInDemo;
     return this;
   }
 
