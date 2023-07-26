@@ -21,6 +21,7 @@ import {StudentDashboard} from './pages/dashboards/StudentDashboard/StudentDashb
 import {TeacherDashboard} from './pages/dashboards/TeacherDashboard/TeacherDashboard';
 import {AdminDashboard} from './pages/dashboards/AdminDashboard/AdminDashboard';
 import {RedirectToDashboard} from './pages/dashboards/RedirectToDashboard';
+import {DemoProjectBuilder} from './pages/demos/DemoProjectBuilder/DemoProjectBuilder';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -42,6 +43,15 @@ const router = createBrowserRouter([
       {
         path: 'accounts.html',
         element: <Accounts />,
+      },
+    ],
+  },
+  {
+    path: '/demos',
+    children: [
+      {
+        path: 'project-builder.html',
+        element: <DemoProjectBuilder />,
       },
     ],
   },
@@ -137,7 +147,6 @@ const router = createBrowserRouter([
     ],
   },
 ]);
-
 root.render(
   <React.StrictMode>
     <>

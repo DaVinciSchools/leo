@@ -1,0 +1,30 @@
+@use "../../libs/color";
+
+.title {
+  border-bottom: color.$neutral-300 solid 1px;
+  border-top: color.$neutral-300 solid 1px;
+  width: 100%;
+}
+
+.stepper {
+  margin: auto;
+  width: 65%;
+}
+
+.main-section {
+  text-align: center;
+  width: 65%;
+}
+
+.buttons {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 1em;
+  justify-content: space-around;
+  margin: 0 auto 0 auto;
+  width: 65%;
+
+  .button {
+    text-transform: none;
+  }
+}
