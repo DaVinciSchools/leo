@@ -355,7 +355,9 @@ export function IkigaiProjectBuilder(props: {
           '.' +
           (category?.id ?? 'undefined') +
           '.' +
-          (category?.category?.id ?? 'undefined'),
+          (category?.category?.id ?? 'undefined') +
+          '.' +
+          (category?.category?.typeId ?? 'undefined'),
         hue: i * (360 / props.categories.length),
         stringValues: category.freeTexts ?? [],
         optionValues:

@@ -23,6 +23,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectPost;
@@ -33,6 +34,7 @@ import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.F
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
+import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.project_management.DeletePostRequest;
 import org.davincischools.leo.protos.project_management.DeletePostResponse;
@@ -44,6 +46,8 @@ import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefi
 import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionsResponse;
 import org.davincischools.leo.protos.project_management.GetEksRequest;
 import org.davincischools.leo.protos.project_management.GetEksResponse;
+import org.davincischools.leo.protos.project_management.GetProjectDefinitionCategoryTypesRequest;
+import org.davincischools.leo.protos.project_management.GetProjectDefinitionCategoryTypesResponse;
 import org.davincischools.leo.protos.project_management.GetProjectDetailsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectDetailsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectPostsRequest;
@@ -60,6 +64,7 @@ import org.davincischools.leo.server.controllers.project_generators.OpenAi3V2Pro
 import org.davincischools.leo.server.utils.DataAccess;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
+import org.davincischools.leo.server.utils.http_user.Anonymous;
 import org.davincischools.leo.server.utils.http_user.Authenticated;
 import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -408,51 +413,57 @@ public class ProjectManagementService {
 
               response.getDefinitionBuilder().setId(definition.definition().getId());
               for (ProjectDefinitionCategory category : definition.categories()) {
-                var type = category.getProjectDefinitionCategoryType();
-                var input = response.getDefinitionBuilder().addInputsBuilder();
-                var inputCategory =
-                    input
-                        .getCategoryBuilder()
-                        .setId(category.getId())
-                        .setShortDescr(type.getShortDescr())
-                        .setName(type.getName())
-                        .setHint(type.getHint())
-                        .setPlaceholder(type.getInputPlaceholder())
-                        .setValueType(
-                            org.davincischools.leo.protos.pl_types.ProjectInputCategory.ValueType
-                                .valueOf(type.getValueType()))
-                        .setMaxNumValues(category.getMaxNumValues());
-                switch (inputCategory.getValueType()) {
-                  case EKS -> populateOptions(
-                      db.getKnowledgeAndSkillRepository().findAll(Type.EKS.name()),
-                      i ->
-                          Option.newBuilder()
-                              .setId(i.getId())
-                              .setName(i.getName())
-                              .setShortDescr(i.getShortDescr()),
-                      inputCategory);
-                  case XQ_COMPETENCY -> populateOptions(
-                      db.getKnowledgeAndSkillRepository().findAll(Type.XQ_COMPETENCY.name()),
-                      i ->
-                          Option.newBuilder()
-                              .setId(i.getId())
-                              .setName(i.getName())
-                              .setShortDescr(i.getShortDescr()),
-                      inputCategory);
-                  case MOTIVATION -> populateOptions(
-                      db.getMotivationRepository().findAll(),
-                      i ->
-                          Option.newBuilder()
-                              .setId(i.getId())
-                              .setName(i.getName())
-                              .setShortDescr(i.getShortDescr()),
-                      inputCategory);
-                }
+                extractProjectInputCategory(
+                    category,
+                    response.getDefinitionBuilder().addInputsBuilder().getCategoryBuilder());
               }
 
               return response.build();
             })
         .finish();
+  }
+
+  private void extractProjectInputCategory(
+      ProjectDefinitionCategory category, ProjectInputCategory.Builder input) {
+    ProjectDefinitionCategoryType type = category.getProjectDefinitionCategoryType();
+    if (category.getId() != null) {
+      input.setId(category.getId());
+    }
+    input
+        .setTypeId(type.getId())
+        .setShortDescr(type.getShortDescr())
+        .setName(type.getName())
+        .setHint(type.getHint())
+        .setPlaceholder(type.getInputPlaceholder())
+        .setValueType(ProjectInputCategory.ValueType.valueOf(type.getValueType()))
+        .setMaxNumValues(category.getMaxNumValues());
+
+    switch (input.getValueType()) {
+      case EKS -> populateOptions(
+          db.getKnowledgeAndSkillRepository().findAll(Type.EKS.name()),
+          i ->
+              Option.newBuilder()
+                  .setId(i.getId())
+                  .setName(i.getName())
+                  .setShortDescr(i.getShortDescr()),
+          input);
+      case XQ_COMPETENCY -> populateOptions(
+          db.getKnowledgeAndSkillRepository().findAll(Type.XQ_COMPETENCY.name()),
+          i ->
+              Option.newBuilder()
+                  .setId(i.getId())
+                  .setName(i.getName())
+                  .setShortDescr(i.getShortDescr()),
+          input);
+      case MOTIVATION -> populateOptions(
+          db.getMotivationRepository().findAll(),
+          i ->
+              Option.newBuilder()
+                  .setId(i.getId())
+                  .setName(i.getName())
+                  .setShortDescr(i.getShortDescr()),
+          input);
+    }
   }
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetAssignmentProjectDefinitions")
@@ -498,7 +509,7 @@ public class ProjectManagementService {
   private <T> void populateOptions(
       Iterable<T> values,
       Function<T, Option.Builder> toOption,
-      org.davincischools.leo.protos.pl_types.ProjectInputCategory.Builder inputCategory) {
+      ProjectInputCategory.Builder inputCategory) {
     Streams.stream(values)
         .map(toOption)
         .sorted(Comparator.comparing(Option.Builder::getName))
@@ -640,6 +651,39 @@ public class ProjectManagementService {
               db.getProjectPostRepository().deleteById(request.getId());
 
               return DeletePostResponse.getDefaultInstance();
+            })
+        .finish();
+  }
+
+  @PostMapping(value = "/api/protos/ProjectManagementService/GetProjectDefinitionCategoryTypes")
+  @ResponseBody
+  public GetProjectDefinitionCategoryTypesResponse GetProjectDefinitionCategoryTypes(
+      @Anonymous HttpUser user,
+      @RequestBody Optional<GetProjectDefinitionCategoryTypesRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+
+    return httpExecutors
+        .start(
+            optionalRequest.orElse(GetProjectDefinitionCategoryTypesRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              GetProjectDefinitionCategoryTypesResponse.Builder response =
+                  GetProjectDefinitionCategoryTypesResponse.newBuilder();
+
+              db
+                  .getProjectDefinitionCategoryTypeRepository()
+                  .findAllByCategories(request.getIncludeDemos())
+                  .stream()
+                  .map(
+                      t ->
+                          new ProjectDefinitionCategory()
+                              .setProjectDefinitionCategoryType(t)
+                              .setMaxNumValues(4))
+                  .forEach(
+                      c -> extractProjectInputCategory(c, response.addInputCategoriesBuilder()));
+
+              return response.build();
             })
         .finish();
   }

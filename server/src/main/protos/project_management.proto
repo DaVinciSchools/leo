@@ -13,6 +13,7 @@ service ProjectManagementService {
   rpc GetMotivations (GetMotivationsRequest) returns (GetMotivationsResponse) {}
   rpc GenerateProjects (GenerateProjectsRequest) returns (GenerateProjectsResponse) {}
 
+  rpc GetProjectDefinitionCategoryTypes (GetProjectDefinitionCategoryTypesRequest) returns (GetProjectDefinitionCategoryTypesResponse) {}
   rpc GetProjectDetails (GetProjectDetailsRequest) returns (GetProjectDetailsResponse) {}
   rpc GetProjects (GetProjectsRequest) returns (GetProjectsResponse) {}
   rpc UpdateProject (UpdateProjectRequest) returns (UpdateProjectResponse) {}
@@ -126,4 +127,12 @@ message DeletePostRequest {
 }
 
 message DeletePostResponse {
+}
+
+message GetProjectDefinitionCategoryTypesRequest {
+  optional bool include_demos = 1;
+}
+
+message GetProjectDefinitionCategoryTypesResponse {
+  repeated pl_types.ProjectInputCategory input_categories = 1;
 }

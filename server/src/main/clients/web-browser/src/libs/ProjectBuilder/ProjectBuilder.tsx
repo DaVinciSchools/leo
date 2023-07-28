@@ -8,10 +8,12 @@ import {
   Stepper,
   Typography,
 } from '@mui/material';
-import {CSSProperties, ReactNode, useState} from 'react';
+import {CSSProperties, ReactNode, useEffect, useState} from 'react';
 import {HandleError, HandleErrorType} from '../HandleError/HandleError';
 import {IkigaiProjectBuilder} from '../IkigaiProjectBuilder/IkigaiProjectBuilder';
-import {pl_types} from '../../generated/protobuf-js';
+import {pl_types, project_management} from '../../generated/protobuf-js';
+import {createService} from '../protos';
+import ProjectManagementService = project_management.ProjectManagementService;
 
 enum State {
   GETTING_STARTED,
@@ -29,12 +31,14 @@ const STATE_LABELS = new Map<State, string>([
 
 export function ProjectBuilder(props: {
   demo?: boolean;
-  categories: pl_types.IProjectInputValue[];
   noCategoriesText: ReactNode;
   detailsAugment?: ReactNode;
   style?: Partial<CSSProperties>;
 }) {
   const [handleError, setHandleError] = useState<HandleErrorType>();
+  const [inputValues, setInputValues] = useState<pl_types.IProjectInputValue[]>(
+    []
+  );
 
   // All states. But, filter out REGISTER/REVIEW depending on demo mode.
   const steps: State[] = Object.values(State)
@@ -42,6 +46,23 @@ export function ProjectBuilder(props: {
     .map(i => i as State)
     .filter(i => (props.demo ? i !== State.REVIEW : i !== State.REGISTER));
   const [activeStep, setActiveStep] = useState(State.GETTING_STARTED);
+
+  useEffect(() => {
+    if (props.demo && inputValues.length === 0) {
+      createService(ProjectManagementService, 'ProjectManagementService')
+        .getProjectDefinitionCategoryTypes({includeDemos: true})
+        .then(response => {
+          setInputValues(
+            response.inputCategories.map(c => ({
+              category: c,
+              freeTexts: [],
+              selectedIds: [],
+            }))
+          );
+        })
+        .catch(setHandleError);
+    }
+  }, [props.demo]);
 
   return (
     <>
@@ -112,12 +133,12 @@ export function ProjectBuilder(props: {
         )}
         {steps[activeStep] === State.PROJECT_DETAILS && (
           <Box className="project-builder-project-details">
-            {props.categories.length === 0 ? (
+            {inputValues.length === 0 ? (
               props.noCategoriesText
             ) : (
               <IkigaiProjectBuilder
                 id="ikigai-builder"
-                categories={props.categories}
+                categories={inputValues}
                 noCategoriesText={props.noCategoriesText}
                 categoryDiameter={(width, height) =>
                   Math.min(width, height) / 2
