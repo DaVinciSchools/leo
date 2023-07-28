@@ -55,6 +55,7 @@ public class ReactResourceController {
     "/",
     "/admin/**",
     "/dashboards/**",
+    "/demos/**",
     "/docs/**",
     "/favicon.*",
     "/images/**",

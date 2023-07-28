@@ -1,22 +1,26 @@
 @use "../../libs/color";
 
-.title {
-  border-bottom: color.$neutral-300 solid 1px;
-  border-top: color.$neutral-300 solid 1px;
+.project-builder-title {
+  border-bottom: color.$neutral-200 solid 1px;
   width: 100%;
 }
 
-.stepper {
+.project-builder-stepper {
   margin: auto;
   width: 65%;
 }
 
-.main-section {
+.project-builder-getting-started {
   text-align: center;
   width: 65%;
 }
 
-.buttons {
+.project-builder-project-details {
+  width: 100%;
+  height: 100%;
+}
+
+.project-builder-buttons {
   display: flex;
   flex-flow: row nowrap;
   gap: 1em;

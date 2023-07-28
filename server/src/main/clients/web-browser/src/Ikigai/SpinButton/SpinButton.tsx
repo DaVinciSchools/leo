@@ -1,93 +1,79 @@
 import './SpinButton.scss';
-import {forwardRef, Ref, useEffect, useImperativeHandle, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {doTransition} from '../../utils/transitions';
+import PromiseQueue from '../../libs/PromiseQueue';
 
-export type SpinButtonFunctions = {
-  show: (durationMs: number) => Promise<void>;
-  hide: (durationMs: number) => Promise<void>;
-};
+const DURATION_MS = 750;
 
-export const SpinButton = forwardRef(
-  (
-    props: {
-      id: string;
-      origin: {x: number; y: number};
-      diameter: number;
-      enabled: boolean;
-      onClick: () => void;
-    },
-    ref: Ref<SpinButtonFunctions>
-  ) => {
-    const [diameter, setDiameter] = useState(0);
-    const [visible, setVisible] = useState(false);
-    const [disabled, setDisabled] = useState(false);
-    const [radians, setRadians] = useState(0);
+export function SpinButton(props: {
+  id: string;
+  diameter: number;
+  enabled: boolean;
+  onClick: () => void;
+}) {
+  const [promises] = useState(new PromiseQueue());
+  const [visible, setVisible] = useState(false);
 
-    const functions = {
-      show(durationMs: number): Promise<void> {
-        setDisabled(true);
+  const [diameterFraction, setDiameterFraction] = useState(0);
+  const [radians, setRadians] = useState(0);
+
+  useEffect(() => {
+    if (props.enabled) {
+      promises.enqueue(() => {
         setVisible(true);
         return doTransition(
-          durationMs,
+          DURATION_MS,
           {
-            setFn: setDiameter,
-            begin: 0,
-            end: props.diameter,
+            setFn: setDiameterFraction,
+            begin: diameterFraction,
+            end: 1,
           },
-          {setFn: setRadians, begin: 4 * Math.PI, end: 0}
-        ).finally(() => setDisabled(false));
-      },
-
-      hide(durationMs: number): Promise<void> {
+          {setFn: setRadians, begin: -4 * Math.PI, end: 0}
+        );
+      }, 'show');
+    } else {
+      promises.enqueue(() => {
         return doTransition(
-          durationMs,
+          DURATION_MS,
           {
-            setFn: setDiameter,
-            begin: props.diameter,
+            setFn: setDiameterFraction,
+            begin: diameterFraction,
             end: 0,
           },
-          {setFn: setRadians, begin: 4 * Math.PI, end: 0}
-        ).finally(() => setVisible(false));
-      },
-    };
-    useImperativeHandle(ref, () => functions);
-
-    useEffect(() => {
-      if (visible) {
-        doTransition(250, {
-          setFn: setDiameter,
-          begin: diameter,
-          end: props.diameter,
+          {setFn: setRadians, begin: -4 * Math.PI, end: 0}
+        ).finally(() => {
+          setVisible(false);
         });
-      }
-    }, [props.diameter]);
-
-    function onClick() {
-      if (!disabled && props.enabled) {
-        props.onClick();
-      }
+      }, 'hide');
     }
+  }, [props.enabled]);
 
-    return (
-      <>
-        <div
-          id={props.id}
-          className="spin-button"
-          style={{
-            left: props.origin.x - diameter / 2,
-            top: props.origin.y - diameter / 2,
-            width: diameter,
-            height: diameter,
-            fontSize: diameter / 4,
-            visibility: visible ? 'visible' : 'hidden',
-            transform: `rotate(${radians}rad)`,
-          }}
-          role="button"
-          onClick={onClick}
-        >
-          SPIN
-        </div>
-      </>
-    );
+  function onClick() {
+    if (props.enabled) {
+      props.onClick();
+    }
   }
-);
+
+  return (
+    <>
+      <div
+        id={props.id}
+        className="spin-button"
+        style={{
+          left: '50%',
+          top: '50%',
+          width: props.diameter * diameterFraction,
+          height: props.diameter * diameterFraction,
+          fontSize: (props.diameter * diameterFraction) / 4,
+          visibility: visible ? 'visible' : 'hidden',
+          transform: `translate(-50%, -50%) rotate(${radians}rad)`,
+          cursor: 'pointer',
+        }}
+        role="button"
+        onClick={onClick}
+      >
+        SPIN
+      </div>
+    </>
+  );
+}

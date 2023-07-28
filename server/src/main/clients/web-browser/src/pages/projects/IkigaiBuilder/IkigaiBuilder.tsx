@@ -346,8 +346,8 @@ export function IkigaiBuilder() {
       return;
     }
     setCategories(
-      projectDefinition.inputs!.map<Category>((input, index) => ({
-        htmlId: `ikigaiCategory.${projectDefinition.id}.${index}`,
+      projectDefinition.inputs!.map<Category>(input => ({
+        htmlId: `ikigaiCategory.${assignment?.id}.${projectDefinition.id}.${input.id}.${input.category?.id}`,
         input: input,
       }))
     );

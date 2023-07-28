@@ -110,6 +110,7 @@ public class ServerApplication {
             new AntPathRequestMatcher("/api/protos/ErrorService/**", HttpMethod.POST.name()),
             new AntPathRequestMatcher("/api/protos/InterestService/**", HttpMethod.POST.name()),
             new AntPathRequestMatcher("/dashboards/**", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/demos/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/docs/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/error**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/favicon.*", HttpMethod.GET.name()),
