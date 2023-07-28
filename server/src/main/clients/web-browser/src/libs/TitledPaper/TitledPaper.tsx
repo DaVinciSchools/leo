@@ -12,6 +12,7 @@ import {
   persistedGridDraggable,
   persistedGridNotDraggable,
 } from '../PersistedReactGridLayout/PersistedReactGridLayout';
+import {Property} from 'csstype';
 
 export const TitledPaper = forwardRef(
   (
@@ -20,7 +21,7 @@ export const TitledPaper = forwardRef(
       icon?: ReactNode;
       headerColor?: string;
       highlightColor: string;
-      draggable?: boolean;
+      draggableCursorType?: Property.Cursor;
       paperProps?: PaperProps;
       style?: Partial<CSSProperties>;
       tabIndex?: number;
@@ -42,6 +43,7 @@ export const TitledPaper = forwardRef(
               height: '100%',
               overflow: 'hidden',
               width: '100%',
+              boxSizing: 'border-box',
             },
             props.style ?? {}
           )}
@@ -54,7 +56,7 @@ export const TitledPaper = forwardRef(
             paddingY={0.5}
             className={'titled-paper-title ' + persistedGridDraggable}
             style={{
-              cursor: props.draggable === true ? 'move' : undefined,
+              cursor: props.draggableCursorType,
               background:
                 props.headerColor ??
                 `

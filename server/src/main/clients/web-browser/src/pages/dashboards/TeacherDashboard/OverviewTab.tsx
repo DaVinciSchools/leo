@@ -24,7 +24,7 @@ export function OverviewTab() {
                 title="Assignments"
                 icon={<DescriptionTwoToneIcon />}
                 highlightColor="orange"
-                draggable={true}
+                draggableCursorType="move"
               >
                 TODO
               </TitledPaper>
@@ -38,7 +38,7 @@ export function OverviewTab() {
                 title="Assignment Stats"
                 icon={<QueryStatsIcon />}
                 highlightColor="blue"
-                draggable={true}
+                draggableCursorType="move"
               >
                 TODO
               </TitledPaper>
@@ -52,7 +52,7 @@ export function OverviewTab() {
                 title="Timeline"
                 icon={<ForumIcon />}
                 highlightColor="black"
-                draggable={true}
+                draggableCursorType="move"
               >
                 TODO
               </TitledPaper>
@@ -66,7 +66,7 @@ export function OverviewTab() {
                 title="Notifications"
                 icon={<NotificationsTwoToneIcon />}
                 highlightColor="green"
-                draggable={true}
+                draggableCursorType="move"
               >
                 TODO
               </TitledPaper>

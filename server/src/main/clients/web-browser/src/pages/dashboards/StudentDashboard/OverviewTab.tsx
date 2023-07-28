@@ -24,7 +24,7 @@ export function OverviewTab() {
               title="My Projects"
               icon={<RocketOutlinedIcon />}
               highlightColor="orange"
-              draggable={true}
+              draggableCursorType="move"
             >
               TODO
             </TitledPaper>
@@ -38,7 +38,7 @@ export function OverviewTab() {
               title="My Careers"
               icon={<BadgeOutlinedIcon />}
               highlightColor="blue"
-              draggable={true}
+              draggableCursorType="move"
             >
               TODO
             </TitledPaper>
@@ -52,7 +52,7 @@ export function OverviewTab() {
               title="My Passions"
               icon={<FavoriteBorderOutlinedIcon />}
               highlightColor="red"
-              draggable={true}
+              draggableCursorType="move"
             >
               TODO
             </TitledPaper>
@@ -66,7 +66,7 @@ export function OverviewTab() {
               title="My Motivations"
               icon={<SentimentSatisfiedOutlinedIcon />}
               highlightColor="yellow"
-              draggable={true}
+              draggableCursorType="move"
             >
               TODO
             </TitledPaper>
@@ -80,7 +80,7 @@ export function OverviewTab() {
               title="Timeline"
               icon={<PostAddOutlinedIcon />}
               highlightColor="black"
-              draggable={true}
+              draggableCursorType="move"
             >
               TODO
             </TitledPaper>
@@ -94,7 +94,7 @@ export function OverviewTab() {
               title="Notifications"
               icon={<NotificationsTwoToneIcon />}
               highlightColor="green"
-              draggable={true}
+              draggableCursorType="move"
             >
               TODO
             </TitledPaper>
