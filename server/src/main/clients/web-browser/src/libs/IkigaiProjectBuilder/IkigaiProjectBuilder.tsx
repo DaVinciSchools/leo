@@ -327,15 +327,14 @@ export function IkigaiProjectBuilder(props: {
   id: string;
   categoryStyle?: Partial<CSSProperties>;
   categories: pl_types.IProjectInputValue[];
-  noCategoriesText: ReactNode;
+  noCategoriesText?: ReactNode;
   categoryDiameter: (width: number, height: number) => number;
   distanceToCategoryCenter: (width: number, height: number) => number;
   enabled: boolean;
+  onSpinClick: (configuration: pl_types.IProjectInputValue[]) => void;
   style?: Partial<CSSProperties>;
 }) {
   const [handleError, setHandleError] = useState<HandleErrorType>();
-
-  const [processing, setProcessing] = useState(false);
 
   const [categoryElements, setCategoryElements] = useState<CategoryElement[]>(
     []
@@ -369,19 +368,6 @@ export function IkigaiProjectBuilder(props: {
     setCategoryElements(newCategoryElements);
   }, [props.categories]);
 
-  function onSpinClick() {
-    setProcessing(true);
-    setTimeout(() => setProcessing(false), 5);
-
-    // createService(ProjectManagementService, 'ProjectManagementService')
-    //   .generateProjects({
-    //     definition: projectDefinition,
-    //     assignmentId: assignment?.id,
-    //   })
-    //   .then(() => navigate('/projects/all-projects.html'))
-    //   .catch(setHandleError);
-  }
-
   return (
     <>
       <HandleError error={handleError} setError={setHandleError} />
@@ -396,17 +382,26 @@ export function IkigaiProjectBuilder(props: {
               (Math.min(width, height) / 4) * 0.85
             }
             radians={0}
-            enabled={!processing}
-            processing={processing}
+            enabled={true}
+            processing={false}
             categoryElementIds={categoryElements.map(e => e.htmlId)}
             showSpinButton={
-              !processing &&
               categoryElements.length > 0 &&
               categoryElements.every(
                 e => e.stringValues.length > 0 || e.optionValues.length > 0
               )
             }
-            onSpinClick={onSpinClick}
+            onSpinClick={() =>
+              props.onSpinClick(
+                categoryElements.map(c => {
+                  c.category.freeTexts = [...(c.stringValues ?? [])];
+                  c.category.selectedIds = (c.optionValues ?? []).map(
+                    o => o.id!
+                  );
+                  return c.category;
+                })
+              )
+            }
             radiansOffset={0}
           >
             {categoryElements.map(e => {
@@ -465,7 +460,22 @@ export function IkigaiProjectBuilder(props: {
             })}
           </Ikigai>
         )}
-        {(props?.categories?.length ?? 0) === 0 && props.noCategoriesText}
+        {(props?.categories?.length ?? 0) === 0 && (
+          <div
+            style={{
+              display: 'flex',
+              flexFlow: 'column nowrap',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+            }}
+          >
+            <span>
+              {props.noCategoriesText ??
+                'There are no categories to display in the Ikigai diagram.'}
+            </span>
+          </div>
+        )}
       </div>
     </>
   );

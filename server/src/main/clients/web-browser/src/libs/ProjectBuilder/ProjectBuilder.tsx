@@ -150,6 +150,7 @@ export function ProjectBuilder(props: {
                   height: '100%',
                   width: '100%',
                 }}
+                onSpinClick={() => console.log('Spin!')}
               />
             )}
           </Box>
