@@ -23,7 +23,8 @@ export const TitledPaper = forwardRef(
       highlightColor: string;
       draggableCursorType?: Property.Cursor;
       paperProps?: PaperProps;
-      style?: Partial<CSSProperties>;
+      titleStyle?: Partial<CSSProperties>;
+      bodyStyle?: Partial<CSSProperties>;
       tabIndex?: number;
     }>,
     ref: ForwardedRef<HTMLDivElement>
@@ -38,13 +39,8 @@ export const TitledPaper = forwardRef(
             {},
             {
               borderBottom: `${props.highlightColor} solid 2px`,
-              display: 'flex',
-              flexFlow: 'column nowrap',
-              height: '100%',
-              overflow: 'hidden',
-              width: '100%',
             },
-            props.style ?? {}
+            props.titleStyle ?? {}
           )}
           {...(props.paperProps ?? {})}
           ref={ref}
@@ -64,15 +60,20 @@ export const TitledPaper = forwardRef(
             }}
           >
             <span>{props.title}</span>
-            <span style={{color: `${props.highlightColor}`}}>
-              {props.icon ?? ''}
+            <span
+              style={{
+                color: props.highlightColor,
+                display: props.icon ? 'block' : 'none',
+              }}
+            >
+              {props.icon}
             </span>
           </Box>
           <Box
             paddingX={1}
             paddingY={0.5}
-            className={NOT_DRAGGABLE_CLASS_NAME}
-            style={{width: '100%', height: '100%'}}
+            className={'titled-paper-body ' + NOT_DRAGGABLE_CLASS_NAME}
+            style={props.bodyStyle}
           >
             {props.children}
           </Box>

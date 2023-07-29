@@ -135,7 +135,7 @@ function FreeTextInput(props: {
           title={props.title}
           headerColor={`hsla(${props.hue}, 100%, 75%, ${VISIBLE_ALPHA})`}
           highlightColor={`hsla(${props.hue}, 100%, 75%, 100%)`}
-          style={MODAL_STYLE}
+          titleStyle={MODAL_STYLE}
           paperProps={MODAL_PAPER_PROPS}
           icon={
             <span style={{color: 'black'}}>
@@ -256,7 +256,7 @@ function DropdownSelectInput(props: {
           title={props.title}
           headerColor={`hsla(${props.hue}, 100%, 75%, ${VISIBLE_ALPHA})`}
           highlightColor={`hsla(${props.hue}, 100%, 75%, 100%)`}
-          style={MODAL_STYLE}
+          titleStyle={MODAL_STYLE}
           paperProps={MODAL_PAPER_PROPS}
           icon={
             <span style={{color: 'black'}}>
