@@ -6,43 +6,57 @@
   background-color: rgba(255, 255, 255);
 }
 
-.ikigai-project-builder-panel {
-  cursor: pointer;
-
-  .ikigai-project-builder-chip-values {
-    @include ikigai-project-builder-chip-values;
-  }
-
-  .ikigai-project-builder-title {
-    font-size: large;
-    font-weight: bold;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: clip;
-  }
-
-  .ikigai-project-builder-hint {
-  }
-}
-
-.ikigai-project-builder-modal-content {
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: space-between;
+.ikigai-project-builder {
   width: 100%;
   height: 100%;
-  padding: 1em;
 
-  .ikigai-project-builder-chip-values {
-    @include ikigai-project-builder-chip-values;
+  .ikigai-project-builder-panel {
+    cursor: pointer;
+
+    .ikigai-project-builder-chip-values {
+      @include ikigai-project-builder-chip-values;
+    }
+
+    .ikigai-project-builder-title {
+      font-size: large;
+      font-weight: bold;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: clip;
+    }
+
+    .ikigai-project-builder-hint {
+    }
   }
 
-  .ikigai-project-builder-modal-buttons {
+  .ikigai-project-builder-modal-content {
     display: flex;
-    flex-flow: row nowrap;
-    justify-content: flex-end;
-    gap: 1em;
+    flex-flow: column nowrap;
+    justify-content: space-between;
     width: 100%;
-    height: fit-content;
+    height: 100%;
+    padding: 1em;
+
+    .ikigai-project-builder-chip-values {
+      @include ikigai-project-builder-chip-values;
+    }
+
+    .ikigai-project-builder-modal-buttons {
+      display: flex;
+      flex-flow: row nowrap;
+      justify-content: flex-end;
+      gap: 1em;
+      width: 100%;
+      height: fit-content;
+    }
+  }
+
+  .ikigai-project-builder-no-categories {
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
   }
 }

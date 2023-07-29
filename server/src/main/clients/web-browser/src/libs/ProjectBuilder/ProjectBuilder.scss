@@ -1,34 +1,82 @@
 @use "../../libs/color";
 
-.project-builder-title {
+.project-builder-page-layout {
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  max-height: inherit;
+}
+
+.project-builder-header {
   border-bottom: color.$neutral-200 solid 1px;
   width: 100%;
 }
 
 .project-builder-stepper {
-  margin: auto;
-  width: 65%;
+  width: 80%;
+  margin: 0 auto 0 auto;
+}
+
+.project-builder-content {
+  margin: 0 auto;
+  width: 80%;
+  height: 100%;
+  overflow: auto;
+}
+
+.project-builder-footer {
+  border-top: color.$neutral-200 solid 1px;
+  margin-top: 1em;
+  width: 100%;
 }
 
 .project-builder-getting-started {
   text-align: center;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: space-around;
+  max-height: 100%;
+  box-sizing: border-box;
+}
+
+.project-builder-getting-started-main {
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.project-builder-getting-started-buttons {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 1em;
+  justify-content: space-between;
+  margin: 0 auto 0 auto;
   width: 65%;
 }
 
 .project-builder-project-details {
   width: 100%;
   height: 100%;
-}
-
-.project-builder-buttons {
   display: flex;
   flex-flow: row nowrap;
-  gap: 1em;
-  justify-content: space-around;
-  margin: 0 auto 0 auto;
-  width: 65%;
+  justify-content: center;
+  gap: 2em;
+}
 
-  .button {
-    text-transform: none;
-  }
+.project-builder-project-details-column {
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.project-builder-project-details-column-title {
+  text-align: center;
+  font-weight: bold;
+  font-size: large;
+}
+
+.project-builder-register-main {
+
 }

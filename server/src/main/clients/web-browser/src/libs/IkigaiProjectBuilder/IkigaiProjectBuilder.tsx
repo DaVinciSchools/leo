@@ -461,18 +461,10 @@ export function IkigaiProjectBuilder(props: {
           </Ikigai>
         )}
         {(props?.categories?.length ?? 0) === 0 && (
-          <div
-            style={{
-              display: 'flex',
-              flexFlow: 'column nowrap',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-            }}
-          >
+          <div className="ikigai-project-builder-no-categories">
             <span>
               {props.noCategoriesText ??
-                'There are no categories to display in the Ikigai diagram.'}
+                'There are no categories for the Ikigai diagram.'}
             </span>
           </div>
         )}
