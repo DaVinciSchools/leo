@@ -210,7 +210,6 @@ export function Ikigai(
   }
 
   useEffect(() => {
-    console.log(JSON.stringify(props.categoryElementIds));
     needsSpinUpdate();
   }, [props.categoryElementIds]);
 
