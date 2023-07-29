@@ -117,7 +117,7 @@ export function ProjectPage(props: {
                   onChange={setLongDescrHtml}
                 />
               </Form.Item>
-              <Form.Item style={{textAlign: 'end', margin: '0 0'}}>
+              <Form.Item style={{textAlign: 'end'}}>
                 <Button type="primary" htmlType="submit">
                   Submit
                 </Button>

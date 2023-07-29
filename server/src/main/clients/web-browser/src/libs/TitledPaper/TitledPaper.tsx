@@ -43,7 +43,6 @@ export const TitledPaper = forwardRef(
               height: '100%',
               overflow: 'hidden',
               width: '100%',
-              boxSizing: 'border-box',
             },
             props.style ?? {}
           )}
@@ -62,7 +61,6 @@ export const TitledPaper = forwardRef(
                 `
               linear-gradient(90deg, transparent 0px, #fffffff2 0px),
               ${props.highlightColor}`,
-              boxSizing: 'border-box',
             }}
           >
             <span>{props.title}</span>
@@ -74,7 +72,7 @@ export const TitledPaper = forwardRef(
             paddingX={1}
             paddingY={0.5}
             className={NOT_DRAGGABLE_CLASS_NAME}
-            style={{width: '100%', height: '100%', boxSizing: 'border-box'}}
+            style={{width: '100%', height: '100%'}}
           >
             {props.children}
           </Box>

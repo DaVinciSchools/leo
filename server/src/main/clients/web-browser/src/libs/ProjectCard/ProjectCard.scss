@@ -7,8 +7,6 @@
   color: color.$neutral-800;
 
   .ant-card-head {
-    padding: 0;
-    margin: 0;
     min-height: 0;
     color: unset;
   }
@@ -33,7 +31,6 @@
   }
 
   div.ant-card ul.ant-card-actions>li {
-    margin: 0 0;
     padding: 0.25em 0.5em;
   }
 
@@ -43,7 +40,6 @@
 
   .ant-card-extra {
     padding: 0.25em 0.5em 0.25em 0;
-    margin: 0;
     min-height: 0;
 
     .details-link {
@@ -73,7 +69,6 @@
     background-color: unset;
 
     >li {
-      margin: 0;
       padding: 0.25em 0.5em;
     }
   }

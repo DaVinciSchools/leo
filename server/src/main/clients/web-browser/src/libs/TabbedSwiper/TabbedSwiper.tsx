@@ -59,6 +59,7 @@ export function TabbedSwiper<K>(props: {
           style={{
             alignSelf: 'stretch',
             flexGrow: 1,
+            // This needs to stay here for tabs to work.
             margin: '0',
           }}
           {...props.swiperProps}

@@ -142,7 +142,6 @@ export function IkigaiCategory(props: {
       borderWidth: '1px',
       borderColor: `hsla(${props.hue}, 100%, 80%, ${props.backgroundAlpha})`,
       opacity: props.contentAlpha,
-      boxSizing: 'border-box',
     });
   }
 

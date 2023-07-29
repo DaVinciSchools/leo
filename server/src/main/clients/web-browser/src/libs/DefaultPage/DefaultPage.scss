@@ -44,7 +44,6 @@
 }
 
 .page-body {
-  box-sizing: border-box;
   flex-grow: 1;
   height: 100%;
   overflow: auto;
@@ -129,14 +128,12 @@
 }
 
 .ant-layout-sider.left-menu {
-  padding: 0;
   width: 100%;
 
   .ant-layout-header {
     flex-shrink: 1;
     height: auto;
     line-height: 0;
-    padding-inline: 0;
     padding: 1em 1em 0.5em 1em !important;
 
     a {
@@ -160,6 +157,7 @@
 
   .ant-layout-footer {
     flex-shrink: 1;
+    // Needed to override AntD.
     padding: 0;
     text-align: left;
   }

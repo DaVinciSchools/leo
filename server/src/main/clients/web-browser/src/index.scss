@@ -5,8 +5,27 @@
 $heading-font-family: Montserrat;
 $body-font-family: Hind;
 
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+ol, ul {
+  margin: 1em;
+  padding-left: 2.5em;
+}
+dl {
+  margin: 1em;
+}
+dd {
+  margin-left: 2.5em;
+}
+p {
+  margin: 1em;
+}
+
 body {
-    margin: 0;
     font-family: $body-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
         'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
         sans-serif;
@@ -62,8 +81,6 @@ html,
 body {
     height: 100%;
     width: 100%;
-    padding: 0;
-    margin: 0;
 }
 
 #root,
@@ -114,7 +131,6 @@ button {
     --hover-bg-color: #{color.$neutral-250};
     color: color.$neutral-750;
     font-weight: 600;
-    box-sizing: border-box;
     cursor: pointer;
 
     &:hover {
@@ -159,10 +175,6 @@ button {
 }
 
 .ql-container .ql-editor {
-  :first-child {
-    margin-top: 0;
-  }
-
   p {
     margin-top: 1em;
   }

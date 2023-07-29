@@ -347,7 +347,7 @@ export function AssignmentsTab(props: {user: IUser}) {
           />
         </Grid>
         <Grid item xs={7}>
-          <Grid container rowGap={2} margin={0} columns={{xs: 6}} width="100%">
+          <Grid container rowGap={2} columns={{xs: 6}} width="100%">
             <Grid item xs={7}>
               <TextField
                 required
@@ -361,7 +361,7 @@ export function AssignmentsTab(props: {user: IUser}) {
             </Grid>
             <Grid item xs={6}>
               {categories.length > 0 ? (
-                <ol style={{margin: 0, paddingLeft: '40px'}}>
+                <ol>
                   {categories.map(category => (
                     <li key={category.category?.id}>
                       {category.category?.name}
@@ -369,7 +369,7 @@ export function AssignmentsTab(props: {user: IUser}) {
                   ))}
                 </ol>
               ) : (
-                <p style={{margin: 0, paddingLeft: '40px'}}>No Categories</p>
+                <p style={{paddingLeft: '2.5em'}}>No Categories</p>
               )}
             </Grid>
           </Grid>

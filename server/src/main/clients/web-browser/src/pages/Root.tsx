@@ -368,12 +368,7 @@ export function Root() {
               placement="bottomLeft"
             >
               <div className="project-leo-dropdown">
-                <span
-                  className="ant-input-prefix"
-                  style={{
-                    marginInlineEnd: '4px',
-                  }}
-                >
+                <span className="ant-input-prefix">
                   <SolutionOutlined />
                 </span>
                 <span
