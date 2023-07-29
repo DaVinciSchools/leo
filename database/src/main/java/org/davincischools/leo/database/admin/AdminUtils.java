@@ -196,6 +196,7 @@ public class AdminUtils {
                       "Knowledge and Skills",
                       type ->
                           type.setShortDescr("Knowledge and skill selections.")
+                              .setIncludeInDemo(true)
                               .setHint("Click to add desired knowledge and skills.")
                               .setInputDescr("Select knowledge and skills:")
                               .setInputPlaceholder("Select a Knowledge and Skill")
@@ -210,6 +211,7 @@ public class AdminUtils {
                       "XQ Competencies",
                       type ->
                           type.setShortDescr("XQ competency selections.")
+                              .setIncludeInDemo(true)
                               .setHint("Click to add desired XQ competency.")
                               .setInputDescr("Select XQ Competency:")
                               .setInputPlaceholder("Select a XQ Competency")
