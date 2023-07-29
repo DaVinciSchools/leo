@@ -1,6 +1,19 @@
-.persisted-grid-draggable {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+.persisted-react-grid-layout-container {
+  height: 100%;
+  max-height: inherit;
+  box-sizing: border-box;
+  position: relative;
+  overflow-x: clip;
+  overflow-y: auto;
+}
+
+.persisted-react-grid-layout {
+  position: relative;
+}
+
+.persisted-react-grid-layout-draggable {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }

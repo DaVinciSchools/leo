@@ -9,8 +9,8 @@ import {
   ReactNode,
 } from 'react';
 import {
-  persistedGridDraggable,
-  persistedGridNotDraggable,
+  DRAGGABLE_CLASS_NAME,
+  NOT_DRAGGABLE_CLASS_NAME,
 } from '../PersistedReactGridLayout/PersistedReactGridLayout';
 import {Property} from 'csstype';
 
@@ -54,7 +54,7 @@ export const TitledPaper = forwardRef(
           <Box
             paddingX={1}
             paddingY={0.5}
-            className={'titled-paper-title ' + persistedGridDraggable}
+            className={'titled-paper-title ' + DRAGGABLE_CLASS_NAME}
             style={{
               cursor: props.draggableCursorType,
               background:
@@ -73,7 +73,7 @@ export const TitledPaper = forwardRef(
           <Box
             paddingX={1}
             paddingY={0.5}
-            className={persistedGridNotDraggable}
+            className={NOT_DRAGGABLE_CLASS_NAME}
             style={{width: '100%', height: '100%', boxSizing: 'border-box'}}
           >
             {props.children}
