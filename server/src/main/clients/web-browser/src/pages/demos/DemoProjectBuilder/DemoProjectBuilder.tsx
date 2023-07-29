@@ -8,7 +8,6 @@ export function DemoProjectBuilder() {
       <ProjectBuilder
         demo={true}
         noCategoriesText={'Select categories on the left'}
-        detailsAugment={<></>}
       />
     </>
   );

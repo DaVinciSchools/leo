@@ -32,7 +32,6 @@ const STATE_LABELS = new Map<State, string>([
 export function ProjectBuilder(props: {
   demo?: boolean;
   noCategoriesText: ReactNode;
-  detailsAugment?: ReactNode;
   style?: Partial<CSSProperties>;
 }) {
   const [handleError, setHandleError] = useState<HandleErrorType>();
