@@ -22,10 +22,11 @@ export function IkigaiProjectConfigurer(props: {
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
+    let i = 0;
     setCategories(
       props.allCategories.map(c => ({
         category: c,
-        selected: true,
+        selected: i++ < 4,
         highlightColor: 'grey',
       }))
     );

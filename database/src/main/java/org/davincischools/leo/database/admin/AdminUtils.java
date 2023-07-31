@@ -148,15 +148,33 @@ public class AdminUtils {
   public static class ProjectDefinitionCategoryTypes {
     private final Database db;
 
+    private final ProjectDefinitionCategoryTypeBuilder studentInterestsType;
     private final ProjectDefinitionCategoryTypeBuilder careerInterestType;
+    private final ProjectDefinitionCategoryTypeBuilder assignmentTopicType;
     private final ProjectDefinitionCategoryTypeBuilder motivationType;
+    private final ProjectDefinitionCategoryTypeBuilder projectLeadTheWay;
     private final ProjectDefinitionCategoryTypeBuilder eksType;
     private final ProjectDefinitionCategoryTypeBuilder xqType;
-    private final ProjectDefinitionCategoryTypeBuilder studentInterestsType;
-    private final ProjectDefinitionCategoryTypeBuilder assignmentTopicType;
 
     public ProjectDefinitionCategoryTypes(Database db) {
       this.db = db;
+
+      // The first four below are automatically included for the demo.
+
+      studentInterestsType =
+          new ProjectDefinitionCategoryTypeBuilder(
+              db,
+              db.getProjectDefinitionCategoryTypeRepository()
+                  .upsert(
+                      "Student Interests",
+                      type ->
+                          type.setShortDescr("Student interest free text.")
+                              .setIncludeInDemo(true)
+                              .setHint("Click to add student interests.")
+                              .setInputDescr("Enter student interests:")
+                              .setInputPlaceholder("Student Interest")
+                              .setQueryPrefix("You are passionate about")
+                              .setValueType(ValueType.FREE_TEXT.name())));
 
       careerInterestType =
           new ProjectDefinitionCategoryTypeBuilder(
@@ -173,6 +191,21 @@ public class AdminUtils {
                               .setQueryPrefix("You are passionate about a career in")
                               .setValueType(ValueType.FREE_TEXT.name())));
 
+      assignmentTopicType =
+          new ProjectDefinitionCategoryTypeBuilder(
+              db,
+              db.getProjectDefinitionCategoryTypeRepository()
+                  .upsert(
+                      "Assignment Topic",
+                      type ->
+                          type.setShortDescr("Assignment topic for project.")
+                              .setIncludeInDemo(true)
+                              .setHint("Click to add assignment topic.")
+                              .setInputDescr("Enter assignment topic:")
+                              .setInputPlaceholder("Assignment Topic")
+                              .setQueryPrefix("The project MUST help the student learn about")
+                              .setValueType(ValueType.FREE_TEXT.name())));
+
       motivationType =
           new ProjectDefinitionCategoryTypeBuilder(
               db,
@@ -187,6 +220,21 @@ public class AdminUtils {
                               .setInputPlaceholder("Select a Motivation")
                               .setQueryPrefix("You are motivated by")
                               .setValueType(ValueType.MOTIVATION.name())));
+
+      projectLeadTheWay =
+          new ProjectDefinitionCategoryTypeBuilder(
+              db,
+              db.getProjectDefinitionCategoryTypeRepository()
+                  .upsert(
+                      "Project Lead The Way",
+                      type ->
+                          type.setShortDescr("Could be a searchable list of standards.")
+                              .setIncludeInDemo(true)
+                              .setHint("Click to add PLTW standards.")
+                              .setInputDescr("PLTW Standards:")
+                              .setInputPlaceholder("Enter PLTW Standards")
+                              .setQueryPrefix("The project should have something to do with")
+                              .setValueType(ValueType.FREE_TEXT.name())));
 
       eksType =
           new ProjectDefinitionCategoryTypeBuilder(
@@ -217,36 +265,6 @@ public class AdminUtils {
                               .setInputPlaceholder("Select a XQ Competency")
                               .setQueryPrefix("You want to improve your ability to")
                               .setValueType(ValueType.XQ_COMPETENCY.name())));
-
-      studentInterestsType =
-          new ProjectDefinitionCategoryTypeBuilder(
-              db,
-              db.getProjectDefinitionCategoryTypeRepository()
-                  .upsert(
-                      "Student Interests",
-                      type ->
-                          type.setShortDescr("Student interest free text.")
-                              .setIncludeInDemo(true)
-                              .setHint("Click to add student interests.")
-                              .setInputDescr("Enter student interests:")
-                              .setInputPlaceholder("Student Interest")
-                              .setQueryPrefix("You are passionate about")
-                              .setValueType(ValueType.FREE_TEXT.name())));
-
-      assignmentTopicType =
-          new ProjectDefinitionCategoryTypeBuilder(
-              db,
-              db.getProjectDefinitionCategoryTypeRepository()
-                  .upsert(
-                      "Assignment Topic",
-                      type ->
-                          type.setShortDescr("Assignment topic for project.")
-                              .setIncludeInDemo(true)
-                              .setHint("Click to add assignment topic.")
-                              .setInputDescr("Enter assignment topic:")
-                              .setInputPlaceholder("Assignment Topic")
-                              .setQueryPrefix("The project MUST help the student learn about")
-                              .setValueType(ValueType.FREE_TEXT.name())));
     }
 
     public ProjectDefinitionCategoryTypeBuilder getCareerInterestType() {
@@ -271,6 +289,10 @@ public class AdminUtils {
 
     public ProjectDefinitionCategoryTypeBuilder getAssignmentTopicType() {
       return assignmentTopicType;
+    }
+
+    public ProjectDefinitionCategoryTypeBuilder getProjectLeadTheWay() {
+      return projectLeadTheWay;
     }
   }
 
