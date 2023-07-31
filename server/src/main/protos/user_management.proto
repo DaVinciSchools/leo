@@ -12,6 +12,7 @@ service UserManagementService {
   rpc GetUserDetails (GetUserDetailsRequest) returns (GetUserDetailsResponse) {}
   rpc UpsertUser (UpsertUserRequest) returns (UpsertUserResponse) {}
   rpc RemoveUser (RemoveUserRequest) returns (RemoveUserResponse) {}
+  rpc RegisterUser (RegisterUserRequest) returns (RegisterUserResponse) {}
 }
 
 message FullUserDetails {
@@ -84,4 +85,27 @@ message RemoveUserRequest {
 }
 
 message RemoveUserResponse {
+}
+
+message RegisterUserRequest {
+  optional int32 user_id = 1;
+  optional string first_name = 2;
+  optional string last_name = 3;
+  optional string email_address = 4;
+  optional string password = 5;
+  optional string verify_password = 6;
+  optional string profession = 7;
+  optional string reasonForInterest = 8;
+  optional string districtName = 9;
+  optional string schoolName = 10;
+  optional string address_line_1 = 11;
+  optional string address_line_2 = 12;
+  optional string city = 13;
+  optional string state = 14;
+  optional string zipCode = 15;
+  optional string numTeachers = 16;
+  optional string numStudents = 17;
+}
+
+message RegisterUserResponse {
 }

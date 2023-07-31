@@ -11,10 +11,16 @@ import {
 import {CSSProperties, ReactNode, useEffect, useState} from 'react';
 import {HandleError, HandleErrorType} from '../HandleError/HandleError';
 import {IkigaiProjectBuilder} from '../IkigaiProjectBuilder/IkigaiProjectBuilder';
-import {pl_types, project_management} from '../../generated/protobuf-js';
+import {
+  pl_types,
+  project_management,
+  user_management,
+} from '../../generated/protobuf-js';
 import {createService} from '../protos';
 import ProjectManagementService = project_management.ProjectManagementService;
 import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectConfigurer';
+import {RegistrationForm} from './RegistrationForm/RegistrationForm';
+import IRegisterUserRequest = user_management.IRegisterUserRequest;
 
 enum State {
   GETTING_STARTED,
@@ -66,6 +72,18 @@ export function ProjectBuilder(props: {
         .catch(setHandleError);
     }
   }, [props.demo]);
+
+  function startGeneratingProjects(
+    configuration: pl_types.IProjectInputValue[]
+  ) {
+    // TODO
+    console.log(configuration);
+  }
+
+  function onRegisterUser(request: IRegisterUserRequest) {
+    // TODO
+    console.log(request);
+  }
 
   return (
     <>
@@ -122,7 +140,10 @@ export function ProjectBuilder(props: {
                   </Typography>
                 </Box>
               </Box>
-              <Box className="project-builder-getting-started-buttons">
+              <Box
+                padding={1}
+                className="project-builder-getting-started-buttons"
+              >
                 <Button
                   variant="contained"
                   className="project-builder-button"
@@ -196,9 +217,36 @@ export function ProjectBuilder(props: {
                     (Math.min(width, height) / 2) * 0.45
                   }
                   enabled={true}
-                  onSpinClick={() => setActiveStep(activeStep + 1)}
+                  onSpinClick={(
+                    configuration: pl_types.IProjectInputValue[]
+                  ) => {
+                    startGeneratingProjects(configuration);
+                    setActiveStep(activeStep + 1);
+                  }}
                 />
               </div>
+            </Box>
+          )}
+          {steps[activeStep] === State.REGISTER && (
+            <Box className="project-builder-register">
+              <div>
+                <Box padding={1} className="project-builder-register-title">
+                  <Typography variant="h4">
+                    Using the power of AI to create new and unique projects
+                    <br />
+                    tailored to your individual preferences!
+                  </Typography>
+                </Box>
+                <Box
+                  padding={1}
+                  className="project-builder-register-instructions"
+                >
+                  To explore the resulting projects, please register below.
+                </Box>
+              </div>
+              <Box paddingY={3} className="project-builder-register-form">
+                <RegistrationForm onRegisterUser={onRegisterUser} />
+              </Box>
             </Box>
           )}
         </div>
