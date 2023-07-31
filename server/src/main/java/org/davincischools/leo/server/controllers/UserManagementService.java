@@ -4,14 +4,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Streams;
+import com.google.common.collect.Lists;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Message;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.davincischools.leo.database.daos.AdminX;
 import org.davincischools.leo.database.daos.District;
+import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Student;
 import org.davincischools.leo.database.daos.Teacher;
@@ -23,6 +27,8 @@ import org.davincischools.leo.protos.user_management.GetPagedUsersDetailsRequest
 import org.davincischools.leo.protos.user_management.GetPagedUsersDetailsResponse;
 import org.davincischools.leo.protos.user_management.GetUserDetailsRequest;
 import org.davincischools.leo.protos.user_management.GetUserDetailsResponse;
+import org.davincischools.leo.protos.user_management.RegisterUserRequest;
+import org.davincischools.leo.protos.user_management.RegisterUserResponse;
 import org.davincischools.leo.protos.user_management.RemoveUserRequest;
 import org.davincischools.leo.protos.user_management.RemoveUserResponse;
 import org.davincischools.leo.protos.user_management.UpsertUserRequest;
@@ -44,8 +50,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class UserManagementService {
 
-  private final Pattern PASSWORD_REQS = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,50}$");
-  private final Pattern EMAIL_REQS = Pattern.compile("^[^@]+@[^@]+[.][^@]+$");
+  private static final Pattern PASSWORD_REQS =
+      Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,50}$");
+  private static final Pattern EMAIL_REQS = Pattern.compile("^[^@]+@[^@]+[.][^@]+$");
+  public static final String ANONYMOUS_USER_ENCODED_PASSWORD = "INVALID_ANONYMOUS_USER_PASSWORD";
 
   @Autowired Database db;
   @Autowired EntityManager entityManager;
@@ -301,12 +309,11 @@ public class UserManagementService {
               return response.build();
             })
         .onError(
-            (error, log) -> {
-              return Optional.of(
-                  UpsertUserResponse.newBuilder()
-                      .setError(error.throwables().get(0).getMessage())
-                      .build());
-            })
+            (error, log) ->
+                Optional.of(
+                    UpsertUserResponse.newBuilder()
+                        .setError(error.throwables().get(0).getMessage())
+                        .build()))
         .finish();
   }
 
@@ -353,6 +360,89 @@ public class UserManagementService {
         .finish();
   }
 
+  @PostMapping(value = "/api/protos/UserManagementService/RegisterUser")
+  @ResponseBody
+  public RegisterUserResponse removeUser(
+      @RequestBody Optional<RegisterUserRequest> optionalRequest, HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    return httpExecutors
+        .start(optionalRequest.orElse(RegisterUserRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              UserX userX = db.getUserXRepository().findById(request.getUserId()).orElseThrow();
+
+              if (!Objects.equals(userX.getEncodedPassword(), ANONYMOUS_USER_ENCODED_PASSWORD)) {
+                throw new IllegalArgumentException("User is not anonymous.");
+              }
+
+              Interest interest =
+                  db.getInterestRepository()
+                      .save(
+                          new Interest()
+                              .setCreationTime(Instant.now())
+                              .setFirstName(
+                                  valueOrNull(request, RegisterUserRequest.FIRST_NAME_FIELD_NUMBER))
+                              .setLastName(
+                                  valueOrNull(request, RegisterUserRequest.LAST_NAME_FIELD_NUMBER))
+                              .setEmailAddress(
+                                  valueOrNull(
+                                      request, RegisterUserRequest.EMAIL_ADDRESS_FIELD_NUMBER))
+                              .setProfession(
+                                  valueOrNull(request, RegisterUserRequest.PROFESSION_FIELD_NUMBER))
+                              .setReasonForInterest(
+                                  valueOrNull(
+                                      request, RegisterUserRequest.REASONFORINTEREST_FIELD_NUMBER))
+                              .setDistrictName(
+                                  valueOrNull(
+                                      request, RegisterUserRequest.DISTRICTNAME_FIELD_NUMBER))
+                              .setSchoolName(
+                                  valueOrNull(request, RegisterUserRequest.SCHOOLNAME_FIELD_NUMBER))
+                              .setAddressLine1(
+                                  valueOrNull(
+                                      request, RegisterUserRequest.ADDRESS_LINE_2_FIELD_NUMBER))
+                              .setAddressLine2(
+                                  valueOrNull(
+                                      request, RegisterUserRequest.ADDRESS_LINE_2_FIELD_NUMBER))
+                              .setCity(valueOrNull(request, RegisterUserRequest.CITY_FIELD_NUMBER))
+                              .setState(
+                                  valueOrNull(request, RegisterUserRequest.STATE_FIELD_NUMBER))
+                              .setZipCode(
+                                  valueOrNull(request, RegisterUserRequest.ZIPCODE_FIELD_NUMBER))
+                              .setNumTeachers(
+                                  valueOrNull(
+                                      request, RegisterUserRequest.NUMTEACHERS_FIELD_NUMBER))
+                              .setNumStudents(
+                                  valueOrNull(
+                                      request, RegisterUserRequest.NUMSTUDENTS_FIELD_NUMBER)));
+              db.getUserXRepository()
+                  .save(
+                      UserUtils.setPassword(
+                          userX
+                              .setCreationTime(Instant.now())
+                              .setFirstName(
+                                  valueOrNull(request, RegisterUserRequest.FIRST_NAME_FIELD_NUMBER))
+                              .setLastName(
+                                  valueOrNull(request, RegisterUserRequest.LAST_NAME_FIELD_NUMBER))
+                              .setEmailAddress(
+                                  valueOrNull(
+                                      request, RegisterUserRequest.EMAIL_ADDRESS_FIELD_NUMBER))
+                              .setInterest(interest),
+                          request.getPassword()));
+
+              return RegisterUserResponse.getDefaultInstance();
+            })
+        .finish();
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T valueOrNull(Message request, int fieldNumber) {
+    FieldDescriptor descriptor = request.getDescriptorForType().findFieldByNumber(fieldNumber);
+    if (request.hasField(descriptor)) {
+      return (T) request.getField(descriptor);
+    }
+    return null;
+  }
+
   private void getFullUserDetails(int userId, FullUserDetails.Builder details) {
     // If the user doesn't exist, return an empty result.
     UserX userX = db.getUserXRepository().findById(userId).orElse(null);
@@ -367,7 +457,7 @@ public class UserManagementService {
     Optional.ofNullable(userX.getTeacher())
         .map(Teacher::getId)
         .map(db.getTeacherSchoolRepository()::findSchoolsByTeacherId)
-        .map(schools -> Streams.stream(schools).map(School::getId).toList())
+        .map(schools -> Lists.transform(schools, School::getId))
         .ifPresent(details::addAllSchoolIds);
 
     // Set student details.

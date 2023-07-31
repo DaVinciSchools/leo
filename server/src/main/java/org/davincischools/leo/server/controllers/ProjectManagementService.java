@@ -730,7 +730,8 @@ public class ProjectManagementService {
                           e ->
                               e.setFirstName("Anonymous")
                                   .setLastName("Anonymous")
-                                  .setEncodedPassword("ANONYMOUS_USER_NEEDS_PASSWORD")));
+                                  .setEncodedPassword(
+                                      UserManagementService.ANONYMOUS_USER_ENCODED_PASSWORD)));
               response.setUserId(userX.get().getId());
 
               // Create the definition and GenerateProjectRequest.

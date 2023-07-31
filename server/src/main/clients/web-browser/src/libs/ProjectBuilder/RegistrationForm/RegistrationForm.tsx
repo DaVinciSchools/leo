@@ -17,8 +17,8 @@ import {FormEvent, RefObject, useRef, useState} from 'react';
 import {user_management} from '../../../generated/protobuf-js';
 import IRegisterUserRequest = user_management.IRegisterUserRequest;
 import {
-  checkFieldForErrors,
-  convertFormValuesToMap,
+  checkFieldForErrorsAndSet,
+  convertFormValuesToObject,
   ExtraErrorChecks,
   getInputField,
   getInputValue,
@@ -32,7 +32,13 @@ export function RegistrationForm(props: {
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const formFieldErrorCheckers = useRef(
-    new Map<string, (finalCheck: boolean) => boolean>()
+    new Map<
+      string,
+      {
+        reset: () => void;
+        checkAndSet: (finalCheck: boolean) => boolean;
+      }
+    >()
   );
 
   const [showPasswords, setShowPasswords] = useState(false);
@@ -78,21 +84,25 @@ export function RegistrationForm(props: {
     error: string,
     extraErrorChecks?: ExtraErrorChecks
   ): OutlinedTextFieldProps {
-    formFieldErrorCheckers.current.set(name, finalCheck => {
-      const error = checkFieldForErrors(
+    const checkErrorFn = (finalCheck: boolean) =>
+      checkFieldForErrorsAndSet(
+        setError,
         getInputField(ref.current),
         finalCheck,
         extraErrorChecks
       );
-      if (error != null) {
-        setError(error);
-        ref.current?.scrollIntoView(true);
-        getInputField(ref.current)?.focus();
-        return true;
-      } else {
-        setError('');
-        return false;
-      }
+
+    formFieldErrorCheckers.current.set(name, {
+      reset: () => setError(''),
+      checkAndSet: finalCheck => {
+        if (checkErrorFn(finalCheck)) {
+          ref.current?.scrollIntoView(true);
+          getInputField(ref.current)?.focus();
+          return true;
+        } else {
+          return false;
+        }
+      },
     });
 
     return {
@@ -103,27 +113,21 @@ export function RegistrationForm(props: {
       ref: ref,
       helperText: error,
       error: !!error,
-      onChange: () =>
-        setError(
-          checkFieldForErrors(
-            getInputField(ref.current),
-            true,
-            extraErrorChecks
-          ) ?? ''
-        ),
-      onBlur: () =>
-        setError(
-          checkFieldForErrors(
-            getInputField(ref.current),
-            true,
-            extraErrorChecks
-          ) ?? ''
-        ),
+      onChange: () => {
+        setError('');
+        checkErrorFn(true);
+      },
+      onBlur: () => {
+        setError('');
+        checkErrorFn(true);
+      },
     };
   }
 
   function checkFormForErrors(finalCheck: boolean) {
     let error = false;
+
+    formFieldErrorCheckers.current.forEach(fn => fn.reset());
 
     const password = getInputValue(getInputField(passwordRef.current));
     const verifyPassword = getInputValue(
@@ -134,11 +138,13 @@ export function RegistrationForm(props: {
         error = true;
         setPasswordError('Passwords do not match.');
         setVerifyPasswordError('Passwords do not match.');
+        passwordRef.current?.scrollIntoView(true);
+        getInputField(passwordRef.current)?.focus();
       }
     }
 
     formFieldErrorCheckers.current.forEach(fn => {
-      if (fn(finalCheck)) {
+      if (fn.checkAndSet(finalCheck)) {
         error = true;
       }
     });
@@ -154,11 +160,9 @@ export function RegistrationForm(props: {
       return;
     }
 
-    const request = convertFormValuesToMap(
-      formRef.current
-    ) as IRegisterUserRequest;
-
-    props.onRegisterUser(request);
+    props.onRegisterUser(
+      convertFormValuesToObject(formRef.current) as IRegisterUserRequest
+    );
   }
 
   return (
@@ -483,7 +487,7 @@ export function RegistrationForm(props: {
             className="project-builder-button"
             type="submit"
           >
-            Show Me the Projects!
+            Register and Continue
           </Button>
         </Grid>
       </Grid>

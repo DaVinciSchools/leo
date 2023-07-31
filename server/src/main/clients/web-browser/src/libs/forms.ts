@@ -76,6 +76,19 @@ export function getAllInputFields(
   );
 }
 
+export function checkFieldForErrorsAndSet(
+  setError: (error: string) => void,
+  input: HTMLInputElement | HTMLTextAreaElement | undefined,
+  finalCheck: boolean,
+  extraErrorChecks?: ExtraErrorChecks
+): string | undefined {
+  const error = checkFieldForErrors(input, finalCheck, extraErrorChecks);
+  if (error) {
+    setError(error);
+  }
+  return error;
+}
+
 export function checkFieldForErrors(
   input: HTMLInputElement | HTMLTextAreaElement | undefined,
   finalCheck: boolean,
@@ -171,7 +184,10 @@ export function getInputValue(
   }
 
   if (input.type === 'number') {
-    if (input.value.length === 0) {
+    if (
+      input.value.length === 0 ||
+      ('valueAsNumber' in input && isNaN(input.valueAsNumber))
+    ) {
       return;
     }
     if (NUMBER_PATTERN.exec(input.value)) {
@@ -185,16 +201,17 @@ export function getInputValue(
   throw new Error(`Input type '${input.type}' is not recognized.`);
 }
 
-export function convertFormValuesToMap(
+export function convertFormValuesToObject(
   form: HTMLFormElement | null | undefined
 ) {
   if (form == null) {
-    return new Map();
+    return {};
   }
 
   return Object.fromEntries(
-    new Map<string, string | number | undefined>(
-      getAllInputFields(form).map(input => [input.name, getInputValue(input)])
-    )
+    getAllInputFields(form)
+      .map(input => [input.name, getInputValue(input)])
+      //eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .filter(([k, v]) => v !== undefined)
   );
 }

@@ -103,8 +103,8 @@ message RegisterUserRequest {
   optional string city = 13;
   optional string state = 14;
   optional string zipCode = 15;
-  optional string numTeachers = 16;
-  optional string numStudents = 17;
+  optional int32 numTeachers = 16;
+  optional int32 numStudents = 17;
 }
 
 message RegisterUserResponse {

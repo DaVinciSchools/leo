@@ -21,6 +21,7 @@ import ProjectManagementService = project_management.ProjectManagementService;
 import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectConfigurer';
 import {RegistrationForm} from './RegistrationForm/RegistrationForm';
 import IRegisterUserRequest = user_management.IRegisterUserRequest;
+import UserManagementService = user_management.UserManagementService;
 
 enum State {
   GETTING_STARTED,
@@ -53,8 +54,7 @@ export function ProjectBuilder(props: {
   // All states. But, filter out REGISTER/REVIEW depending on demo mode.
   const steps: State[] = Object.values(State)
     .filter(i => typeof i === 'number')
-    .map(i => i as State)
-    .filter(i => (props.demo ? i !== State.REVIEW : i !== State.REGISTER));
+    .map(i => i as State);
   const [activeStep, setActiveStep] = useState(State.GETTING_STARTED);
 
   useEffect(() => {
@@ -86,9 +86,12 @@ export function ProjectBuilder(props: {
 
   function onRegisterUser(request: IRegisterUserRequest) {
     request.userId = userId;
-
-    // TODO
-    console.log(request);
+    createService(UserManagementService, 'UserManagementService')
+      .registerUser(request)
+      .then(() => {
+        setActiveStep(activeStep + 1);
+      })
+      .catch(setHandleError);
   }
 
   return (
