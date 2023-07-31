@@ -737,7 +737,11 @@ public class ProjectManagementService {
               // Create the definition and GenerateProjectRequest.
               ProjectDefinition definition =
                   db.getProjectDefinitionRepository()
-                      .upsert("Anonymously Created Project Definition", userX.get(), e -> {});
+                      .save(
+                          new ProjectDefinition()
+                              .setCreationTime(Instant.now())
+                              .setName("Anonymously Created Project Definition")
+                              .setUserX(userX.get()));
               generateRequest.getDefinitionBuilder().setId(definition.getId());
 
               // Process the inputs.
