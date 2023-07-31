@@ -20,7 +20,7 @@ public class HttpUser {
   private final HttpServletResponse response;
   private final boolean authorized;
 
-  HttpUser(
+  public HttpUser(
       Optional<UserX> userX,
       HttpServletRequest request,
       HttpServletResponse response,

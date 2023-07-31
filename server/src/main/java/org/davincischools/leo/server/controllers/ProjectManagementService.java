@@ -8,6 +8,8 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -16,17 +18,21 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import org.apache.commons.text.StringEscapeUtils;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.Project;
+import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectPost;
+import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
@@ -38,6 +44,8 @@ import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.project_management.DeletePostRequest;
 import org.davincischools.leo.protos.project_management.DeletePostResponse;
+import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsRequest;
+import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsResponse;
 import org.davincischools.leo.protos.project_management.GenerateProjectsRequest;
 import org.davincischools.leo.protos.project_management.GenerateProjectsResponse;
 import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionRequest;
@@ -82,6 +90,9 @@ public class ProjectManagementService {
       ProjectInput input,
       List<ImmutableList<ProjectInputValue>> values,
       GenerateProjectsResponse.Builder response) {}
+
+  public record GenerateAnonymousProjectInput(
+      ProjectInputCategory input, ProjectDefinitionCategory inputDefinition) {}
 
   private static final AtomicInteger POSITION_COUNTER = new AtomicInteger(0);
 
@@ -176,7 +187,10 @@ public class ProjectManagementService {
                       .setUserX(user.get().orElseThrow())
                       .setState(State.PROCESSING.name())
                       .setTimeout(Instant.now().plus(Duration.ofMinutes(10)))
-                      .setAssignment(new Assignment().setId(request.getAssignmentId())),
+                      .setAssignment(
+                          request.hasAssignmentId()
+                              ? new Assignment().setId(request.getAssignmentId())
+                              : null),
                   new ArrayList<>(),
                   GenerateProjectsResponse.newBuilder());
             })
@@ -683,6 +697,96 @@ public class ProjectManagementService {
                   .forEach(
                       c -> extractProjectInputCategory(c, response.addInputCategoriesBuilder()));
 
+              return response.build();
+            })
+        .finish();
+  }
+
+  @PostMapping(value = "/api/protos/ProjectManagementService/GenerateAnonymousProjects")
+  @ResponseBody
+  public GenerateAnonymousProjectsResponse generateAnonymousProjects(
+      @Anonymous HttpUser user,
+      @RequestBody Optional<GenerateAnonymousProjectsRequest> optionalRequest,
+      HttpServletRequest servletRequest,
+      HttpServletResponse servletResponse,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    var response = GenerateAnonymousProjectsResponse.newBuilder();
+    var userX = new AtomicReference<UserX>();
+
+    return httpExecutors
+        .start(optionalRequest.orElse(GenerateAnonymousProjectsRequest.getDefaultInstance()))
+        // Create the GenerateProjectRequest.
+        .andThen(
+            (request, log) -> {
+              var generateRequest = GenerateProjectsRequest.newBuilder();
+
+              // Create the user.
+              userX.set(
+                  db.getUserXRepository()
+                      .upsert(
+                          null,
+                          UUID.randomUUID().toString() + "@anonymous.projectleo.net",
+                          e ->
+                              e.setFirstName("Anonymous")
+                                  .setLastName("Anonymous")
+                                  .setEncodedPassword("ANONYMOUS_USER_NEEDS_PASSWORD")));
+              response.setUserId(userX.get().getId());
+
+              // Create the definition and GenerateProjectRequest.
+              ProjectDefinition definition =
+                  db.getProjectDefinitionRepository()
+                      .upsert("Anonymously Created Project Definition", userX.get(), e -> {});
+              generateRequest.getDefinitionBuilder().setId(definition.getId());
+
+              // Process the inputs.
+              request
+                  .getInputValuesList()
+                  .forEach(
+                      input -> {
+                        db.getProjectDefinitionCategoryRepository()
+                            .upsert(
+                                definition,
+                                db.getProjectDefinitionCategoryTypeRepository()
+                                    .findById(input.getCategory().getTypeId())
+                                    .orElseThrow(),
+                                e ->
+                                    e.setMaxNumValues(input.getCategory().getMaxNumValues())
+                                        .setPosition((float) POSITION_COUNTER.incrementAndGet()));
+                        generateRequest
+                            .getDefinitionBuilder()
+                            .addInputsBuilder()
+                            .addAllFreeTexts(input.getFreeTextsList())
+                            .addAllSelectedIds(input.getSelectedIdsList());
+                      });
+
+              return generateRequest;
+            })
+        .andThen(
+            (generateRequest, log) -> {
+              new Thread(
+                      () -> {
+                        try {
+                          generateProjects(
+                                  new HttpUser(
+                                      Optional.of(userX.get()),
+                                      servletRequest,
+                                      servletResponse,
+                                      true),
+                                  Optional.of(generateRequest.build()),
+                                  httpExecutors)
+                              .getProjectsList()
+                              .stream()
+                              .forEach(
+                                  project ->
+                                      log.addNote(
+                                          "Generated project: %s: %s",
+                                          project.getId(), project.getName()));
+                        } catch (HttpExecutorException e) {
+                          // The log will already be populated with any error. Ignore.
+                        }
+                      })
+                  .start();
               return response.build();
             })
         .finish();

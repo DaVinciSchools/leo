@@ -12,6 +12,7 @@ service ProjectManagementService {
   rpc GetXqCompetencies (GetXqCompetenciesRequest) returns (GetXqCompetenciesResponse) {}
   rpc GetMotivations (GetMotivationsRequest) returns (GetMotivationsResponse) {}
   rpc GenerateProjects (GenerateProjectsRequest) returns (GenerateProjectsResponse) {}
+  rpc GenerateAnonymousProjects (GenerateAnonymousProjectsRequest) returns (GenerateAnonymousProjectsResponse) {}
 
   rpc GetProjectDefinitionCategoryTypes (GetProjectDefinitionCategoryTypesRequest) returns (GetProjectDefinitionCategoryTypesResponse) {}
   rpc GetProjectDetails (GetProjectDetailsRequest) returns (GetProjectDetailsResponse) {}
@@ -135,4 +136,13 @@ message GetProjectDefinitionCategoryTypesRequest {
 
 message GetProjectDefinitionCategoryTypesResponse {
   repeated pl_types.ProjectInputCategory input_categories = 1;
+}
+
+message GenerateAnonymousProjectsRequest {
+  repeated pl_types.ProjectInputValue input_values = 1;
+}
+
+message GenerateAnonymousProjectsResponse {
+  optional int32 user_id = 1;
+  optional int32 project_id = 2;
 }

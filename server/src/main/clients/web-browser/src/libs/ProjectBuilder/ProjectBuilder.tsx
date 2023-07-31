@@ -48,6 +48,7 @@ export function ProjectBuilder(props: {
   const [inputValues, setInputValues] = useState<pl_types.IProjectInputValue[]>(
     []
   );
+  const [userId, setUserId] = useState(-1);
 
   // All states. But, filter out REGISTER/REVIEW depending on demo mode.
   const steps: State[] = Object.values(State)
@@ -73,14 +74,19 @@ export function ProjectBuilder(props: {
     }
   }, [props.demo]);
 
-  function startGeneratingProjects(
-    configuration: pl_types.IProjectInputValue[]
-  ) {
-    // TODO
-    console.log(configuration);
+  function startGeneratingProjects(values: pl_types.IProjectInputValue[]) {
+    createService(ProjectManagementService, 'ProjectManagementService')
+      .generateAnonymousProjects({inputValues: values})
+      .then(response => {
+        setUserId(response.userId!);
+        setActiveStep(activeStep + 1);
+      })
+      .catch(setHandleError);
   }
 
   function onRegisterUser(request: IRegisterUserRequest) {
+    request.userId = userId;
+
     // TODO
     console.log(request);
   }
@@ -221,7 +227,6 @@ export function ProjectBuilder(props: {
                     configuration: pl_types.IProjectInputValue[]
                   ) => {
                     startGeneratingProjects(configuration);
-                    setActiveStep(activeStep + 1);
                   }}
                 />
               </div>

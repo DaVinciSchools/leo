@@ -112,6 +112,9 @@ public class ServerApplication {
             new AntPathRequestMatcher(
                 "/api/protos/ProjectManagementService/GetProjectDefinitionCategoryTypes",
                 HttpMethod.POST.name()),
+            new AntPathRequestMatcher(
+                "/api/protos/ProjectManagementService/GenerateAnonymousProjects",
+                HttpMethod.POST.name()),
             new AntPathRequestMatcher("/dashboards/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/demos/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/docs/**", HttpMethod.GET.name()),
