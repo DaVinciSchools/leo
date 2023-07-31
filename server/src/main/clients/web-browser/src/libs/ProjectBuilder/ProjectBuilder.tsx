@@ -22,19 +22,25 @@ import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectC
 import {RegistrationForm} from './RegistrationForm/RegistrationForm';
 import IRegisterUserRequest = user_management.IRegisterUserRequest;
 import UserManagementService = user_management.UserManagementService;
+import {useNavigate} from 'react-router';
+import {
+  LOGIN_RETURN_TO_PARAM,
+  PASSWORD_PARAM,
+  USERNAME_PARAM,
+} from '../authentication';
 
 enum State {
   GETTING_STARTED,
   PROJECT_DETAILS,
   REGISTER,
-  REVIEW,
+  CONGRATULATIONS,
 }
 
 const STATE_LABELS = new Map<State, string>([
   [State.GETTING_STARTED, 'Getting Started'],
   [State.PROJECT_DETAILS, 'Project Details'],
   [State.REGISTER, 'Register'],
-  [State.REVIEW, 'Review'],
+  [State.CONGRATULATIONS, 'Congratulations!'],
 ]);
 
 export function ProjectBuilder(props: {
@@ -43,6 +49,8 @@ export function ProjectBuilder(props: {
   style?: Partial<CSSProperties>;
 }) {
   const [handleError, setHandleError] = useState<HandleErrorType>();
+  const navigate = useNavigate();
+
   const [allInputValues, setAllInputValues] = useState<
     pl_types.IProjectInputValue[]
   >([]);
@@ -50,6 +58,8 @@ export function ProjectBuilder(props: {
     []
   );
   const [userId, setUserId] = useState(-1);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
   // All states. But, filter out REGISTER/REVIEW depending on demo mode.
   const steps: State[] = Object.values(State)
@@ -89,9 +99,23 @@ export function ProjectBuilder(props: {
     createService(UserManagementService, 'UserManagementService')
       .registerUser(request)
       .then(() => {
+        setUsername(request.emailAddress!);
+        setPassword(request.password!);
         setActiveStep(activeStep + 1);
       })
       .catch(setHandleError);
+  }
+
+  function onSeeProjects() {
+    navigate(
+      `/users/login.html?${USERNAME_PARAM}=${encodeURIComponent(
+        username
+      )}&${PASSWORD_PARAM}=${encodeURIComponent(
+        password
+      )}&${LOGIN_RETURN_TO_PARAM}=${encodeURIComponent(
+        '/projects/all-projects.html'
+      )}`
+    );
   }
 
   return (
@@ -256,6 +280,30 @@ export function ProjectBuilder(props: {
                 <RegistrationForm onRegisterUser={onRegisterUser} />
               </Box>
             </Box>
+          )}
+          {steps[activeStep] === State.CONGRATULATIONS && (
+            <div className="project-builder-congratulations">
+              <Typography variant="h4">
+                Congratulations! Let's take you to your projects!
+              </Typography>
+              <Box className="project-builder-congratulations-main">
+                <Box padding={1}>
+                  <img src="/images/landing/kids-jumping.png" height="200px" />
+                </Box>
+              </Box>
+              <Box
+                padding={1}
+                className="project-builder-congratulations-buttons"
+              >
+                <Button
+                  variant="contained"
+                  className="project-builder-button"
+                  onClick={onSeeProjects}
+                >
+                  Go see my projects!
+                </Button>
+              </Box>
+            </div>
           )}
         </div>
         <Box className="project-builder-footer" style={{width: '100%'}}>

@@ -38,7 +38,6 @@
   flex-flow: column nowrap;
   justify-content: space-around;
   max-height: 100%;
-  box-sizing: border-box;
   gap: 1em;
 }
 
@@ -99,4 +98,22 @@
     overflow: auto;
     padding-right: 16px;
   }
+}
+
+.project-builder-congratulations {
+  text-align: center;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: space-around;
+  max-height: 100%;
+  gap: 1em;
+}
+
+.project-builder-congratulations-buttons {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 1em;
+  justify-content: space-around;
+  margin: 0 auto 0 auto;
+  width: 65%;
 }

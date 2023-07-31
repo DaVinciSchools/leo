@@ -28,6 +28,15 @@ export function LoginForm(props: {successAction: (user: IUser) => void}) {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
+    if (queryParameters.get('username') && queryParameters.get('password')) {
+      doSubmit({
+        username: queryParameters.get('username'),
+        password: queryParameters.get('password'),
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     if (failure) {
       setTimeout(() => setFailure(''), 5000);
     }
