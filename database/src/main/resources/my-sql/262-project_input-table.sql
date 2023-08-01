@@ -15,8 +15,6 @@ CREATE TABLE project_input
             ON DELETE RESTRICT
             ON UPDATE RESTRICT,
 
-    -- Allow projects to be created outside of assignments. Useful for testing
-    -- project definitions while they are being developed.
     assignment_id         INT,
     CONSTRAINT project__assignment_id
         FOREIGN KEY (assignment_id)
@@ -24,7 +22,8 @@ CREATE TABLE project_input
             ON DELETE RESTRICT
             ON UPDATE RESTRICT,
 
-    user_x_id             INT      NOT NULL,
+    -- Optional for demo usage.
+    user_x_id             INT,
     CONSTRAINT project_input__user_x_id
         FOREIGN KEY (user_x_id)
             REFERENCES user_x (id)
