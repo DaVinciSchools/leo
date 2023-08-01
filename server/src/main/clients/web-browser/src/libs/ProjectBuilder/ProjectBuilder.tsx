@@ -24,6 +24,7 @@ import IRegisterUserRequest = user_management.IRegisterUserRequest;
 import UserManagementService = user_management.UserManagementService;
 import {useNavigate} from 'react-router';
 import {
+  getCurrentUser,
   LOGIN_RETURN_TO_PARAM,
   PASSWORD_PARAM,
   USERNAME_PARAM,
@@ -39,16 +40,16 @@ enum State {
 const STATE_LABELS = new Map<State, string>([
   [State.GETTING_STARTED, 'Getting Started'],
   [State.PROJECT_DETAILS, 'Project Details'],
-  [State.REGISTER, 'Register'],
+  [State.REGISTER, 'Log in / Register'],
   [State.CONGRATULATIONS, 'Congratulations!'],
 ]);
 
 export function ProjectBuilder(props: {
-  demo?: boolean;
   noCategoriesText: ReactNode;
   style?: Partial<CSSProperties>;
 }) {
   const [handleError, setHandleError] = useState<HandleErrorType>();
+  const user = getCurrentUser();
   const navigate = useNavigate();
 
   const [allInputValues, setAllInputValues] = useState<
@@ -61,14 +62,15 @@ export function ProjectBuilder(props: {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  // All states. But, filter out REGISTER/REVIEW depending on demo mode.
+  // All states. But, filter out REGISTER depending on demo mode.
   const steps: State[] = Object.values(State)
     .filter(i => typeof i === 'number')
+    .filter(i => user == null || i !== State.REGISTER)
     .map(i => i as State);
-  const [activeStep, setActiveStep] = useState(State.GETTING_STARTED);
+  const [activeStep, setActiveStep] = useState(State.REGISTER);
 
   useEffect(() => {
-    if (props.demo && allInputValues.length === 0) {
+    if (allInputValues.length === 0) {
       createService(ProjectManagementService, 'ProjectManagementService')
         .getProjectDefinitionCategoryTypes({includeDemos: true})
         .then(response => {
@@ -82,7 +84,7 @@ export function ProjectBuilder(props: {
         })
         .catch(setHandleError);
     }
-  }, [props.demo]);
+  }, []);
 
   function startGeneratingProjects(values: pl_types.IProjectInputValue[]) {
     createService(ProjectManagementService, 'ProjectManagementService')
@@ -180,7 +182,7 @@ export function ProjectBuilder(props: {
                 <Button
                   variant="contained"
                   className="project-builder-button"
-                  disabled={props.demo}
+                  disabled={user == null}
                 >
                   Start with an
                   <br />
@@ -198,7 +200,7 @@ export function ProjectBuilder(props: {
                 <Button
                   variant="contained"
                   className="project-builder-button"
-                  disabled={props.demo}
+                  disabled={user == null}
                 >
                   Create a project
                   <br />
