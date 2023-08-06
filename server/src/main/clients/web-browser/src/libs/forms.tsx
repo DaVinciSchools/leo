@@ -79,7 +79,7 @@ export class FormFields {
     const passwordsSetNonBlank = new Set(passwordsSet);
 
     if (
-      (finalCheck && passwordsSet.size > 0) ||
+      (finalCheck && passwordsSet.size > 1) ||
       passwordsSetNonBlank.size > 1
     ) {
       passwordFields.forEach(f => f.setError('Passwords do not match.'));
@@ -224,6 +224,16 @@ export class FormFields {
         max: fieldMetadata?.isInteger?.max,
       },
     };
+  }
+
+  get(name: string): string | number | undefined {
+    const field = this.#fields.get(name);
+    if (!field) {
+      // We don't have a field to search under yet.
+      return undefined;
+    }
+
+    return getInputValue(getInputField(field.fieldRef.current));
   }
 }
 
