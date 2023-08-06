@@ -1,6 +1,3 @@
-import {pl_types} from '../generated/protobuf-js';
-import IUser = pl_types.IUser;
-import User = pl_types.User;
 import Cookies from 'js-cookie';
 import {useEffect} from 'react';
 import {redirect} from 'react-router-dom';
@@ -31,24 +28,6 @@ export function addXsrfInputField() {
     );
   }
   return <></>;
-}
-
-const SESSION_STORAGE_USER_KEY = 'project-leo-user';
-
-export function login(user: IUser) {
-  sessionStorage.setItem(SESSION_STORAGE_USER_KEY, JSON.stringify(user));
-}
-
-export function logout() {
-  sessionStorage.removeItem(SESSION_STORAGE_USER_KEY);
-}
-
-export function getCurrentUser(): IUser | undefined {
-  const userJson = sessionStorage.getItem(SESSION_STORAGE_USER_KEY);
-  if (userJson != null) {
-    return User.fromObject(JSON.parse(userJson));
-  }
-  return undefined;
 }
 
 export function sendToLogin() {

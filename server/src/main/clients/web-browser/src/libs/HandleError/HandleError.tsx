@@ -2,10 +2,10 @@ import './HandleError.scss';
 
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import Typography from '@mui/material/Typography';
 import {createService, error_service} from '../protos';
-import {getCurrentUser} from '../authentication';
+import {GlobalStateContext} from '../GlobalState';
 
 export const REPORT_ERROR_REQUEST_PROP_NAME = 'projectLeoReportErrorRequest';
 
@@ -45,7 +45,7 @@ export function HandleError(props: {
   error: HandleErrorType;
   setError: (error: HandleErrorType) => void;
 }) {
-  const user = getCurrentUser();
+  const global = useContext(GlobalStateContext);
 
   const [reportErrorRequest, setReportErrorRequest] =
     useState<error_service.IReportErrorRequest>({});
@@ -92,7 +92,7 @@ ${issueLink + logErrorBody + errorBody}`);
       }' on ${new Date().toUTCString()}`
     );
 
-    setErrorBody(`User Id: ${user?.userXId ?? 'none'}
+    setErrorBody(`User Id: ${global.user?.userXId ?? 'none'}
 
 Error: ${reportErrorRequest.name ?? 'Unknown'}
 From: ${window.location.href}

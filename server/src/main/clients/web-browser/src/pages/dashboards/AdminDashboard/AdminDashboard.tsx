@@ -1,10 +1,12 @@
 import './AdminDashboard.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
+import {sendToLogin} from '../../../libs/authentication';
+import {useContext} from 'react';
+import {GlobalStateContext} from '../../../libs/GlobalState';
 
 export function AdminDashboard() {
-  const user = getCurrentUser();
-  if (user == null || !user.isAdmin) {
+  const global = useContext(GlobalStateContext);
+  if (!global.user?.isAdmin) {
     return sendToLogin();
   }
 

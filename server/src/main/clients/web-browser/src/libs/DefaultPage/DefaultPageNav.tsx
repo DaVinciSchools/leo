@@ -8,9 +8,10 @@ import {
   SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import {getCurrentUser, sendToLogin} from '../authentication';
 import {Link} from 'react-router-dom';
-import {useState} from 'react';
+import {useContext, useState} from 'react';
+import {GlobalStateContext} from '../GlobalState';
+import {sendToLogin} from '../authentication';
 
 const Footer = Layout.Footer;
 
@@ -34,8 +35,8 @@ enum MenuKeys {
 }
 
 export function DefaultPageNav() {
-  const user = getCurrentUser();
-  if (user == null) {
+  const global = useContext(GlobalStateContext);
+  if (!global.user) {
     return sendToLogin();
   }
 
@@ -48,23 +49,25 @@ export function DefaultPageNav() {
       key: MenuKeys.DASHBOARD_ADMIN,
       icon: <HomeOutlined />,
       style: {
-        display: user.isAdmin ? 'block' : 'none',
+        display: global.user?.isAdmin ? 'block' : 'none',
       },
     },
     {
-      label: (user.isAdmin ? 'Student ' : '') + 'Dashboard',
+      label: (global.user?.isAdmin ? 'Student ' : '') + 'Dashboard',
       key: MenuKeys.DASHBOARD_STUDENT,
       icon: <HomeOutlined />,
       style: {
-        display: user.isAdmin || user.isStudent ? 'block' : 'none',
+        display:
+          global.user?.isAdmin || global.user?.isStudent ? 'block' : 'none',
       },
     },
     {
-      label: (user.isAdmin ? 'Teacher ' : '') + 'Dashboard',
+      label: (global.user?.isAdmin ? 'Teacher ' : '') + 'Dashboard',
       key: MenuKeys.DASHBOARD_TEACHER,
       icon: <HomeOutlined />,
       style: {
-        display: user.isAdmin || user.isTeacher ? 'block' : 'none',
+        display:
+          global.user?.isAdmin || global.user?.isTeacher ? 'block' : 'none',
       },
     },
     {
@@ -95,7 +98,8 @@ export function DefaultPageNav() {
       key: MenuKeys.PORTFOLIOS,
       icon: <BookOutlined />,
       style: {
-        display: user.isAdmin || user.isStudent ? 'block' : 'none',
+        display:
+          global.user?.isAdmin || global.user?.isStudent ? 'block' : 'none',
       },
     },
     {
@@ -103,7 +107,7 @@ export function DefaultPageNav() {
       key: MenuKeys.ADMIN,
       icon: <SettingOutlined />,
       style: {
-        display: user.isAdmin ? 'block' : 'none',
+        display: global.user?.isAdmin ? 'block' : 'none',
       },
       children: [
         {

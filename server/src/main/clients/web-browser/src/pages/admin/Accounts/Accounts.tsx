@@ -1,7 +1,7 @@
 import './Accounts.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
-import {useEffect, useRef, useState} from 'react';
+import {sendToLogin} from '../../../libs/authentication';
+import {useContext, useEffect, useRef, useState} from 'react';
 import {pl_types, user_management} from '../../../generated/protobuf-js';
 import {
   Button,
@@ -20,19 +20,15 @@ import {
   EditOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
+import {GlobalStateContext} from '../../../libs/GlobalState';
 import UserManagementService = user_management.UserManagementService;
 import IFullUserDetails = user_management.IFullUserDetails;
 import IUpsertUserRequest = user_management.IUpsertUserRequest;
 import IUser = pl_types.IUser;
-import {
-  HandleError,
-  HandleErrorType,
-} from '../../../libs/HandleError/HandleError';
 
 export function Accounts() {
-  const [handleError, setHandleError] = useState<HandleErrorType>();
-  const user = getCurrentUser();
-  if (user == null || !user.isAdmin) {
+  const global = useContext(GlobalStateContext);
+  if (!global.user?.isAdmin) {
     return sendToLogin();
   }
 
@@ -64,7 +60,7 @@ export function Accounts() {
   useEffect(() => {
     userService
       .getPagedUsersDetails({
-        districtId: user.districtId,
+        districtId: global.user?.districtId,
         page: page - 1,
         pageSize: pageSize,
         searchText: searchText,
@@ -73,7 +69,7 @@ export function Accounts() {
         setUsers(response.users);
         setTotalUsers(response.totalUsers!);
       })
-      .catch(setHandleError);
+      .catch(global.setError);
   }, [page, pageSize, searchText, showSearchForAccount]);
 
   useEffect(() => {
@@ -111,12 +107,11 @@ export function Accounts() {
         }
         setEditingUser(undefined);
       })
-      .catch(reason => setHandleError({error: reason, reload: false}));
+      .catch(reason => global.setError({error: reason, reload: false}));
   }
 
   return (
     <>
-      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage title="Accounts">
         <div className="space-filler" style={{height: '2em'}}>
           <div
@@ -163,7 +158,7 @@ export function Accounts() {
           onChange={() => setFormChangeCount(formChangeCount + 1)}
         >
           <CommonAccountFields form={form} />
-          <div style={{display: user.isAdmin ? undefined : 'none'}}>
+          <div style={{display: global.user?.isAdmin ? undefined : 'none'}}>
             <Form.Item
               style={{margin: '0 0'}}
               name="isAdmin"

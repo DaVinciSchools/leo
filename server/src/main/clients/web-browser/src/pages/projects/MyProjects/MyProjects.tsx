@@ -1,27 +1,23 @@
 import './MyProjects.scss';
-import {useEffect, useRef, useState} from 'react';
+import {useContext, useEffect, useRef, useState} from 'react';
 import {
   createService,
   pl_types,
   project_management,
 } from '../../../libs/protos';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
+import {sendToLogin} from '../../../libs/authentication';
 import {Dropdown} from 'antd';
 import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
 import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
 import {ItemType} from 'antd/es/menu/hooks/useItems';
 import IProjectPost = pl_types.IProjectPost;
-import {
-  HandleError,
-  HandleErrorType,
-} from '../../../libs/HandleError/HandleError';
+import {GlobalStateContext} from '../../../libs/GlobalState';
 
 export function MyProjects() {
-  const [handleError, setHandleError] = useState<HandleErrorType>();
-  const user = getCurrentUser();
-  if (user == null) {
+  const global = useContext(GlobalStateContext);
+  if (!global.user) {
     return sendToLogin();
   }
 
@@ -37,11 +33,11 @@ export function MyProjects() {
 
   useEffect(() => {
     service
-      .getProjects({userXId: user!.userXId, activeOnly: true})
+      .getProjects({userXId: global.user?.userXId, activeOnly: true})
       .then(response => {
         setProjects(response.projects);
       })
-      .catch(setHandleError);
+      .catch(global.setError);
   }, []);
 
   useEffect(() => {
@@ -57,7 +53,7 @@ export function MyProjects() {
             setPosts(response.projectPosts);
           }
         })
-        .catch(reason => setHandleError({error: reason, reload: false}));
+        .catch(reason => global.setError({error: reason, reload: false}));
     }
   }, [project]);
 
@@ -84,13 +80,13 @@ export function MyProjects() {
               id: response.projectPostId!,
               name: name,
               messageHtml: messageHtml,
-              user: user!,
+              user: global.user,
             },
           ];
           setPosts(newPosts);
         }
       })
-      .catch(reason => setHandleError({error: reason, reload: false}));
+      .catch(reason => global.setError({error: reason, reload: false}));
   }
 
   function deletePost(post: pl_types.IProjectPost) {
@@ -104,12 +100,11 @@ export function MyProjects() {
           setPosts(newPosts);
         }
       })
-      .catch(reason => setHandleError({error: reason, reload: false}));
+      .catch(reason => global.setError({error: reason, reload: false}));
   }
 
   return (
     <>
-      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage title="My Projects">
         <div style={{width: '100%'}}>
           <Dropdown.Button

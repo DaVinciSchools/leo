@@ -306,6 +306,9 @@ public class UserManagementService {
               }
               db.getUserXRepository().save(userX);
 
+              if (!response.hasError()) {
+                response.setUser(DataAccess.convertFullUserXToDetailsProto(userX));
+              }
               return response.build();
             })
         .onError(

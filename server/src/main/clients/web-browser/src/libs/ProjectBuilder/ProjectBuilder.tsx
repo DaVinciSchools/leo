@@ -8,8 +8,7 @@ import {
   Stepper,
   Typography,
 } from '@mui/material';
-import {CSSProperties, ReactNode, useEffect, useState} from 'react';
-import {HandleError, HandleErrorType} from '../HandleError/HandleError';
+import {CSSProperties, ReactNode, useContext, useEffect, useState} from 'react';
 import {IkigaiProjectBuilder} from '../IkigaiProjectBuilder/IkigaiProjectBuilder';
 import {
   pl_types,
@@ -17,18 +16,19 @@ import {
   user_management,
 } from '../../generated/protobuf-js';
 import {createService} from '../protos';
-import ProjectManagementService = project_management.ProjectManagementService;
 import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectConfigurer';
 import {RegistrationForm} from './RegistrationForm/RegistrationForm';
-import IRegisterUserRequest = user_management.IRegisterUserRequest;
-import UserManagementService = user_management.UserManagementService;
 import {useNavigate} from 'react-router';
 import {
-  getCurrentUser,
   LOGIN_RETURN_TO_PARAM,
   PASSWORD_PARAM,
+  sendToLogin,
   USERNAME_PARAM,
 } from '../authentication';
+import {GlobalStateContext} from '../GlobalState';
+import ProjectManagementService = project_management.ProjectManagementService;
+import IRegisterUserRequest = user_management.IRegisterUserRequest;
+import UserManagementService = user_management.UserManagementService;
 
 enum State {
   GETTING_STARTED,
@@ -48,8 +48,10 @@ export function ProjectBuilder(props: {
   noCategoriesText: ReactNode;
   style?: Partial<CSSProperties>;
 }) {
-  const [handleError, setHandleError] = useState<HandleErrorType>();
-  const user = getCurrentUser();
+  const global = useContext(GlobalStateContext);
+  if (!global.user) {
+    return sendToLogin();
+  }
   const navigate = useNavigate();
 
   const [allInputValues, setAllInputValues] = useState<
@@ -65,7 +67,7 @@ export function ProjectBuilder(props: {
   // All states. But, filter out REGISTER depending on demo mode.
   const steps: State[] = Object.values(State)
     .filter(i => typeof i === 'number')
-    .filter(i => user == null || i !== State.REGISTER)
+    .filter(i => !global.user || i !== State.REGISTER)
     .map(i => i as State);
   const [activeStep, setActiveStep] = useState(State.REGISTER);
 
@@ -82,7 +84,7 @@ export function ProjectBuilder(props: {
             }))
           );
         })
-        .catch(setHandleError);
+        .catch(global.setError);
     }
   }, []);
 
@@ -93,7 +95,7 @@ export function ProjectBuilder(props: {
         setUserId(response.userId!);
         setActiveStep(activeStep + 1);
       })
-      .catch(setHandleError);
+      .catch(global.setError);
   }
 
   function onRegisterUser(request: IRegisterUserRequest) {
@@ -105,7 +107,7 @@ export function ProjectBuilder(props: {
         setPassword(request.password!);
         setActiveStep(activeStep + 1);
       })
-      .catch(setHandleError);
+      .catch(global.setError);
   }
 
   function onSeeProjects() {
@@ -122,7 +124,6 @@ export function ProjectBuilder(props: {
 
   return (
     <>
-      <HandleError error={handleError} setError={setHandleError} />
       <div className="project-builder-page-layout" style={props.style}>
         <Box className="project-builder-header">
           <Typography variant="h4">
@@ -182,7 +183,7 @@ export function ProjectBuilder(props: {
                 <Button
                   variant="contained"
                   className="project-builder-button"
-                  disabled={user == null}
+                  disabled={!global.user}
                 >
                   Start with an
                   <br />
@@ -200,7 +201,7 @@ export function ProjectBuilder(props: {
                 <Button
                   variant="contained"
                   className="project-builder-button"
-                  disabled={user == null}
+                  disabled={!global.user}
                 >
                   Create a project
                   <br />

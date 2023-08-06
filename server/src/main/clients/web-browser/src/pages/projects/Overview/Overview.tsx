@@ -1,10 +1,12 @@
 import './Overview.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
+import {sendToLogin} from '../../../libs/authentication';
+import {useContext} from 'react';
+import {GlobalStateContext} from '../../../libs/GlobalState';
 
 export function Overview() {
-  const user = getCurrentUser();
-  if (user == null) {
+  const global = useContext(GlobalStateContext);
+  if (!global.user) {
     return sendToLogin();
   }
 

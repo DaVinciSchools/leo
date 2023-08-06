@@ -22,6 +22,7 @@ import {TeacherDashboard} from './pages/dashboards/TeacherDashboard/TeacherDashb
 import {AdminDashboard} from './pages/dashboards/AdminDashboard/AdminDashboard';
 import {RedirectToDashboard} from './pages/dashboards/RedirectToDashboard';
 import {DemoProjectBuilder} from './pages/demos/DemoProjectBuilder/DemoProjectBuilder';
+import {GlobalState} from './libs/GlobalState';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -147,11 +148,12 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+
 root.render(
   <React.StrictMode>
-    <>
+    <GlobalState>
       <RouterProvider router={router} />
-    </>
+    </GlobalState>
   </React.StrictMode>
 );
 

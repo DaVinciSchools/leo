@@ -1,14 +1,17 @@
 import './Logout.scss';
-import {addXsrfInputField, logout} from '../../../libs/authentication';
-import {useEffect, useRef} from 'react';
+import {addXsrfInputField} from '../../../libs/authentication';
+import {useContext, useEffect, useRef} from 'react';
 import {Link} from 'react-router-dom';
+import {GlobalStateContext} from '../../../libs/GlobalState';
 
 export function Logout() {
+  const global = useContext(GlobalStateContext);
+
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (formRef.current != null) {
-      logout();
+      global.setUser(undefined);
       formRef.current.requestSubmit();
     }
   }, [formRef.current]);

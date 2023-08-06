@@ -1,5 +1,5 @@
 import './AllProjects.scss';
-import {useEffect, useState} from 'react';
+import {useContext, useEffect, useState} from 'react';
 import {
   createService,
   pl_types,
@@ -7,21 +7,17 @@ import {
 } from '../../../libs/protos';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {ProjectCard} from '../../../libs/ProjectCard/ProjectCard';
-import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
+import {sendToLogin} from '../../../libs/authentication';
+import {Modal} from 'antd';
+import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
+import {GlobalStateContext} from '../../../libs/GlobalState';
 import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
 import ThumbsState = pl_types.Project.ThumbsState;
-import {Modal} from 'antd';
-import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
-import {
-  HandleError,
-  HandleErrorType,
-} from '../../../libs/HandleError/HandleError';
 
 export function AllProjects() {
-  const [handleError, setHandleError] = useState<HandleErrorType>();
-  const user = getCurrentUser();
-  if (user == null) {
+  const global = useContext(GlobalStateContext);
+  if (!global.user == null) {
     return sendToLogin();
   }
 
@@ -36,18 +32,18 @@ export function AllProjects() {
 
   useEffect(() => {
     service
-      .getProjects({userXId: user!.userXId})
+      .getProjects({userXId: global.user!.userXId})
       .then(response => {
         response.projects.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
         setProjects(response.projects);
       })
-      .catch(setHandleError);
+      .catch(global.setError);
   }, []);
 
   function updateProject(project: IProject, modifications: IProject) {
     service
       .updateProject({id: project.id!, modifications: modifications})
-      .catch(setHandleError);
+      .catch(global.setError);
 
     const newProjects = [...projects];
     Object.assign(project, modifications);
@@ -62,13 +58,12 @@ export function AllProjects() {
       .then(response => setProjectDetails(response.project!))
       .catch(reason => {
         setShowProjectDetails(false);
-        setHandleError({error: reason, reload: false});
+        global.setError({error: reason, reload: false});
       });
   }
 
   return (
     <>
-      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage title="All Projects">
         <div>
           {projects.map(project => (

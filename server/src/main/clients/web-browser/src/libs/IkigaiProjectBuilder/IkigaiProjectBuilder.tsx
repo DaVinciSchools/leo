@@ -2,7 +2,6 @@ import './IkigaiProjectBuilder.scss';
 
 import {Close} from '@mui/icons-material';
 import {CSSProperties, ReactNode, useEffect, useState} from 'react';
-import {HandleError, HandleErrorType} from '../HandleError/HandleError';
 import {Ikigai, VISIBLE_ALPHA} from '../../Ikigai/Ikigai';
 import {
   Autocomplete,
@@ -334,8 +333,6 @@ export function IkigaiProjectBuilder(props: {
   onSpinClick: (configuration: pl_types.IProjectInputValue[]) => void;
   style?: Partial<CSSProperties>;
 }) {
-  const [handleError, setHandleError] = useState<HandleErrorType>();
-
   const [categoryElements, setCategoryElements] = useState<CategoryElement[]>(
     []
   );
@@ -370,7 +367,6 @@ export function IkigaiProjectBuilder(props: {
 
   return (
     <>
-      <HandleError error={handleError} setError={setHandleError} />
       <div style={props.style ?? {}} className="ikigai-project-builder">
         {(props?.categories?.length ?? 0) > 0 && (
           <Ikigai

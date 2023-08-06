@@ -1,27 +1,24 @@
 import './IkigaiBuilder.scss';
 import {Input, Layout, Modal} from 'antd';
 import {Ikigai} from '../../../Ikigai/Ikigai';
-import {ChangeEvent, useEffect, useState} from 'react';
+import {ChangeEvent, useContext, useEffect, useState} from 'react';
 import {
   assignment_management,
   createService,
   pl_types,
   project_management,
 } from '../../../libs/protos';
-import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
+import {sendToLogin} from '../../../libs/authentication';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {MinusCircleOutlined, PlusCircleOutlined} from '@ant-design/icons';
 import ProjectManagementService = project_management.ProjectManagementService;
 import {useNavigate} from 'react-router';
 import ISelectionOption = pl_types.ProjectInputCategory.IOption;
-import {
-  HandleError,
-  HandleErrorType,
-} from '../../../libs/HandleError/HandleError';
 import IAssignment = pl_types.IAssignment;
 import AssignmentManagementService = assignment_management.AssignmentManagementService;
 import {Autocomplete, TextField} from '@mui/material';
 import IClassX = pl_types.IClassX;
+import {GlobalStateContext} from '../../../libs/GlobalState';
 
 const {Content} = Layout;
 
@@ -34,7 +31,6 @@ function FreeTextInput(props: {
   onValuesUpdated: (values: string[]) => void;
   maxNumberOfValues: number;
 }) {
-  const [handleError, setHandleError] = useState<HandleErrorType>();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingValues, setEditingValues] = useState<string[]>([]);
 
@@ -77,7 +73,6 @@ function FreeTextInput(props: {
 
   return (
     <>
-      <HandleError error={handleError} setError={setHandleError} />
       <div
         id={props.id}
         onClick={onClick}
@@ -292,9 +287,8 @@ type Category = {
 };
 
 export function IkigaiBuilder() {
-  const [handleError, setHandleError] = useState<HandleErrorType>();
-  const user = getCurrentUser();
-  if (user == null) {
+  const global = useContext(GlobalStateContext);
+  if (!global.user) {
     return sendToLogin();
   }
 
@@ -319,13 +313,13 @@ export function IkigaiBuilder() {
   useEffect(() => {
     createService(AssignmentManagementService, 'AssignmentManagementService')
       .getAssignments({
-        teacherId: user.isStudent ? undefined : user.teacherId,
-        studentId: user.isStudent ? user.studentId : undefined,
+        teacherId: global.user?.isStudent ? undefined : global.user?.teacherId,
+        studentId: global.user?.isStudent ? global.user?.studentId : undefined,
       })
       .then(response => {
         setAssignments(response.assignments);
       })
-      .catch(setHandleError);
+      .catch(global.setError);
   }, []);
 
   useEffect(() => {
@@ -336,7 +330,7 @@ export function IkigaiBuilder() {
     createService(ProjectManagementService, 'ProjectManagementService')
       .getAssignmentProjectDefinition({assignmentId: assignment?.id})
       .then(response => setProjectDefinition(response.definition ?? null))
-      .catch(setHandleError);
+      .catch(global.setError);
   }, [assignment]);
 
   useEffect(() => {
@@ -363,7 +357,7 @@ export function IkigaiBuilder() {
         assignmentId: assignment?.id,
       })
       .then(() => navigate('/projects/all-projects.html'))
-      .catch(setHandleError);
+      .catch(global.setError);
   }
 
   function updateCategoryValues(index: number, values: (string | number)[]) {
@@ -374,7 +368,6 @@ export function IkigaiBuilder() {
 
   return (
     <>
-      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage
         title={
           <>

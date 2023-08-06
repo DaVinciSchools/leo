@@ -2,7 +2,7 @@ import './Root.scss';
 
 import {Link} from 'react-router-dom';
 import {Button, Dropdown, Form, Input, Modal} from 'antd';
-import {ChangeEvent, useState} from 'react';
+import {ChangeEvent, useContext, useState} from 'react';
 import {
   DownOutlined,
   MailOutlined,
@@ -13,7 +13,7 @@ import {interest_service} from '../generated/protobuf-js';
 import InterestService = interest_service.InterestService;
 import {createService} from '../libs/protos';
 import RegisterInterestRequest = interest_service.RegisterInterestRequest;
-import {HandleError, HandleErrorType} from '../libs/HandleError/HandleError';
+import {GlobalStateContext} from '../libs/GlobalState';
 
 const selectProfession = 'Select Profession';
 const otherProfession = 'Other (please describe below)';
@@ -27,7 +27,7 @@ const defaultProfessions = [
 ];
 
 export function Root() {
-  const [handleError, setHandleError] = useState<HandleErrorType>();
+  const global = useContext(GlobalStateContext);
 
   const [interestForm] = Form.useForm();
   const [interestFormOpen, setInterestFormOpen] = useState(false);
@@ -43,12 +43,11 @@ export function Root() {
       professionSelection !== otherProfession
         ? professionSelection
         : professionDescr;
-    interestService.registerInterest(request).catch(setHandleError);
+    interestService.registerInterest(request).catch(global.setError);
   }
 
   return (
     <>
-      <HandleError error={handleError} setError={setHandleError} />
       <header>
         <Link to="/" className="header-section header-section-left">
           <img src="/images/logo-white-on-orange.svg" />

@@ -7,17 +7,17 @@ import {
   LockOutlined,
   UserOutlined,
 } from '@ant-design/icons';
+import {GlobalStateContext} from '../GlobalState';
 import {Link} from 'react-router-dom';
-import {addXsrfHeader, login} from '../authentication';
+import {addXsrfHeader} from '../authentication';
 import {pl_types} from '../protos';
-import {useEffect, useState} from 'react';
+import {useContext, useEffect, useState} from 'react';
 import IUser = pl_types.IUser;
-import {HandleError, HandleErrorType} from '../HandleError/HandleError';
 
 const AUTHORIZATION_FAILURE = 'Authentication failure. Please try again.';
 
 export function LoginForm(props: {successAction: (user: IUser) => void}) {
-  const [handleError, setHandleError] = useState<HandleErrorType>();
+  const global = useContext(GlobalStateContext);
 
   const [loginForm] = Form.useForm();
   const [disabled, setDisabled] = useState(false);
@@ -55,12 +55,12 @@ export function LoginForm(props: {successAction: (user: IUser) => void}) {
       })
         .then(response => {
           if (!response.ok) {
-            setHandleError(response);
+            global.setError(response);
           } else if (response.redirected) {
             if (new URL(response.url).searchParams.get('failed') != null) {
               setFailure(AUTHORIZATION_FAILURE);
             } else {
-              setHandleError(response);
+              global.setError(response);
             }
           } else if (response.body != null) {
             response.body
@@ -69,20 +69,23 @@ export function LoginForm(props: {successAction: (user: IUser) => void}) {
               .then(result => {
                 try {
                   const user: IUser = pl_types.User.decode(result.value!);
-                  login(user);
+                  global.setUser(user);
                   props.successAction(user);
                 } catch (e) {
-                  setHandleError(e);
+                  global.setError(e);
                 }
               })
-              .catch(setHandleError);
+              .catch(global.setError);
           } else {
-            setHandleError({name: 'Error', message: 'Response had no body.'});
+            global.setError({
+              name: 'Error',
+              message: 'Response had no body.',
+            });
           }
         })
-        .catch(setHandleError);
+        .catch(global.setError);
     } catch (e) {
-      setHandleError(e);
+      global.setError(e);
     }
   }
 
@@ -90,13 +93,12 @@ export function LoginForm(props: {successAction: (user: IUser) => void}) {
     setDisabled(true);
     setFailure('');
     doSubmit(formValues)
-      .catch(setHandleError)
+      .catch(global.setError)
       .finally(() => setDisabled(false));
   }
 
   return (
     <>
-      <HandleError error={handleError} setError={setHandleError} />
       <div className="space-filler" />
       <div className="logo">
         <Link to="/">

@@ -8,14 +8,15 @@ import {
   MailOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import {useState} from 'react';
-import {getCurrentUser} from '../authentication';
+import {useContext, useState} from 'react';
+import {GlobalStateContext} from '../GlobalState';
 
 export function CommonAccountFields(props: {
   form: FormInstance;
   disabled?: boolean;
 }) {
-  const user = getCurrentUser() ?? {};
+  const global = useContext(GlobalStateContext);
+
   const [showPassword, setShowPassword] = useState(false);
   const passwordReqs = RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,50}$');
   const passwordRules: FormRule[] = [
@@ -114,18 +115,18 @@ export function CommonAccountFields(props: {
           maxLength={255}
           autoComplete="email"
           prefix={<MailOutlined />}
-          disabled={!user.isAdmin || props.disabled}
+          disabled={!global.user?.isAdmin || props.disabled}
         />
       </Form.Item>
       <Form.Item
         name="currentPassword"
-        style={{display: user.isAdmin ? 'none' : undefined}}
+        style={{display: global.user?.isAdmin ? 'none' : undefined}}
         rules={[
           {
             message: 'The current password is required for password updates.',
             validator: () => {
               if (
-                !user.isAdmin &&
+                !global.user?.isAdmin &&
                 ((props.form.getFieldValue('password') ?? '') !== '' ||
                   (props.form.getFieldValue('verifyPassword') ?? '') !== '') &&
                 (props.form.getFieldValue('currentPassword') ?? '') === ''

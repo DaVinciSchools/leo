@@ -1,23 +1,19 @@
 import './MyAccount.scss';
 import {CommonAccountFields} from '../../../libs/CommonAccountFields/CommonAccountFields';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
-import {useEffect, useState} from 'react';
+import {sendToLogin} from '../../../libs/authentication';
+import {useContext, useEffect, useState} from 'react';
 import {pl_types, user_management} from '../../../generated/protobuf-js';
 import IUser = pl_types.IUser;
 import {Button, Form} from 'antd';
 import {createService} from '../../../libs/protos';
 import UserManagementService = user_management.UserManagementService;
 import IUpsertUserRequest = user_management.IUpsertUserRequest;
-import {
-  HandleError,
-  HandleErrorType,
-} from '../../../libs/HandleError/HandleError';
+import {GlobalStateContext} from '../../../libs/GlobalState';
 
 export function MyAccount() {
-  const [handleError, setHandleError] = useState<HandleErrorType>();
-  const user = getCurrentUser();
-  if (user == null) {
+  const global = useContext(GlobalStateContext);
+  if (!global.user) {
     return sendToLogin();
   }
 
@@ -36,9 +32,9 @@ export function MyAccount() {
 
   useEffect(() => {
     userService
-      .getUserDetails({userXId: user.userXId})
+      .getUserDetails({userXId: global.user?.userXId})
       .then(response => setUserX(response.user?.user ?? {}))
-      .catch(setHandleError);
+      .catch(global.setError);
   }, []);
 
   useEffect(() => {
@@ -56,15 +52,15 @@ export function MyAccount() {
         if (response.error) {
           setErrorMessage(response.error);
         } else {
-          setUserX(response.user?.user ?? {});
+          setUserX(response?.user?.user ?? {});
+          global.setUser(response?.user?.user);
         }
       })
-      .catch(reason => setHandleError({error: reason, reload: false}));
+      .catch(reason => global.setError({error: reason, reload: false}));
   }
 
   return (
     <>
-      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage title="My Account">
         <div className="space-filler">
           <div

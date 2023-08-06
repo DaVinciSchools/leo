@@ -48,12 +48,18 @@ public class DataAccess {
             .setUserXId(coalesce(user::getId, () -> -1))
             .setFirstName(user.getFirstName())
             .setLastName(user.getLastName())
-            .setEmailAddress(user.getEmailAddress())
-            .setIsAdmin(UserXRepository.isAdmin(user))
-            .setIsTeacher(UserXRepository.isTeacher(user))
-            .setIsStudent(UserXRepository.isStudent(user));
-    if (user.getDistrict() != null) {
-      userProto.setDistrictId(coalesce(() -> user.getDistrict().getId(), () -> -1));
+            .setEmailAddress(user.getEmailAddress());
+    if (UserXRepository.isAdmin(user)) {
+      userProto.setIsAdmin(true).setAdminId(user.getAdminX().getId());
+    }
+    if (UserXRepository.isTeacher(user)) {
+      userProto.setIsTeacher(true).setTeacherId(user.getTeacher().getId());
+    }
+    if (UserXRepository.isStudent(user)) {
+      userProto.setIsStudent(true).setStudentId(user.getStudent().getId());
+    }
+    if (user.getDistrict() != null && user.getDistrict().getId() != null) {
+      userProto.setDistrictId(user.getDistrict().getId());
     }
     return userProto.build();
   }

@@ -16,7 +16,7 @@ import {
   ListItemText,
   TextField,
 } from '@mui/material';
-import {useEffect, useRef, useState} from 'react';
+import {useContext, useEffect, useRef, useState} from 'react';
 import {
   assignment_management,
   pl_types,
@@ -24,10 +24,6 @@ import {
 } from '../../../generated/protobuf-js';
 import ReactQuill, {Value} from 'react-quill';
 import {createService} from '../../../libs/protos';
-import {
-  HandleError,
-  HandleErrorType,
-} from '../../../libs/HandleError/HandleError';
 import IClassX = pl_types.IClassX;
 import IAssignment = pl_types.IAssignment;
 import AssignmentManagementService = assignment_management.AssignmentManagementService;
@@ -35,9 +31,11 @@ import IUser = pl_types.IUser;
 import IProjectDefinition = pl_types.IProjectDefinition;
 import ProjectManagementService = project_management.ProjectManagementService;
 import IProjectInputValue = pl_types.IProjectInputValue;
+import {GlobalStateContext} from '../../../libs/GlobalState';
 
 export function AssignmentsTab(props: {user: IUser}) {
-  const [handleError, setHandleError] = useState<HandleErrorType>();
+  const global = useContext(GlobalStateContext);
+
   const [classXs, setClassXs] = useState<IClassX[]>([]);
   const [assignments, setAssignments] = useState<IAssignment[] | null>(null);
   const [saveStatus, setSaveStatus] = useState<'Saved' | 'Saving...'>('Saved');
@@ -116,7 +114,7 @@ export function AssignmentsTab(props: {user: IUser}) {
     if (assignmentRef.current != null) {
       createService(AssignmentManagementService, 'AssignmentManagementService')
         .saveAssignment({assignment: assignmentRef.current})
-        .catch(setHandleError);
+        .catch(global.setError);
       setSaveStatus('Saved');
     }
   }
@@ -139,7 +137,7 @@ export function AssignmentsTab(props: {user: IUser}) {
           }
         }
       })
-      .catch(setHandleError);
+      .catch(global.setError);
   }, [assignment]);
 
   useEffect(() => {
@@ -159,7 +157,7 @@ export function AssignmentsTab(props: {user: IUser}) {
         setClassXs(response.classXs);
         setAssignments(response.assignments);
       })
-      .catch(setHandleError);
+      .catch(global.setError);
   }, []);
 
   function createNewAssignment(classXId: number) {
@@ -169,7 +167,7 @@ export function AssignmentsTab(props: {user: IUser}) {
         setAssignments((assignments ?? []).concat([response.assignment!]));
         setAssignment(response.assignment!);
       })
-      .catch(reason => setHandleError({error: reason, reload: false}));
+      .catch(reason => global.setError({error: reason, reload: false}));
   }
 
   function deleteAssignment() {
@@ -185,12 +183,11 @@ export function AssignmentsTab(props: {user: IUser}) {
           (assignments ?? []).filter(a => a.id !== assignment?.id)
         );
       })
-      .catch(reason => setHandleError({error: reason, reload: false}));
+      .catch(reason => global.setError({error: reason, reload: false}));
   }
 
   return (
     <>
-      <HandleError error={handleError} setError={setHandleError} />
       <Grid container paddingY={2} spacing={2} columns={{xs: 6, md: 12}}>
         <Grid item xs={12} className="section-heading">
           <div className="section-title">Select Assignment:</div>

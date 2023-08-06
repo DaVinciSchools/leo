@@ -1,5 +1,5 @@
 import './EditDistricts.scss';
-import {ChangeEvent, useEffect, useState} from 'react';
+import {ChangeEvent, useContext, useEffect, useState} from 'react';
 import {
   createService,
   district_management,
@@ -10,11 +10,8 @@ import DistrictInformationResponse = district_management.DistrictInformationResp
 import IDistrict = pl_types.IDistrict;
 import {Display, SelectFromList} from '../../../SelectFromList/SelectFromList';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
-import {
-  HandleError,
-  HandleErrorType,
-} from '../../../libs/HandleError/HandleError';
+import {sendToLogin} from '../../../libs/authentication';
+import {GlobalStateContext} from '../../../libs/GlobalState';
 
 export function SelectDistrictFromList(props: {
   id: string;
@@ -40,9 +37,8 @@ export function SelectDistrictFromList(props: {
 }
 
 export function EditDistricts() {
-  const [handleError, setHandleError] = useState<HandleErrorType>();
-  const user = getCurrentUser();
-  if (user == null) {
+  const global = useContext(GlobalStateContext);
+  if (!global.user?.isAdmin) {
     return sendToLogin();
   }
 
@@ -59,14 +55,14 @@ export function EditDistricts() {
     districtManagementService
       .addDistrict({district: {name: districtName}})
       .then(processDistrictInformationResponse)
-      .catch(setHandleError);
+      .catch(global.setError);
   }
 
   function updateDistrict() {
     districtManagementService
       .updateDistrict({district: {id: districtId, name: districtName}})
       .then(processDistrictInformationResponse)
-      .catch(setHandleError);
+      .catch(global.setError);
   }
 
   function removeDistrict() {
@@ -75,7 +71,7 @@ export function EditDistricts() {
         districtId: districtId,
       })
       .then(processDistrictInformationResponse)
-      .catch(setHandleError);
+      .catch(global.setError);
   }
 
   function processDistrictInformationResponse(
@@ -89,12 +85,11 @@ export function EditDistricts() {
     districtManagementService
       .getDistricts({})
       .then(processDistrictInformationResponse)
-      .catch(setHandleError);
+      .catch(global.setError);
   }, []);
 
   return (
     <>
-      <HandleError error={handleError} setError={setHandleError} />
       <DefaultPage title="Edit Districts">
         <table className="form-table">
           <tbody>

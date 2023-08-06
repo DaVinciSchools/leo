@@ -15,9 +15,9 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.post_environment_processors.LoadCustomProjectLeoProperties;
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.User;
 import org.davincischools.leo.server.controllers.project_generators.ProjectGenerator;
+import org.davincischools.leo.server.utils.DataAccess;
 import org.davincischools.leo.server.utils.QueryWithNullsToRecordConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutor;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorArgumentResolver;
@@ -161,7 +161,7 @@ public class ServerApplication {
                               HttpServletResponse response,
                               Supplier<CsrfToken> csrfToken) -> {
                             // The CSRF cookie isn't actually generated until the get() method
-                            // is called, because it's generation is lazy. For the build-in
+                            // is called, because it's generation is lazy. For the built-in
                             // login page, get() is called as part of creating the login HTML.
                             // But, get() is not called if you use an external login page,
                             // like we are doing. So, in order to force a CSRF token to be
@@ -187,28 +187,7 @@ public class ServerApplication {
                               Authentication authentication) -> {
                             // Return the user in the reply after authentication.
                             UserX userX = ((UserXDetails) authentication.getPrincipal()).getUserX();
-                            User.Builder user =
-                                User.newBuilder()
-                                    .setUserXId(userX.getId())
-                                    .setEmailAddress(userX.getEmailAddress())
-                                    .setFirstName(userX.getFirstName())
-                                    .setLastName(userX.getLastName())
-                                    .setIsAdmin(UserXRepository.isAdmin(userX))
-                                    .setIsTeacher(UserXRepository.isTeacher(userX))
-                                    .setIsStudent(UserXRepository.isStudent(userX))
-                                    .setIsDemo(UserXRepository.isDemo(userX));
-                            if (userX.getDistrict() != null) {
-                              user.setDistrictId(userX.getDistrict().getId());
-                            }
-                            if (user.getIsAdmin()) {
-                              user.setAdminId(userX.getAdminX().getId());
-                            }
-                            if (user.getIsTeacher()) {
-                              user.setTeacherId(userX.getTeacher().getId());
-                            }
-                            if (user.getIsStudent()) {
-                              user.setStudentId(userX.getStudent().getId());
-                            }
+                            User user = DataAccess.convertFullUserXToProto(userX);
 
                             response.setContentType(
                                 ProtobufHttpMessageConverter.PROTOBUF.toString());
@@ -218,7 +197,7 @@ public class ServerApplication {
                             response.setHeader(
                                 ProtobufHttpMessageConverter.X_PROTOBUF_MESSAGE_HEADER,
                                 user.getDescriptorForType().getFullName());
-                            response.getOutputStream().write(user.build().toByteArray());
+                            response.getOutputStream().write(user.toByteArray());
                             response.setStatus(HttpServletResponse.SC_OK);
                           })
                       .failureUrl("/users/login.html?failed=true")

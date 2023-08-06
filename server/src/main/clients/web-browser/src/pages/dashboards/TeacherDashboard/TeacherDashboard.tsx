@@ -1,10 +1,12 @@
 import './TeacherDashboard.scss';
 
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {getCurrentUser, sendToLogin} from '../../../libs/authentication';
+import {sendToLogin} from '../../../libs/authentication';
 import {TabbedSwiper} from '../../../libs/TabbedSwiper/TabbedSwiper';
 import {OverviewTab} from './OverviewTab';
 import {AssignmentsTab} from './AssignmentsTab';
+import {useContext} from 'react';
+import {GlobalStateContext} from '../../../libs/GlobalState';
 
 enum TabValue {
   ASSIGNMENTS,
@@ -12,14 +14,16 @@ enum TabValue {
 }
 
 export function TeacherDashboard() {
-  const user = getCurrentUser();
-  if (user == null || (!user.isTeacher && !user.isAdmin)) {
+  const global = useContext(GlobalStateContext);
+  if (!global.user?.isTeacher && !global.user?.isAdmin) {
     return sendToLogin();
   }
 
   return (
     <>
-      <DefaultPage title={(user.isAdmin ? 'Teacher ' : '') + 'Dashboard'}>
+      <DefaultPage
+        title={(global.user?.isAdmin ? 'Teacher ' : '') + 'Dashboard'}
+      >
         <div style={{height: '100%'}}>
           <TabbedSwiper
             tabs={[
@@ -31,7 +35,7 @@ export function TeacherDashboard() {
               {
                 key: TabValue.ASSIGNMENTS,
                 label: 'Assignments',
-                content: <AssignmentsTab user={user} />,
+                content: <AssignmentsTab user={global.user} />,
               },
             ]}
           />
