@@ -7,7 +7,8 @@ CREATE TABLE project_definition
     name          VARCHAR(255) NOT NULL,
     template      BOOLEAN,
 
-    user_x_id     INT          NOT NULL,
+    -- Optional for demo usage.
+    user_x_id     INT,
     CONSTRAINT project_definition__user_x_id
         FOREIGN KEY (user_x_id)
             REFERENCES user_x (id)
