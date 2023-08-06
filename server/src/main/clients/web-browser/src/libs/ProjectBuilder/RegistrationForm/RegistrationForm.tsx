@@ -1,46 +1,15 @@
-import {
-  Autocomplete,
-  Button,
-  Grid,
-  InputAdornment,
-  TextField,
-} from '@mui/material';
-import {
-  AccountCircle,
-  Email,
-  LockPerson,
-  QuestionMark,
-  Visibility,
-  VisibilityOff,
-} from '@mui/icons-material';
-import {FormEvent, RefObject, useRef, useState} from 'react';
+import {Autocomplete, Button, Grid, TextField} from '@mui/material';
+import {AccountCircle, Comment, Email} from '@mui/icons-material';
+import {FormEvent, useRef, useState} from 'react';
 import {user_management} from '../../../generated/protobuf-js';
 import IRegisterUserRequest = user_management.IRegisterUserRequest;
-import {
-  checkFieldForErrorsAndSet,
-  convertFormValuesToObject,
-  ExtraErrorChecks,
-  getInputField,
-  getInputValue,
-  MAX_PASSWORD_LENGTH,
-  MIN_PASSWORD_LENGTH,
-} from '../../forms';
-import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
+import {convertFormValuesToObject, FormFields} from '../../forms';
 
 export function RegistrationForm(props: {
   onRegisterUser: (registerUserRequest: IRegisterUserRequest) => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const formFieldErrorCheckers = useRef(
-    new Map<
-      string,
-      {
-        reset: () => void;
-        checkAndSet: (finalCheck: boolean) => boolean;
-      }
-    >()
-  );
-
+  const formFields = useState(new FormFields(formRef))[0];
   const [showPasswords, setShowPasswords] = useState(false);
 
   const firstNameRef = useRef<HTMLInputElement>(null);
@@ -77,86 +46,12 @@ export function RegistrationForm(props: {
   const [numTeachersError, setNumTeachersError] = useState('');
   const [numStudentsError, setNumStudentsError] = useState('');
 
-  function registrationFieldProps(
-    name: string,
-    ref: RefObject<HTMLDivElement>,
-    setError: (message: string) => void,
-    error: string,
-    extraErrorChecks?: ExtraErrorChecks
-  ): OutlinedTextFieldProps {
-    const checkErrorFn = (finalCheck: boolean) =>
-      checkFieldForErrorsAndSet(
-        setError,
-        getInputField(ref.current),
-        finalCheck,
-        extraErrorChecks
-      );
-
-    formFieldErrorCheckers.current.set(name, {
-      reset: () => setError(''),
-      checkAndSet: finalCheck => {
-        if (checkErrorFn(finalCheck)) {
-          ref.current?.scrollIntoView(true);
-          getInputField(ref.current)?.focus();
-          return true;
-        } else {
-          return false;
-        }
-      },
-    });
-
-    return {
-      variant: 'outlined',
-      fullWidth: true,
-      size: 'small',
-      name: name,
-      ref: ref,
-      helperText: error,
-      error: !!error,
-      onChange: () => {
-        setError('');
-        checkErrorFn(true);
-      },
-      onBlur: () => {
-        setError('');
-        checkErrorFn(true);
-      },
-    };
-  }
-
-  function checkFormForErrors(finalCheck: boolean) {
-    let error = false;
-
-    formFieldErrorCheckers.current.forEach(fn => fn.reset());
-
-    const password = getInputValue(getInputField(passwordRef.current));
-    const verifyPassword = getInputValue(
-      getInputField(verifyPasswordRef.current)
-    );
-    if (finalCheck || (password != null && verifyPassword != null)) {
-      if (password !== verifyPassword) {
-        error = true;
-        setPasswordError('Passwords do not match.');
-        setVerifyPasswordError('Passwords do not match.');
-        passwordRef.current?.scrollIntoView(true);
-        getInputField(passwordRef.current)?.focus();
-      }
-    }
-
-    formFieldErrorCheckers.current.forEach(fn => {
-      if (fn.checkAndSet(finalCheck)) {
-        error = true;
-      }
-    });
-
-    return error;
-  }
-
   function onFormSubmit(e: FormEvent<HTMLFormElement>) {
     // Prevent the form from reloading the page.
     e.preventDefault();
 
-    if (checkFormForErrors(true)) {
+    formFields.resetErrors();
+    if (formFields.checkAndSet(true)) {
       return;
     }
 
@@ -172,136 +67,90 @@ export function RegistrationForm(props: {
           <TextField
             required
             autoFocus
-            type="text"
             autoComplete="given-name"
             label="First Name"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <AccountCircle />
-                </InputAdornment>
-              ),
-            }}
-            inputProps={{maxLength: 255}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'firstName',
               firstNameRef,
+              firstNameError,
               setFirstNameError,
-              firstNameError
+              {
+                startIcon: <AccountCircle />,
+                maxLength: 255,
+              }
             )}
           />
         </Grid>
         <Grid item xs={6}>
           <TextField
             required
-            type="text"
             autoComplete="family-name"
             label="Last Name"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <AccountCircle />
-                </InputAdornment>
-              ),
-            }}
-            inputProps={{maxLength: 255}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'lastName',
               lastNameRef,
+              lastNameError,
               setLastNameError,
-              lastNameError
+              {
+                startIcon: <AccountCircle />,
+                maxLength: 255,
+              }
             )}
           />
         </Grid>
         <Grid item xs={12}>
           <TextField
             required
-            type="email"
             autoComplete="email"
             label="Email Address"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Email />
-                </InputAdornment>
-              ),
-            }}
-            inputProps={{maxLength: 254}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'emailAddress',
               emailAddressRef,
+              emailAddressError,
               setEmailAddressError,
-              emailAddressError
+              {
+                startIcon: <Email />,
+                maxLength: 254,
+                isEmail: true,
+              }
             )}
           />
         </Grid>
         <Grid item xs={6}>
           <TextField
             required
-            type={showPasswords ? 'text' : 'password'}
             autoComplete="current-password"
             label="Password"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <LockPerson />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  {showPasswords ? (
-                    <Visibility onClick={() => setShowPasswords(false)} />
-                  ) : (
-                    <VisibilityOff onClick={() => setShowPasswords(true)} />
-                  )}
-                </InputAdornment>
-              ),
-            }}
-            inputProps={{
-              minLength: MIN_PASSWORD_LENGTH,
-              maxLength: MAX_PASSWORD_LENGTH,
-            }}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'password',
               passwordRef,
-              setPasswordError,
               passwordError,
-              {isPassword: true}
+              setPasswordError,
+              {
+                isPassword: {
+                  showPasswords,
+                  setShowPasswords,
+                },
+              }
             )}
           />
         </Grid>
         <Grid item xs={6}>
           <TextField
             required
-            type={showPasswords ? 'text' : 'password'}
             autoComplete="new-password"
             label="Verify Password"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <LockPerson />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  {showPasswords ? (
-                    <Visibility onClick={() => setShowPasswords(false)} />
-                  ) : (
-                    <VisibilityOff onClick={() => setShowPasswords(true)} />
-                  )}
-                </InputAdornment>
-              ),
-            }}
-            inputProps={{
-              minLength: MIN_PASSWORD_LENGTH,
-              maxLength: MAX_PASSWORD_LENGTH,
-            }}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'verifyPassword',
               verifyPasswordRef,
-              setVerifyPasswordError,
               verifyPasswordError,
-              {isPassword: true}
+              setVerifyPasswordError,
+              {
+                isPassword: {
+                  showPasswords,
+                  setShowPasswords,
+                },
+              }
             )}
           />
         </Grid>
@@ -315,26 +164,23 @@ export function RegistrationForm(props: {
               'K-12 Educator',
               'K-12 Student',
             ]}
-            renderInput={params => {
-              const newParams = {...params};
-              params.inputProps = params.inputProps ?? {};
-              params.inputProps.maxLength = 255;
-              return (
-                <TextField
-                  required
-                  type="text"
-                  autoComplete="organization-title"
-                  label="Profession"
-                  {...newParams}
-                  {...registrationFieldProps(
-                    'profession',
-                    professionRef,
-                    setProfessionError,
-                    professionError
-                  )}
-                />
-              );
-            }}
+            renderInput={params => (
+              <TextField
+                required
+                autoComplete="organization-title"
+                label="Profession"
+                {...formFields.registerProps(
+                  'profession',
+                  professionRef,
+                  professionError,
+                  setProfessionError,
+                  {
+                    maxLength: 255,
+                    params,
+                  }
+                )}
+              />
+            )}
           />
         </Grid>
         <Grid item xs={12}>
@@ -342,113 +188,100 @@ export function RegistrationForm(props: {
             required
             multiline
             rows={3}
-            type="text"
             label="Let us know why you're interested."
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <QuestionMark />
-                </InputAdornment>
-              ),
-            }}
-            inputProps={{maxLength: 8192}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'reasonForInterest',
               reasonForInterestRef,
+              reasonForInterestError,
               setReasonForInterestError,
-              reasonForInterestError
+              {
+                startIcon: <Comment />,
+                maxLength: 8192,
+              }
             )}
           />
         </Grid>
         <Grid item xs={12} />
         <Grid item xs={12}>
           <TextField
-            type="text"
             label="District Name"
-            inputProps={{maxLength: 255}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'districtName',
               districtNameRef,
+              districtNameError,
               setDistrictNameError,
-              districtNameError
+              {maxLength: 255}
             )}
           />
         </Grid>
         <Grid item xs={12}>
           <TextField
-            type="text"
             label="School Name"
-            inputProps={{maxLength: 255}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'schoolName',
               schoolNameRef,
+              schoolNameError,
               setSchoolNameError,
-              schoolNameError
+              {maxLength: 255}
             )}
           />
         </Grid>
         <Grid item xs={12}>
           <TextField
-            type="text"
             label="Address Line 1"
-            inputProps={{maxLength: 255}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'addressLine_1',
               addressLine1Ref,
+              addressLine1Error,
               setAddressLine1Error,
-              addressLine1Error
+              {maxLength: 255}
             )}
           />
         </Grid>
         <Grid item xs={12}>
           <TextField
-            type="text"
             label="Address Line 2"
-            inputProps={{maxLength: 255}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'addressLine_2',
               addressLine2Ref,
+              addressLine2Error,
               setAddressLine2Error,
-              addressLine2Error
+              {maxLength: 255}
             )}
           />
         </Grid>
         <Grid item xs={4}>
           <TextField
-            type="text"
             label="City"
-            inputProps={{maxLength: 20}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'city',
               cityRef,
+              cityError,
               setCityError,
-              cityError
+              {maxLength: 20}
             )}
           />
         </Grid>
         <Grid item xs={4}>
           <TextField
-            type="text"
             label="State"
-            inputProps={{maxLength: 2}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'state',
               stateRef,
+              stateError,
               setStateError,
-              stateError
+              {maxLength: 2}
             )}
           />
         </Grid>
         <Grid item xs={4}>
           <TextField
-            type="text"
             label="Zip Code"
-            inputProps={{maxLength: 10}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'zipCode',
               zipCodeRef,
-              setZipCodeError,
               zipCodeError,
+              setZipCodeError,
               {isZipCode: true}
             )}
           />
@@ -456,27 +289,25 @@ export function RegistrationForm(props: {
         <Grid item xs={12} />
         <Grid item xs={6}>
           <TextField
-            type="number"
             label="Number of Educators"
-            inputProps={{min: '0'}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'numTeachers',
               numTeachersRef,
+              numTeachersError,
               setNumTeachersError,
-              numTeachersError
+              {isInteger: {min: 0}}
             )}
           />
         </Grid>
         <Grid item xs={6}>
           <TextField
-            type="number"
             label="Number of Students"
-            inputProps={{min: '0'}}
-            {...registrationFieldProps(
+            {...formFields.registerProps(
               'numStudents',
               numStudentsRef,
+              numStudentsError,
               setNumStudentsError,
-              numStudentsError
+              {isInteger: {min: 0}}
             )}
           />
         </Grid>

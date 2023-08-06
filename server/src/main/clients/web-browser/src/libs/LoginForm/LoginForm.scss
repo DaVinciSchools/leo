@@ -1,56 +1,57 @@
 @use '../color';
-@use '../forms';
 
-.logo {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-
-  a {
-    line-height: 0;
-  }
+.login-form-modal {
+  background: white;
+  border: 2px solid color.$neutral-800;
+  height: 75%;
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 55%;
 }
 
-.form-container {
-  .form-padding {
-    padding: 0.5em;
-  }
+.login-form {
+  display: flex;
+  flex-flow: column nowrap;
+  height: 100%;
+  justify-content: center;
 
-  .success {
-    @include color.success;
-
-    border: 1px solid;
+  .login-form-logo {
+    align-items: flex-start;
+    display: flex;
     justify-content: center;
-    padding: 0.25em;
-    border-radius: 6px;
-  }
-
-  .form-elements {
-    display: flex;
-    flex-flow: column nowrap;
-    gap: 0.5em;
-    min-width: fit-content;
-    width: 40%;
-  }
-
-  .footer {
-    align-items: center;
-    display: flex;
-    flex-flow: row nowrap;
-    flex-grow: 1;
-    gap: 1em;
 
     a {
-      color: color.$primary-800;
-      flex-shrink: 1;
-      padding-right: 0.5em;
-      text-align: right;
-      white-space: nowrap;
-      margin-bottom: 24px;
+      line-height: 0;
     }
+
+    margin-bottom: 5em;
   }
 
-  .buttons {
-    padding: 0.5em;
+  .login-form-fields {
+    align-content: center;
+    display: flex;
+    flex-flow: column nowrap;
+    gap: 3em;
+    justify-content: center;
+    width: 100%;
+
+    .login-form-failure {
+      @include color.error;
+      align-self: center;
+      border-style: solid;
+      border-width: 1px;
+      padding: 0.5em 1em;
+      width: fit-content;
+    }
+
+    .login-form-buttons {
+      display: flex;
+      flex-flow: row nowrap;
+      gap: 1em;
+      justify-content: space-between;
+      margin: 0 auto 0 auto;
+    }
   }
 }

@@ -1,55 +1,64 @@
 import './LoginForm.scss';
 
-import {Button, Checkbox, Form, Input} from 'antd';
-import {
-  EyeInvisibleOutlined,
-  EyeOutlined,
-  LockOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+import {Button, TextField} from '@mui/material';
+import {FormEvent, useContext, useEffect, useRef, useState} from 'react';
 import {GlobalStateContext} from '../GlobalState';
 import {Link} from 'react-router-dom';
+import {Lock, Person} from '@mui/icons-material';
 import {addXsrfHeader} from '../authentication';
+import {convertFormValuesToURLSearchParams, FormFields} from '../forms';
 import {pl_types} from '../protos';
-import {useContext, useEffect, useState} from 'react';
+
 import IUser = pl_types.IUser;
 
-const AUTHORIZATION_FAILURE = 'Authentication failure. Please try again.';
+const AUTHENTICATION_FAILURE = 'Authentication failure. Please try again.';
 
-export function LoginForm(props: {successAction: (user: IUser) => void}) {
+export function LoginForm(props: {
+  successAction: () => void;
+  failureAction: () => void;
+}) {
   const global = useContext(GlobalStateContext);
 
-  const [loginForm] = Form.useForm();
-  const [disabled, setDisabled] = useState(false);
   const queryParameters = new URLSearchParams(window.location.search);
   const [failure, setFailure] = useState(
-    queryParameters.get('failed') != null ? AUTHORIZATION_FAILURE : ''
+    queryParameters.get('failed') != null ? AUTHENTICATION_FAILURE : ''
   );
-  const [showPassword, setShowPassword] = useState(false);
 
-  useEffect(() => {
-    if (queryParameters.get('username') && queryParameters.get('password')) {
-      doSubmit({
-        username: queryParameters.get('username'),
-        password: queryParameters.get('password'),
-      });
-    }
-  }, []);
+  const [showPasswords, setShowPasswords] = useState(false);
+
+  const formRef = useRef<HTMLFormElement>(null);
+  const formFields = useState(new FormFields(formRef))[0];
+
+  const emailAddressRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLDivElement>(null);
+
+  const [emailAddressError, setEmailAddressError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
     if (failure) {
-      setTimeout(() => setFailure(''), 5000);
+      setTimeout(() => {
+        setFailure('');
+      }, 5000);
     }
   }, [failure]);
 
-  async function doSubmit(formValues: {}) {
+  async function onFormSubmit(e: FormEvent<HTMLFormElement>) {
+    // Prevent the form from reloading the page.
+    e.preventDefault();
+
+    formFields.resetErrors();
+    if (formFields.checkAndSet(true)) {
+      return;
+    }
+
     try {
       fetch('/api/login.html', {
         method: 'POST',
         headers: addXsrfHeader({
           'Content-Type': 'application/x-www-form-urlencoded',
         }),
-        body: new URLSearchParams(formValues),
+        body: convertFormValuesToURLSearchParams(formRef.current),
         cache: 'no-cache',
         redirect: 'follow',
       })
@@ -58,7 +67,7 @@ export function LoginForm(props: {successAction: (user: IUser) => void}) {
             global.setError(response);
           } else if (response.redirected) {
             if (new URL(response.url).searchParams.get('failed') != null) {
-              setFailure(AUTHORIZATION_FAILURE);
+              setFailure(AUTHENTICATION_FAILURE);
             } else {
               global.setError(response);
             }
@@ -70,7 +79,7 @@ export function LoginForm(props: {successAction: (user: IUser) => void}) {
                 try {
                   const user: IUser = pl_types.User.decode(result.value!);
                   global.setUser(user);
-                  props.successAction(user);
+                  props.successAction();
                 } catch (e) {
                   global.setError(e);
                 }
@@ -89,96 +98,72 @@ export function LoginForm(props: {successAction: (user: IUser) => void}) {
     }
   }
 
-  function onFinish(formValues: {}) {
-    setDisabled(true);
-    setFailure('');
-    doSubmit(formValues)
-      .catch(global.setError)
-      .finally(() => setDisabled(false));
-  }
-
   return (
     <>
-      <div className="space-filler" />
-      <div className="logo">
-        <Link to="/">
-          <img src="/images/logo-orange-on-white.svg" />
-        </Link>
-      </div>
-      <div className="space-filler">
-        <div
-          className="error-notice"
-          style={{display: failure ? undefined : 'none'}}
-        >
-          {failure}
+      <form
+        ref={formRef}
+        onSubmit={onFormSubmit}
+        className="login-form"
+        noValidate
+      >
+        <div className="login-form-logo">
+          <div />
+          <Link to="/">
+            <img src="/images/logo-orange-on-white.svg" />
+          </Link>
         </div>
-      </div>
-      <div className="form-container">
-        <Form
-          form={loginForm}
-          onFinish={onFinish}
-          disabled={disabled}
-          className="form-elements"
-        >
-          <Form.Item
-            name="username"
-            rules={[
-              {
-                required: true,
-                whitespace: true,
-                message: 'Please enter your email address.',
-              },
-              {
-                type: 'email',
-                message: 'This e-mail address is not valid.',
-              },
-            ]}
+        <div className="login-form-fields">
+          <div
+            className="login-form-failure"
+            style={{visibility: failure ? 'visible' : 'hidden'}}
           >
-            <Input
-              placeholder="Email Address"
-              maxLength={255}
-              autoComplete="username"
-              autoFocus={true}
-              prefix={<UserOutlined />}
-            />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            rules={[
-              {
-                required: true,
-                message: 'Please enter your password.',
-              },
-            ]}
-          >
-            <Input
-              placeholder="Password"
-              maxLength={255}
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
-              prefix={<LockOutlined />}
-              suffix={
-                showPassword ? (
-                  <EyeOutlined onClick={() => setShowPassword(false)} />
-                ) : (
-                  <EyeInvisibleOutlined onClick={() => setShowPassword(true)} />
-                )
-              }
-            />
-          </Form.Item>
-          <div className="footer">
-            <Form.Item name="rememberMe" valuePropName="checked">
-              <Checkbox>Remember me (TODO)</Checkbox>
-            </Form.Item>
-            <Link to="/">Forgot your password? (TODO)</Link>
+            &nbsp;{failure}&nbsp;
           </div>
-          <div className="buttons">
-            <Button type="primary" htmlType="submit">
-              Submit
+          <TextField
+            required
+            autoComplete="email"
+            label="Email Address"
+            {...formFields.registerProps(
+              'username',
+              emailAddressRef,
+              emailAddressError,
+              setEmailAddressError,
+              {
+                isEmail: true,
+                startIcon: <Person />,
+                maxLength: 254,
+              }
+            )}
+          />
+          <TextField
+            required
+            autoComplete="current-password"
+            label="Password"
+            {...formFields.registerProps(
+              'password',
+              passwordRef,
+              passwordError,
+              setPasswordError,
+              {
+                isPassword: {
+                  showPasswords,
+                  setShowPasswords,
+                  skipPasswordCheck: true,
+                },
+                startIcon: <Lock />,
+              }
+            )}
+          />
+          <div className="login-form-buttons">
+            <Button variant="contained" type="submit">
+              Login and Continue
+            </Button>
+            <Button variant="contained" onClick={props.failureAction}>
+              Cancel
             </Button>
           </div>
-        </Form>
-      </div>
+        </div>
+      </form>
     </>
   );
 }
