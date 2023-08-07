@@ -1,5 +1,17 @@
 @use '../color';
 
+.login-login-form {
+  background: white;
+  height: 75%;
+  left: 50%;
+  min-height: fit-content;
+  min-width: fit-content;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 55%;
+}
+
 .login-form-modal {
   background: white;
   border: 2px solid color.$neutral-800;
@@ -51,9 +63,9 @@
     .login-form-buttons {
       display: flex;
       flex-flow: row nowrap;
-      gap: 1em;
-      justify-content: space-between;
-      margin: 0 auto 0 auto;
+      gap: 2em;
+      justify-content: center;
+      width: 100%;
     }
   }
 }

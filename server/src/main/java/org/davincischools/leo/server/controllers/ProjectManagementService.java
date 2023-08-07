@@ -608,8 +608,7 @@ public class ProjectManagementService {
             (request, log) -> {
               var response = GetProjectPostsResponse.newBuilder();
               response.addAllProjectPosts(
-                  Streams.stream(
-                          db.getProjectPostRepository().findAllByProjectId(request.getProjectId()))
+                  db.getProjectPostRepository().findAllByProjectId(request.getProjectId()).stream()
                       .map(DataAccess::convertProjectPostToProto)
                       .toList());
               return response.build();

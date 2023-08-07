@@ -1,8 +1,8 @@
 import './Login.scss';
 
 import {FORWARD_PARAM} from '../../../libs/authentication';
+import {LoginForm} from '../../../libs/LoginForm/LoginForm';
 import {useNavigate} from 'react-router';
-import {ModalLoginForm} from '../../../libs/LoginForm/ModalLoginForm';
 
 export function Login() {
   const navigate = useNavigate();
@@ -10,15 +10,14 @@ export function Login() {
 
   return (
     <>
-      <div style={{width: '100%', height: '100%', background: 'white'}}>
-        <ModalLoginForm
-          open={true}
-          successAction={() => {
+      <div className="login-login-form">
+        <LoginForm
+          onLoggedIn={() => {
             navigate(
               queryParameters.get(FORWARD_PARAM) || '/dashboards/redirect.html'
             );
           }}
-          failureAction={() => navigate('/')}
+          onCancel={() => navigate('/')}
         />
       </div>
     </>

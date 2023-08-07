@@ -11,9 +11,7 @@ export function Logout() {
 
   useEffect(() => {
     setTimeout(() => {
-      logout(global, () => {
-        navigate('/');
-      });
+      logout(global).finally(() => navigate('/'));
     }, 250);
   }, []);
 

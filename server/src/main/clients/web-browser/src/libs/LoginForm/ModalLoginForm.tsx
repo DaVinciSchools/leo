@@ -5,8 +5,8 @@ import {LoginForm} from './LoginForm';
 
 export function ModalLoginForm(props: {
   open: boolean;
-  successAction: () => void;
-  failureAction: () => void;
+  onLoggedIn: () => void;
+  onCancel: () => void;
 }) {
   return (
     <>
@@ -20,10 +20,7 @@ export function ModalLoginForm(props: {
         }}
       >
         <Box className="login-form-modal" paddingX={8}>
-          <LoginForm
-            successAction={props.successAction}
-            cancelAction={props.failureAction}
-          />
+          <LoginForm onLoggedIn={props.onLoggedIn} onCancel={props.onCancel} />
         </Box>
       </Modal>
     </>

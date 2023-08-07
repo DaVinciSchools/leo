@@ -11,8 +11,8 @@ import {login} from '../authentication';
 const AUTHENTICATION_FAILURE = 'Authentication failure. Please try again.';
 
 export function LoginForm(props: {
-  successAction: () => void;
-  cancelAction: () => void;
+  onLoggedIn: () => void;
+  onCancel: () => void;
 }) {
   const global = useContext(GlobalStateContext);
 
@@ -53,10 +53,9 @@ export function LoginForm(props: {
       global,
       String(formFields.get('username') ?? ''),
       String(formFields.get('password') ?? ''),
-      props.successAction,
-      () => {
-        setFailure(AUTHENTICATION_FAILURE);
-      }
+      props.onLoggedIn,
+      () => setFailure(AUTHENTICATION_FAILURE),
+      global.setError
     );
   }
 
@@ -114,7 +113,7 @@ export function LoginForm(props: {
             <Button variant="contained" type="submit">
               Login and Continue
             </Button>
-            <Button variant="contained" onClick={props.cancelAction}>
+            <Button variant="contained" onClick={props.onCancel}>
               Cancel
             </Button>
           </div>

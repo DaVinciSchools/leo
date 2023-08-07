@@ -5,7 +5,7 @@ import {pl_types, user_management} from '../generated/protobuf-js';
 import {useNavigate} from 'react-router';
 
 import UserManagementService = user_management.UserManagementService;
-import {FORWARD_PARAM} from './authentication';
+import {FORWARD_PARAM, logout} from './authentication';
 
 export interface IGlobalState {
   readonly user?: pl_types.IUser;
@@ -78,11 +78,12 @@ export function GlobalState(props: PropsWithChildren<{}>) {
       .then(response => {
         if (response?.user?.user != null) {
           setUser(response.user.user);
+          setLoaded(true);
+        } else {
+          logout(global).finally(() => setLoaded(true));
         }
-        return response?.user?.user ?? undefined;
       })
-      .catch(setError)
-      .finally(() => setLoaded(true));
+      .catch(() => logout(global).finally(() => setLoaded(true)));
   }, []);
 
   return (

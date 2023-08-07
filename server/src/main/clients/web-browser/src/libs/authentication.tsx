@@ -1,4 +1,5 @@
 import Cookies from 'js-cookie';
+import {HandleErrorType} from './HandleError/HandleError';
 import {IGlobalState} from './GlobalState';
 import {pl_types} from '../generated/protobuf-js';
 
@@ -35,13 +36,14 @@ export function login(
   username: string,
   password: string,
   onSuccess: () => void,
-  onFailure: () => void
+  onFailure: () => void,
+  onError: (error?: HandleErrorType) => void
 ) {
   const params = new URLSearchParams();
   params.append(USERNAME_PARAM, username);
   params.append(PASSWORD_PARAM, password);
 
-  logout(global, () => {
+  logout(global).finally(() => {
     try {
       fetch('/api/login.html', {
         method: 'POST',
@@ -54,14 +56,16 @@ export function login(
       })
         .then(response => {
           if (!response.ok) {
-            global.setError(response);
+            onError(response);
           } else if (response.redirected) {
             if (new URL(response.url).searchParams.get('failed') != null) {
               onFailure();
             } else {
-              global.setError(response);
+              onError(response);
             }
-          } else if (response.body != null) {
+          } else if (response.body == null) {
+            onError('Response had no body.');
+          } else {
             response.body
               .getReader()
               .read()
@@ -70,32 +74,25 @@ export function login(
                   global.setUser(pl_types.User.decode(result.value!));
                   onSuccess();
                 } catch (e) {
-                  global.setError(e);
+                  onError(e);
                 }
               })
-              .catch(global.setError);
-          } else {
-            global.setError({
-              name: 'Error',
-              message: 'Response had no body.',
-            });
+              .catch(onError);
           }
         })
-        .catch(global.setError);
+        .catch(onError);
     } catch (e) {
-      global.setError(e);
+      onError(e);
     }
   });
 }
 
-export function logout(global: IGlobalState, onSuccess: () => void) {
-  fetch('/api/logout.html', {
+export function logout(global: IGlobalState) {
+  global.setUser(undefined);
+  return fetch('/api/logout.html', {
     method: 'POST',
     headers: addXsrfHeader(),
     cache: 'no-cache',
     redirect: 'follow',
-  }).finally(() => {
-    global.setUser(undefined);
-    onSuccess();
   });
 }
