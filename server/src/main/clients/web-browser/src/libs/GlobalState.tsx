@@ -1,6 +1,6 @@
-import {pl_types} from './protos';
 import {HandleError, HandleErrorType} from './HandleError/HandleError';
 import {createContext, PropsWithChildren, useState} from 'react';
+import {pl_types} from '../generated/protobuf-js';
 
 export interface IGlobalState {
   readonly user?: pl_types.IUser;

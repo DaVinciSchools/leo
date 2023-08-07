@@ -1,19 +1,18 @@
 import './MyProjects.scss';
-import {useContext, useEffect, useRef, useState} from 'react';
-import {
-  createService,
-  pl_types,
-  project_management,
-} from '../../../libs/protos';
+
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {sendToLogin} from '../../../libs/authentication';
 import {Dropdown} from 'antd';
-import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
-import IProject = pl_types.IProject;
-import ProjectManagementService = project_management.ProjectManagementService;
-import {ItemType} from 'antd/es/menu/hooks/useItems';
-import IProjectPost = pl_types.IProjectPost;
 import {GlobalStateContext} from '../../../libs/GlobalState';
+import {ItemType} from 'antd/es/menu/hooks/useItems';
+import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
+import {createService} from '../../../libs/protos';
+import {pl_types, project_management} from '../../../generated/protobuf-js';
+import {sendToLogin} from '../../../libs/authentication';
+import {useContext, useEffect, useRef, useState} from 'react';
+
+import IProject = pl_types.IProject;
+import IProjectPost = pl_types.IProjectPost;
+import ProjectManagementService = project_management.ProjectManagementService;
 
 export function MyProjects() {
   const global = useContext(GlobalStateContext);

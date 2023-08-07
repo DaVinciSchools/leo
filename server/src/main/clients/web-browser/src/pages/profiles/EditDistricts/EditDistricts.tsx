@@ -1,17 +1,16 @@
 import './EditDistricts.scss';
+
 import {ChangeEvent, useContext, useEffect, useState} from 'react';
-import {
-  createService,
-  district_management,
-  pl_types,
-} from '../../../libs/protos';
-import DistrictManagementService = district_management.DistrictManagementService;
-import DistrictInformationResponse = district_management.DistrictInformationResponse;
-import IDistrict = pl_types.IDistrict;
-import {Display, SelectFromList} from '../../../SelectFromList/SelectFromList';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {sendToLogin} from '../../../libs/authentication';
+import {Display, SelectFromList} from '../../../SelectFromList/SelectFromList';
 import {GlobalStateContext} from '../../../libs/GlobalState';
+import {createService} from '../../../libs/protos';
+import {district_management, pl_types} from '../../../generated/protobuf-js';
+import {sendToLogin} from '../../../libs/authentication';
+
+import DistrictInformationResponse = district_management.DistrictInformationResponse;
+import DistrictManagementService = district_management.DistrictManagementService;
+import IDistrict = pl_types.IDistrict;
 
 export function SelectDistrictFromList(props: {
   id: string;

@@ -1,7 +1,14 @@
 import './Accounts.scss';
+
+import {
+  CloseSquareOutlined,
+  EditOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
+import {CommonAccountFields} from '../../../libs/CommonAccountFields/CommonAccountFields';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {sendToLogin} from '../../../libs/authentication';
-import {useContext, useEffect, useRef, useState} from 'react';
+import {GlobalStateContext} from '../../../libs/GlobalState';
+import {createService} from '../../../libs/protos';
 import {pl_types, user_management} from '../../../generated/protobuf-js';
 import {
   Button,
@@ -13,18 +20,13 @@ import {
   Pagination,
   Table,
 } from 'antd';
-import {createService} from '../../../libs/protos';
-import {CommonAccountFields} from '../../../libs/CommonAccountFields/CommonAccountFields';
-import {
-  CloseSquareOutlined,
-  EditOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
-import {GlobalStateContext} from '../../../libs/GlobalState';
-import UserManagementService = user_management.UserManagementService;
+import {sendToLogin} from '../../../libs/authentication';
+import {useContext, useEffect, useRef, useState} from 'react';
+
 import IFullUserDetails = user_management.IFullUserDetails;
 import IUpsertUserRequest = user_management.IUpsertUserRequest;
 import IUser = pl_types.IUser;
+import UserManagementService = user_management.UserManagementService;
 
 export function Accounts() {
   const global = useContext(GlobalStateContext);

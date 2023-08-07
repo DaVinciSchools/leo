@@ -4,8 +4,9 @@ import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import React, {useContext, useEffect, useState} from 'react';
 import Typography from '@mui/material/Typography';
-import {createService, error_service} from '../protos';
 import {GlobalStateContext} from '../GlobalState';
+import {createService} from '../protos';
+import {error_service} from '../../generated/protobuf-js';
 
 export const REPORT_ERROR_REQUEST_PROP_NAME = 'projectLeoReportErrorRequest';
 

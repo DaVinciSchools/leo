@@ -1,16 +1,15 @@
 import './AllProjects.scss';
-import {useContext, useEffect, useState} from 'react';
-import {
-  createService,
-  pl_types,
-  project_management,
-} from '../../../libs/protos';
+
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {ProjectCard} from '../../../libs/ProjectCard/ProjectCard';
-import {sendToLogin} from '../../../libs/authentication';
-import {Modal} from 'antd';
-import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
 import {GlobalStateContext} from '../../../libs/GlobalState';
+import {Modal} from 'antd';
+import {ProjectCard} from '../../../libs/ProjectCard/ProjectCard';
+import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
+import {createService} from '../../../libs/protos';
+import {pl_types, project_management} from '../../../generated/protobuf-js';
+import {sendToLogin} from '../../../libs/authentication';
+import {useContext, useEffect, useState} from 'react';
+
 import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
 import ThumbsState = pl_types.Project.ThumbsState;

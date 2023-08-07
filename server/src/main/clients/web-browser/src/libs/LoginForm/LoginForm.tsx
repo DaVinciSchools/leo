@@ -7,7 +7,7 @@ import {Link} from 'react-router-dom';
 import {Lock, Person} from '@mui/icons-material';
 import {addXsrfHeader} from '../authentication';
 import {convertFormValuesToURLSearchParams, FormFields} from '../forms';
-import {pl_types} from '../protos';
+import {pl_types} from '../../generated/protobuf-js';
 
 import IUser = pl_types.IUser;
 

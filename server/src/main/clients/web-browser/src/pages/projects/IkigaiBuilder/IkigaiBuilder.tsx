@@ -1,24 +1,26 @@
 import './IkigaiBuilder.scss';
-import {Input, Layout, Modal} from 'antd';
-import {Ikigai} from '../../../Ikigai/Ikigai';
+
+import {Autocomplete, TextField} from '@mui/material';
 import {ChangeEvent, useContext, useEffect, useState} from 'react';
+import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
+import {GlobalStateContext} from '../../../libs/GlobalState';
+import {Ikigai} from '../../../Ikigai/Ikigai';
+import {Input, Layout, Modal} from 'antd';
+import {MinusCircleOutlined, PlusCircleOutlined} from '@ant-design/icons';
+import {createService} from '../../../libs/protos';
+import {sendToLogin} from '../../../libs/authentication';
+import {useNavigate} from 'react-router';
 import {
   assignment_management,
-  createService,
   pl_types,
   project_management,
-} from '../../../libs/protos';
-import {sendToLogin} from '../../../libs/authentication';
-import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {MinusCircleOutlined, PlusCircleOutlined} from '@ant-design/icons';
-import ProjectManagementService = project_management.ProjectManagementService;
-import {useNavigate} from 'react-router';
-import ISelectionOption = pl_types.ProjectInputCategory.IOption;
-import IAssignment = pl_types.IAssignment;
+} from '../../../generated/protobuf-js';
+
 import AssignmentManagementService = assignment_management.AssignmentManagementService;
-import {Autocomplete, TextField} from '@mui/material';
+import IAssignment = pl_types.IAssignment;
 import IClassX = pl_types.IClassX;
-import {GlobalStateContext} from '../../../libs/GlobalState';
+import ISelectionOption = pl_types.ProjectInputCategory.IOption;
+import ProjectManagementService = project_management.ProjectManagementService;
 
 const {Content} = Layout;
 

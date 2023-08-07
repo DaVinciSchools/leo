@@ -1,6 +1,5 @@
 import 'swiper/css/bundle';
 
-import {Tab, TabProps, Tabs, TabsProps} from '@mui/material';
 import {ReactNode, useEffect, useState} from 'react';
 import {
   Swiper,
@@ -9,6 +8,7 @@ import {
   SwiperSlide,
   SwiperSlideProps,
 } from 'swiper/react';
+import {Tab, TabProps, Tabs, TabsProps} from '@mui/material';
 
 export function TabbedSwiper<K>(props: {
   tabs: {key: K; label: ReactNode; content: ReactNode}[];

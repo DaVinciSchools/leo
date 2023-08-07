@@ -1,10 +1,13 @@
 import './PartialTextOpenAiPrompt.scss';
-import {createService, partial_text_openai_prompt} from '../libs/protos';
-import GetSuggestionsRequest = partial_text_openai_prompt.GetSuggestionsRequest;
-import GetSuggestionsResponse = partial_text_openai_prompt.GetSuggestionsResponse;
-import {useContext, useState} from 'react';
+
 import {CgSearch, CgSearchLoading} from 'react-icons/cg';
 import {GlobalStateContext} from '../libs/GlobalState';
+import {createService} from '../libs/protos';
+import {partial_text_openai_prompt} from '../generated/protobuf-js';
+import {useContext, useState} from 'react';
+
+import GetSuggestionsRequest = partial_text_openai_prompt.GetSuggestionsRequest;
+import GetSuggestionsResponse = partial_text_openai_prompt.GetSuggestionsResponse;
 
 export function PartialTextOpenAiPrompt(props: {
   id: string;

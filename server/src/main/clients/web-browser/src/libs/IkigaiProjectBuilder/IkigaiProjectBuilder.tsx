@@ -1,8 +1,5 @@
 import './IkigaiProjectBuilder.scss';
 
-import {Close} from '@mui/icons-material';
-import {CSSProperties, ReactNode, useEffect, useState} from 'react';
-import {Ikigai, VISIBLE_ALPHA} from '../../Ikigai/Ikigai';
 import {
   Autocomplete,
   Button,
@@ -11,12 +8,15 @@ import {
   PaperProps,
   TextField,
 } from '@mui/material';
+import {CSSProperties, ReactNode, useEffect, useState} from 'react';
+import {Checkbox} from 'antd';
+import {Close} from '@mui/icons-material';
+import {Ikigai, VISIBLE_ALPHA} from '../../Ikigai/Ikigai';
 import {TitledPaper} from '../TitledPaper/TitledPaper';
-import {pl_types} from '../protos';
+import {pl_types} from '../../generated/protobuf-js';
 
 import IOption = pl_types.ProjectInputCategory.IOption;
 import ValueType = pl_types.ProjectInputCategory.ValueType;
-import {Checkbox} from 'antd';
 
 const MODAL_STYLE: Partial<CSSProperties> = {
   position: 'absolute',

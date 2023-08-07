@@ -1,25 +1,27 @@
 import './EditSchools.scss';
+
 import {ChangeEvent, useContext, useEffect, useState} from 'react';
-import {
-  createService,
-  district_management,
-  school_management,
-  pl_types,
-} from '../../../libs/protos';
+import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {Display, SelectFromList} from '../../../SelectFromList/SelectFromList';
-import {SelectDistrictFromList} from '../EditDistricts/EditDistricts';
-import DistrictManagementService = district_management.DistrictManagementService;
-import IDistrict = pl_types.IDistrict;
-import SchoolManagementService = school_management.SchoolManagementService;
-import ISchool = pl_types.ISchool;
-import ISchoolInformationResponse = school_management.ISchoolInformationResponse;
+import {GlobalStateContext} from '../../../libs/GlobalState';
 import {
   MultipleDisplay,
   SelectMultipleFromList,
 } from '../../../SelectMultipleFromList/SelectMultipleFromList';
-import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
+import {SelectDistrictFromList} from '../EditDistricts/EditDistricts';
+import {createService} from '../../../libs/protos';
+import {
+  district_management,
+  pl_types,
+  school_management,
+} from '../../../generated/protobuf-js';
 import {sendToLogin} from '../../../libs/authentication';
-import {GlobalStateContext} from '../../../libs/GlobalState';
+
+import DistrictManagementService = district_management.DistrictManagementService;
+import IDistrict = pl_types.IDistrict;
+import ISchool = pl_types.ISchool;
+import ISchoolInformationResponse = school_management.ISchoolInformationResponse;
+import SchoolManagementService = school_management.SchoolManagementService;
 
 export function SelectSchoolFromList(props: {
   id: string;

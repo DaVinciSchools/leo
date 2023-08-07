@@ -2,9 +2,10 @@ import './ProjectPage.scss';
 import 'react-quill/dist/quill.bubble.css';
 
 import {Button, Card, Form, Input} from 'antd';
-import {pl_types} from '../../generated/protobuf-js';
 import {ChangeEvent, useState} from 'react';
 import {CloseCircleTwoTone} from '@ant-design/icons';
+import {pl_types} from '../../generated/protobuf-js';
+
 import IProject = pl_types.IProject;
 import IProjectPost = pl_types.IProjectPost;
 import ReactQuill, {Value} from 'react-quill';

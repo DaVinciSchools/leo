@@ -9,25 +9,26 @@ import {
   Typography,
 } from '@mui/material';
 import {CSSProperties, ReactNode, useContext, useEffect, useState} from 'react';
+import {GlobalStateContext} from '../GlobalState';
 import {IkigaiProjectBuilder} from '../IkigaiProjectBuilder/IkigaiProjectBuilder';
-import {
-  pl_types,
-  project_management,
-  user_management,
-} from '../../generated/protobuf-js';
-import {createService} from '../protos';
 import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectConfigurer';
-import {RegistrationForm} from './RegistrationForm/RegistrationForm';
-import {useNavigate} from 'react-router';
 import {
   LOGIN_RETURN_TO_PARAM,
   PASSWORD_PARAM,
   sendToLogin,
   USERNAME_PARAM,
 } from '../authentication';
-import {GlobalStateContext} from '../GlobalState';
-import ProjectManagementService = project_management.ProjectManagementService;
+import {RegistrationForm} from './RegistrationForm/RegistrationForm';
+import {createService} from '../protos';
+import {
+  pl_types,
+  project_management,
+  user_management,
+} from '../../generated/protobuf-js';
+import {useNavigate} from 'react-router';
+
 import IRegisterUserRequest = user_management.IRegisterUserRequest;
+import ProjectManagementService = project_management.ProjectManagementService;
 import UserManagementService = user_management.UserManagementService;
 
 enum State {

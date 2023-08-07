@@ -1,5 +1,6 @@
-import {Link} from 'react-router-dom';
 import './LandingPageNav.scss';
+
+import {Link} from 'react-router-dom';
 import {Outlet} from 'react-router';
 
 export function LandingPageNav() {

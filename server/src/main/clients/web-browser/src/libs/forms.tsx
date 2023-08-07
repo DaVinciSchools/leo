@@ -1,6 +1,6 @@
-import {ReactElement, RefObject} from 'react';
-import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
 import {AutocompleteRenderInputParams, InputAdornment} from '@mui/material';
+import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
+import {ReactElement, RefObject} from 'react';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
 
 const MAX_ZIP_CODE_LENGTH = 10;

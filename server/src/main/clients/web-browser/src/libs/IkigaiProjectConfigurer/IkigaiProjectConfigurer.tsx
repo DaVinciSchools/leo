@@ -1,11 +1,11 @@
-import {pl_types} from '../../generated/protobuf-js';
 import {CSSProperties, useEffect, useState} from 'react';
-import {TitledPaper} from '../TitledPaper/TitledPaper';
-import {PersistedReactGridLayout} from '../PersistedReactGridLayout/PersistedReactGridLayout';
-import {FormControlLabel} from '@mui/material';
 import {Checkbox} from 'antd';
-import {VISIBLE_ALPHA} from '../../Ikigai/Ikigai';
+import {FormControlLabel} from '@mui/material';
 import {Layout} from 'react-grid-layout';
+import {PersistedReactGridLayout} from '../PersistedReactGridLayout/PersistedReactGridLayout';
+import {TitledPaper} from '../TitledPaper/TitledPaper';
+import {VISIBLE_ALPHA} from '../../Ikigai/Ikigai';
+import {pl_types} from '../../generated/protobuf-js';
 
 interface Category {
   category: pl_types.IProjectInputValue;

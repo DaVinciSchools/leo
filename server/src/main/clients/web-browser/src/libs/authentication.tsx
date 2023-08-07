@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie';
-import {useEffect} from 'react';
 import {redirect} from 'react-router-dom';
+import {useEffect} from 'react';
 
 export const LOGIN_RETURN_TO_PARAM = 'returnTo';
 export const USERNAME_PARAM = 'username';

@@ -9,8 +9,9 @@ import {
   LikeOutlined,
   LikeTwoTone,
 } from '@ant-design/icons';
-import {pl_types} from '../../generated/protobuf-js';
 import {ReactNode, useRef, useState} from 'react';
+import {pl_types} from '../../generated/protobuf-js';
+
 import IProject = pl_types.IProject;
 import ThumbsState = pl_types.Project.ThumbsState;
 
