@@ -5,13 +5,16 @@ import {
   QuestionCircleOutlined,
   SmileTwoTone,
 } from '@ant-design/icons';
-import {PropsWithChildren, ReactNode, useContext} from 'react';
-import {Popover} from 'antd';
-import {Link} from 'react-router-dom';
 import {GlobalStateContext} from '../GlobalState';
+import {Link} from 'react-router-dom';
+import {Popover} from 'antd';
+import {PropsWithChildren, ReactNode, useContext} from 'react';
 
 export function DefaultPage(props: PropsWithChildren<{title: ReactNode}>) {
   const global = useContext(GlobalStateContext);
+  if (!global.requireUser(user => user?.isAuthenticated)) {
+    return <></>;
+  }
 
   const avatarPanel =
     global.user != null ? (

@@ -7,7 +7,6 @@ import {ItemType} from 'antd/es/menu/hooks/useItems';
 import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
 import {createService} from '../../../libs/protos';
 import {pl_types, project_management} from '../../../generated/protobuf-js';
-import {sendToLogin} from '../../../libs/authentication';
 import {useContext, useEffect, useRef, useState} from 'react';
 
 import IProject = pl_types.IProject;
@@ -16,8 +15,8 @@ import ProjectManagementService = project_management.ProjectManagementService;
 
 export function MyProjects() {
   const global = useContext(GlobalStateContext);
-  if (!global.user) {
-    return sendToLogin();
+  if (!global.requireUser(user => user?.isAuthenticated)) {
+    return <></>;
   }
 
   const projectId = useRef<number | undefined>();

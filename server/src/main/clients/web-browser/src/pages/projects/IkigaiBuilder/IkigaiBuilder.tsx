@@ -8,7 +8,6 @@ import {Ikigai} from '../../../Ikigai/Ikigai';
 import {Input, Layout, Modal} from 'antd';
 import {MinusCircleOutlined, PlusCircleOutlined} from '@ant-design/icons';
 import {createService} from '../../../libs/protos';
-import {sendToLogin} from '../../../libs/authentication';
 import {useNavigate} from 'react-router';
 import {
   assignment_management,
@@ -290,8 +289,8 @@ type Category = {
 
 export function IkigaiBuilder() {
   const global = useContext(GlobalStateContext);
-  if (!global.user) {
-    return sendToLogin();
+  if (!global.requireUser(user => user?.isAuthenticated)) {
+    return <></>;
   }
 
   const classXSorter = (a: IClassX, b: IClassX) =>

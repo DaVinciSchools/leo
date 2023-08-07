@@ -43,12 +43,14 @@ public class DataAccess {
   }
 
   public static org.davincischools.leo.protos.pl_types.User convertFullUserXToProto(UserX user) {
-    var userProto =
-        org.davincischools.leo.protos.pl_types.User.newBuilder()
-            .setUserXId(coalesce(user::getId, () -> -1))
-            .setFirstName(user.getFirstName())
-            .setLastName(user.getLastName())
-            .setEmailAddress(user.getEmailAddress());
+    var userProto = org.davincischools.leo.protos.pl_types.User.newBuilder();
+    if (user.getId() != null) {
+      userProto
+          .setUserXId(user.getId())
+          .setFirstName(user.getFirstName())
+          .setLastName(user.getLastName())
+          .setEmailAddress(user.getEmailAddress());
+    }
     if (UserXRepository.isAdmin(user)) {
       userProto.setIsAdmin(true).setAdminId(user.getAdminX().getId());
     }
@@ -57,6 +59,12 @@ public class DataAccess {
     }
     if (UserXRepository.isStudent(user)) {
       userProto.setIsStudent(true).setStudentId(user.getStudent().getId());
+    }
+    if (UserXRepository.isDemo(user)) {
+      userProto.setIsDemo(true);
+    }
+    if (UserXRepository.isAuthenticated(user)) {
+      userProto.setIsAuthenticated(true);
     }
     if (user.getDistrict() != null && user.getDistrict().getId() != null) {
       userProto.setDistrictId(user.getDistrict().getId());

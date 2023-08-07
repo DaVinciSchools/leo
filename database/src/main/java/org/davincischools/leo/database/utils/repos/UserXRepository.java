@@ -52,7 +52,11 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
   }
 
   static boolean isDemo(UserX userX) {
-    return !isAdmin(userX) && !isTeacher(userX) && !isStudent(userX);
+    return isAuthenticated(userX) && !isAdmin(userX) && !isTeacher(userX) && !isStudent(userX);
+  }
+
+  static boolean isAuthenticated(UserX userX) {
+    return userX.getId() > 0;
   }
 
   static EnumSet<Role> getRoles(UserX user) {

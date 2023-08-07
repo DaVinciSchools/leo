@@ -15,7 +15,6 @@ import {
   pl_types,
   school_management,
 } from '../../../generated/protobuf-js';
-import {sendToLogin} from '../../../libs/authentication';
 
 import DistrictManagementService = district_management.DistrictManagementService;
 import IDistrict = pl_types.IDistrict;
@@ -98,8 +97,8 @@ export function SelectMultipleSchoolsFromList(props: {
 
 export function EditSchools() {
   const global = useContext(GlobalStateContext);
-  if (!global.user?.isAdmin) {
-    return sendToLogin();
+  if (!global.requireUser(user => user?.isAdmin)) {
+    return <></>;
   }
 
   const [districts, setDistricts] = useState(new Map<number, IDistrict>());

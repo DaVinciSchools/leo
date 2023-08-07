@@ -20,7 +20,6 @@ import {
   Pagination,
   Table,
 } from 'antd';
-import {sendToLogin} from '../../../libs/authentication';
 import {useContext, useEffect, useRef, useState} from 'react';
 
 import IFullUserDetails = user_management.IFullUserDetails;
@@ -30,8 +29,8 @@ import UserManagementService = user_management.UserManagementService;
 
 export function Accounts() {
   const global = useContext(GlobalStateContext);
-  if (!global.user?.isAdmin) {
-    return sendToLogin();
+  if (!global.requireUser(user => user.isAdmin)) {
+    return <></>;
   }
 
   const [showSearchForAccount, setShowSearchForAccount] = useState(false);

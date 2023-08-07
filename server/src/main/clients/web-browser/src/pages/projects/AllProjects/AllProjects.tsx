@@ -7,7 +7,6 @@ import {ProjectCard} from '../../../libs/ProjectCard/ProjectCard';
 import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
 import {createService} from '../../../libs/protos';
 import {pl_types, project_management} from '../../../generated/protobuf-js';
-import {sendToLogin} from '../../../libs/authentication';
 import {useContext, useEffect, useState} from 'react';
 
 import IProject = pl_types.IProject;
@@ -16,8 +15,8 @@ import ThumbsState = pl_types.Project.ThumbsState;
 
 export function AllProjects() {
   const global = useContext(GlobalStateContext);
-  if (!global.user == null) {
-    return sendToLogin();
+  if (!global.requireUser(user => user?.isAuthenticated)) {
+    return <></>;
   }
 
   const [projects, setProjects] = useState<IProject[]>([]);

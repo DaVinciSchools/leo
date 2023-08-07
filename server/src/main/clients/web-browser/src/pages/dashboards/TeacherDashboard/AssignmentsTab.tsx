@@ -33,7 +33,7 @@ import ProjectManagementService = project_management.ProjectManagementService;
 import IProjectInputValue = pl_types.IProjectInputValue;
 import {GlobalStateContext} from '../../../libs/GlobalState';
 
-export function AssignmentsTab(props: {user: IUser}) {
+export function AssignmentsTab(props: {user: IUser | undefined}) {
   const global = useContext(GlobalStateContext);
 
   const [classXs, setClassXs] = useState<IClassX[]>([]);
@@ -151,7 +151,7 @@ export function AssignmentsTab(props: {user: IUser}) {
   useEffect(() => {
     createService(AssignmentManagementService, 'AssignmentManagementService')
       .getAssignments({
-        teacherId: props.user.teacherId!,
+        teacherId: props.user?.teacherId,
       })
       .then(response => {
         setClassXs(response.classXs);

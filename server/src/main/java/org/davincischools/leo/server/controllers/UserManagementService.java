@@ -37,6 +37,7 @@ import org.davincischools.leo.server.utils.DataAccess;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user.Admin;
+import org.davincischools.leo.server.utils.http_user.Anonymous;
 import org.davincischools.leo.server.utils.http_user.Authenticated;
 import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,18 +99,23 @@ public class UserManagementService {
   @PostMapping(value = "/api/protos/UserManagementService/GetUserDetails")
   @ResponseBody
   public GetUserDetailsResponse getUserDetails(
-      @Authenticated HttpUser user,
+      @Anonymous HttpUser user,
       @RequestBody Optional<GetUserDetailsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(GetUserDetailsResponse.getDefaultInstance());
-    }
-
     return httpExecutors
         .start(optionalRequest.orElse(GetUserDetailsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
+              GetUserDetailsResponse.Builder response = GetUserDetailsResponse.newBuilder();
+
+              // No user id is the equivalent to a whoami request.
+              if (!request.hasUserXId()) {
+                if (user.isAuthenticated()) {
+                  getFullUserDetails(user.get().get().getId(), response.getUserBuilder());
+                }
+                return response.build();
+              }
 
               // If not an admin, make sure the user is getting their own profile.
               int userId = request.getUserXId();
@@ -118,8 +124,6 @@ public class UserManagementService {
                   return user.returnForbidden(GetUserDetailsResponse.getDefaultInstance());
                 }
               }
-
-              GetUserDetailsResponse.Builder response = GetUserDetailsResponse.newBuilder();
 
               getFullUserDetails(userId, response.getUserBuilder());
 

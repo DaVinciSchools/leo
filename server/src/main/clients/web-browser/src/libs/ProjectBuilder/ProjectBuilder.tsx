@@ -15,7 +15,6 @@ import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectC
 import {
   LOGIN_RETURN_TO_PARAM,
   PASSWORD_PARAM,
-  sendToLogin,
   USERNAME_PARAM,
 } from '../authentication';
 import {RegistrationForm} from './RegistrationForm/RegistrationForm';
@@ -50,9 +49,10 @@ export function ProjectBuilder(props: {
   style?: Partial<CSSProperties>;
 }) {
   const global = useContext(GlobalStateContext);
-  if (!global.user) {
-    return sendToLogin();
+  if (!global.requireUser(user => user?.isAuthenticated)) {
+    return <></>;
   }
+
   const navigate = useNavigate();
 
   const [allInputValues, setAllInputValues] = useState<

@@ -1,12 +1,11 @@
-import {sendToLogin} from '../../libs/authentication';
 import {useNavigate} from 'react-router';
 import {useContext, useEffect} from 'react';
 import {GlobalStateContext} from '../../libs/GlobalState';
 
 export function RedirectToDashboard() {
   const global = useContext(GlobalStateContext);
-  if (!global.user) {
-    return sendToLogin();
+  if (!global.requireUser(user => user?.isAuthenticated)) {
+    return <></>;
   }
 
   const navigate = useNavigate();
@@ -17,6 +16,8 @@ export function RedirectToDashboard() {
       navigate('/dashboards/teacher-dashboard.html');
     } else if (global.user?.isStudent) {
       navigate('/dashboards/student-dashboard.html');
+    } else if (global.user?.isAuthenticated) {
+      navigate('/projects/all-projects.html');
     }
   });
 

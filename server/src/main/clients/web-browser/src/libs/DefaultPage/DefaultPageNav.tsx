@@ -1,6 +1,5 @@
 import './DefaultPage.scss';
-import {Outlet, useNavigate} from 'react-router';
-import {Layout, Menu, MenuItemProps, MenuProps} from 'antd';
+
 import {
   BookOutlined,
   HomeOutlined,
@@ -8,13 +7,13 @@ import {
   SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import {Link} from 'react-router-dom';
-import {useContext, useState} from 'react';
 import {GlobalStateContext} from '../GlobalState';
-import {sendToLogin} from '../authentication';
+import {Layout, Menu, MenuItemProps, MenuProps} from 'antd';
+import {Link} from 'react-router-dom';
+import {Outlet, useNavigate} from 'react-router';
+import {useContext, useState} from 'react';
 
 const Footer = Layout.Footer;
-
 const {Header, Sider, Content} = Layout;
 
 enum MenuKeys {
@@ -35,13 +34,14 @@ enum MenuKeys {
 }
 
 export function DefaultPageNav() {
-  const global = useContext(GlobalStateContext);
-  if (!global.user) {
-    return sendToLogin();
-  }
-
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+
+  // This has to be AFTER the useState() call above, otherwise it will fail.
+  const global = useContext(GlobalStateContext);
+  if (!global.requireUser(user => user?.isAuthenticated)) {
+    return <></>;
+  }
 
   const topMenuItems: MenuProps['items'] = [
     {

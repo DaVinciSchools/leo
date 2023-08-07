@@ -74,6 +74,10 @@ public class HttpUser {
     return userX.isPresent() && UserXRepository.isStudent(userX.get());
   }
 
+  public boolean isAuthenticated() {
+    return userX.isPresent();
+  }
+
   public boolean isDemo() {
     return userX.isPresent() && UserXRepository.isDemo(userX.get());
   }

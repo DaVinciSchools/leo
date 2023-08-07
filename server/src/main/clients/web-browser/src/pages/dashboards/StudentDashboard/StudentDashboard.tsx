@@ -1,6 +1,5 @@
 import './StudentDashboard.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {sendToLogin} from '../../../libs/authentication';
 import {TabbedSwiper} from '../../../libs/TabbedSwiper/TabbedSwiper';
 import {OverviewTab} from './OverviewTab';
 import {useContext} from 'react';
@@ -12,8 +11,8 @@ enum TabValue {
 
 export function StudentDashboard() {
   const global = useContext(GlobalStateContext);
-  if (!global.user?.isStudent && !global.user?.isAdmin) {
-    return sendToLogin();
+  if (!global.requireUser(user => user?.isAdmin || user?.isStudent)) {
+    return <></>;
   }
 
   return (

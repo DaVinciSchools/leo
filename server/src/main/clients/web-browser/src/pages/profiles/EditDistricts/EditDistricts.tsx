@@ -6,7 +6,6 @@ import {Display, SelectFromList} from '../../../SelectFromList/SelectFromList';
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {createService} from '../../../libs/protos';
 import {district_management, pl_types} from '../../../generated/protobuf-js';
-import {sendToLogin} from '../../../libs/authentication';
 
 import DistrictInformationResponse = district_management.DistrictInformationResponse;
 import DistrictManagementService = district_management.DistrictManagementService;
@@ -37,8 +36,8 @@ export function SelectDistrictFromList(props: {
 
 export function EditDistricts() {
   const global = useContext(GlobalStateContext);
-  if (!global.user?.isAdmin) {
-    return sendToLogin();
+  if (!global.requireUser(user => user?.isAdmin)) {
+    return <></>;
   }
 
   const [districts, setDistricts] = useState(new Map<number, IDistrict>());

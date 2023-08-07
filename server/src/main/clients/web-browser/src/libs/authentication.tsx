@@ -1,6 +1,4 @@
 import Cookies from 'js-cookie';
-import {redirect} from 'react-router-dom';
-import {useEffect} from 'react';
 
 export const LOGIN_RETURN_TO_PARAM = 'returnTo';
 export const USERNAME_PARAM = 'username';
@@ -27,16 +25,5 @@ export function addXsrfInputField() {
       />
     );
   }
-  return <></>;
-}
-
-export function sendToLogin() {
-  useEffect(() => {
-    redirect(
-      `/users/login?${LOGIN_RETURN_TO_PARAM}=${encodeURIComponent(
-        window.location.href
-      )}`
-    );
-  }, []);
   return <></>;
 }

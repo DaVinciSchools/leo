@@ -101,6 +101,7 @@ message User {
   optional int32 student_id = 11;
 
   optional bool is_demo = 12;
+  optional bool is_authenticated = 13;
 }
 
 message Eks {

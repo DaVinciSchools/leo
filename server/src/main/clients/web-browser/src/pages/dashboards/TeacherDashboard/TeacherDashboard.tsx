@@ -1,7 +1,6 @@
 import './TeacherDashboard.scss';
 
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {sendToLogin} from '../../../libs/authentication';
 import {TabbedSwiper} from '../../../libs/TabbedSwiper/TabbedSwiper';
 import {OverviewTab} from './OverviewTab';
 import {AssignmentsTab} from './AssignmentsTab';
@@ -15,8 +14,8 @@ enum TabValue {
 
 export function TeacherDashboard() {
   const global = useContext(GlobalStateContext);
-  if (!global.user?.isTeacher && !global.user?.isAdmin) {
-    return sendToLogin();
+  if (!global.requireUser(user => user?.isAdmin || user?.isTeacher)) {
+    return <></>;
   }
 
   return (

@@ -45,6 +45,7 @@ message GetPagedUsersDetailsResponse {
 }
 
 message GetUserDetailsRequest {
+  // If unset, returns details about the current user.
   optional int32 user_x_id = 1;
 }
 

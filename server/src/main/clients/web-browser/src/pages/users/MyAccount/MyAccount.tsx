@@ -1,7 +1,6 @@
 import './MyAccount.scss';
 import {CommonAccountFields} from '../../../libs/CommonAccountFields/CommonAccountFields';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {sendToLogin} from '../../../libs/authentication';
 import {useContext, useEffect, useState} from 'react';
 import {pl_types, user_management} from '../../../generated/protobuf-js';
 import IUser = pl_types.IUser;
@@ -13,8 +12,8 @@ import {GlobalStateContext} from '../../../libs/GlobalState';
 
 export function MyAccount() {
   const global = useContext(GlobalStateContext);
-  if (!global.user) {
-    return sendToLogin();
+  if (!global.requireUser(user => user?.isAuthenticated)) {
+    return <></>;
   }
 
   const [form] = Form.useForm();
