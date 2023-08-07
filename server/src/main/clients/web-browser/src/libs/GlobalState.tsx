@@ -5,7 +5,7 @@ import {pl_types, user_management} from '../generated/protobuf-js';
 import {useNavigate} from 'react-router';
 
 import UserManagementService = user_management.UserManagementService;
-import {LOGIN_RETURN_TO_PARAM} from './authentication';
+import {FORWARD_PARAM} from './authentication';
 
 export interface IGlobalState {
   readonly user?: pl_types.IUser;
@@ -51,7 +51,7 @@ export function GlobalState(props: PropsWithChildren<{}>) {
           } else {
             const url = new URL(window.location.href);
             navigate(
-              `/users/login.html?${LOGIN_RETURN_TO_PARAM}=${encodeURIComponent(
+              `/users/login.html?${FORWARD_PARAM}=${encodeURIComponent(
                 url.pathname + url.search
               )}`
             );

@@ -1,20 +1,21 @@
 import './Logout.scss';
-import {addXsrfInputField} from '../../../libs/authentication';
-import {useContext, useEffect, useRef} from 'react';
+import {logout} from '../../../libs/authentication';
+import {useContext, useEffect} from 'react';
 import {Link} from 'react-router-dom';
 import {GlobalStateContext} from '../../../libs/GlobalState';
+import {useNavigate} from 'react-router';
 
 export function Logout() {
   const global = useContext(GlobalStateContext);
-
-  const formRef = useRef<HTMLFormElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (formRef.current != null) {
-      global.setUser(undefined);
-      formRef.current.requestSubmit();
-    }
-  }, [formRef.current]);
+    setTimeout(() => {
+      logout(global, () => {
+        navigate('/');
+      });
+    }, 250);
+  }, []);
 
   return (
     <>
@@ -26,9 +27,6 @@ export function Logout() {
       </div>
       <div className="space-filler" />
       <div className="logout">Logging out...</div>
-      <form action="/api/logout.html" method="POST" ref={formRef}>
-        {addXsrfInputField()}
-      </form>
     </>
   );
 }

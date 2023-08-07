@@ -5,6 +5,8 @@
   border: 2px solid color.$neutral-800;
   height: 75%;
   left: 50%;
+  min-height: fit-content;
+  min-width: fit-content;
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
@@ -14,7 +16,9 @@
 .login-form {
   display: flex;
   flex-flow: column nowrap;
+  gap: 64px;
   height: 100%;
+  min-height: fit-content;
   justify-content: center;
 
   .login-form-logo {
@@ -25,8 +29,6 @@
     a {
       line-height: 0;
     }
-
-    margin-bottom: 5em;
   }
 
   .login-form-fields {
@@ -42,7 +44,7 @@
       align-self: center;
       border-style: solid;
       border-width: 1px;
-      padding: 0.5em 1em;
+      padding: 0.5em;
       width: fit-content;
     }
 

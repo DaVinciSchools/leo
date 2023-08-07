@@ -4,14 +4,14 @@ import {Backdrop, Box, Modal} from '@mui/material';
 import {LoginForm} from './LoginForm';
 
 export function ModalLoginForm(props: {
-  visible: boolean;
+  open: boolean;
   successAction: () => void;
   failureAction: () => void;
 }) {
   return (
     <>
       <Modal
-        open={props.visible}
+        open={props.open}
         slots={{backdrop: Backdrop}}
         slotProps={{
           backdrop: {
@@ -22,7 +22,7 @@ export function ModalLoginForm(props: {
         <Box className="login-form-modal" paddingX={8}>
           <LoginForm
             successAction={props.successAction}
-            failureAction={props.failureAction}
+            cancelAction={props.failureAction}
           />
         </Box>
       </Modal>

@@ -12,11 +12,7 @@ import {CSSProperties, ReactNode, useContext, useEffect, useState} from 'react';
 import {GlobalStateContext} from '../GlobalState';
 import {IkigaiProjectBuilder} from '../IkigaiProjectBuilder/IkigaiProjectBuilder';
 import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectConfigurer';
-import {
-  LOGIN_RETURN_TO_PARAM,
-  PASSWORD_PARAM,
-  USERNAME_PARAM,
-} from '../authentication';
+import {FORWARD_PARAM, PASSWORD_PARAM, USERNAME_PARAM} from '../authentication';
 import {RegistrationForm} from './RegistrationForm/RegistrationForm';
 import {createService} from '../protos';
 import {
@@ -117,9 +113,7 @@ export function ProjectBuilder(props: {
         username
       )}&${PASSWORD_PARAM}=${encodeURIComponent(
         password
-      )}&${LOGIN_RETURN_TO_PARAM}=${encodeURIComponent(
-        '/projects/all-projects.html'
-      )}`
+      )}&${FORWARD_PARAM}=${encodeURIComponent('/projects/all-projects.html')}`
     );
   }
 

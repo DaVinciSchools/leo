@@ -2,20 +2,17 @@ import './LoginForm.scss';
 
 import {Button, TextField} from '@mui/material';
 import {FormEvent, useContext, useEffect, useRef, useState} from 'react';
+import {FormFields} from '../forms';
 import {GlobalStateContext} from '../GlobalState';
 import {Link} from 'react-router-dom';
 import {Lock, Person} from '@mui/icons-material';
-import {addXsrfHeader} from '../authentication';
-import {convertFormValuesToURLSearchParams, FormFields} from '../forms';
-import {pl_types} from '../../generated/protobuf-js';
-
-import IUser = pl_types.IUser;
+import {login} from '../authentication';
 
 const AUTHENTICATION_FAILURE = 'Authentication failure. Please try again.';
 
 export function LoginForm(props: {
   successAction: () => void;
-  failureAction: () => void;
+  cancelAction: () => void;
 }) {
   const global = useContext(GlobalStateContext);
 
@@ -52,50 +49,15 @@ export function LoginForm(props: {
       return;
     }
 
-    try {
-      fetch('/api/login.html', {
-        method: 'POST',
-        headers: addXsrfHeader({
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }),
-        body: convertFormValuesToURLSearchParams(formRef.current),
-        cache: 'no-cache',
-        redirect: 'follow',
-      })
-        .then(response => {
-          if (!response.ok) {
-            global.setError(response);
-          } else if (response.redirected) {
-            if (new URL(response.url).searchParams.get('failed') != null) {
-              setFailure(AUTHENTICATION_FAILURE);
-            } else {
-              global.setError(response);
-            }
-          } else if (response.body != null) {
-            response.body
-              .getReader()
-              .read()
-              .then(result => {
-                try {
-                  const user: IUser = pl_types.User.decode(result.value!);
-                  global.setUser(user);
-                  props.successAction();
-                } catch (e) {
-                  global.setError(e);
-                }
-              })
-              .catch(global.setError);
-          } else {
-            global.setError({
-              name: 'Error',
-              message: 'Response had no body.',
-            });
-          }
-        })
-        .catch(global.setError);
-    } catch (e) {
-      global.setError(e);
-    }
+    login(
+      global,
+      String(formFields.get('username') ?? ''),
+      String(formFields.get('password') ?? ''),
+      props.successAction,
+      () => {
+        setFailure(AUTHENTICATION_FAILURE);
+      }
+    );
   }
 
   return (
@@ -113,12 +75,6 @@ export function LoginForm(props: {
           </Link>
         </div>
         <div className="login-form-fields">
-          <div
-            className="login-form-failure"
-            style={{visibility: failure ? 'visible' : 'hidden'}}
-          >
-            &nbsp;{failure}&nbsp;
-          </div>
           <TextField
             required
             autoComplete="email"
@@ -126,7 +82,7 @@ export function LoginForm(props: {
             {...formFields.registerProps(
               'username',
               emailAddressRef,
-              emailAddressError,
+              emailAddressError || failure,
               setEmailAddressError,
               {
                 isEmail: true,
@@ -142,7 +98,7 @@ export function LoginForm(props: {
             {...formFields.registerProps(
               'password',
               passwordRef,
-              passwordError,
+              passwordError || failure,
               setPasswordError,
               {
                 isPassword: {
@@ -158,7 +114,7 @@ export function LoginForm(props: {
             <Button variant="contained" type="submit">
               Login and Continue
             </Button>
-            <Button variant="contained" onClick={props.failureAction}>
+            <Button variant="contained" onClick={props.cancelAction}>
               Cancel
             </Button>
           </div>
