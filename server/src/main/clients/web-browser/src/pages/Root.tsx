@@ -1,50 +1,10 @@
 import './Root.scss';
 
 import {Link} from 'react-router-dom';
-import {Button, Dropdown, Form, Input, Modal} from 'antd';
-import {ChangeEvent, useContext, useState} from 'react';
-import {
-  DownOutlined,
-  MailOutlined,
-  SolutionOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
-import {interest_service} from '../generated/protobuf-js';
-import InterestService = interest_service.InterestService;
-import {createService} from '../libs/protos';
-import RegisterInterestRequest = interest_service.RegisterInterestRequest;
-import {GlobalStateContext} from '../libs/GlobalState';
-
-const selectProfession = 'Select Profession';
-const otherProfession = 'Other (please describe below)';
-const defaultProfessions = [
-  'K-12 District Leader/Administrator',
-  'K-12 Educator',
-  'Higher Education Leader/Administrator',
-  'Higher Education Faculty Member',
-  'Student',
-  otherProfession,
-];
+import {useNavigate} from 'react-router';
 
 export function Root() {
-  const global = useContext(GlobalStateContext);
-
-  const [interestForm] = Form.useForm();
-  const [interestFormOpen, setInterestFormOpen] = useState(false);
-  const [professionSelection, setProfessionSelection] =
-    useState(selectProfession);
-  const [professionDescr, setProfessionDescr] = useState('');
-
-  function submitInterestForm(values: {}) {
-    setInterestFormOpen(false);
-    const interestService = createService(InterestService, 'InterestService');
-    const request = RegisterInterestRequest.fromObject(values);
-    request.profession =
-      professionSelection !== otherProfession
-        ? professionSelection
-        : professionDescr;
-    interestService.registerInterest(request).catch(global.setError);
-  }
+  const navigate = useNavigate();
 
   return (
     <>
@@ -77,8 +37,11 @@ export function Root() {
           <Link to="/users/login.html">
             <button className="primary">Login</button>
           </Link>
-          <button className="light" onClick={() => setInterestFormOpen(true)}>
-            I'm interested! Tell me more!
+          <button
+            className="light"
+            onClick={() => navigate('/demos/project-builder.html')}
+          >
+            Try it out!
           </button>
         </div>
       </header>
@@ -102,8 +65,11 @@ export function Root() {
               latest AI tools in a safe way to give your students a more
               purposeful and engaging learning experience.
             </div>
-            <button className="light" onClick={() => setInterestFormOpen(true)}>
-              I'm interested! Tell me more!
+            <button
+              className="light"
+              onClick={() => navigate('/demos/project-builder.html')}
+            >
+              Try it out!
             </button>
           </div>
           <img src="/images/landing/girl_at_board.jpg" />
@@ -252,262 +218,6 @@ export function Root() {
       <footer>
         Images by <Link to="https://www.freepik.com/">Freepik</Link>.
       </footer>
-      <Modal
-        title="I'm interested! Tell me more!"
-        open={interestFormOpen}
-        closable={true}
-        onCancel={() => setInterestFormOpen(false)}
-        footer={null}
-        style={{
-          width: '60%',
-          minWidth: 'fit-content',
-        }}
-        forceRender
-      >
-        <Form
-          form={interestForm}
-          name="interested_form"
-          labelWrap={false}
-          labelCol={{span: 6}}
-          wrapperCol={{span: 96}}
-          onFinish={submitInterestForm}
-        >
-          <div>
-            <Form.Item
-              rules={[
-                {
-                  required: true,
-                  whitespace: true,
-                  message: 'Please enter your first name.',
-                },
-              ]}
-              name="firstName"
-            >
-              <Input
-                placeholder="First Name"
-                maxLength={255}
-                autoComplete="given-name"
-                prefix={<UserOutlined />}
-              />
-            </Form.Item>
-            <Form.Item
-              rules={[
-                {
-                  required: true,
-                  whitespace: true,
-                  message: 'Please enter your last name.',
-                },
-              ]}
-              name="lastName"
-            >
-              <Input
-                placeholder="Last Name"
-                maxLength={255}
-                autoComplete="family-name"
-                prefix={<UserOutlined />}
-              />
-            </Form.Item>
-          </div>
-          <Form.Item
-            rules={[
-              {
-                required: true,
-                whitespace: true,
-                message: 'Please enter your email address.',
-              },
-              {
-                type: 'email',
-                message: 'This e-mail address is not valid.',
-              },
-            ]}
-            name="emailAddress"
-          >
-            <Input
-              placeholder="Email Address"
-              maxLength={255}
-              autoComplete="email"
-              prefix={<MailOutlined />}
-            />
-          </Form.Item>
-          <Form.Item
-            required={true}
-            rules={[
-              {
-                validator: () => {
-                  if (professionSelection.trim() === selectProfession) {
-                    return Promise.reject('Please select your profession.');
-                  }
-                  return Promise.resolve();
-                },
-              },
-            ]}
-            name="professionSelection"
-          >
-            <Dropdown
-              menu={{
-                items: defaultProfessions.map(value => {
-                  return {
-                    key: value,
-                    label: (
-                      <div
-                        onClick={() => {
-                          setProfessionSelection(value);
-                          interestForm.setFieldValue(
-                            'professionSelection',
-                            value
-                          );
-                        }}
-                      >
-                        {value}
-                      </div>
-                    ),
-                  };
-                }),
-              }}
-              placement="bottomLeft"
-            >
-              <div className="project-leo-dropdown">
-                <span className="ant-input-prefix">
-                  <SolutionOutlined />
-                </span>
-                <span
-                  style={{
-                    color:
-                      professionSelection === selectProfession
-                        ? '#bfbfbf'
-                        : 'black',
-                    width: '100%',
-                  }}
-                >
-                  {professionSelection}
-                </span>
-                <span
-                  className="ant-input-suffix"
-                  style={{
-                    marginInlineStart: '4px',
-                  }}
-                >
-                  <DownOutlined />
-                </span>
-              </div>
-            </Dropdown>
-          </Form.Item>
-          <Form.Item
-            required={professionSelection === otherProfession}
-            hidden={professionSelection !== otherProfession}
-            rules={[
-              {
-                validator: () => {
-                  if (professionSelection === otherProfession) {
-                    if (professionDescr.trim() === '') {
-                      return Promise.reject('Please describe your profession.');
-                    }
-                  }
-                  return Promise.resolve();
-                },
-              },
-            ]}
-            name="professionDescr"
-          >
-            <Input
-              placeholder="Profession Description"
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setProfessionDescr(e.target.value)
-              }
-              value={professionDescr}
-              maxLength={255}
-              prefix={<SolutionOutlined />}
-            />
-          </Form.Item>
-          <Form.Item
-            rules={[
-              {
-                required: true,
-                whitespace: true,
-                message: 'Please let us know your thoughts.',
-              },
-            ]}
-            name="reasonForInterest"
-          >
-            <Input.TextArea
-              placeholder="Let us know your thoughts / Questions / Comments / Suggestions"
-              maxLength={8192}
-              rows={5}
-            />
-          </Form.Item>
-          <div className="form-separator" style={{marginBottom: '0.5em'}} />
-          The following fields are optional:
-          <Form.Item name="districtName">
-            <Input maxLength={255} placeholder="District Name" />
-          </Form.Item>
-          <Form.Item name="schoolName">
-            <Input maxLength={255} placeholder="School Name" />
-          </Form.Item>
-          <Form.Item
-            name="numTeachers"
-            rules={[
-              {
-                validator: () => {
-                  if (
-                    !/^(\d+|)$/.test(
-                      interestForm.getFieldValue('numTeachers') ?? ''
-                    )
-                  ) {
-                    return Promise.reject('Please enter a valid number.');
-                  }
-                  return Promise.resolve();
-                },
-              },
-            ]}
-          >
-            <Input placeholder="Number of Teachers" />
-          </Form.Item>
-          <Form.Item
-            name="numStudents"
-            rules={[
-              {
-                validator: () => {
-                  if (
-                    !/^(\d+|)$/.test(
-                      interestForm.getFieldValue('numStudents') ?? ''
-                    )
-                  ) {
-                    return Promise.reject('Please enter a valid number.');
-                  }
-                  return Promise.resolve();
-                },
-              },
-            ]}
-          >
-            <Input placeholder="Number of Students" />
-          </Form.Item>
-          <Form.Item name="addressLine_1">
-            <Input maxLength={255} placeholder="Address Line 1" />
-          </Form.Item>
-          <Form.Item name="addressLine_2">
-            <Input maxLength={255} placeholder="Address Line 2" />
-          </Form.Item>
-          <Form.Item name="city">
-            <Input maxLength={20} placeholder="City" />
-          </Form.Item>
-          <Form.Item name="state">
-            <Input maxLength={2} placeholder="State" />
-          </Form.Item>
-          <Form.Item name="zipCode">
-            <Input maxLength={10} placeholder="Zip Code" />
-          </Form.Item>
-          <div className="form-separator" style={{marginTop: '1em'}} />
-          <Form.Item style={{textAlign: 'end'}}>
-            <Button type="primary" htmlType="submit">
-              Submit
-            </Button>
-            &nbsp;
-            <Button type="default" onClick={() => setInterestFormOpen(false)}>
-              Cancel
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
     </>
   );
 }
