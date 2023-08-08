@@ -82,22 +82,39 @@
   height: 100%;
   display: flex;
   flex-flow: column nowrap;
+  justify-content: space-between;
   align-items: center;
+}
 
-  .project-builder-register-title {
-    text-align: center;
-    font-style: italic;
-  }
+.project-builder-register-title {
+  text-align: center;
+  font-style: italic;
+}
 
-  .project-builder-register-instructions {
-    text-align: center;
-  }
+.project-builder-register-instructions {
+  text-align: center;
+}
 
-  .project-builder-register-form {
-    width: 100%;
-    overflow: auto;
-    padding-right: 16px;
-  }
+.project-builder-register-modal {
+  background: white;
+  border: 2px solid color.$neutral-800;
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 1em;
+  left: 50%;
+  overflow: auto;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 45%;
+}
+
+.project-builder-register-buttons {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 1em;
+  justify-content: space-around;
+  margin: 0 auto 0 auto;
 }
 
 .project-builder-congratulations {

@@ -1,6 +1,8 @@
 import './ProjectBuilder.scss';
 
+import Modal from '@mui/material/Modal';
 import {
+  Backdrop,
   Box,
   Button,
   Step,
@@ -12,9 +14,10 @@ import {CSSProperties, ReactNode, useContext, useEffect, useState} from 'react';
 import {GlobalStateContext} from '../GlobalState';
 import {IkigaiProjectBuilder} from '../IkigaiProjectBuilder/IkigaiProjectBuilder';
 import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectConfigurer';
-import {FORWARD_PARAM, PASSWORD_PARAM, USERNAME_PARAM} from '../authentication';
-import {RegistrationForm} from './RegistrationForm/RegistrationForm';
+import {ModalLoginForm} from '../LoginForm/ModalLoginForm';
+import {ModalRegistrationForm} from './RegistrationForm/ModalRegistrationForm';
 import {createService} from '../protos';
+import {login} from '../authentication';
 import {
   pl_types,
   project_management,
@@ -22,7 +25,6 @@ import {
 } from '../../generated/protobuf-js';
 import {useNavigate} from 'react-router';
 
-import IRegisterUserRequest = user_management.IRegisterUserRequest;
 import ProjectManagementService = project_management.ProjectManagementService;
 import UserManagementService = user_management.UserManagementService;
 
@@ -45,10 +47,6 @@ export function ProjectBuilder(props: {
   style?: Partial<CSSProperties>;
 }) {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUser(user => user?.isAuthenticated)) {
-    return <></>;
-  }
-
   const navigate = useNavigate();
 
   const [allInputValues, setAllInputValues] = useState<
@@ -57,16 +55,19 @@ export function ProjectBuilder(props: {
   const [inputValues, setInputValues] = useState<pl_types.IProjectInputValue[]>(
     []
   );
-  const [userId, setUserId] = useState(-1);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [projectInputId, setProjectInputId] = useState<number | undefined>();
 
-  // All states. But, filter out REGISTER depending on demo mode.
+  const [loginUserVisible, setLoginUserVisible] = useState(false);
+  const [registerUserVisible, setRegisterUserVisible] = useState(false);
+  const [accountAlreadyExistsVisible, setAccountAlreadyExistsVisible] =
+    useState(false);
+
+  // All states. But, filter out REGISTER depending on whether a user is already logged in.
   const steps: State[] = Object.values(State)
     .filter(i => typeof i === 'number')
-    .filter(i => !global.user || i !== State.REGISTER)
+    .filter(i => !global.user?.isAuthenticated || i !== State.REGISTER)
     .map(i => i as State);
-  const [activeStep, setActiveStep] = useState(State.REGISTER);
+  const [activeStep, setActiveStep] = useState(State.GETTING_STARTED);
 
   useEffect(() => {
     if (allInputValues.length === 0) {
@@ -89,32 +90,58 @@ export function ProjectBuilder(props: {
     createService(ProjectManagementService, 'ProjectManagementService')
       .generateAnonymousProjects({inputValues: values})
       .then(response => {
-        setUserId(response.userId!);
+        setProjectInputId(response.projectInputId ?? undefined);
         setActiveStep(activeStep + 1);
       })
       .catch(global.setError);
   }
 
-  function onRegisterUser(request: IRegisterUserRequest) {
-    request.userId = userId;
+  function onLoggedIn() {
+    setLoginUserVisible(false);
+    createService(ProjectManagementService, 'ProjectManagementService')
+      .registerAnonymousProjects({projectInputId})
+      .then(() => {
+        // The act of logging in should advance the step due to the removal of the REGISTER step.
+        setProjectInputId(undefined);
+      })
+      .catch(global.setError);
+  }
+
+  function onRegisterUser(request: user_management.IRegisterUserRequest) {
     createService(UserManagementService, 'UserManagementService')
       .registerUser(request)
-      .then(() => {
-        setUsername(request.emailAddress!);
-        setPassword(request.password!);
-        setActiveStep(activeStep + 1);
+      .then(response => {
+        if (response.accountAlreadyExists) {
+          setAccountAlreadyExistsVisible(true);
+        } else {
+          login(
+            global,
+            request.emailAddress ?? '',
+            request.password ?? '',
+            () => {
+              createService(
+                ProjectManagementService,
+                'ProjectManagementService'
+              )
+                .registerAnonymousProjects({projectInputId})
+                .then(() => {
+                  // The act of logging in should advance the step due to the removal of the REGISTER step.
+                  setProjectInputId(undefined);
+                })
+                .catch(global.setError);
+            },
+            () => {
+              global.setError('Failed to log registered user in.');
+            },
+            global.setError
+          );
+        }
       })
       .catch(global.setError);
   }
 
   function onSeeProjects() {
-    navigate(
-      `/users/login.html?${USERNAME_PARAM}=${encodeURIComponent(
-        username
-      )}&${PASSWORD_PARAM}=${encodeURIComponent(
-        password
-      )}&${FORWARD_PARAM}=${encodeURIComponent('/projects/all-projects.html')}`
-    );
+    navigate('/projects/all-projects.html');
   }
 
   return (
@@ -259,24 +286,84 @@ export function ProjectBuilder(props: {
           )}
           {steps[activeStep] === State.REGISTER && (
             <Box className="project-builder-register">
-              <div>
-                <Box padding={1} className="project-builder-register-title">
-                  <Typography variant="h4">
-                    Using the power of AI to create new and unique projects
-                    <br />
-                    tailored to your individual preferences!
-                  </Typography>
-                </Box>
-                <Box
-                  padding={1}
-                  className="project-builder-register-instructions"
-                >
-                  To explore the resulting projects, please register below.
-                </Box>
-              </div>
-              <Box paddingY={3} className="project-builder-register-form">
-                <RegistrationForm onRegisterUser={onRegisterUser} />
+              <Box padding={1} className="project-builder-register-title">
+                <Typography variant="h4">
+                  Using the power of AI to create new and unique projects
+                  <br />
+                  tailored to your individual preferences!
+                </Typography>
               </Box>
+              <Box
+                padding={1}
+                className="project-builder-register-instructions"
+              >
+                To explore the resulting projects, please log in or register
+                below.
+              </Box>
+              <Box padding={1} className="project-builder-register-buttons">
+                <Button
+                  variant="contained"
+                  className="project-builder-button"
+                  onClick={() => setLoginUserVisible(true)}
+                >
+                  Log in with an existing account
+                </Button>
+                <Button
+                  variant="contained"
+                  className="project-builder-button"
+                  onClick={() => setRegisterUserVisible(true)}
+                >
+                  Register for a new account
+                </Button>
+              </Box>
+              <div />
+              <ModalLoginForm
+                open={loginUserVisible}
+                onLoggedIn={onLoggedIn}
+                onCancel={() => setLoginUserVisible(false)}
+              />
+              <ModalRegistrationForm
+                open={registerUserVisible}
+                onRegisterUser={onRegisterUser}
+                onCancel={() => setRegisterUserVisible(false)}
+              />
+              <Modal
+                open={accountAlreadyExistsVisible}
+                slots={{backdrop: Backdrop}}
+                slotProps={{
+                  backdrop: {
+                    timeout: 500,
+                  },
+                }}
+              >
+                <Box className="project-builder-register-modal" padding={3}>
+                  The email address you entered is already associated with an
+                  account. Do you want to register with a different email
+                  address? Or, login using the existing account?
+                  <div className="project-builder-register-buttons">
+                    <Button
+                      variant="contained"
+                      className="project-builder-button"
+                      onClick={() => {
+                        setAccountAlreadyExistsVisible(false);
+                      }}
+                    >
+                      Register with a different email
+                    </Button>
+                    <Button
+                      variant="contained"
+                      className="project-builder-button"
+                      onClick={() => {
+                        setAccountAlreadyExistsVisible(false);
+                        setRegisterUserVisible(false);
+                        setLoginUserVisible(true);
+                      }}
+                    >
+                      Login using the existing account
+                    </Button>
+                  </div>
+                </Box>
+              </Modal>
             </Box>
           )}
           {steps[activeStep] === State.CONGRATULATIONS && (

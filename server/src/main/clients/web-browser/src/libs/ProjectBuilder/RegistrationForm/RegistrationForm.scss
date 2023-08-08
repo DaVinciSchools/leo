@@ -1,0 +1,35 @@
+@use '../../color';
+
+.registration-form-modal {
+  background: white;
+  border: 2px solid color.$neutral-800;
+  height: 90%;
+  left: 50%;
+  overflow: auto;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 55%;
+}
+
+.registration-form-logo {
+  align-items: flex-start;
+  display: flex;
+  justify-content: center;
+
+  a {
+    line-height: 0;
+  }
+
+  margin-top: 5em;
+  margin-bottom: 5em;
+}
+
+.registration-form-buttons {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 1em;
+  justify-content: flex-end;
+  margin: 0 auto 0 auto;
+  width: 65%;
+}

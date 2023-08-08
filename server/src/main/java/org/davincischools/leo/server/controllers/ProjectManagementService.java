@@ -2,14 +2,11 @@ package org.davincischools.leo.server.controllers;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.fasterxml.jackson.datatype.jdk8.WrappedIOException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -18,9 +15,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import org.apache.commons.text.StringEscapeUtils;
@@ -32,7 +28,6 @@ import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectPost;
-import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
@@ -66,6 +61,8 @@ import org.davincischools.leo.protos.project_management.GetXqCompetenciesRequest
 import org.davincischools.leo.protos.project_management.GetXqCompetenciesResponse;
 import org.davincischools.leo.protos.project_management.PostMessageRequest;
 import org.davincischools.leo.protos.project_management.PostMessageResponse;
+import org.davincischools.leo.protos.project_management.RegisterAnonymousProjectsRequest;
+import org.davincischools.leo.protos.project_management.RegisterAnonymousProjectsResponse;
 import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
 import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V2ProjectGenerator;
@@ -184,7 +181,7 @@ public class ProjectManagementService {
                   new ProjectInput()
                       .setCreationTime(Instant.now())
                       .setProjectDefinition(definition.definition())
-                      .setUserX(user.get().orElseThrow())
+                      .setUserX(user.get().orElse(null))
                       .setState(State.PROCESSING.name())
                       .setTimeout(Instant.now().plus(Duration.ofMinutes(10)))
                       .setAssignment(
@@ -255,38 +252,42 @@ public class ProjectManagementService {
 
               // Save project projectInput.
               db.getProjectInputRepository().save(state.input);
-              log.addProjectInput(state.input);
               db.getProjectInputValueRepository()
                   .saveAll(state.values.stream().flatMap(Collection::stream).toList());
+
+              log.addProjectInput(state.input);
+              state.response.setProjectInputId(state.input.getId());
 
               return state;
             })
         .andThen(
             (state, log) -> {
-              List<Project> projects =
-                  ImmutableList.of(openAi3V2ProjectGenerator).stream()
-                      .parallel()
-                      .map(
-                          generator -> {
-                            try {
-                              return generator.generateAndSaveProjects(state, httpExecutors, 5);
-                            } catch (HttpExecutorException e) {
-                              throw new WrappedIOException(e);
-                            }
-                          })
-                      .flatMap(Collection::stream)
-                      .toList();
-
-              db.getProjectInputRepository().save(state.input.setState(State.COMPLETED.name()));
+              new Thread(
+                      () -> {
+                        var failed = new AtomicBoolean(false);
+                        ImmutableList.of(openAi3V2ProjectGenerator).parallelStream()
+                            .forEach(
+                                generator -> {
+                                  try {
+                                    generator.generateAndSaveProjects(state, httpExecutors, 5);
+                                  } catch (Throwable t) {
+                                    failed.set(true);
+                                  }
+                                });
+                        db.getProjectInputRepository()
+                            .updateState(
+                                state.input.getId(),
+                                failed.get() ? State.FAILED.name() : State.COMPLETED.name());
+                      })
+                  .start();
 
               return state.response.build();
             })
         .onError(
             (error, log) -> {
               if (error.lastInput() instanceof GenerateProjectsState state) {
-                if (state.input.getId() != null) {
-                  db.getProjectInputRepository().save(state.input.setState(State.FAILED.name()));
-                }
+                db.getProjectInputRepository()
+                    .updateState(state.input.getId(), State.FAILED.name());
               }
               return Optional.empty();
             })
@@ -706,12 +707,9 @@ public class ProjectManagementService {
   public GenerateAnonymousProjectsResponse generateAnonymousProjects(
       @Anonymous HttpUser user,
       @RequestBody Optional<GenerateAnonymousProjectsRequest> optionalRequest,
-      HttpServletRequest servletRequest,
-      HttpServletResponse servletResponse,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
     var response = GenerateAnonymousProjectsResponse.newBuilder();
-    var userX = new AtomicReference<UserX>();
 
     return httpExecutors
         .start(optionalRequest.orElse(GenerateAnonymousProjectsRequest.getDefaultInstance()))
@@ -720,27 +718,15 @@ public class ProjectManagementService {
             (request, log) -> {
               var generateRequest = GenerateProjectsRequest.newBuilder();
 
-              // Create the user.
-              userX.set(
-                  db.getUserXRepository()
-                      .upsert(
-                          null,
-                          UUID.randomUUID().toString() + "@anonymous.projectleo.net",
-                          e ->
-                              e.setFirstName("Anonymous")
-                                  .setLastName("Anonymous")
-                                  .setEncodedPassword(
-                                      UserManagementService.ANONYMOUS_USER_ENCODED_PASSWORD)));
-              response.setUserId(userX.get().getId());
-
               // Create the definition and GenerateProjectRequest.
               ProjectDefinition definition =
-                  db.getProjectDefinitionRepository()
-                      .save(
-                          new ProjectDefinition()
-                              .setCreationTime(Instant.now())
-                              .setName("Anonymously Created Project Definition")
-                              .setUserX(userX.get()));
+                  new ProjectDefinition()
+                      .setCreationTime(Instant.now())
+                      .setName("Anonymously Created Project Definition");
+              if (user.isAuthenticated()) {
+                definition.setUserX(user.get().orElseThrow());
+              }
+              db.getProjectDefinitionRepository().save(definition);
               generateRequest.getDefinitionBuilder().setId(definition.getId());
 
               // Process the inputs.
@@ -768,29 +754,37 @@ public class ProjectManagementService {
             })
         .andThen(
             (generateRequest, log) -> {
-              new Thread(
-                      () -> {
-                        try {
-                          generateProjects(
-                                  new HttpUser(
-                                      Optional.of(userX.get()),
-                                      servletRequest,
-                                      servletResponse,
-                                      true),
-                                  Optional.of(generateRequest.build()),
-                                  httpExecutors)
-                              .getProjectsList()
-                              .stream()
-                              .forEach(
-                                  project ->
-                                      log.addNote(
-                                          "Generated project: %s: %s",
-                                          project.getId(), project.getName()));
-                        } catch (HttpExecutorException e) {
-                          // The log will already be populated with any error. Ignore.
-                        }
-                      })
-                  .start();
+              GenerateProjectsResponse generateProjectsResponse =
+                  generateProjects(user, Optional.of(generateRequest.build()), httpExecutors);
+              return response
+                  .setProjectInputId(generateProjectsResponse.getProjectInputId())
+                  .build();
+            })
+        .finish();
+  }
+
+  @PostMapping(value = "/api/protos/ProjectManagementService/RegisterAnonymousProjects")
+  @ResponseBody
+  public RegisterAnonymousProjectsResponse registerAnonymousProjects(
+      @Authenticated HttpUser user,
+      @RequestBody Optional<RegisterAnonymousProjectsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    return httpExecutors
+        .start(optionalRequest.orElse(RegisterAnonymousProjectsRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              var response = RegisterAnonymousProjectsResponse.newBuilder();
+
+              ProjectInput input =
+                  db.getProjectInputRepository()
+                      .findById(request.getProjectInputId())
+                      .orElseThrow();
+              db.getProjectInputRepository()
+                  .updateUserX(request.getProjectInputId(), user.get().get().getId());
+              db.getProjectDefinitionRepository()
+                  .updateUserX(input.getProjectDefinition().getId(), user.get().get().getId());
+
               return response.build();
             })
         .finish();

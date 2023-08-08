@@ -17,9 +17,11 @@ import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.UserX;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface ProjectDefinitionRepository extends JpaRepository<ProjectDefinition, Integer> {
@@ -112,4 +114,11 @@ public interface ProjectDefinitionRepository extends JpaRepository<ProjectDefini
 
     return allDefinitions;
   }
+
+  @Modifying
+  @Transactional
+  @Query(
+      "UPDATE ProjectDefinition p SET p.userX.id = (:userXId) WHERE p.id = (:id) AND p.userX.id IS"
+          + " NULL")
+  void updateUserX(@Param("id") int id, @Param("userXId") int userXId);
 }

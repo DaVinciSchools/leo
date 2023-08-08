@@ -1,12 +1,17 @@
+import './RegistrationForm.scss';
+
 import {Autocomplete, Button, Grid, TextField} from '@mui/material';
-import {AccountCircle, Comment, Email} from '@mui/icons-material';
+import {AccountCircle, Comment, Email, Lock} from '@mui/icons-material';
 import {FormEvent, useRef, useState} from 'react';
-import {user_management} from '../../../generated/protobuf-js';
-import IRegisterUserRequest = user_management.IRegisterUserRequest;
+import {Link} from 'react-router-dom';
 import {convertFormValuesToObject, FormFields} from '../../forms';
+import {user_management} from '../../../generated/protobuf-js';
+
+import IRegisterUserRequest = user_management.IRegisterUserRequest;
 
 export function RegistrationForm(props: {
   onRegisterUser: (registerUserRequest: IRegisterUserRequest) => void;
+  onCancel: () => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const formFields = useState(new FormFields(formRef))[0];
@@ -62,6 +67,12 @@ export function RegistrationForm(props: {
 
   return (
     <form ref={formRef} onSubmit={onFormSubmit} noValidate>
+      <div className="registration-form-logo">
+        <div />
+        <Link to="/">
+          <img src="/images/logo-orange-on-white.svg" />
+        </Link>
+      </div>
       <Grid container spacing={2}>
         <Grid item xs={6}>
           <TextField
@@ -131,6 +142,7 @@ export function RegistrationForm(props: {
                   showPasswords,
                   setShowPasswords,
                 },
+                startIcon: <Lock />,
               }
             )}
           />
@@ -150,6 +162,7 @@ export function RegistrationForm(props: {
                   showPasswords,
                   setShowPasswords,
                 },
+                startIcon: <Lock />,
               }
             )}
           />
@@ -312,13 +325,20 @@ export function RegistrationForm(props: {
           />
         </Grid>
         <Grid item xs={12} />
-        <Grid item xs={12} style={{textAlign: 'right'}}>
+        <Grid item xs={12} className="registration-form-buttons">
           <Button
             variant="contained"
             className="project-builder-button"
             type="submit"
           >
             Register and Continue
+          </Button>
+          <Button
+            variant="contained"
+            className="project-builder-button"
+            onClick={props.onCancel}
+          >
+            Cancel
           </Button>
         </Grid>
       </Grid>

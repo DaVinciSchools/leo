@@ -89,7 +89,6 @@ message RemoveUserResponse {
 }
 
 message RegisterUserRequest {
-  optional int32 user_id = 1;
   optional string first_name = 2;
   optional string last_name = 3;
   optional string email_address = 4;
@@ -109,4 +108,5 @@ message RegisterUserRequest {
 }
 
 message RegisterUserResponse {
+  optional bool account_already_exists = 1;
 }

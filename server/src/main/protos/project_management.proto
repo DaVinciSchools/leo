@@ -13,6 +13,7 @@ service ProjectManagementService {
   rpc GetMotivations (GetMotivationsRequest) returns (GetMotivationsResponse) {}
   rpc GenerateProjects (GenerateProjectsRequest) returns (GenerateProjectsResponse) {}
   rpc GenerateAnonymousProjects (GenerateAnonymousProjectsRequest) returns (GenerateAnonymousProjectsResponse) {}
+  rpc RegisterAnonymousProjects (RegisterAnonymousProjectsRequest) returns (RegisterAnonymousProjectsResponse) {}
 
   rpc GetProjectDefinitionCategoryTypes (GetProjectDefinitionCategoryTypesRequest) returns (GetProjectDefinitionCategoryTypesResponse) {}
   rpc GetProjectDetails (GetProjectDetailsRequest) returns (GetProjectDetailsResponse) {}
@@ -52,7 +53,7 @@ message GenerateProjectsRequest {
 }
 
 message GenerateProjectsResponse {
-  repeated pl_types.Project projects = 1;
+  optional int32 project_input_id = 1;
 }
 
 message GetProjectDetailsRequest {
@@ -143,6 +144,12 @@ message GenerateAnonymousProjectsRequest {
 }
 
 message GenerateAnonymousProjectsResponse {
-  optional int32 user_id = 1;
-  optional int32 project_id = 2;
+  optional int32 project_input_id = 1;
+}
+
+message RegisterAnonymousProjectsRequest {
+  optional int32 project_input_id = 1;
+}
+
+message RegisterAnonymousProjectsResponse {
 }

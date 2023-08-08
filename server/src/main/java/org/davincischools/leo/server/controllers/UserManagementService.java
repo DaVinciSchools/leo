@@ -10,7 +10,6 @@ import com.google.protobuf.Message;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.davincischools.leo.database.daos.AdminX;
@@ -54,7 +53,6 @@ public class UserManagementService {
   private static final Pattern PASSWORD_REQS =
       Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,50}$");
   private static final Pattern EMAIL_REQS = Pattern.compile("^[^@]+@[^@]+[.][^@]+$");
-  public static final String ANONYMOUS_USER_ENCODED_PASSWORD = "INVALID_ANONYMOUS_USER_PASSWORD";
 
   @Autowired Database db;
   @Autowired EntityManager entityManager;
@@ -369,17 +367,19 @@ public class UserManagementService {
 
   @PostMapping(value = "/api/protos/UserManagementService/RegisterUser")
   @ResponseBody
-  public RegisterUserResponse removeUser(
+  public RegisterUserResponse registerUser(
       @RequestBody Optional<RegisterUserRequest> optionalRequest, HttpExecutors httpExecutors)
       throws HttpExecutorException {
     return httpExecutors
         .start(optionalRequest.orElse(RegisterUserRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              UserX userX = db.getUserXRepository().findById(request.getUserId()).orElseThrow();
+              var response = RegisterUserResponse.newBuilder();
 
-              if (!Objects.equals(userX.getEncodedPassword(), ANONYMOUS_USER_ENCODED_PASSWORD)) {
-                throw new IllegalArgumentException("User is not anonymous.");
+              Optional<UserX> userX =
+                  db.getUserXRepository().findByEmailAddress(request.getEmailAddress());
+              if (userX.isPresent()) {
+                return response.setAccountAlreadyExists(true).build();
               }
 
               Interest interest =
@@ -421,10 +421,11 @@ public class UserManagementService {
                               .setNumStudents(
                                   valueOrNull(
                                       request, RegisterUserRequest.NUMSTUDENTS_FIELD_NUMBER)));
+
               db.getUserXRepository()
                   .save(
                       UserUtils.setPassword(
-                          userX
+                          new UserX()
                               .setCreationTime(Instant.now())
                               .setFirstName(
                                   valueOrNull(request, RegisterUserRequest.FIRST_NAME_FIELD_NUMBER))
@@ -436,7 +437,7 @@ public class UserManagementService {
                               .setInterest(interest),
                           request.getPassword()));
 
-              return RegisterUserResponse.getDefaultInstance();
+              return response.build();
             })
         .finish();
   }
