@@ -15,7 +15,7 @@ import {GlobalStateContext} from '../GlobalState';
 import {IkigaiProjectBuilder} from '../IkigaiProjectBuilder/IkigaiProjectBuilder';
 import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectConfigurer';
 import {ModalLoginForm} from '../LoginForm/ModalLoginForm';
-import {ModalRegistrationForm} from './RegistrationForm/ModalRegistrationForm';
+import {ModalRegistrationForm} from '../RegistrationForm/ModalRegistrationForm';
 import {createService} from '../protos';
 import {login} from '../authentication';
 import {

@@ -4,8 +4,8 @@ import {Autocomplete, Button, Grid, TextField} from '@mui/material';
 import {AccountCircle, Comment, Email, Lock} from '@mui/icons-material';
 import {FormEvent, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
-import {convertFormValuesToObject, FormFields} from '../../forms';
-import {user_management} from '../../../generated/protobuf-js';
+import {convertFormValuesToObject, FormFields} from '../forms';
+import {user_management} from '../../generated/protobuf-js';
 
 import IRegisterUserRequest = user_management.IRegisterUserRequest;
 
