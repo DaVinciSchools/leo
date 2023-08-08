@@ -1,5 +1,5 @@
 import {useSearchParams} from 'react-router-dom';
-import {Card, HeaderSidebar} from '../../utils/Layout';
+import {Card, HeaderSidebar} from './utils/Layout';
 
 function App() {
   const [searchParams] = useSearchParams();

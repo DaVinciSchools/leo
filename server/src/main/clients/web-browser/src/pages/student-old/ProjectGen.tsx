@@ -1,6 +1,6 @@
 import React from 'react';
-import Venn, {stringSet} from '../../utils/Venn';
-import generateCompletion from '../../utils/Completion';
+import Venn, {stringSet} from './utils/Venn';
+import generateCompletion from './utils/Completion';
 
 function App() {
   const style: React.CSSProperties = {
