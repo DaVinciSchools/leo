@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react';
 import {IkigaiCategory} from '../IkigaiCategory/IkigaiCategory';
-import {doTransition, overshootTransition} from '../utils/transitions';
+import {doTransition, overshootTransition} from '../libs/transitions';
 import {SpinButton} from './SpinButton/SpinButton';
 import PromiseQueue from '../libs/PromiseQueue';
 

@@ -1,6 +1,6 @@
 import './SpinButton.scss';
 import {useEffect, useState} from 'react';
-import {doTransition} from '../../utils/transitions';
+import {doTransition} from '../../libs/transitions';
 import PromiseQueue from '../../libs/PromiseQueue';
 
 const DURATION_MS = 750;
