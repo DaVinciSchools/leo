@@ -182,7 +182,7 @@ export function DefaultPageNav() {
         break;
       }
       case MenuKeys.PROJECTS_PROJECT_BUILDER: {
-        navigate('/projects/ikigai-builder.html');
+        navigate('/projects/project-builder.html');
         break;
       }
     }

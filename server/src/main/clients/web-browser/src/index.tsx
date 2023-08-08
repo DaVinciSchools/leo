@@ -9,7 +9,7 @@ import {Login} from './pages/users/Login/Login';
 import {EditDistricts} from './pages/profiles/EditDistricts/EditDistricts';
 import {EditSchools} from './pages/profiles/EditSchools/EditSchools';
 import {DefaultPageNav} from './libs/DefaultPage/DefaultPageNav';
-import {IkigaiBuilder} from './pages/projects/IkigaiBuilder/IkigaiBuilder';
+import {ProjectBuilder} from './pages/projects/ProjectBuilder/ProjectBuilder';
 import {MyProjects} from './pages/projects/MyProjects/MyProjects';
 import {MyAccount} from './pages/users/MyAccount/MyAccount';
 import {PrivacyPolicy} from './pages/docs/PrivacyPolicy';
@@ -121,8 +121,8 @@ const router = createBrowserRouter([
         element: <Overview />,
       },
       {
-        path: 'ikigai-builder.html',
-        element: <IkigaiBuilder />,
+        path: 'project-builder.html',
+        element: <ProjectBuilder />,
       },
       {
         path: 'my-projects.html',

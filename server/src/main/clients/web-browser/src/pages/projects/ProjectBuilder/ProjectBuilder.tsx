@@ -1,4 +1,4 @@
-import './IkigaiBuilder.scss';
+import './ProjectBuilder.scss';
 
 import {Autocomplete, TextField} from '@mui/material';
 import {ChangeEvent, useContext, useEffect, useState} from 'react';
@@ -287,7 +287,7 @@ type Category = {
   input: pl_types.IProjectInputValue;
 };
 
-export function IkigaiBuilder() {
+export function ProjectBuilder() {
   const global = useContext(GlobalStateContext);
   if (!global.requireUser(user => user?.isAuthenticated)) {
     return <></>;
