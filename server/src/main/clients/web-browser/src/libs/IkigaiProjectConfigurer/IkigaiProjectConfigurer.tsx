@@ -1,6 +1,5 @@
+import {Checkbox, FormControlLabel} from '@mui/material';
 import {CSSProperties, useEffect, useState} from 'react';
-import {Checkbox} from 'antd';
-import {FormControlLabel} from '@mui/material';
 import {Layout} from 'react-grid-layout';
 import {PersistedReactGridLayout} from '../PersistedReactGridLayout/PersistedReactGridLayout';
 import {TitledPaper} from '../TitledPaper/TitledPaper';

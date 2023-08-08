@@ -3,13 +3,13 @@ import './IkigaiProjectBuilder.scss';
 import {
   Autocomplete,
   Button,
+  Checkbox,
   Chip,
   Modal,
   PaperProps,
   TextField,
 } from '@mui/material';
 import {CSSProperties, ReactNode, useEffect, useState} from 'react';
-import {Checkbox} from 'antd';
 import {Close} from '@mui/icons-material';
 import {Ikigai, VISIBLE_ALPHA} from '../../Ikigai/Ikigai';
 import {TitledPaper} from '../TitledPaper/TitledPaper';
