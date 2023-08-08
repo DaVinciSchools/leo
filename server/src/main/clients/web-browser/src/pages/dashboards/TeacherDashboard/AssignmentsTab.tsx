@@ -1,14 +1,15 @@
 import './TeacherDashboard.scss';
 import 'react-quill/dist/quill.snow.css';
 
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
+import ReactQuill, {Value} from 'react-quill';
 import {
   Autocomplete,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Grid,
   List,
   ListItem,
@@ -16,22 +17,34 @@ import {
   ListItemText,
   TextField,
 } from '@mui/material';
-import {useContext, useEffect, useRef, useState} from 'react';
+import {GlobalStateContext} from '../../../libs/GlobalState';
 import {
   assignment_management,
   pl_types,
   project_management,
 } from '../../../generated/protobuf-js';
-import ReactQuill, {Value} from 'react-quill';
 import {createService} from '../../../libs/protos';
-import IClassX = pl_types.IClassX;
-import IAssignment = pl_types.IAssignment;
+import {useContext, useEffect, useRef, useState} from 'react';
+
 import AssignmentManagementService = assignment_management.AssignmentManagementService;
-import IUser = pl_types.IUser;
+import IAssignment = pl_types.IAssignment;
+import IClassX = pl_types.IClassX;
 import IProjectDefinition = pl_types.IProjectDefinition;
-import ProjectManagementService = project_management.ProjectManagementService;
 import IProjectInputValue = pl_types.IProjectInputValue;
-import {GlobalStateContext} from '../../../libs/GlobalState';
+import IUser = pl_types.IUser;
+import ProjectManagementService = project_management.ProjectManagementService;
+
+const classXSorter = (a: IClassX, b: IClassX) =>
+  (a?.name ?? '').localeCompare(b?.name ?? '');
+const assignmentSorter = (a: IAssignment, b: IAssignment) =>
+  classXSorter(a?.classX ?? {}, b?.classX ?? {}) ||
+  (a?.name ?? '').localeCompare(b?.name ?? '');
+const projectDefinitionSorter = (
+  a: IProjectDefinition,
+  b: IProjectDefinition
+) =>
+  (b.template === true ? 1 : -1) - (a.template === true ? 1 : -1) ||
+  (a.name ?? '').localeCompare(b.name ?? '');
 
 export function AssignmentsTab(props: {user: IUser | undefined}) {
   const global = useContext(GlobalStateContext);
@@ -59,29 +72,17 @@ export function AssignmentsTab(props: {user: IUser | undefined}) {
     useState<IProjectDefinition | null>(null);
   const [categories, setCategories] = useState<IProjectInputValue[]>([]);
 
-  const classXSorter = (a: IClassX, b: IClassX) =>
-    (a?.name ?? '').localeCompare(b?.name ?? '');
-  const assignmentSorter = (a: IAssignment, b: IAssignment) =>
-    classXSorter(a?.classX ?? {}, b?.classX ?? {}) ||
-    (a?.name ?? '').localeCompare(b?.name ?? '');
-  const projectDefinitionSorter = (
-    a: IProjectDefinition,
-    b: IProjectDefinition
-  ) =>
-    (b.template === true ? 1 : -1) - (a.template === true ? 1 : -1) ||
-    (a.name ?? '').localeCompare(b.name ?? '');
-
-  function setAssignment(newAssignment: IAssignment | null) {
-    if (assignment != null) {
-      saveAssignment();
-    }
-
-    fnSetAssignment(newAssignment);
-    setClassX(newAssignment?.classX ?? null);
-    setName(newAssignment?.name ?? '');
-    setShortDescr(newAssignment?.shortDescr ?? '');
-    setLongDescrHtml(newAssignment?.longDescrHtml ?? '');
-  }
+  useEffect(() => {
+    createService(AssignmentManagementService, 'AssignmentManagementService')
+      .getAssignments({
+        teacherId: props.user?.teacherId,
+      })
+      .then(response => {
+        setClassXs(response.classXs);
+        setAssignments(response.assignments);
+      })
+      .catch(global.setError);
+  }, []);
 
   // Any change to be written back to the database.
   useEffect(() => {
@@ -106,18 +107,6 @@ export function AssignmentsTab(props: {user: IUser | undefined}) {
   useEffect(() => {
     setAssignments(assignments != null ? [...assignments] : []);
   }, [classX, name, shortDescr]);
-
-  function saveAssignment() {
-    clearTimeout(saveAssignmentTimeout.current);
-    saveAssignmentTimeout.current = undefined;
-
-    if (assignmentRef.current != null) {
-      createService(AssignmentManagementService, 'AssignmentManagementService')
-        .saveAssignment({assignment: assignmentRef.current})
-        .catch(global.setError);
-      setSaveStatus('Saved');
-    }
-  }
 
   useEffect(() => {
     if (assignment == null) {
@@ -148,17 +137,33 @@ export function AssignmentsTab(props: {user: IUser | undefined}) {
     setCategories(projectDefinition.inputs);
   }, [projectDefinition]);
 
-  useEffect(() => {
-    createService(AssignmentManagementService, 'AssignmentManagementService')
-      .getAssignments({
-        teacherId: props.user?.teacherId,
-      })
-      .then(response => {
-        setClassXs(response.classXs);
-        setAssignments(response.assignments);
-      })
-      .catch(global.setError);
-  }, []);
+  if (!global.requireUser(user => user?.isTeacher)) {
+    return <></>;
+  }
+
+  function setAssignment(newAssignment: IAssignment | null) {
+    if (assignment != null) {
+      saveAssignment();
+    }
+
+    fnSetAssignment(newAssignment);
+    setClassX(newAssignment?.classX ?? null);
+    setName(newAssignment?.name ?? '');
+    setShortDescr(newAssignment?.shortDescr ?? '');
+    setLongDescrHtml(newAssignment?.longDescrHtml ?? '');
+  }
+
+  function saveAssignment() {
+    clearTimeout(saveAssignmentTimeout.current);
+    saveAssignmentTimeout.current = undefined;
+
+    if (assignmentRef.current != null) {
+      createService(AssignmentManagementService, 'AssignmentManagementService')
+        .saveAssignment({assignment: assignmentRef.current})
+        .catch(global.setError);
+      setSaveStatus('Saved');
+    }
+  }
 
   function createNewAssignment(classXId: number) {
     createService(AssignmentManagementService, 'AssignmentManagementService')
