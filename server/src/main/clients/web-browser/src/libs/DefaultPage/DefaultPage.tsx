@@ -8,9 +8,14 @@ import {
 import {GlobalStateContext} from '../GlobalState';
 import {Link} from 'react-router-dom';
 import {Popover} from 'antd';
-import {PropsWithChildren, ReactNode, useContext} from 'react';
+import {CSSProperties, PropsWithChildren, ReactNode, useContext} from 'react';
 
-export function DefaultPage(props: PropsWithChildren<{title: ReactNode}>) {
+export function DefaultPage(
+  props: PropsWithChildren<{
+    title: ReactNode;
+    bodyStyle?: CSSProperties;
+  }>
+) {
   const global = useContext(GlobalStateContext);
   if (!global.requireUser(user => user?.isAuthenticated)) {
     return <></>;
@@ -44,6 +49,7 @@ export function DefaultPage(props: PropsWithChildren<{title: ReactNode}>) {
     <>
       <div className="page">
         <div className="page-header">
+          <div className="page-title">{props.title}</div>
           <div className="page-account">
             <QuestionCircleOutlined />
             <BellOutlined />
@@ -61,8 +67,9 @@ export function DefaultPage(props: PropsWithChildren<{title: ReactNode}>) {
             </Popover>
           </div>
         </div>
-        <div className="page-title">{props.title}</div>
-        <div className="page-body">{props.children}</div>
+        <div className="page-body" style={props.bodyStyle}>
+          {props.children}
+        </div>
       </div>
     </>
   );
