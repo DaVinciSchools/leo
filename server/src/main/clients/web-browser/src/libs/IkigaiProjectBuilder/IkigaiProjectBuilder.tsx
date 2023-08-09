@@ -17,6 +17,7 @@ import {pl_types} from '../../generated/protobuf-js';
 
 import IOption = pl_types.ProjectInputCategory.IOption;
 import ValueType = pl_types.ProjectInputCategory.ValueType;
+import {OPTION_SORTER, TEXT_SORTER} from '../sorters';
 
 const MODAL_STYLE: Partial<CSSProperties> = {
   position: 'absolute',
@@ -38,12 +39,6 @@ interface CategoryElement {
   stringValues: string[];
   optionValues: IOption[];
 }
-
-const OPTION_SORTER = (a: IOption, b: IOption) =>
-  (a?.name ?? '').localeCompare(b?.name ?? '') ||
-  (a?.shortDescr ?? '').localeCompare(b?.shortDescr ?? '');
-
-const TEXT_SORTER = (a: string, b: string) => a.localeCompare(b);
 
 function addClassName(
   tagProps: {className?: string},

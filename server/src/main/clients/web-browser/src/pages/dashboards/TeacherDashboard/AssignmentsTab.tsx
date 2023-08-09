@@ -33,18 +33,11 @@ import IProjectDefinition = pl_types.IProjectDefinition;
 import IProjectInputValue = pl_types.IProjectInputValue;
 import IUser = pl_types.IUser;
 import ProjectManagementService = project_management.ProjectManagementService;
-
-const classXSorter = (a: IClassX, b: IClassX) =>
-  (a?.name ?? '').localeCompare(b?.name ?? '');
-const assignmentSorter = (a: IAssignment, b: IAssignment) =>
-  classXSorter(a?.classX ?? {}, b?.classX ?? {}) ||
-  (a?.name ?? '').localeCompare(b?.name ?? '');
-const projectDefinitionSorter = (
-  a: IProjectDefinition,
-  b: IProjectDefinition
-) =>
-  (b.template === true ? 1 : -1) - (a.template === true ? 1 : -1) ||
-  (a.name ?? '').localeCompare(b.name ?? '');
+import {
+  CLASS_SORTER,
+  CLASS_THEN_ASSIGNMENT_SORTER,
+  PROJECT_DEFINITION_SORTER,
+} from '../../../libs/sorters';
 
 export function AssignmentsTab(props: {user: IUser | undefined}) {
   const global = useContext(GlobalStateContext);
@@ -202,7 +195,7 @@ export function AssignmentsTab(props: {user: IUser | undefined}) {
             id="assignment"
             value={assignment}
             autoHighlight
-            options={(assignments ?? []).sort(assignmentSorter)}
+            options={(assignments ?? []).sort(CLASS_THEN_ASSIGNMENT_SORTER)}
             onChange={(e, value) => setAssignment(value)}
             getOptionLabel={assignment =>
               assignment?.name ?? '(Unnamed Assignment)'
@@ -255,7 +248,7 @@ export function AssignmentsTab(props: {user: IUser | undefined}) {
             id="class"
             value={classX}
             autoHighlight
-            options={classXs.sort(classXSorter)}
+            options={classXs.sort(CLASS_SORTER)}
             onChange={(e, value) => setClassX(value)}
             getOptionLabel={classX => classX?.name ?? ''}
             isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -320,7 +313,7 @@ export function AssignmentsTab(props: {user: IUser | undefined}) {
             id="projectDefinition"
             value={projectDefinition}
             autoHighlight
-            options={(projectDefinitions ?? []).sort(projectDefinitionSorter)}
+            options={(projectDefinitions ?? []).sort(PROJECT_DEFINITION_SORTER)}
             onChange={(e, value) => setProjectDefinition(value ?? null)}
             getOptionLabel={projectDefinition =>
               projectDefinition?.name ?? '(Unnamed Ikigai Configuration)'

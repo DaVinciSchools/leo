@@ -10,6 +10,7 @@ import {district_management, pl_types} from '../../../generated/protobuf-js';
 import DistrictInformationResponse = district_management.DistrictInformationResponse;
 import DistrictManagementService = district_management.DistrictManagementService;
 import IDistrict = pl_types.IDistrict;
+import {DISTRICT_SORTER} from '../../../libs/sorters';
 
 export function SelectDistrictFromList(props: {
   id: string;
@@ -26,7 +27,7 @@ export function SelectDistrictFromList(props: {
     selectedKey: props.districtId,
     getKey: district => (district != null ? district.id! : -1),
     stringToKey: Number,
-    compareValues: (a, b) => (a.name || '').localeCompare(b.name || ''),
+    compareValues: DISTRICT_SORTER,
     onSelect: props.onSelect,
     renderValue: key => (
       <>{(props.districts.get(key) || {name: props.defaultText}).name!}</>

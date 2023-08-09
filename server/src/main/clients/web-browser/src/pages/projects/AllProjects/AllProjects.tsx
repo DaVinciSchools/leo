@@ -12,6 +12,7 @@ import {useContext, useEffect, useState} from 'react';
 import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
 import ThumbsState = pl_types.Project.ThumbsState;
+import {REVERSE_DATE_THEN_PROJECT_SORTER} from '../../../libs/sorters';
 
 export function AllProjects() {
   const global = useContext(GlobalStateContext);
@@ -32,8 +33,7 @@ export function AllProjects() {
     service
       .getProjects({userXId: global.user!.userXId})
       .then(response => {
-        response.projects.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
-        setProjects(response.projects);
+        setProjects(response.projects.sort(REVERSE_DATE_THEN_PROJECT_SORTER));
       })
       .catch(global.setError);
   }, []);

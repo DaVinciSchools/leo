@@ -21,6 +21,7 @@ import IDistrict = pl_types.IDistrict;
 import ISchool = pl_types.ISchool;
 import ISchoolInformationResponse = school_management.ISchoolInformationResponse;
 import SchoolManagementService = school_management.SchoolManagementService;
+import {SCHOOL_SORTER} from '../../../libs/sorters';
 
 export function SelectSchoolFromList(props: {
   id: string;
@@ -37,9 +38,7 @@ export function SelectSchoolFromList(props: {
     selectedKey: props.schoolId,
     getKey: school => (school != null ? school.id! : -1),
     stringToKey: Number,
-    compareValues: (a, b) =>
-      (a.name || '').localeCompare(b.name || '') ||
-      (a.address || '').localeCompare(b.address || ''),
+    compareValues: SCHOOL_SORTER,
     onSelect: props.onSelect,
     renderValue: schoolId => {
       const school = props.schools.get(schoolId);
@@ -73,9 +72,7 @@ export function SelectMultipleSchoolsFromList(props: {
     selectedKeys: props.schoolIds,
     getKey: school => (school != null ? school.id! : -1),
     stringToKey: Number,
-    compareValues: (a, b) =>
-      (a.name || '').localeCompare(b.name || '') ||
-      (a.address || '').localeCompare(b.address || ''),
+    compareValues: SCHOOL_SORTER,
     onSelect: props.onSelect,
     renderValue: schoolId => {
       const school = props.schools.get(schoolId);
