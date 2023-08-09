@@ -1,0 +1,31 @@
+.demo-project-builder {
+  display: flex;
+  flex-flow: column nowrap;
+  height: 100%;
+  width: 100%;
+}
+
+.demo-project-builder-project-title {
+  align-items: center;
+  border-bottom: rgba(5, 5, 5, 0.06) 1px solid;
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 2em;
+  padding: 0 1em;
+  width: 100%;
+
+  a {
+    line-height: 0;
+  }
+
+  span {
+    font-size: xx-large;
+    font-weight: bold;
+  }
+}
+
+.demo-project-builder-project-builder {
+  height: 100%;
+  padding: 0 1em 1em 1em;
+  width: 100%;
+}

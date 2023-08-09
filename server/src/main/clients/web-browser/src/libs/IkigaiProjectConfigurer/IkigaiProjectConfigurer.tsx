@@ -73,7 +73,7 @@ export function IkigaiProjectConfigurer(props: {
       id="category-grid"
       cols={1}
       rows={3}
-      padding={{x: 5, y: 16}}
+      padding={{x: 5, y: 0}}
       gap={{x: 0, y: 16}}
       panels={categories.map((c, index) => ({
         id: (c.category?.category?.typeId ?? 0).toString(),

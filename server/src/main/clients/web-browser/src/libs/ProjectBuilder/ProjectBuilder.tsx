@@ -1,15 +1,7 @@
 import './ProjectBuilder.scss';
 
 import Modal from '@mui/material/Modal';
-import {
-  Backdrop,
-  Box,
-  Button,
-  Step,
-  StepButton,
-  Stepper,
-  Typography,
-} from '@mui/material';
+import {Backdrop, Box, Button, Step, StepButton, Stepper} from '@mui/material';
 import {CSSProperties, ReactNode, useContext, useEffect, useState} from 'react';
 import {GlobalStateContext} from '../GlobalState';
 import {IkigaiProjectBuilder} from '../IkigaiProjectBuilder/IkigaiProjectBuilder';
@@ -147,11 +139,6 @@ export function ProjectBuilder(props: {
   return (
     <>
       <div className="project-builder-page-layout" style={props.style}>
-        <Box className="project-builder-header">
-          <Typography variant="h4">
-            <Box padding={1}>Create a new project</Box>
-          </Typography>
-        </Box>
         <Box className="project-builder-stepper" paddingY={3}>
           <Stepper activeStep={activeStep}>
             {steps.map((value, index) => (
@@ -165,9 +152,9 @@ export function ProjectBuilder(props: {
                 }}
               >
                 <StepButton>
-                  <Typography variant="h5">
+                  <div className="project-builder-stepper-buttons">
                     {STATE_LABELS.get(value)}
-                  </Typography>
+                  </div>
                 </StepButton>
               </Step>
             ))}
@@ -176,27 +163,21 @@ export function ProjectBuilder(props: {
         <div className="project-builder-content">
           {steps[activeStep] === State.GETTING_STARTED && (
             <div className="project-builder-getting-started">
-              <Box className="project-builder-getting-started-main">
-                <Box padding={1}>
-                  <img
-                    src="/images/buildingProjects/designed-rocket-launching.png"
-                    height="200px"
-                  />
-                </Box>
-                <Box padding={1}>
-                  <Typography variant="h4">
-                    Choose how you want to start creating your project
-                  </Typography>
-                </Box>
-                <Box padding={1}>
-                  <Typography variant="h5">
-                    You can start with an existing project,
-                    <br />
-                    select a favorite from the Ikigai Project Builder,
-                    <br />
-                    or create a project from scratch.
-                  </Typography>
-                </Box>
+              <Box padding={1}>
+                <img
+                  src="/images/buildingProjects/designed-rocket-launching.png"
+                  height="200px"
+                />
+              </Box>
+              <div className="project-builder-getting-started-title">
+                Choose how you want to start creating your project
+              </div>
+              <Box padding={1}>
+                You can start with an existing project,
+                <br />
+                select a favorite from the Ikigai Project Builder,
+                <br />
+                or create a project from scratch.
               </Box>
               <Box
                 padding={1}
@@ -205,7 +186,7 @@ export function ProjectBuilder(props: {
                 <Button
                   variant="contained"
                   className="project-builder-button"
-                  disabled={!global.user}
+                  disabled={true}
                 >
                   Start with an
                   <br />
@@ -214,20 +195,28 @@ export function ProjectBuilder(props: {
                 <Button
                   variant="contained"
                   className="project-builder-button"
-                  onClick={() => setActiveStep(activeStep + 1)}
+                  disabled={true}
                 >
-                  Use the Ikigai
+                  Create for
                   <br />
-                  Project Builder
+                  an assignment
                 </Button>
                 <Button
                   variant="contained"
                   className="project-builder-button"
-                  disabled={!global.user}
+                  onClick={() => setActiveStep(activeStep + 1)}
                 >
-                  Create a project
+                  Create a custom
                   <br />
-                  from scratch
+                  ikigai project
+                </Button>
+                <Button
+                  variant="contained"
+                  className="project-builder-button"
+                  disabled={true}
+                >
+                  Manually create
+                  <br />a new project
                 </Button>
               </Box>
             </div>
@@ -235,35 +224,65 @@ export function ProjectBuilder(props: {
           {steps[activeStep] === State.PROJECT_DETAILS && (
             <Box className="project-builder-project-details">
               <div
-                className="project-builder-project-details-column"
-                style={{width: '30%'}}
+                className="project-builder-project-details-title"
+                style={{
+                  gridColumn: 1,
+                  gridRow: 1,
+                }}
               >
-                <div className="project-builder-project-details-column-title">
-                  Ikigai Project Builder Configuration
-                </div>
-                <div>
-                  Select categories below to include in the Ikigai Project
-                  Builder diagram on the right. You can also drag them up and
-                  down to reorder them.
-                </div>
+                Ikigai Project Builder Configuration
+              </div>
+              <div
+                className="project-builder-project-details-description"
+                style={{
+                  gridColumn: 1,
+                  gridRow: 2,
+                }}
+              >
+                Select categories below to include in the Ikigai Project Builder
+                diagram on the right. You can also drag them up and down to
+                reorder them.
+              </div>
+              <div
+                className="project-builder-project-details-widget"
+                style={{
+                  gridColumn: 1,
+                  gridRow: 3,
+                }}
+              >
                 <IkigaiProjectConfigurer
                   allCategories={allInputValues}
                   setSelectedCategories={setInputValues}
                 />
               </div>
               <div
-                className="project-builder-project-details-column"
-                style={{width: '60%'}}
+                className="project-builder-project-details-title project-builder-project-details-ikigai-builder"
+                style={{
+                  gridColumn: 2,
+                  gridRow: 1,
+                }}
               >
-                <div className="project-builder-project-details-column-title">
-                  Ikigai Project Builder
-                </div>
-                <div>
-                  Select categories on the left to include in the Ikigai Project
-                  Builder below. Click on the circles to indicate what sorts of
-                  projects you wish to generate. After they are all filled,
-                  click the <i>SPIN</i> button that appears.
-                </div>
+                Ikigai Project Builder
+              </div>
+              <div
+                className="project-builder-project-details-description project-builder-project-details-ikigai-builder"
+                style={{
+                  gridColumn: 2,
+                  gridRow: 2,
+                }}
+              >
+                Select categories on the left to include in the Ikigai Project
+                Builder below. Click on the circles to indicate what sorts of
+                projects you wish to generate. After they are all filled, click
+                the <i>SPIN</i> button that appears.
+              </div>
+              <div
+                style={{
+                  gridColumn: 2,
+                  gridRow: 3,
+                }}
+                className="project-builder-project-details-widget project-builder-project-details-ikigai-builder"
+              >
                 <IkigaiProjectBuilder
                   id="ikigai-builder"
                   categories={inputValues}
@@ -287,11 +306,9 @@ export function ProjectBuilder(props: {
           {steps[activeStep] === State.REGISTER && (
             <Box className="project-builder-register">
               <Box padding={1} className="project-builder-register-title">
-                <Typography variant="h4">
-                  Using the power of AI to create new and unique projects
-                  <br />
-                  tailored to your individual preferences!
-                </Typography>
+                Using the power of AI to create new and unique projects
+                <br />
+                tailored to your individual preferences!
               </Box>
               <Box
                 padding={1}
@@ -336,7 +353,7 @@ export function ProjectBuilder(props: {
                   },
                 }}
               >
-                <Box className="project-builder-register-modal" padding={3}>
+                <div className="project-builder-register-modal">
                   The email address you entered is already associated with an
                   account. Do you want to register with a different email
                   address? Or, login using the existing account?
@@ -362,15 +379,13 @@ export function ProjectBuilder(props: {
                       Login using the existing account
                     </Button>
                   </div>
-                </Box>
+                </div>
               </Modal>
             </Box>
           )}
           {steps[activeStep] === State.CONGRATULATIONS && (
             <div className="project-builder-congratulations">
-              <Typography variant="h4">
-                Congratulations! Let's take you to your projects!
-              </Typography>
+              Congratulations! Let's take you to your projects!
               <Box className="project-builder-congratulations-main">
                 <Box padding={1}>
                   <img src="/images/landing/kids-jumping.png" height="200px" />
@@ -391,11 +406,6 @@ export function ProjectBuilder(props: {
             </div>
           )}
         </div>
-        <Box className="project-builder-footer" style={{width: '100%'}}>
-          <Typography variant="h4">
-            <Box padding={1}>&nbsp;</Box>
-          </Typography>
-        </Box>
       </div>
     </>
   );
