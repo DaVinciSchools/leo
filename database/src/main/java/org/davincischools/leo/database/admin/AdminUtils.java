@@ -31,7 +31,6 @@ import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.School;
-import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.test.TestData;
 import org.davincischools.leo.database.utils.Database;

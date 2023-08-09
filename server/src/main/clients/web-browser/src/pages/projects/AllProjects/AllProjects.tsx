@@ -21,7 +21,6 @@ export function AllProjects() {
   }
 
   const [projects, setProjects] = useState<IProject[]>([]);
-  const [showProjectDetails, setShowProjectDetails] = useState(false);
   const [projectDetails, setProjectDetails] = useState<IProject | undefined>();
 
   const service = createService(
@@ -48,14 +47,11 @@ export function AllProjects() {
     setProjects(newProjects);
   }
 
-  function showModal(project: pl_types.IProject) {
-    setProjectDetails(undefined);
-    setShowProjectDetails(true);
+  function showProjectDetails(project: pl_types.IProject) {
     service
       .getProjectDetails({projectId: project.id})
       .then(response => setProjectDetails(response.project!))
       .catch(reason => {
-        setShowProjectDetails(false);
         global.setError({error: reason, reload: false});
       });
   }
@@ -68,14 +64,14 @@ export function AllProjects() {
             <ProjectCard
               id={project.id!}
               key={project.id!}
-              name={project.name!}
-              shortDescr={project.shortDescr!}
-              longDescrHtml={project.longDescrHtml!}
+              name={project.name ?? 'undefined'}
+              shortDescr={project.shortDescr ?? 'undefined'}
+              longDescrHtml={project.longDescrHtml ?? 'undefined'}
               active={project.active ?? false}
               favorite={project.favorite ?? false}
               thumbsState={project.thumbsState ?? ThumbsState.UNSET}
               thumbsStateReason={project.thumbsStateReason ?? ''}
-              showDetails={() => showModal(project)}
+              showDetails={() => showProjectDetails(project)}
               updateProject={modifications =>
                 updateProject(project, modifications)
               }
@@ -83,23 +79,23 @@ export function AllProjects() {
           ))}
         </div>
         <Modal
-          open={showProjectDetails}
-          onOk={() => setShowProjectDetails(false)}
-          onCancel={() => setShowProjectDetails(false)}
+          open={projectDetails != null}
+          onOk={() => setProjectDetails(undefined)}
+          onCancel={() => setProjectDetails(undefined)}
           cancelButtonProps={{style: {display: 'none'}}}
           centered
           style={{margin: '5%', minWidth: '60%'}}
         >
           {projectDetails != null && (
             <ProjectPage
-              id={projectDetails!.id!}
-              key={projectDetails!.id!}
-              name={projectDetails!.name!}
-              shortDescr={projectDetails!.shortDescr!}
-              longDescrHtml={projectDetails!.longDescrHtml!}
-              milestones={projectDetails!.milestones!}
+              id={projectDetails.id!}
+              key={projectDetails.id!}
+              name={projectDetails.name ?? 'undefined'}
+              shortDescr={projectDetails.shortDescr ?? 'undefined'}
+              longDescrHtml={projectDetails.longDescrHtml ?? 'undefined'}
+              milestones={projectDetails.milestones ?? []}
               updateProject={modifications =>
-                updateProject(projectDetails!, modifications)
+                updateProject(projectDetails, modifications)
               }
               onDeletePost={() => {}}
               onSubmitPost={() => {}}
