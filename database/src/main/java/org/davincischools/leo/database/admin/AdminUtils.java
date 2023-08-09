@@ -636,15 +636,15 @@ public class AdminUtils {
                     Type.XQ_COMPETENCY,
                     ks -> ks.setShortDescr(xqDescr));
 
-        ClassX classX =
-            db.getClassXRepository().upsert(school, xqName, c -> c.setShortDescr(xqDescr));
-        db.getClassXKnowledgeAndSkillRepository().upsert(classX, knowledgeAndSkill);
-
-        Assignment assignment =
-            db.getAssignmentRepository().upsert(classX, xqName, a -> a.setShortDescr(xqDescr));
-        db.getAssignmentKnowledgeAndSkillRepository().upsert(assignment, knowledgeAndSkill);
-
-        classXIds.add(classX.getId());
+        // ClassX classX =
+        // db.getClassXRepository().upsert(school, xqName, c -> c.setShortDescr(xqDescr));
+        // db.getClassXKnowledgeAndSkillRepository().upsert(classX, knowledgeAndSkill);
+        //
+        // Assignment assignment =
+        // db.getAssignmentRepository().upsert(classX, xqName, a -> a.setShortDescr(xqDescr));
+        // db.getAssignmentKnowledgeAndSkillRepository().upsert(assignment, knowledgeAndSkill);
+        //
+        // classXIds.add(classX.getId());
 
         log.atTrace().log("Imported: {}", line);
       } catch (Exception e) {
@@ -653,14 +653,14 @@ public class AdminUtils {
       }
     }
     try {
-      for (TeacherSchool teacherSchool : db.getTeacherSchoolRepository().findAll()) {
-        if (teacherSchool.getSchool().getId().equals(school.getId())) {
-          for (int classXId : classXIds) {
-            ClassX classX = new ClassX().setId(classXId);
-            db.getTeacherClassXRepository().upsert(teacherSchool.getTeacher(), classX);
-          }
-        }
-      }
+      // for (TeacherSchool teacherSchool : db.getTeacherSchoolRepository().findAll()) {
+      // if (teacherSchool.getSchool().getId().equals(school.getId())) {
+      // for (int classXId : classXIds) {
+      // ClassX classX = new ClassX().setId(classXId);
+      // db.getTeacherClassXRepository().upsert(teacherSchool.getTeacher(), classX);
+      // }
+      // }
+      // }
     } catch (Exception e) {
       log.atError().withThrowable(e).log("Error: adding teachers to classes.");
       errors.add(new Error("N/A", e));

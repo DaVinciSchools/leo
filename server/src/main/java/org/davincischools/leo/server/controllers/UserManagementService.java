@@ -382,6 +382,19 @@ public class UserManagementService {
                 return response.setAccountAlreadyExists(true).build();
               }
 
+              // TODO: Remove when clever is incorporated.
+              Optional<District> district = Optional.empty();
+              boolean isStudent = false;
+              boolean isTeacher = false;
+              Student student = null;
+              Teacher teacher = null;
+              if (request.getEmailAddress().endsWith("davincischools.org")) {
+                district =
+                    db.getDistrictRepository().findByName("Wiseburn Unified School District");
+                isStudent = request.getEmailAddress().endsWith("student.davincischools.org");
+                isTeacher = !isStudent;
+              }
+
               Interest interest =
                   db.getInterestRepository()
                       .save(
@@ -422,11 +435,24 @@ public class UserManagementService {
                                   valueOrNull(
                                       request, RegisterUserRequest.NUMSTUDENTS_FIELD_NUMBER)));
 
+              if (isStudent) {
+                student =
+                    db.getStudentRepository().save(new Student().setCreationTime(Instant.now()));
+              }
+
+              if (isTeacher) {
+                teacher =
+                    db.getTeacherRepository().save(new Teacher().setCreationTime(Instant.now()));
+              }
+
               db.getUserXRepository()
                   .save(
                       UserUtils.setPassword(
                           new UserX()
                               .setCreationTime(Instant.now())
+                              .setDistrict(district.orElse(null))
+                              .setStudent(student)
+                              .setTeacher(teacher)
                               .setFirstName(
                                   valueOrNull(request, RegisterUserRequest.FIRST_NAME_FIELD_NUMBER))
                               .setLastName(
