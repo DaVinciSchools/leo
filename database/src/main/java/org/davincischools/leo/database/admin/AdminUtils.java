@@ -425,7 +425,7 @@ public class AdminUtils {
 
     List<Error> errors = Collections.synchronizedList(new ArrayList<>());
 
-    List<UserX> userXs =
+    List<Object> userXs =
         Files.readLines(new File(importTeachers), StandardCharsets.UTF_8).stream()
             .map(
                 line -> {
@@ -447,27 +447,28 @@ public class AdminUtils {
                     checkArgument(!schoolNickname.isEmpty(), "School nickname required.");
                     checkArgument(emailAddress.contains("@"), "Invalid e-mail address.");
 
-                    UserX teacher =
-                        db.getUserXRepository()
-                            .upsert(
-                                district,
-                                emailAddress,
-                                userX ->
-                                    db.getTeacherRepository()
-                                        .upsert(userX)
-                                        .setFirstName(firstName)
-                                        .setLastName(lastName));
-                    School school =
-                        DaVinciSchoolsByNickname.valueOf(schoolNickname).createSchool(db, district);
-                    db.getTeacherSchoolRepository().upsert(teacher.getTeacher(), school);
+                    // UserX teacher =
+                    // db.getUserXRepository()
+                    // .upsert(
+                    // district,
+                    // emailAddress,
+                    // userX ->
+                    // db.getTeacherRepository()
+                    // .upsert(userX)
+                    // .setFirstName(firstName)
+                    // .setLastName(lastName));
+                    // School school =
+                    // DaVinciSchoolsByNickname.valueOf(schoolNickname).createSchool(db, district);
+                    // db.getTeacherSchoolRepository().upsert(teacher.getTeacher(), school);
 
                     if (cells.length >= 5) {
                       String className = cells[4];
 
                       checkArgument(!className.isEmpty(), "Class name required.");
 
-                      ClassX classX = db.getClassXRepository().upsert(school, className, c -> {});
-                      db.getTeacherClassXRepository().upsert(teacher.getTeacher(), classX);
+                      // ClassX classX = db.getClassXRepository().upsert(school, className, c ->
+                      // {});
+                      // db.getTeacherClassXRepository().upsert(teacher.getTeacher(), classX);
 
                       for (int eksIndex : new int[] {5, 7}) {
                         if (cells.length >= eksIndex + 2) {
@@ -480,14 +481,15 @@ public class AdminUtils {
                           KnowledgeAndSkill eks =
                               db.getKnowledgeAndSkillRepository()
                                   .upsert(eksName, Type.EKS, ks -> ks.setShortDescr(eksDescr));
-                          db.getClassXKnowledgeAndSkillRepository().upsert(classX, eks);
+                          // db.getClassXKnowledgeAndSkillRepository().upsert(classX, eks);
                         }
                       }
                     }
 
                     log.atTrace().log("Imported: {}", line);
 
-                    return teacher;
+                    // return teacher;
+                    return null;
                   } catch (Exception e) {
                     log.atError().withThrowable(e).log("Error: {}", line);
                     errors.add(new Error(line, e));
@@ -495,16 +497,16 @@ public class AdminUtils {
                   }
                 })
             .filter(Objects::nonNull)
-            .parallel()
-            .peek(
-                userX -> {
-                  if (userX.getEncodedPassword().equals(UserXRepository.INVALID_ENCODED_PASSWORD)) {
-                    UserUtils.setPassword(userX, userX.getEmailAddress());
-                  }
-                })
+            // .parallel()
+            // .peek(
+            // userX -> {
+            // if (userX.getEncodedPassword().equals(UserXRepository.INVALID_ENCODED_PASSWORD)) {
+            // UserUtils.setPassword(userX, userX.getEmailAddress());
+            // }
+            // })
             .toList();
 
-    db.getUserXRepository().saveAllAndFlush(userXs);
+    // db.getUserXRepository().saveAllAndFlush(userXs);
 
     if (!errors.isEmpty()) {
       log.atError()
