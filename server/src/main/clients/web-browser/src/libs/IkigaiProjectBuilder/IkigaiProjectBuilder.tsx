@@ -9,7 +9,7 @@ import {
   PaperProps,
   TextField,
 } from '@mui/material';
-import {CSSProperties, ReactNode, useEffect, useState} from 'react';
+import {CSSProperties, ReactNode, useEffect, useRef, useState} from 'react';
 import {Close} from '@mui/icons-material';
 import {Ikigai, VISIBLE_ALPHA} from '../../Ikigai/Ikigai';
 import {TitledPaper} from '../TitledPaper/TitledPaper';
@@ -18,6 +18,7 @@ import {pl_types} from '../../generated/protobuf-js';
 import IOption = pl_types.ProjectInputCategory.IOption;
 import ValueType = pl_types.ProjectInputCategory.ValueType;
 import {OPTION_SORTER, TEXT_SORTER} from '../sorters';
+import {getInputField, getInputValue} from '../forms';
 
 const MODAL_STYLE: Partial<CSSProperties> = {
   position: 'absolute',
@@ -68,6 +69,7 @@ function FreeTextInput(props: {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
   const [optionValues, setOptionValues] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>();
 
   useEffect(
     () =>
@@ -88,9 +90,13 @@ function FreeTextInput(props: {
 
   function onSave() {
     setModalOpen(false);
-    props.onValuesUpdated(
-      selectedValues.map(e => e.trim()).filter(e => e.length > 0)
-    );
+    const unenteredValue = getInputValue(getInputField(inputRef.current));
+    if (unenteredValue != null) {
+      selectedValues.push(String(unenteredValue));
+    }
+    props.onValuesUpdated([
+      ...new Set(selectedValues.map(e => e.trim()).filter(e => e.length > 0)),
+    ]);
   }
 
   return (
@@ -141,6 +147,7 @@ function FreeTextInput(props: {
             <div>
               <div style={{paddingBottom: '1em'}}>{props.description}</div>
               <Autocomplete
+                ref={inputRef}
                 multiple
                 freeSolo
                 autoFocus
