@@ -8,37 +8,51 @@ import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
 import {createService} from '../../../libs/protos';
 import {pl_types, project_management} from '../../../generated/protobuf-js';
 import {useContext, useEffect, useState} from 'react';
-
+import {
+  PROJECT_DEFINITION_SORTER,
+  REVERSE_DATE_THEN_PROJECT_SORTER,
+} from '../../../libs/sorters';
+import {TitledPaper} from '../../../libs/TitledPaper/TitledPaper';
 import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
 import ThumbsState = pl_types.Project.ThumbsState;
-import {REVERSE_DATE_THEN_PROJECT_SORTER} from '../../../libs/sorters';
+import IProjectDefinition = pl_types.IProjectDefinition;
+import {Button} from '@mui/material';
+import State = pl_types.ProjectDefinition.State;
 
 export function AllProjects() {
   const global = useContext(GlobalStateContext);
+
+  const [projects, setProjects] = useState<IProject[]>([]);
+  const [unsuccessfulProjects, setUnsuccessfulProjects] = useState<
+    IProjectDefinition[]
+  >([]);
+
+  const [projectDetails, setProjectDetails] = useState<IProject | undefined>();
+
+  useEffect(() => {
+    if (global.user != null) {
+      createService(ProjectManagementService, 'ProjectManagementService')
+        .getProjects({userXId: global.user!.userXId, includeUnsuccessful: true})
+        .then(response => {
+          setProjects(response.projects.sort(REVERSE_DATE_THEN_PROJECT_SORTER));
+          setUnsuccessfulProjects(
+            (response.unsuccessfulInputs ?? []).sort(PROJECT_DEFINITION_SORTER)
+          );
+        })
+        .catch(global.setError);
+    } else {
+      setProjects([]);
+      setUnsuccessfulProjects([]);
+    }
+  }, [global.user]);
+
   if (!global.requireUser(user => user?.isAuthenticated)) {
     return <></>;
   }
 
-  const [projects, setProjects] = useState<IProject[]>([]);
-  const [projectDetails, setProjectDetails] = useState<IProject | undefined>();
-
-  const service = createService(
-    ProjectManagementService,
-    'ProjectManagementService'
-  );
-
-  useEffect(() => {
-    service
-      .getProjects({userXId: global.user!.userXId})
-      .then(response => {
-        setProjects(response.projects.sort(REVERSE_DATE_THEN_PROJECT_SORTER));
-      })
-      .catch(global.setError);
-  }, []);
-
   function updateProject(project: IProject, modifications: IProject) {
-    service
+    createService(ProjectManagementService, 'ProjectManagementService')
       .updateProject({id: project.id!, modifications: modifications})
       .catch(global.setError);
 
@@ -48,7 +62,7 @@ export function AllProjects() {
   }
 
   function showProjectDetails(project: pl_types.IProject) {
-    service
+    createService(ProjectManagementService, 'ProjectManagementService')
       .getProjectDetails({projectId: project.id})
       .then(response => setProjectDetails(response.project!))
       .catch(reason => {
@@ -60,6 +74,31 @@ export function AllProjects() {
     <>
       <DefaultPage title="All Projects">
         <div>
+          {unsuccessfulProjects
+            .filter(e => e.state === State.FAILED)
+            .map(definition => (
+              <TitledPaper
+                title="Project Generation Failed"
+                highlightColor="red"
+                key={definition.id}
+              >
+                Generating projects for this Ikigai configuration failed. If the
+                problem persists, please contact the administrator.
+                <Button>Retry</Button>
+              </TitledPaper>
+            ))}
+          {unsuccessfulProjects
+            .filter(e => e.state === State.PROCESSING)
+            .map(definition => (
+              <TitledPaper
+                title="Project Generation In Progress"
+                highlightColor="lightgreen"
+                key={definition.id}
+              >
+                Projects are still being generated for this Ikigai
+                configuration. Please refresh the page to check for updates.
+              </TitledPaper>
+            ))}
           {projects.map(project => (
             <ProjectCard
               id={project.id!}

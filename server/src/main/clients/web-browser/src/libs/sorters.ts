@@ -6,6 +6,7 @@ import IProjectDefinition = pl_types.IProjectDefinition;
 import ISchool = pl_types.ISchool;
 import IDistrict = pl_types.IDistrict;
 import IProject = pl_types.IProject;
+import State = pl_types.ProjectDefinition.State;
 
 export const TEXT_SORTER = (a: string, b: string) => a.localeCompare(b);
 
@@ -35,6 +36,9 @@ export const PROJECT_DEFINITION_SORTER = (
   a: IProjectDefinition,
   b: IProjectDefinition
 ) =>
+  (b.state === State.FAILED ? -1 : 1) - (b.state === State.FAILED ? -1 : 1) ||
+  (b.state === State.PROCESSING ? -1 : 1) -
+    (b.state === State.PROCESSING ? -1 : 1) ||
   (b.template === true ? 1 : -1) - (a.template === true ? 1 : -1) ||
   (a.name ?? '').localeCompare(b.name ?? '');
 

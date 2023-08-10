@@ -117,12 +117,21 @@ message XqCompetency {
 }
 
 message ProjectDefinition {
+  enum State {
+    UNSET = 0;
+    PROCESSING = 1;
+    COMPLETED = 2;
+    FAILED = 3;
+  }
+
   optional int32 id = 1;
   optional string name = 2;
+  optional int32 input_id = 7;
   optional bool template = 3;
   optional bool selected = 4;
+  optional State state = 5;
   // Sorted by position already.
-  repeated ProjectInputValue inputs = 5;
+  repeated ProjectInputValue inputs = 6;
 }
 
 message ProjectInputValue {

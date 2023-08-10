@@ -10,7 +10,9 @@ import java.util.stream.StreamSupport;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
+import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.Project;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.daos.ProjectPost;
@@ -18,10 +20,13 @@ import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
+import org.davincischools.leo.database.utils.repos.ProjectInputRepository.FullProjectInput;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.MilestoneWithSteps;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
+import org.davincischools.leo.protos.pl_types.ProjectDefinition.State;
+import org.davincischools.leo.protos.pl_types.ProjectInputValue;
 import org.davincischools.leo.protos.user_management.FullUserDetails;
 
 public class DataAccess {
@@ -131,27 +136,72 @@ public class DataAccess {
   }
 
   public static org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder
-      convertFullProjectDefinition(FullProjectDefinition fullProjectdefinition) {
+      convertFullProjectDefinition(FullProjectDefinition fullProjectDefinition) {
     var projectDefinitionProto =
         org.davincischools.leo.protos.pl_types.ProjectDefinition.newBuilder()
-            .setId(fullProjectdefinition.definition().getId())
-            .setName(fullProjectdefinition.definition().getName())
-            .setTemplate(Boolean.TRUE.equals(fullProjectdefinition.definition().getTemplate()));
-    for (var categoryDao : fullProjectdefinition.categories()) {
+            .setId(fullProjectDefinition.definition().getId())
+            .setName(fullProjectDefinition.definition().getName())
+            .setTemplate(Boolean.TRUE.equals(fullProjectDefinition.definition().getTemplate()));
+    for (var categoryDao : fullProjectDefinition.categories()) {
       var type = categoryDao.getProjectDefinitionCategoryType();
-      projectDefinitionProto
-          .addInputsBuilder()
-          .getCategoryBuilder()
-          .setId(categoryDao.getId())
-          .setShortDescr(type.getShortDescr())
-          .setName(type.getName())
-          .setHint(type.getHint())
-          .setPlaceholder(type.getInputPlaceholder())
-          .setValueType(
-              org.davincischools.leo.protos.pl_types.ProjectInputCategory.ValueType.valueOf(
-                  categoryDao.getProjectDefinitionCategoryType().getValueType()));
+      createProjectInputValueProto(
+          categoryDao.getId(), type, projectDefinitionProto.addInputsBuilder());
     }
     return projectDefinitionProto;
+  }
+
+  public static org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder
+      convertFullProjectInput(FullProjectInput fullProjectInput) {
+    var projectDefinitionProto =
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.newBuilder()
+            .setId(fullProjectInput.definition().getId())
+            .setName(fullProjectInput.definition().getName())
+            .setInputId(fullProjectInput.input().getId())
+            .setState(State.valueOf(fullProjectInput.input().getState()))
+            .setTemplate(Boolean.TRUE.equals(fullProjectInput.definition().getTemplate()));
+    for (var categoryValues : fullProjectInput.values()) {
+      var type = categoryValues.type();
+      var inputValueProto =
+          createProjectInputValueProto(
+              categoryValues.category().getId(), type, projectDefinitionProto.addInputsBuilder());
+      switch (inputValueProto.getCategory().getValueType()) {
+        case FREE_TEXT -> inputValueProto.addAllFreeTexts(
+            categoryValues.values().stream()
+                .map(org.davincischools.leo.database.daos.ProjectInputValue::getFreeTextValue)
+                .toList());
+        case EKS, XQ_COMPETENCY -> inputValueProto.addAllSelectedIds(
+            categoryValues.values().stream()
+                .map(
+                    org.davincischools.leo.database.daos.ProjectInputValue
+                        ::getKnowledgeAndSkillValue)
+                .map(KnowledgeAndSkill::getId)
+                .toList());
+        case MOTIVATION -> inputValueProto.addAllSelectedIds(
+            categoryValues.values().stream()
+                .map(org.davincischools.leo.database.daos.ProjectInputValue::getMotivationValue)
+                .map(Motivation::getId)
+                .toList());
+        case UNSET -> throw new IllegalStateException("Unset value type");
+      }
+    }
+    return projectDefinitionProto;
+  }
+
+  private static ProjectInputValue.Builder createProjectInputValueProto(
+      int categoryId,
+      ProjectDefinitionCategoryType type,
+      ProjectInputValue.Builder projectInputValueProto) {
+    projectInputValueProto
+        .getCategoryBuilder()
+        .setId(categoryId)
+        .setShortDescr(type.getShortDescr())
+        .setName(type.getName())
+        .setHint(type.getHint())
+        .setPlaceholder(type.getInputPlaceholder())
+        .setValueType(
+            org.davincischools.leo.protos.pl_types.ProjectInputCategory.ValueType.valueOf(
+                type.getValueType()));
+    return projectInputValueProto;
   }
 
   public static org.davincischools.leo.protos.pl_types.Project convertProjectToProto(

@@ -386,6 +386,18 @@ public class ProjectManagementService {
                       .map(DataAccess::convertProjectToProto)
                       .toList());
 
+              if (request.getIncludeUnsuccessful()) {
+                response.addAllUnsuccessfulInputs(
+                    db
+                        .getProjectInputRepository()
+                        .findFullProjectInputByUserAndUnsuccessful(userId)
+                        .stream()
+                        .map(DataAccess::convertFullProjectInput)
+                        .map(
+                            org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder::build)
+                        .toList());
+              }
+
               return response.build();
             })
         .finish();

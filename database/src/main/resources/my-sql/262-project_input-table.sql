@@ -6,6 +6,7 @@ CREATE TABLE project_input
 
     -- TODO: Manage these with a task queue.
     timeout               DATETIME,
+
     state                 ENUM ('PROCESSING', 'COMPLETED', 'FAILED') NOT NULL,
 
     project_definition_id INT      NOT NULL,

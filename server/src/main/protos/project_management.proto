@@ -67,10 +67,12 @@ message GetProjectDetailsResponse {
 message GetProjectsRequest {
   optional int32 user_x_id = 1;
   optional bool active_only = 2;
+  optional bool include_unsuccessful = 3;
 }
 
 message GetProjectsResponse {
   repeated pl_types.Project projects = 1;
+  repeated pl_types.ProjectDefinition unsuccessful_inputs = 2;
 }
 
 message UpdateProjectRequest {
