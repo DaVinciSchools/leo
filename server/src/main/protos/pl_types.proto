@@ -162,6 +162,7 @@ message ProjectInputCategory {
   optional int32 type_id = 2;
   optional string name = 3;
   optional string short_descr = 4;
+  optional string input_descr = 10;
   optional string hint = 5;
   optional string placeholder = 6;
   optional ValueType value_type = 7;

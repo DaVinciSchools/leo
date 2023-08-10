@@ -1,4 +1,3 @@
-import {Checkbox, FormControlLabel} from '@mui/material';
 import {CSSProperties, useEffect, useState} from 'react';
 import {Layout} from 'react-grid-layout';
 import {PersistedReactGridLayout} from '../PersistedReactGridLayout/PersistedReactGridLayout';
@@ -88,23 +87,29 @@ export function IkigaiProjectConfigurer(props: {
               flexFlow: 'column nowrap',
               justifyContent: 'space-between',
             }}
-          >
-            {c.category?.category?.shortDescr ?? 'undefined'}
-            <span style={{textAlign: 'right'}}>
-              <FormControlLabel
-                label="Include"
-                control={
-                  <Checkbox
+            icon={
+              <>
+                <span
+                  style={{
+                    whiteSpace: 'nowrap',
+                    color: 'black',
+                    fontWeight: 'normal',
+                  }}
+                >
+                  Include:&nbsp;
+                  <input
+                    type="checkbox"
                     checked={c.selected}
                     onChange={() => {
                       c.selected = !c.selected;
                       setCategories([...categories]);
                     }}
-                    style={{paddingRight: '0.5em'}}
                   />
-                }
-              />
-            </span>
+                </span>
+              </>
+            }
+          >
+            {c.category?.category?.shortDescr ?? 'undefined'}
           </TitledPaper>
         ),
         layout: {x: 0, y: index, w: 1, h: 1},

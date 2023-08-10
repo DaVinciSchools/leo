@@ -17,7 +17,6 @@ import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
 import ThumbsState = pl_types.Project.ThumbsState;
 import IProjectDefinition = pl_types.IProjectDefinition;
-import {Button} from '@mui/material';
 import State = pl_types.ProjectDefinition.State;
 
 export function AllProjects() {
@@ -84,7 +83,6 @@ export function AllProjects() {
               >
                 Generating projects for this Ikigai configuration failed. If the
                 problem persists, please contact the administrator.
-                <Button>Retry</Button>
               </TitledPaper>
             ))}
           {unsuccessfulProjects

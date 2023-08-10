@@ -412,7 +412,7 @@ export function IkigaiProjectBuilder(props: {
                       hue={e.hue}
                       title={e.category?.category?.name ?? 'undefined'}
                       description={
-                        e.category?.category?.shortDescr ?? 'undefined'
+                        e.category?.category?.inputDescr ?? 'undefined'
                       }
                       hint={e.category?.category?.hint ?? 'undefined'}
                       placeholder={
@@ -437,7 +437,7 @@ export function IkigaiProjectBuilder(props: {
                       hue={e.hue}
                       title={e.category?.category?.name ?? 'undefined'}
                       description={
-                        e.category?.category?.shortDescr ?? 'undefined'
+                        e.category?.category?.inputDescr ?? 'undefined'
                       }
                       hint={e.category?.category?.hint ?? 'undefined'}
                       placeholder={

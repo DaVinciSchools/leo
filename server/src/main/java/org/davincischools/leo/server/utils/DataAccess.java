@@ -195,6 +195,7 @@ public class DataAccess {
         .getCategoryBuilder()
         .setId(categoryId)
         .setShortDescr(type.getShortDescr())
+        .setInputDescr(type.getInputDescr())
         .setName(type.getName())
         .setHint(type.getHint())
         .setPlaceholder(type.getInputPlaceholder())

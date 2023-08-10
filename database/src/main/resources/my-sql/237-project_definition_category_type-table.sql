@@ -4,7 +4,8 @@ CREATE TABLE project_definition_category_type
     creation_time     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted           DATETIME,
 
-    short_descr       VARCHAR(255) NOT NULL,
+    -- Displayed in the category selector.
+    short_descr       VARCHAR(1024) NOT NULL,
     include_in_demo   BOOLEAN,
 
     -- Attributes for the visual display of the category in the diagram.
@@ -13,7 +14,7 @@ CREATE TABLE project_definition_category_type
     -- Text on the category circle before values are selected.
     hint              VARCHAR(255) NOT NULL,
     -- Text above the inputs to describe what's being entered.
-    input_descr       VARCHAR(255) NOT NULL,
+    input_descr       VARCHAR(1024) NOT NULL,
     -- Text inside the field before it is entered / selected.
     input_placeholder VARCHAR(255) NOT NULL,
 

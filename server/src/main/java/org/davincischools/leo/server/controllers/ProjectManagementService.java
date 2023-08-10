@@ -450,6 +450,7 @@ public class ProjectManagementService {
         .finish();
   }
 
+  // TODO: Merge this with DataAccess.createProjectInputValueProto.
   private void extractProjectInputCategory(
       ProjectDefinitionCategory category, ProjectInputCategory.Builder input) {
     ProjectDefinitionCategoryType type = category.getProjectDefinitionCategoryType();
@@ -459,6 +460,7 @@ public class ProjectManagementService {
     input
         .setTypeId(type.getId())
         .setShortDescr(type.getShortDescr())
+        .setInputDescr(type.getInputDescr())
         .setName(type.getName())
         .setHint(type.getHint())
         .setPlaceholder(type.getInputPlaceholder())

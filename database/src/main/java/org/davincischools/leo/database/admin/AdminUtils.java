@@ -84,8 +84,8 @@ public class AdminUtils {
     HUM(
         "Humanities",
         "Governments",
-        "Cultivate, refine, and leverage perspectives on how governments work and how they could be"
-            + " improved"),
+        "Cultivate, refine, and leverage perspectives on how governments work"
+            + " and how they could be improved"),
     STEAM(
         "Science, Technology, Engineering, Arts, and Math (STEM)",
         "Scientific Thinking",
@@ -167,12 +167,20 @@ public class AdminUtils {
                   .upsert(
                       "Student Interests",
                       type ->
-                          type.setShortDescr("Student interest free text.")
+                          type.setShortDescr(
+                                  "Include this category to allow a student to enter their"
+                                      + " personal interests. They will be considered when"
+                                      + " creating projects for that individual student.")
                               .setIncludeInDemo(true)
-                              .setHint("Click to add student interests.")
-                              .setInputDescr("Enter student interests:")
+                              .setHint("Click to add your personal interests.")
+                              .setInputDescr(
+                                  "Type in things that interest you that you'd like a project to"
+                                      + " include. You can add multiple interests by pressing"
+                                      + " ENTER after each one. An interest would be something"
+                                      + " like 'playing sports' or 'watching youtube videos about"
+                                      + " building things'.")
                               .setInputPlaceholder("Student Interest")
-                              .setQueryPrefix("You are passionate about")
+                              .setQueryPrefix("You would like projects that involve")
                               .setValueType(ValueType.FREE_TEXT.name())));
 
       careerInterestType =
@@ -182,12 +190,20 @@ public class AdminUtils {
                   .upsert(
                       "Career Interests",
                       type ->
-                          type.setShortDescr("Career interests free text.")
+                          type.setShortDescr(
+                                  "Include this category to allow a student to enter their"
+                                      + " career interests. They will be considered when"
+                                      + " creating projects for that individual student.")
                               .setIncludeInDemo(true)
                               .setHint("Click to add careers.")
-                              .setInputDescr("Enter career interests:")
+                              .setInputDescr(
+                                  "Type in careers that interest you. You can add"
+                                      + " multiple careers by pressing ENTER after each one. A"
+                                      + " career would be something like 'doctor' or 'english"
+                                      + " teacher'.")
                               .setInputPlaceholder("Career Interest")
-                              .setQueryPrefix("You are passionate about a career in")
+                              .setQueryPrefix(
+                                  "You would like projects that help you learn how to be a")
                               .setValueType(ValueType.FREE_TEXT.name())));
 
       assignmentTopicType =
@@ -197,12 +213,23 @@ public class AdminUtils {
                   .upsert(
                       "Assignment Topic",
                       type ->
-                          type.setShortDescr("Assignment topic for project.")
+                          type.setShortDescr(
+                                  "This is a demo category that allows you to enter topics of an"
+                                      + " imaginary assignment that the projects will be generated"
+                                      + " for. Normally, this would be pulled from an actual"
+                                      + " class assignment and not entered by the student.")
                               .setIncludeInDemo(true)
                               .setHint("Click to add assignment topic.")
-                              .setInputDescr("Enter assignment topic:")
+                              .setInputDescr(
+                                  "Normally, this would be pulled from an assignment. But, you"
+                                      + " can enter example topics that a project should help"
+                                      + " a student learn. You can enter multiple topics by"
+                                      + " pressing ENTER after each one.A topic would be"
+                                      + " something like 'learn how valence electrons work' or"
+                                      + " 'learn how to write a persuasive essay'.")
                               .setInputPlaceholder("Assignment Topic")
-                              .setQueryPrefix("The project MUST help the student learn about")
+                              .setQueryPrefix(
+                                  "It is very important that every project MUST help you")
                               .setValueType(ValueType.FREE_TEXT.name())));
 
       motivationType =
@@ -212,10 +239,17 @@ public class AdminUtils {
                   .upsert(
                       "Motivations",
                       type ->
-                          type.setShortDescr("Motivation selections.")
+                          type.setShortDescr(
+                                  "This is a demo category where you can select results from"
+                                      + " a TruMotivate assessment. Normally, this would be pulled"
+                                      + " from a student's actual TruMotivate assessment results"
+                                      + " and not entered by the student.")
                               .setIncludeInDemo(true)
                               .setHint("Click to add motivations.")
-                              .setInputDescr("Select motivations:")
+                              .setInputDescr(
+                                  "Normally, this would be pulled from a student's TruMotivate"
+                                      + " assessment. But, for demo purposes, you can select"
+                                      + " multiple results from the options below.")
                               .setInputPlaceholder("Select a Motivation")
                               .setQueryPrefix("You are motivated by")
                               .setValueType(ValueType.MOTIVATION.name())));
@@ -227,12 +261,23 @@ public class AdminUtils {
                   .upsert(
                       "Project Lead The Way",
                       type ->
-                          type.setShortDescr("Could be a searchable list of standards.")
+                          type.setShortDescr(
+                                  "This is a demo category for adding Project Lead The Way (PLTW)"
+                                      + " standards that a course is working towards. Normally,"
+                                      + " these standards would be pulled from class information"
+                                      + " or an assignment and not entered by the student.")
                               .setIncludeInDemo(true)
                               .setHint("Click to add PLTW standards.")
-                              .setInputDescr("PLTW Standards:")
+                              .setInputDescr(
+                                  "Normally, this would be pulled from class information or an"
+                                      + " assignment. But, for demo purposes, you can enter"
+                                      + " examples of standards that a class or assignment might"
+                                      + " be working towards. A standard would be something like"
+                                      + " 'developing and using models' or 'using mathematics and"
+                                      + " computational thinking'.")
                               .setInputPlaceholder("Enter PLTW Standards")
-                              .setQueryPrefix("The project should have something to do with")
+                              .setQueryPrefix(
+                                  "It is very important that every project MUST help you with")
                               .setValueType(ValueType.FREE_TEXT.name())));
 
       eksType =
@@ -242,12 +287,23 @@ public class AdminUtils {
                   .upsert(
                       "Knowledge and Skills",
                       type ->
-                          type.setShortDescr("Knowledge and skill selections.")
+                          type.setShortDescr(
+                                  "This is a demo category for selecting Da Vinci School class'"
+                                      + " Essential Knowledge and Skills (EKS). These are the"
+                                      + " knowledge and skills that the class will teach the"
+                                      + " students. Normally, these would be pulled from class"
+                                      + " information or an assignment and not entered by the"
+                                      + " student.")
                               .setIncludeInDemo(true)
                               .setHint("Click to add desired knowledge and skills.")
-                              .setInputDescr("Select knowledge and skills:")
+                              .setInputDescr(
+                                  "Normally, this would be pulled from class information or an"
+                                      + " assignment. But, for demo purposes, you can select"
+                                      + " multiple EKS' from the options below.")
                               .setInputPlaceholder("Select a Knowledge and Skill")
-                              .setQueryPrefix("You want to improve your ability to")
+                              .setQueryPrefix(
+                                  "It is very important that every project"
+                                      + " MUST help you learn how to")
                               .setValueType(ValueType.EKS.name())));
 
       xqType =
@@ -257,12 +313,21 @@ public class AdminUtils {
                   .upsert(
                       "XQ Competencies",
                       type ->
-                          type.setShortDescr("XQ competency selections.")
+                          type.setShortDescr(
+                                  "This is a demo category for selecting XQ Competencies for"
+                                      + " projects. Normally, these would be pulled from class"
+                                      + " information or an assignment and not entered by the"
+                                      + " student.")
                               .setIncludeInDemo(true)
                               .setHint("Click to add desired XQ competency.")
-                              .setInputDescr("Select XQ Competency:")
-                              .setInputPlaceholder("Select a XQ Competency")
-                              .setQueryPrefix("You want to improve your ability to")
+                              .setInputDescr(
+                                  "Normally, this would be pulled from class information or an"
+                                      + " assignment. But, for demo purposes, you can select"
+                                      + " multiple XQ Competencies from the options below.")
+                              .setInputPlaceholder("Select an XQ Competency")
+                              .setQueryPrefix(
+                                  "It is very important that every project"
+                                      + " MUST help you learn how to")
                               .setValueType(ValueType.XQ_COMPETENCY.name())));
     }
 
