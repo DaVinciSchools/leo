@@ -6,6 +6,9 @@ CREATE TABLE class_x
     deleted         DATETIME,
 
     name            VARCHAR(255) NOT NULL,
+    number          VARCHAR(16) NOT NULL,
+    period          VARCHAR(16),
+    grade           VARCHAR(16),
     short_descr     TEXT,
     long_descr_html TEXT,
 
@@ -16,7 +19,7 @@ CREATE TABLE class_x
             ON DELETE RESTRICT
             ON UPDATE RESTRICT,
 
-    CONSTRAINT class_x__school_id__name
-        UNIQUE (school_id, name)
+    CONSTRAINT class_x__school_id__number
+        UNIQUE (school_id, number)
 ) ENGINE InnoDB
   CHAR SET UTF8MB4;

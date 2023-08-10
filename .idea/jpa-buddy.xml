@@ -3,7 +3,7 @@
   <component name="JpaBuddyIdeaProjectConfig" migrateIndexesAndConstraints="true" reUseTableSchema="true">
     <option name="defaultUnitInitialized" value="true" />
     <option name="renamerInitialized" value="true" />
-    <option name="reverseEngineeringLastDbConnectionId" value="cd7d6ca1-6a13-4753-b106-1974d718d82e__leo_temp" />
+    <option name="reverseEngineeringLastDbConnectionId" value="6b2da686-c64b-41f0-9853-0629236383d5__leo_temp" />
     <option name="reLastEntityCreationPackage" value="database/src/main/java/org/davincischools/leo/database/daos" />
   </component>
 </project>

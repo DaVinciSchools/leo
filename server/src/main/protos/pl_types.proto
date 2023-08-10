@@ -17,6 +17,9 @@ message Assignment {
 message ClassX {
   optional int32 id = 1;
   optional string name = 2;
+  optional string number = 6;
+  optional string period = 7;
+  optional string grade = 8;
   optional string short_descr = 3;
   optional string long_descr_html = 4;
 

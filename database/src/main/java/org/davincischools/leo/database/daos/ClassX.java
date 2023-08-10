@@ -29,9 +29,12 @@ public class ClassX implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
+  public static final String COLUMN_NUMBER_NAME = "number";
+  public static final String COLUMN_PERIOD_NAME = "period";
+  public static final String COLUMN_GRADE_NAME = "grade";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = -4108492211704023918L;
+  private static final long serialVersionUID = -1516051238272452857L;
 
   private Integer id;
 
@@ -40,6 +43,12 @@ public class ClassX implements Serializable {
   private Instant deleted;
 
   private String name;
+
+  private String number;
+
+  private String period;
+
+  private String grade;
 
   private String shortDescr;
 
@@ -86,6 +95,36 @@ public class ClassX implements Serializable {
 
   public ClassX setName(String name) {
     this.name = name;
+    return this;
+  }
+
+  @Column(name = COLUMN_NUMBER_NAME, nullable = false, length = 16)
+  public String getNumber() {
+    return number;
+  }
+
+  public ClassX setNumber(String number) {
+    this.number = number;
+    return this;
+  }
+
+  @Column(name = COLUMN_PERIOD_NAME, length = 16)
+  public String getPeriod() {
+    return period;
+  }
+
+  public ClassX setPeriod(String period) {
+    this.period = period;
+    return this;
+  }
+
+  @Column(name = COLUMN_GRADE_NAME, length = 16)
+  public String getGrade() {
+    return grade;
+  }
+
+  public ClassX setGrade(String grade) {
+    this.grade = grade;
     return this;
   }
 

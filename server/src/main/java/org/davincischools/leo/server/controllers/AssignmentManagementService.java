@@ -3,6 +3,7 @@ package org.davincischools.leo.server.controllers;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimaps;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,6 +12,7 @@ import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.TeacherClassXId;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.AssignmentRepository.ClassXAssignment;
+import org.davincischools.leo.database.utils.repos.ClassXRepository.FullClassX;
 import org.davincischools.leo.protos.assignment_management.CreateAssignmentRequest;
 import org.davincischools.leo.protos.assignment_management.CreateAssignmentResponse;
 import org.davincischools.leo.protos.assignment_management.DeleteAssignmentRequest;
@@ -90,7 +92,8 @@ public class AssignmentManagementService {
                   .asMap()
                   .forEach(
                       (key, value) -> {
-                        var classProto = DataAccess.convertClassToProto(key);
+                        var classProto =
+                            DataAccess.toFullClassXProto(new FullClassX(key, new ArrayList<>()));
                         response.addClassXs(classProto);
                         value.forEach(
                             assignment ->

@@ -1,6 +1,7 @@
 package org.davincischools.leo.server.utils;
 
 import com.google.common.base.Strings;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -117,21 +118,15 @@ public class DataAccess {
         .collect(Collectors.toList());
   }
 
-  public static org.davincischools.leo.protos.pl_types.ClassX convertClassToProto(ClassX classX) {
-    return org.davincischools.leo.protos.pl_types.ClassX.newBuilder()
-        .setId(coalesce(classX::getId, () -> -1))
-        .setName(classX.getName())
-        .setShortDescr(coalesce(classX::getShortDescr, () -> ""))
-        .setLongDescrHtml(coalesce(classX::getLongDescrHtml, () -> ""))
-        .build();
-  }
-
   public static org.davincischools.leo.protos.pl_types.ClassX.Builder toFullClassXProto(
       FullClassX fullClassX) {
     var classX = fullClassX.classX();
     return org.davincischools.leo.protos.pl_types.ClassX.newBuilder()
         .setId(classX.getId())
         .setName(classX.getName())
+        .setNumber(classX.getNumber())
+        .setGrade(coalesce(classX::getGrade, () -> ""))
+        .setPeriod(coalesce(classX::getPeriod, () -> ""))
         .setShortDescr(coalesce(classX::getShortDescr, () -> ""))
         .setLongDescrHtml(coalesce(classX::getLongDescrHtml, () -> ""))
         .addAllKnowledgeAndSkills(
@@ -158,7 +153,7 @@ public class DataAccess {
         .setName(assignment.getName())
         .setShortDescr(coalesce(assignment::getShortDescr, () -> ""))
         .setLongDescrHtml(coalesce(assignment::getLongDescrHtml, () -> ""))
-        .setClassX(convertClassToProto(classX))
+        .setClassX(DataAccess.toFullClassXProto(new FullClassX(classX, new ArrayList<>())))
         .build();
   }
 

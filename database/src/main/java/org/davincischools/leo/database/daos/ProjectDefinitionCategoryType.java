@@ -83,7 +83,7 @@ public class ProjectDefinitionCategoryType implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_SHORTDESCR_NAME, nullable = false)
+  @Column(name = COLUMN_SHORTDESCR_NAME, nullable = false, length = 1024)
   public String getShortDescr() {
     return shortDescr;
   }
@@ -123,7 +123,7 @@ public class ProjectDefinitionCategoryType implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_INPUTDESCR_NAME, nullable = false)
+  @Column(name = COLUMN_INPUTDESCR_NAME, nullable = false, length = 1024)
   public String getInputDescr() {
     return inputDescr;
   }

@@ -321,7 +321,8 @@ public class TestData {
 
     // Create programming class.
     programmingClass =
-        db.getClassXRepository().upsert(school, "Intro to Programming", classX -> {});
+        db.getClassXRepository()
+            .upsert(school, "Intro to Programming", classX -> classX.setNumber("CS 101"));
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), programmingClass);
     db.getStudentClassXRepository().upsert(student.getStudent(), programmingClass);
 
@@ -352,7 +353,9 @@ public class TestData {
         .upsert(programmingContainerAssignment, programmingContainerEks);
 
     // Create chemistry class.
-    chemistryClass = db.getClassXRepository().upsert(school, "Intro to Chemistry", classX -> {});
+    chemistryClass =
+        db.getClassXRepository()
+            .upsert(school, "Intro to Chemistry", classX -> classX.setNumber("CHEM 101"));
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), chemistryClass);
     db.getStudentClassXRepository().upsert(student.getStudent(), chemistryClass);
 
@@ -385,7 +388,8 @@ public class TestData {
         .upsert(chemistryValenceElectronsAssignment, chemistryValenceElectronsEks);
 
     // Create an empty class.
-    danceClass = db.getClassXRepository().upsert(school, "Dance", classX -> {});
+    danceClass =
+        db.getClassXRepository().upsert(school, "Dance", classX -> classX.setNumber("DANCE 101"));
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), danceClass);
     db.getStudentClassXRepository().upsert(student.getStudent(), danceClass);
 
