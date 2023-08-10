@@ -43,6 +43,7 @@ public class OpenAiUtils {
   public static final String OPENAI_API_KEY_ENV_NAME =
       OPENAI_API_KEY_PROP_NAME.toUpperCase().replaceAll("\\.", "_");
   public static final String GPT_3_5_TURBO_MODEL = "gpt-3.5-turbo";
+  public static final String GPT_4_MODEL = "gpt-4";
 
   private final String openAiKey;
   private final String openAiUrl;
@@ -82,15 +83,18 @@ public class OpenAiUtils {
               }
 
               // Make the call to OpenAI.
+              int timeoutMinutes = 15;
               HttpClient client =
                   HttpClient.create()
-                      .responseTimeout(Duration.ofSeconds(120))
-                      .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 120 * 1000)
+                      .responseTimeout(Duration.ofSeconds(timeoutMinutes * 60))
+                      .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeoutMinutes * 60 * 1000)
                       .option(ChannelOption.SO_KEEPALIVE, true)
                       .doOnConnected(
                           conn ->
-                              conn.addHandlerFirst(new ReadTimeoutHandler(600, TimeUnit.SECONDS))
-                                  .addHandlerFirst(new WriteTimeoutHandler(600, TimeUnit.SECONDS)));
+                              conn.addHandlerFirst(
+                                      new ReadTimeoutHandler(timeoutMinutes, TimeUnit.MINUTES))
+                                  .addHandlerFirst(
+                                      new WriteTimeoutHandler(timeoutMinutes, TimeUnit.MINUTES)));
               ResponseSpec responseSpec =
                   WebClient.builder()
                       .clientConnector(new ReactorClientHttpConnector(client))

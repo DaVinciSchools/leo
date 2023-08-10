@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 public class OpenAi3V1ProjectGenerator {
 
   private static final Joiner COMMA_AND_JOINER = Joiner.on(", and ");
-  private static final Joiner SEMICOLON_JOINER = Joiner.on("; ");
+  private static final Joiner SENTENCE_JOINER = Joiner.on(". ");
 
   // Initialize OpenAI query by adding the system role content.
   static OpenAiRequest.Builder getInitialAiRequest(
@@ -59,13 +59,12 @@ public class OpenAi3V1ProjectGenerator {
     }
 
     request
-        .setModel(OpenAiUtils.GPT_3_5_TURBO_MODEL)
+        .setModel(OpenAiUtils.GPT_4_MODEL)
         .addMessagesBuilder()
         .setRole("system")
         .setContent(
-            "You are a senior student who wants to spend 60 hours to build a project."
-                + " Each project MUST address ALL of the following requirements: "
-                + SEMICOLON_JOINER.join(requirements)
+            "You are a senior student who wants to spend 60 hours to build a project. "
+                + SENTENCE_JOINER.join(requirements)
                 + ".");
     return request;
   }

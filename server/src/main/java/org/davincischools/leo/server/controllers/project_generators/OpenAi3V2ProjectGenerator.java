@@ -65,14 +65,18 @@ public class OpenAi3V2ProjectGenerator implements ProjectGenerator {
                 "Generate %s projects that would fit the system criteria. Return a JSON object"
                     + " with a \"projects\" array. For each \"projects\" array object, return 1)"
                     + " a \"name\" property containing a short declarative command statement that"
-                    + " summarizes the project in plain text, then 2) a \"short_descr\" property"
-                    + " that contains a sentence describing the project in plain text, then 3) a"
-                    + " \"long_descr_html\" property containing multiple paragraphs with a very"
-                    + " detailed explanation of the entire project formatted with HTML, then 4)"
-                    + " a \"milestones\" array property that contains objects representing"
-                    + " milestones with a \"name\" property in plain text and a \"steps\" array"
-                    + " property in plain text. Do not include any text other than the json"
-                    + " object.",
+                    + " summarizes the project in plain text (be sure to escape any quotation marks"
+                    + " in the JSON string value), then 2) a \"short_descr\" property that contains"
+                    + " a sentence describing the project in plain text (be sure to escape any"
+                    + " quotation marks in the JSON string value), then 3) a \"long_descr_html\""
+                    + " property containing multiple paragraphs with a very detailed explanation"
+                    + " of the entire project formatted with HTML (be sure to escape any quotation"
+                    + " marks in the JSON string value), then 4) a \"milestones\" array property"
+                    + " that contains objects representing milestones with a \"name\" property in"
+                    + " plain text (be sure to escape any quotation marks in the JSON string value)"
+                    + " and a \"steps\" array property in plain text (be sure to escape any"
+                    + " quotation marks in the JSON string value). Do not include any text other"
+                    + " than the json object.",
                 numberOfProjects));
 
     return httpExecutors
@@ -92,6 +96,7 @@ public class OpenAi3V2ProjectGenerator implements ProjectGenerator {
                   .flatMap(
                       content -> {
                         try {
+                          log.addNote(content);
                           return extractProjects(db, log, content, state.input()).stream();
                         } catch (IOException e) {
                           throw new WrappedIOException(e);
