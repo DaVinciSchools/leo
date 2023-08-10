@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.springframework.security.core.Authentication;
@@ -66,16 +67,36 @@ public class HttpUser {
     return userX.isPresent() && UserXRepository.isAdmin(userX.get());
   }
 
+  @Nullable
+  public Integer adminId() {
+    return isAdmin() ? userX.orElseThrow().getAdminX().getId() : null;
+  }
+
   public boolean isTeacher() {
     return userX.isPresent() && UserXRepository.isTeacher(userX.get());
+  }
+
+  @Nullable
+  public Integer teacherId() {
+    return isTeacher() ? userX.orElseThrow().getTeacher().getId() : null;
   }
 
   public boolean isStudent() {
     return userX.isPresent() && UserXRepository.isStudent(userX.get());
   }
 
+  @Nullable
+  public Integer studentId() {
+    return isStudent() ? userX.orElseThrow().getStudent().getId() : null;
+  }
+
   public boolean isAuthenticated() {
     return userX.isPresent();
+  }
+
+  @Nullable
+  public Integer userXId() {
+    return isAuthenticated() ? userX.orElseThrow().getId() : null;
   }
 
   public boolean isDemo() {

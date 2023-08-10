@@ -19,6 +19,8 @@ message ClassX {
   optional string name = 2;
   optional string short_descr = 3;
   optional string long_descr_html = 4;
+
+  repeated KnowledgeAndSkill knowledge_and_skills = 5;
 }
 
 message District {

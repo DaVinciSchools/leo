@@ -19,11 +19,13 @@ import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.ClassXRepository.FullClassX;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.FullProjectInput;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.MilestoneWithSteps;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
+import org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Type;
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition.State;
 import org.davincischools.leo.protos.pl_types.ProjectInputValue;
@@ -122,6 +124,31 @@ public class DataAccess {
         .setShortDescr(coalesce(classX::getShortDescr, () -> ""))
         .setLongDescrHtml(coalesce(classX::getLongDescrHtml, () -> ""))
         .build();
+  }
+
+  public static org.davincischools.leo.protos.pl_types.ClassX.Builder toFullClassXProto(
+      FullClassX fullClassX) {
+    var classX = fullClassX.classX();
+    return org.davincischools.leo.protos.pl_types.ClassX.newBuilder()
+        .setId(classX.getId())
+        .setName(classX.getName())
+        .setShortDescr(coalesce(classX::getShortDescr, () -> ""))
+        .setLongDescrHtml(coalesce(classX::getLongDescrHtml, () -> ""))
+        .addAllKnowledgeAndSkills(
+            fullClassX.knowledgeAndSkills().stream()
+                .map(DataAccess::toKnowledgeAndSkillProto)
+                .map(org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Builder::build)
+                .toList());
+  }
+
+  public static org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Builder
+      toKnowledgeAndSkillProto(KnowledgeAndSkill knowledgeAndSkill) {
+    return org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.newBuilder()
+        .setId(knowledgeAndSkill.getId())
+        .setType(Type.valueOf(knowledgeAndSkill.getType()))
+        .setName(knowledgeAndSkill.getName())
+        .setShortDescr(coalesce(knowledgeAndSkill::getShortDescr, () -> ""))
+        .setLongDescrHtml(coalesce(knowledgeAndSkill::getLongDescrHtml, () -> ""));
   }
 
   public static org.davincischools.leo.protos.pl_types.Assignment convertAssignmentToProto(

@@ -23,6 +23,7 @@ import {AdminDashboard} from './pages/dashboards/AdminDashboard/AdminDashboard';
 import {RedirectToDashboard} from './pages/dashboards/RedirectToDashboard';
 import {DemoProjectBuilder} from './pages/demos/DemoProjectBuilder/DemoProjectBuilder';
 import {GlobalState} from './libs/GlobalState';
+import {TeacherEditClasses} from './pages/classes/TeacherEditClasses/TeacherEditClasses';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -44,6 +45,16 @@ const router = createBrowserRouter([
       {
         path: 'accounts.html',
         element: <Accounts />,
+      },
+    ],
+  },
+  {
+    path: '/classes',
+    element: <DefaultPageNav />,
+    children: [
+      {
+        path: 'teacher-edit-classes.html',
+        element: <TeacherEditClasses />,
       },
     ],
   },

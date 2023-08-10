@@ -5,10 +5,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import javax.annotation.Nullable;
 import org.davincischools.leo.database.daos.ClassX;
+import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
+import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.School;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +22,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
+
+  record FullClassX(ClassX classX, List<KnowledgeAndSkill> knowledgeAndSkills) {}
+
+  record FullClassXRow(ClassX classX, ClassXKnowledgeAndSkill classKnowledgeAndSkill) {}
 
   default ClassX upsert(School school, String name, Consumer<ClassX> modifier) {
     checkNotNull(school);
@@ -36,6 +45,46 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
 
   @Query("SELECT c FROM ClassX c WHERE c.school.id = (:schoolId) AND c.name = (:name)")
   Optional<ClassX> findByName(@Param("schoolId") int schoolId, @Param("name") String name);
+
+  @Query(
+      """
+    SELECT c, cxks
+    FROM ClassX c
+    RIGHT JOIN TeacherClassX tcx
+    ON c.id = tcx.classX.id
+    RIGHT JOIN StudentClassX scx
+    ON c.id = scx.classX.id
+    LEFT JOIN ClassXKnowledgeAndSkill cxks
+    ON (c.id = cxks.classX.id)
+    LEFT JOIN FETCH cxks.knowledgeAndSkill
+    WHERE ((:teacherId) IS NULL OR tcx.teacher.id = (:teacherId))
+    AND ((:studentId) IS NULL OR scx.student.id = (:studentId))
+    ORDER BY c.id""")
+  List<FullClassXRow> findFullClassXRowsByUserId(
+      @Nullable @Param("teacherId") Integer teacherId,
+      @Nullable @Param("studentId") Integer studentId);
+
+  default List<FullClassX> findFullClassXsByUserId(
+      @Nullable @Param("teacherId") Integer teacherId,
+      @Nullable @Param("studentId") Integer studentId) {
+    return toFullClassX(findFullClassXRowsByUserId(teacherId, studentId));
+  }
+
+  private List<FullClassX> toFullClassX(Iterable<FullClassXRow> rows) {
+    List<FullClassX> fullClassXs = new ArrayList<>();
+    FullClassX classX = null;
+
+    for (FullClassXRow row : rows) {
+      if (classX == null || !Objects.equals(row.classX.getId(), classX.classX.getId())) {
+        fullClassXs.add(classX = new FullClassX(row.classX, new ArrayList<>()));
+      }
+      if (row.classKnowledgeAndSkill() != null) {
+        classX.knowledgeAndSkills.add(row.classKnowledgeAndSkill().getKnowledgeAndSkill());
+      }
+    }
+
+    return fullClassXs;
+  }
 
   List<ClassX> findAllBySchool(School school);
 }

@@ -21,6 +21,8 @@ enum MenuKeys {
   ADMIN_ACCOUNTS,
   ADMIN_DISTRICTS,
   ADMIN_SCHOOLS,
+  CLASSES,
+  CLASSES_EDIT_TEACHER,
   DASHBOARD_ADMIN,
   DASHBOARD_STUDENT,
   DASHBOARD_TEACHER,
@@ -69,6 +71,21 @@ export function DefaultPageNav() {
         display:
           global.user?.isAdmin || global.user?.isTeacher ? 'block' : 'none',
       },
+    },
+    {
+      label: (global.user?.isAdmin ? 'Teacher ' : '') + 'Classes',
+      key: MenuKeys.CLASSES,
+      icon: <UserOutlined />,
+      style: {
+        display:
+          global.user?.isAdmin || global.user?.isTeacher ? 'block' : 'none',
+      },
+      children: [
+        {
+          label: 'Edit Classes',
+          key: MenuKeys.CLASSES_EDIT_TEACHER,
+        },
+      ],
     },
     {
       label: 'Projects',
@@ -147,6 +164,10 @@ export function DefaultPageNav() {
       }
       case MenuKeys.ADMIN_SCHOOLS: {
         navigate('/profiles/edit-schools.html');
+        break;
+      }
+      case MenuKeys.CLASSES_EDIT_TEACHER: {
+        navigate('/classes/teacher-edit-classes.html');
         break;
       }
       case MenuKeys.DASHBOARD_ADMIN: {
