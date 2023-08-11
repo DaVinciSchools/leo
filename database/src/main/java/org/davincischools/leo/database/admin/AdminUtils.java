@@ -95,18 +95,18 @@ public class AdminUtils {
         "Relationship Building",
         "Build and maintain healthy relationships");
 
-    private final String name;
+    private final String category;
     private final String exampleName;
     private final String exampleDescription;
 
-    XqCategoriesByNickname(String name, String exampleName, String exampleDescription) {
-      this.name = name;
+    XqCategoriesByNickname(String category, String exampleName, String exampleDescription) {
+      this.category = category;
       this.exampleName = exampleName;
       this.exampleDescription = exampleDescription;
     }
 
-    public String getName() {
-      return name;
+    public String getCategory() {
+      return category;
     }
 
     public String getExampleName() {
@@ -484,9 +484,11 @@ public class AdminUtils {
   }
 
   private void importTeachers() throws IOException {
+    checkArgument(!createAdmins.isEmpty(), "--createAdmin required.");
     checkArgument(importTeachers != null, "--importTeachers required.");
 
     District district = createDistrict();
+    UserX userX = db.getUserXRepository().findByEmailAddress(createAdmins.get(0)).orElseThrow();
 
     List<Error> errors = Collections.synchronizedList(new ArrayList<>());
 
@@ -545,7 +547,13 @@ public class AdminUtils {
 
                           KnowledgeAndSkill eks =
                               db.getKnowledgeAndSkillRepository()
-                                  .upsert(eksName, Type.EKS, ks -> ks.setShortDescr(eksDescr));
+                                  .upsert(
+                                      eksName,
+                                      Type.EKS,
+                                      ks ->
+                                          ks.setShortDescr(eksDescr)
+                                              .setGlobal(true)
+                                              .setUserX(userX));
                           // db.getClassXKnowledgeAndSkillRepository().upsert(classX, eks);
                         }
                       }
@@ -671,9 +679,11 @@ public class AdminUtils {
   }
 
   private void importXqEks() throws IOException {
+    checkArgument(!createAdmins.isEmpty(), "--createAdmin required.");
     checkArgument(importXqEks != null, "--importXqEks required.");
 
     District district = createDistrict();
+    UserX userX = db.getUserXRepository().findByEmailAddress(createAdmins.get(0)).orElseThrow();
     School school = DaVinciSchoolsByNickname.DVRISE.createSchool(db, district);
 
     List<Error> errors = Collections.synchronizedList(new ArrayList<>());
@@ -698,9 +708,13 @@ public class AdminUtils {
         KnowledgeAndSkill knowledgeAndSkill =
             db.getKnowledgeAndSkillRepository()
                 .upsert(
-                    xqCategory.getName() + ": " + xqName,
+                    xqName,
                     Type.XQ_COMPETENCY,
-                    ks -> ks.setShortDescr(xqDescr));
+                    ks ->
+                        ks.setShortDescr(xqDescr)
+                            .setGlobal(true)
+                            .setCategory(xqCategory.getCategory())
+                            .setUserX(userX));
 
         // ClassX classX =
         // db.getClassXRepository().upsert(school, xqName, c -> c.setShortDescr(xqDescr));

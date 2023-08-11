@@ -177,16 +177,6 @@ public class TestData {
             .findByNickname(district.getId(), DaVinciSchoolsByNickname.DVS.name())
             .orElseThrow();
 
-    // Create XQ Competencies.
-    // These are currently not unique per call.
-    for (var xqCompetency : AdminUtils.XqCategoriesByNickname.values()) {
-      db.getKnowledgeAndSkillRepository()
-          .upsert(
-              xqCompetency.getName() + ": " + xqCompetency.getExampleName(),
-              Type.XQ_COMPETENCY,
-              k -> k.setShortDescr(xqCompetency.getExampleDescription()));
-    }
-
     // Create motivations.
     // These are currently not unique per call.
     beCentralMotivation =
@@ -319,6 +309,20 @@ public class TestData {
                                         .setProfession("")
                                         .setReasonForInterest(""))));
 
+    // Create XQ Competencies.
+    // These are currently not unique per call.
+    for (var xqCompetency : AdminUtils.XqCategoriesByNickname.values()) {
+      db.getKnowledgeAndSkillRepository()
+          .upsert(
+              xqCompetency.getExampleName(),
+              Type.XQ_COMPETENCY,
+              k ->
+                  k.setShortDescr(xqCompetency.getExampleDescription())
+                      .setGlobal(true)
+                      .setCategory(xqCompetency.getCategory())
+                      .setUserX(admin));
+    }
+
     // Create programming class.
     programmingClass =
         db.getClassXRepository()
@@ -331,13 +335,19 @@ public class TestData {
             .upsert(
                 "Sort Algorithms",
                 Type.EKS,
-                eks -> eks.setShortDescr("I understand different sort algorithms."));
+                eks ->
+                    eks.setShortDescr("I understand different sort algorithms.")
+                        .setGlobal(true)
+                        .setUserX(admin));
     programmingContainerEks =
         db.getKnowledgeAndSkillRepository()
             .upsert(
                 "Containers",
                 Type.EKS,
-                eks -> eks.setShortDescr("I understand Lists, Sets, and Maps."));
+                eks ->
+                    eks.setShortDescr("I understand Lists, Sets, and Maps.")
+                        .setGlobal(true)
+                        .setUserX(admin));
     db.getClassXKnowledgeAndSkillRepository().upsert(programmingClass, programmingSortEks);
     db.getClassXKnowledgeAndSkillRepository().upsert(programmingClass, programmingContainerEks);
 
@@ -364,7 +374,10 @@ public class TestData {
             .upsert(
                 "Periodic Table",
                 Type.EKS,
-                ks -> ks.setShortDescr("I know how to read a periodic table."));
+                ks ->
+                    ks.setShortDescr("I know how to read a periodic table.")
+                        .setGlobal(true)
+                        .setUserX(admin));
     chemistryValenceElectronsEks =
         db.getKnowledgeAndSkillRepository()
             .upsert(
@@ -372,7 +385,9 @@ public class TestData {
                 Type.EKS,
                 ks ->
                     ks.setShortDescr(
-                        "I can determine the number of valence electrons for each element."));
+                            "I can determine the number of valence electrons for each element.")
+                        .setGlobal(true)
+                        .setUserX(admin));
     db.getClassXKnowledgeAndSkillRepository().upsert(chemistryClass, chemistryPeriodicTableEks);
     db.getClassXKnowledgeAndSkillRepository().upsert(chemistryClass, chemistryValenceElectronsEks);
 

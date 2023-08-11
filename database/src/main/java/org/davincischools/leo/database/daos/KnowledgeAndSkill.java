@@ -2,10 +2,13 @@ package org.davincischools.leo.database.daos;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
@@ -21,9 +24,11 @@ public class KnowledgeAndSkill implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_TYPE_NAME = "type";
+  public static final String COLUMN_CATEGORY_NAME = "category";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = 7483967690312138211L;
+  public static final String COLUMN_GLOBAL_NAME = "global";
+  private static final long serialVersionUID = -4620261343456466499L;
 
   private Integer id;
 
@@ -35,9 +40,15 @@ public class KnowledgeAndSkill implements Serializable {
 
   private String type;
 
+  private String category;
+
   private String shortDescr;
 
   private String longDescrHtml;
+
+  private Boolean global;
+
+  private UserX userX;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -92,6 +103,16 @@ public class KnowledgeAndSkill implements Serializable {
     return this;
   }
 
+  @Column(name = COLUMN_CATEGORY_NAME)
+  public String getCategory() {
+    return category;
+  }
+
+  public KnowledgeAndSkill setCategory(String category) {
+    this.category = category;
+    return this;
+  }
+
   @Lob
   @Column(name = COLUMN_SHORTDESCR_NAME)
   public String getShortDescr() {
@@ -111,6 +132,27 @@ public class KnowledgeAndSkill implements Serializable {
 
   public KnowledgeAndSkill setLongDescrHtml(String longDescrHtml) {
     this.longDescrHtml = longDescrHtml;
+    return this;
+  }
+
+  @Column(name = COLUMN_GLOBAL_NAME)
+  public Boolean getGlobal() {
+    return global;
+  }
+
+  public KnowledgeAndSkill setGlobal(Boolean global) {
+    this.global = global;
+    return this;
+  }
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_x_id", nullable = false)
+  public UserX getUserX() {
+    return userX;
+  }
+
+  public KnowledgeAndSkill setUserX(UserX userX) {
+    this.userX = userX;
     return this;
   }
 }
