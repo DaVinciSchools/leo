@@ -30,7 +30,7 @@ export function LandingPageNav() {
         </div>
         <div className="header-section header-section-right">
           <Link to="/users/login">
-            <button className="light">Login</button>
+            <button className="light">Log In</button>
           </Link>
           <Link to="">
             <button className="primary">Sign up</button>

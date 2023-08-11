@@ -356,7 +356,7 @@ export function ProjectBuilder(props: {
                 <div className="project-builder-register-modal">
                   The email address you entered is already associated with an
                   account. Do you want to register with a different email
-                  address? Or, login using the existing account?
+                  address? Or, log in using the existing account?
                   <div className="project-builder-register-buttons">
                     <Button
                       variant="contained"

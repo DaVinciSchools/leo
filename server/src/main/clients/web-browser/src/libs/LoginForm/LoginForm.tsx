@@ -1,14 +1,14 @@
 import './LoginForm.scss';
 
 import {Button, TextField} from '@mui/material';
-import {FormEvent, useContext, useEffect, useRef, useState} from 'react';
-import {FormFields} from '../forms';
+import {FormEvent, useContext, useEffect, useState} from 'react';
 import {GlobalStateContext} from '../GlobalState';
-import {Link} from 'react-router-dom';
 import {Lock, Person} from '@mui/icons-material';
 import {login} from '../authentication';
+import {useFormFields} from '../forms';
 
-const AUTHENTICATION_FAILURE = 'Authentication failure. Please try again.';
+const AUTHENTICATION_FAILURE =
+  'Invalid username or password. Please try again.';
 
 export function LoginForm(props: {
   onLoggedIn: () => void;
@@ -16,27 +16,35 @@ export function LoginForm(props: {
 }) {
   const global = useContext(GlobalStateContext);
 
-  const queryParameters = new URLSearchParams(window.location.search);
-  const [failure, setFailure] = useState(
-    queryParameters.get('failed') != null ? AUTHENTICATION_FAILURE : ''
-  );
+  const [failure, setFailure] = useState(false);
 
-  const [showPasswords, setShowPasswords] = useState(false);
-
-  const formRef = useRef<HTMLFormElement>(null);
-  const formFields = useState(new FormFields(formRef))[0];
-
-  const emailAddressRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLDivElement>(null);
-
-  const [emailAddressError, setEmailAddressError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const formFields = useFormFields();
+  const username = formFields.useStringFormField('username', {
+    isEmail: true,
+    startIcon: <Person />,
+    maxLength: 254,
+  });
+  const password = formFields.useStringFormField('password', {
+    isPassword: {
+      skipPasswordCheck: true,
+    },
+    startIcon: <Lock />,
+  });
 
   useEffect(() => {
     if (failure) {
+      username.setError(AUTHENTICATION_FAILURE);
+      password.setError(AUTHENTICATION_FAILURE);
       setTimeout(() => {
-        setFailure('');
+        setFailure(false);
       }, 5000);
+    } else {
+      if (username.error === AUTHENTICATION_FAILURE) {
+        username.setError('');
+      }
+      if (password.error === AUTHENTICATION_FAILURE) {
+        password.setError('');
+      }
     }
   }, [failure]);
 
@@ -44,74 +52,47 @@ export function LoginForm(props: {
     // Prevent the form from reloading the page.
     e.preventDefault();
 
-    formFields.resetErrors();
-    if (formFields.checkAndSet(true)) {
+    if (!formFields.verifyOk(true)) {
       return;
     }
 
     login(
       global,
-      String(formFields.get('username') ?? ''),
-      String(formFields.get('password') ?? ''),
+      username.getTypedValue() ?? '',
+      password.getTypedValue() ?? '',
       props.onLoggedIn,
-      () => setFailure(AUTHENTICATION_FAILURE),
+      () => setFailure(true),
       global.setError
     );
   }
 
   return (
     <>
-      <form
-        ref={formRef}
-        onSubmit={onFormSubmit}
-        className="login-form"
-        noValidate
-      >
+      <form onSubmit={onFormSubmit} className="login-form" noValidate>
         <div className="login-form-logo">
           <div />
-          <Link to="/">
-            <img src="/images/logo-orange-on-white.svg" />
-          </Link>
+          <img src="/images/logo-orange-on-white.svg" />
         </div>
         <div className="login-form-fields">
           <TextField
             required
             autoComplete="email"
             label="Email Address"
-            {...formFields.registerProps(
-              'username',
-              emailAddressRef,
-              emailAddressError || failure,
-              setEmailAddressError,
-              {
-                isEmail: true,
-                startIcon: <Person />,
-                maxLength: 254,
-              }
-            )}
+            {...username.params()}
           />
           <TextField
             required
             autoComplete="current-password"
             label="Password"
-            {...formFields.registerProps(
-              'password',
-              passwordRef,
-              passwordError || failure,
-              setPasswordError,
-              {
-                isPassword: {
-                  showPasswords,
-                  setShowPasswords,
-                  skipPasswordCheck: true,
-                },
-                startIcon: <Lock />,
-              }
-            )}
+            {...password.params()}
           />
           <div className="login-form-buttons">
-            <Button variant="contained" type="submit">
-              Login and Continue
+            <Button
+              variant="contained"
+              type="submit"
+              disabled={!formFields.isTentativelyOkToSubmit()}
+            >
+              Log In and Continue
             </Button>
             <Button variant="contained" onClick={props.onCancel}>
               Cancel

@@ -18,7 +18,7 @@ import {pl_types} from '../../generated/protobuf-js';
 import IOption = pl_types.ProjectInputCategory.IOption;
 import ValueType = pl_types.ProjectInputCategory.ValueType;
 import {OPTION_SORTER, TEXT_SORTER} from '../sorters';
-import {getInputField, getInputValue} from '../forms';
+import {getInputField} from '../forms';
 
 const MODAL_STYLE: Partial<CSSProperties> = {
   position: 'absolute',
@@ -90,9 +90,11 @@ function FreeTextInput(props: {
 
   function onSave() {
     setModalOpen(false);
-    const unenteredValue = getInputValue(getInputField(inputRef.current));
-    if (unenteredValue != null) {
-      selectedValues.push(String(unenteredValue));
+    const unenteredValue = getInputField(
+      getInputField(inputRef.current)
+    )?.value?.trim();
+    if (unenteredValue != null && unenteredValue !== '') {
+      selectedValues.push(unenteredValue);
     }
     props.onValuesUpdated([
       ...new Set(selectedValues.map(e => e.trim()).filter(e => e.length > 0)),

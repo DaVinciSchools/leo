@@ -2,9 +2,8 @@ import './RegistrationForm.scss';
 
 import {Autocomplete, Button, Grid, TextField} from '@mui/material';
 import {AccountCircle, Comment, Email, Lock} from '@mui/icons-material';
-import {FormEvent, useRef, useState} from 'react';
-import {Link} from 'react-router-dom';
-import {convertFormValuesToObject, FormFields} from '../forms';
+import {FormEvent} from 'react';
+import {useFormFields} from '../forms';
 import {user_management} from '../../generated/protobuf-js';
 
 import IRegisterUserRequest = user_management.IRegisterUserRequest;
@@ -13,65 +12,73 @@ export function RegistrationForm(props: {
   onRegisterUser: (registerUserRequest: IRegisterUserRequest) => void;
   onCancel: () => void;
 }) {
-  const formRef = useRef<HTMLFormElement>(null);
-  const formFields = useState(new FormFields(formRef))[0];
-  const [showPasswords, setShowPasswords] = useState(false);
-
-  const firstNameRef = useRef<HTMLInputElement>(null);
-  const lastNameRef = useRef<HTMLDivElement>(null);
-  const emailAddressRef = useRef<HTMLDivElement>(null);
-  const passwordRef = useRef<HTMLDivElement>(null);
-  const verifyPasswordRef = useRef<HTMLDivElement>(null);
-  const professionRef = useRef<HTMLDivElement>(null);
-  const reasonForInterestRef = useRef<HTMLDivElement>(null);
-  const districtNameRef = useRef<HTMLDivElement>(null);
-  const schoolNameRef = useRef<HTMLDivElement>(null);
-  const addressLine1Ref = useRef<HTMLDivElement>(null);
-  const addressLine2Ref = useRef<HTMLDivElement>(null);
-  const cityRef = useRef<HTMLDivElement>(null);
-  const stateRef = useRef<HTMLDivElement>(null);
-  const zipCodeRef = useRef<HTMLDivElement>(null);
-  const numTeachersRef = useRef<HTMLDivElement>(null);
-  const numStudentsRef = useRef<HTMLDivElement>(null);
-
-  const [firstNameError, setFirstNameError] = useState('');
-  const [lastNameError, setLastNameError] = useState('');
-  const [emailAddressError, setEmailAddressError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [verifyPasswordError, setVerifyPasswordError] = useState('');
-  const [professionError, setProfessionError] = useState('');
-  const [reasonForInterestError, setReasonForInterestError] = useState('');
-  const [districtNameError, setDistrictNameError] = useState('');
-  const [schoolNameError, setSchoolNameError] = useState('');
-  const [addressLine1Error, setAddressLine1Error] = useState('');
-  const [addressLine2Error, setAddressLine2Error] = useState('');
-  const [cityError, setCityError] = useState('');
-  const [stateError, setStateError] = useState('');
-  const [zipCodeError, setZipCodeError] = useState('');
-  const [numTeachersError, setNumTeachersError] = useState('');
-  const [numStudentsError, setNumStudentsError] = useState('');
+  const formFields = useFormFields();
+  const firstName = formFields.useStringFormField('firstName', {
+    startIcon: <AccountCircle />,
+    maxLength: 255,
+  });
+  const lastName = formFields.useStringFormField('lastName', {
+    startIcon: <AccountCircle />,
+    maxLength: 255,
+  });
+  const emailAddress = formFields.useStringFormField('emailAddress', {
+    startIcon: <Email />,
+    maxLength: 254,
+    isEmail: true,
+  });
+  const password = formFields.useStringFormField('password', {
+    isPassword: {},
+    startIcon: <Lock />,
+  });
+  const verifyPassword = formFields.useStringFormField('verifyPassword', {
+    isPassword: {},
+    startIcon: <Lock />,
+  });
+  const profession = formFields.useStringFormField('profession', {
+    maxLength: 255,
+  });
+  const reasonForInterest = formFields.useStringFormField('reasonForInterest', {
+    startIcon: <Comment />,
+    maxLength: 8192,
+  });
+  const districtName = formFields.useStringFormField('districtName', {
+    maxLength: 255,
+  });
+  const schoolName = formFields.useStringFormField('schoolName', {
+    maxLength: 255,
+  });
+  const addressLine1 = formFields.useStringFormField('addressLine1', {
+    maxLength: 255,
+  });
+  const addressLine2 = formFields.useStringFormField('addressLine2', {
+    maxLength: 255,
+  });
+  const city = formFields.useStringFormField('city', {maxLength: 20});
+  const state = formFields.useStringFormField('state', {maxLength: 2});
+  const zipCode = formFields.useStringFormField('zipCode', {isZipCode: true});
+  const numTeachers = formFields.useNumberFormField('numTeachers', {
+    isInteger: {min: 0},
+  });
+  const numStudents = formFields.useNumberFormField('numStudents', {
+    isInteger: {min: 0},
+  });
 
   function onFormSubmit(e: FormEvent<HTMLFormElement>) {
     // Prevent the form from reloading the page.
     e.preventDefault();
 
-    formFields.resetErrors();
-    if (formFields.checkAndSet(true)) {
+    if (!formFields.verifyOk(true)) {
       return;
     }
 
-    props.onRegisterUser(
-      convertFormValuesToObject(formRef.current) as IRegisterUserRequest
-    );
+    props.onRegisterUser(formFields.getValuesObject() as IRegisterUserRequest);
   }
 
   return (
-    <form ref={formRef} onSubmit={onFormSubmit} noValidate>
+    <form onSubmit={onFormSubmit} noValidate>
       <div className="registration-form-logo">
         <div />
-        <Link to="/">
-          <img src="/images/logo-orange-on-white.svg" />
-        </Link>
+        <img src="/images/logo-orange-on-white.svg" />
       </div>
       <Grid container spacing={2}>
         <Grid item xs={6}>
@@ -80,16 +87,7 @@ export function RegistrationForm(props: {
             autoFocus
             autoComplete="given-name"
             label="First Name"
-            {...formFields.registerProps(
-              'firstName',
-              firstNameRef,
-              firstNameError,
-              setFirstNameError,
-              {
-                startIcon: <AccountCircle />,
-                maxLength: 255,
-              }
-            )}
+            {...firstName.params()}
           />
         </Grid>
         <Grid item xs={6}>
@@ -97,16 +95,7 @@ export function RegistrationForm(props: {
             required
             autoComplete="family-name"
             label="Last Name"
-            {...formFields.registerProps(
-              'lastName',
-              lastNameRef,
-              lastNameError,
-              setLastNameError,
-              {
-                startIcon: <AccountCircle />,
-                maxLength: 255,
-              }
-            )}
+            {...lastName.params()}
           />
         </Grid>
         <Grid item xs={12}>
@@ -114,17 +103,7 @@ export function RegistrationForm(props: {
             required
             autoComplete="email"
             label="Email Address"
-            {...formFields.registerProps(
-              'emailAddress',
-              emailAddressRef,
-              emailAddressError,
-              setEmailAddressError,
-              {
-                startIcon: <Email />,
-                maxLength: 254,
-                isEmail: true,
-              }
-            )}
+            {...emailAddress.params()}
           />
         </Grid>
         <Grid item xs={6}>
@@ -132,19 +111,7 @@ export function RegistrationForm(props: {
             required
             autoComplete="current-password"
             label="Password"
-            {...formFields.registerProps(
-              'password',
-              passwordRef,
-              passwordError,
-              setPasswordError,
-              {
-                isPassword: {
-                  showPasswords,
-                  setShowPasswords,
-                },
-                startIcon: <Lock />,
-              }
-            )}
+            {...password.params()}
           />
         </Grid>
         <Grid item xs={6}>
@@ -152,19 +119,7 @@ export function RegistrationForm(props: {
             required
             autoComplete="new-password"
             label="Verify Password"
-            {...formFields.registerProps(
-              'verifyPassword',
-              verifyPasswordRef,
-              verifyPasswordError,
-              setVerifyPasswordError,
-              {
-                isPassword: {
-                  showPasswords,
-                  setShowPasswords,
-                },
-                startIcon: <Lock />,
-              }
-            )}
+            {...verifyPassword.params()}
           />
         </Grid>
         <Grid item xs={12}>
@@ -182,16 +137,7 @@ export function RegistrationForm(props: {
                 required
                 autoComplete="organization-title"
                 label="Profession"
-                {...formFields.registerProps(
-                  'profession',
-                  professionRef,
-                  professionError,
-                  setProfessionError,
-                  {
-                    maxLength: 255,
-                    params,
-                  }
-                )}
+                {...profession.params(params)}
               />
             )}
           />
@@ -202,127 +148,37 @@ export function RegistrationForm(props: {
             multiline
             rows={3}
             label="Let us know why you're interested."
-            {...formFields.registerProps(
-              'reasonForInterest',
-              reasonForInterestRef,
-              reasonForInterestError,
-              setReasonForInterestError,
-              {
-                startIcon: <Comment />,
-                maxLength: 8192,
-              }
-            )}
+            {...reasonForInterest.params()}
           />
         </Grid>
         <Grid item xs={12} />
         <Grid item xs={12}>
-          <TextField
-            label="District Name"
-            {...formFields.registerProps(
-              'districtName',
-              districtNameRef,
-              districtNameError,
-              setDistrictNameError,
-              {maxLength: 255}
-            )}
-          />
+          <TextField label="District Name" {...districtName.params()} />
         </Grid>
         <Grid item xs={12}>
-          <TextField
-            label="School Name"
-            {...formFields.registerProps(
-              'schoolName',
-              schoolNameRef,
-              schoolNameError,
-              setSchoolNameError,
-              {maxLength: 255}
-            )}
-          />
+          <TextField label="School Name" {...schoolName.params()} />
         </Grid>
         <Grid item xs={12}>
-          <TextField
-            label="Address Line 1"
-            {...formFields.registerProps(
-              'addressLine_1',
-              addressLine1Ref,
-              addressLine1Error,
-              setAddressLine1Error,
-              {maxLength: 255}
-            )}
-          />
+          <TextField label="Address Line 1" {...addressLine1.params()} />
         </Grid>
         <Grid item xs={12}>
-          <TextField
-            label="Address Line 2"
-            {...formFields.registerProps(
-              'addressLine_2',
-              addressLine2Ref,
-              addressLine2Error,
-              setAddressLine2Error,
-              {maxLength: 255}
-            )}
-          />
+          <TextField label="Address Line 2" {...addressLine2.params()} />
         </Grid>
         <Grid item xs={4}>
-          <TextField
-            label="City"
-            {...formFields.registerProps(
-              'city',
-              cityRef,
-              cityError,
-              setCityError,
-              {maxLength: 20}
-            )}
-          />
+          <TextField label="City" {...city.params()} />
         </Grid>
         <Grid item xs={4}>
-          <TextField
-            label="State"
-            {...formFields.registerProps(
-              'state',
-              stateRef,
-              stateError,
-              setStateError,
-              {maxLength: 2}
-            )}
-          />
+          <TextField label="State" {...state.params()} />
         </Grid>
         <Grid item xs={4}>
-          <TextField
-            label="Zip Code"
-            {...formFields.registerProps(
-              'zipCode',
-              zipCodeRef,
-              zipCodeError,
-              setZipCodeError,
-              {isZipCode: true}
-            )}
-          />
+          <TextField label="Zip Code" {...zipCode.params()} />
         </Grid>
         <Grid item xs={12} />
         <Grid item xs={6}>
-          <TextField
-            label="Number of Educators"
-            {...formFields.registerProps(
-              'numTeachers',
-              numTeachersRef,
-              numTeachersError,
-              setNumTeachersError,
-              {isInteger: {min: 0}}
-            )}
-          />
+          <TextField label="Number of Educators" {...numTeachers.params()} />
         </Grid>
         <Grid item xs={6}>
-          <TextField
-            label="Number of Students"
-            {...formFields.registerProps(
-              'numStudents',
-              numStudentsRef,
-              numStudentsError,
-              setNumStudentsError,
-              {isInteger: {min: 0}}
-            )}
-          />
+          <TextField label="Number of Students" {...numStudents.params()} />
         </Grid>
         <Grid item xs={12} />
         <Grid item xs={12} className="registration-form-buttons">
@@ -330,6 +186,7 @@ export function RegistrationForm(props: {
             variant="contained"
             className="project-builder-button"
             type="submit"
+            disabled={!formFields.isTentativelyOkToSubmit()}
           >
             Register and Continue
           </Button>

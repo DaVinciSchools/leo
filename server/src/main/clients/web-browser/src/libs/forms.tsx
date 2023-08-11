@@ -1,25 +1,25 @@
 import {AutocompleteRenderInputParams, InputAdornment} from '@mui/material';
 import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
-import {ReactElement, RefObject} from 'react';
+import {ReactElement, RefObject, useRef, useState} from 'react';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
 
 const MAX_ZIP_CODE_LENGTH = 10;
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 50;
-export const PASSWORD_PATTERN = RegExp(
+
+const PASSWORD_PATTERN = RegExp(
   `^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{${MIN_PASSWORD_LENGTH},${MAX_PASSWORD_LENGTH}}$`
 );
-export const PASSWORD_ERROR_MESSAGE =
+const NUMBER_PATTERN = RegExp('^-?[0-9.]+([eE][+-][0-9]+)?');
+const INTEGER_PATTERN = RegExp('^-?[0-9]+');
+const EMAIL_PATTERN = RegExp('^[^@]+@[^@]+\\.[^@]{2,}$');
+const ZIP_CODE_PATTERN = RegExp('^[0-9]{5}(-[0-9]{4})?$');
+
+const PASSWORD_ERROR_MESSAGE =
   'Passwords must have 8+ characters, a number, and a lower and upper case letter.';
-export const NUMBER_PATTERN = RegExp('^-?[0-9.]+([eE][+-][0-9]+)?');
-export const INTEGER_PATTERN = RegExp('^-?[0-9]+');
-export const EMAIL_PATTERN = RegExp('^[^@]+@[^@]+\\.[^@]{3,}$');
-export const ZIP_CODE_PATTERN = RegExp('^[0-9]{5}(-[0-9]{4})?$');
 
 export interface FieldMetadata {
   isPassword?: {
-    showPasswords: boolean;
-    setShowPasswords: (showPasswords: boolean) => void;
     skipPasswordCheck?: boolean;
   };
   isInteger?: {
@@ -30,34 +30,227 @@ export interface FieldMetadata {
   isZipCode?: boolean;
   startIcon?: ReactElement;
   maxLength?: number;
-  params?: AutocompleteRenderInputParams;
 }
 
-interface FormField {
-  name: string;
-  fieldRef: RefObject<HTMLDivElement>;
-  setError: (message: string) => void;
-  error: string;
-  fieldMetadata?: FieldMetadata;
-  checkAndSet: (finalCheck: boolean) => boolean;
+export interface FormField<T extends number | string> {
+  readonly name: string;
+  readonly fieldRef: RefObject<HTMLDivElement>;
+  readonly fieldMetadata?: FieldMetadata;
+
+  readonly stringValue: string;
+  readonly setStringValue: (value: string) => void;
+
+  readonly error: string;
+  readonly setError: (message: string) => void;
+
+  readonly getTypedValue: () => T | undefined;
+
+  readonly params: (
+    params?: AutocompleteRenderInputParams
+  ) => OutlinedTextFieldProps;
 }
 
-export class FormFields {
-  readonly #fields: Map<string, FormField> = new Map();
-  readonly #formRef: RefObject<HTMLFormElement>;
+export interface FormFields {
+  readonly useNumberFormField: (
+    name: string,
+    fieldMetadata?: FieldMetadata
+  ) => FormField<number>;
 
-  constructor(formRef: RefObject<HTMLFormElement>) {
-    this.#formRef = formRef;
+  readonly useStringFormField: (
+    name: string,
+    fieldMetadata?: FieldMetadata
+  ) => FormField<string>;
+
+  readonly setValuesObject: (values: {} | null | undefined) => void;
+
+  readonly getValuesObject: () => {};
+  readonly getValuesURLSearchParams: () => URLSearchParams;
+
+  readonly verifyOk: (finalCheck: boolean) => boolean;
+  readonly isTentativelyOkToSubmit: () => boolean;
+}
+
+export function useFormFields() {
+  return FormFieldsImpl.useFormFields();
+}
+
+class FormFieldsImpl implements FormFields {
+  //eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly #fields: Map<string, FormField<any>> = new Map();
+  #showPasswords = false;
+  #setShowPasswords: (showPasswords: boolean) => void = () => {
+    throw new Error(
+      'Use FormFields.useFormFields() to create a FormFields object.'
+    );
+  };
+
+  static useFormFields() {
+    const formFields = useState(new FormFieldsImpl())[0];
+    [formFields.#showPasswords, formFields.#setShowPasswords] = useState(false);
+    return formFields;
   }
 
-  resetErrors() {
+  useStringFormField(
+    name: string,
+    fieldMetadata?: FieldMetadata
+  ): FormField<string> {
+    if (fieldMetadata?.isInteger) {
+      throw new Error(
+        'useStringFormField requires FieldMetadata.isInteger to be unset.'
+      );
+    }
+    return this.#useFormField<string>(name, fieldMetadata);
+  }
+
+  useNumberFormField(
+    name: string,
+    fieldMetadata?: FieldMetadata
+  ): FormField<number> {
+    if (!fieldMetadata?.isInteger) {
+      throw new Error(
+        'useNumberFormField requires FieldMetadata.isInteger to be set.'
+      );
+    }
+    return this.#useFormField<number>(name, fieldMetadata);
+  }
+
+  #useFormField<T extends number | string>(
+    name: string,
+    fieldMetadata?: FieldMetadata
+  ): FormField<T> {
+    const [stringValue, setStringValue] = useState('');
+    const [error, setError] = useState('');
+    const fieldRef = useRef<HTMLDivElement>(null);
+
+    const formField: FormField<T> = {
+      name,
+      stringValue,
+      setStringValue,
+      fieldRef,
+      error,
+      setError,
+      fieldMetadata,
+
+      params: (params?: AutocompleteRenderInputParams) => {
+        const checkErrorFn = (finalCheck: boolean) =>
+          checkFieldForErrorsAndSet(
+            setError,
+            getInputField(fieldRef.current),
+            finalCheck,
+            fieldMetadata
+          );
+
+        return {
+          ...(params ?? {}),
+          value: stringValue,
+          type:
+            fieldMetadata?.isPassword && !this.#showPasswords
+              ? 'password'
+              : fieldMetadata?.isEmail
+              ? 'email'
+              : fieldMetadata?.isInteger != null
+              ? 'number'
+              : 'text',
+          variant: 'outlined',
+          fullWidth: true,
+          size: 'small',
+          name: name,
+          ref: fieldRef,
+          helperText: error,
+          error: !!error,
+          onChange: e => {
+            setError('');
+            setStringValue(e.target.value);
+            checkErrorFn(true);
+          },
+          onBlur: () => {
+            setError('');
+            checkErrorFn(true);
+          },
+          InputProps: {
+            ...(params?.InputProps ?? {}),
+            startAdornment: fieldMetadata?.startIcon ? (
+              <InputAdornment position="start" style={{cursor: 'not-allowed'}}>
+                {fieldMetadata.startIcon}
+              </InputAdornment>
+            ) : (
+              params?.InputProps?.startAdornment
+            ),
+            endAdornment: fieldMetadata?.isPassword ? (
+              this.#showPasswords ? (
+                <Visibility
+                  onClick={() => this.#setShowPasswords(false)}
+                  style={{cursor: 'pointer'}}
+                />
+              ) : (
+                <VisibilityOff
+                  onClick={() => this.#setShowPasswords(true)}
+                  style={{cursor: 'pointer'}}
+                />
+              )
+            ) : (
+              params?.InputProps?.endAdornment
+            ),
+          },
+          inputProps: {
+            ...(params?.inputProps ?? {}),
+            minLength:
+              fieldMetadata?.isPassword &&
+              fieldMetadata?.isPassword?.skipPasswordCheck !== true
+                ? MIN_PASSWORD_LENGTH
+                : undefined,
+            maxLength:
+              fieldMetadata?.maxLength ??
+              (fieldMetadata?.isZipCode
+                ? MAX_ZIP_CODE_LENGTH
+                : fieldMetadata?.isPassword &&
+                  fieldMetadata?.isPassword?.skipPasswordCheck !== true
+                ? MAX_PASSWORD_LENGTH
+                : undefined),
+            min: fieldMetadata?.isInteger?.min,
+            max: fieldMetadata?.isInteger?.max,
+          },
+        };
+      },
+
+      getTypedValue: () => {
+        const input = getInputField(fieldRef.current);
+        if (input == null || stringValue == null || stringValue.length === 0) {
+          // We don't have a value to process.
+          return;
+        }
+
+        if (['email', 'password', 'text', 'textarea'].includes(input.type)) {
+          const trimmedValue = stringValue.trim();
+          return trimmedValue.length === 0 ? undefined : (trimmedValue as T);
+        }
+
+        if (input.type === 'number') {
+          if (NUMBER_PATTERN.exec(input.value)) {
+            return (
+              INTEGER_PATTERN.exec(input.value)
+                ? parseInt(input.value)
+                : parseFloat(input.value)
+            ) as T;
+          }
+          return;
+        }
+
+        throw new Error(`Input type '${input.type}' is not recognized.`);
+      },
+    };
+
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.#fields.set(name, formField as FormField<any>);
+
+    return formField;
+  }
+
+  verifyOk(finalCheck: boolean) {
     this.#fields.forEach(f => f.setError(''));
-  }
+    let errorField;
 
-  checkAndSet(finalCheck: boolean) {
-    let error = false;
-
-    const passwordFields: FormField[] = [];
+    const passwordFields: FormField<string>[] = [];
     const passwordInputs: (
       | HTMLInputElement
       | HTMLTextAreaElement
@@ -67,7 +260,7 @@ export class FormFields {
     //eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [name, field] of this.#fields) {
       if (
-        field.fieldMetadata?.isPassword &&
+        field.fieldMetadata?.isPassword != null &&
         field?.fieldMetadata?.isPassword?.skipPasswordCheck !== true
       ) {
         passwordFields.push(field);
@@ -83,30 +276,34 @@ export class FormFields {
       passwordsSetNonBlank.size > 1
     ) {
       passwordFields.forEach(f => f.setError('Passwords do not match.'));
-      error = true;
+      errorField = passwordFields[0];
     }
 
     this.#fields.forEach(f => {
-      if (f.checkAndSet(finalCheck)) {
-        error = true;
+      if (
+        checkFieldForErrorsAndSet(
+          f.setError,
+          getInputField(f.fieldRef.current),
+          finalCheck,
+          f.fieldMetadata
+        )
+      ) {
+        errorField = f;
       }
     });
 
-    return error;
-  }
-
-  showPasswords(showPasswords: boolean) {
-    this.#fields.forEach(f => {
-      if (f.fieldMetadata?.isPassword) {
-        const input = getInputField(f.fieldRef.current);
-        if (input != null && input instanceof HTMLInputElement) {
-          input.type = showPasswords ? 'text' : 'password';
-        }
+    if (errorField) {
+      const input = getInputField(errorField.fieldRef.current);
+      if (input != null) {
+        input.scrollIntoView(true);
+        input.focus();
       }
-    });
+    }
+
+    return !errorField;
   }
 
-  checkPasswords(finalCheck: boolean) {
+  #checkPasswords(finalCheck: boolean) {
     let error = false;
 
     this.#fields.forEach(f => {
@@ -114,7 +311,14 @@ export class FormFields {
         f.fieldMetadata?.isPassword &&
         f.fieldMetadata?.isPassword?.skipPasswordCheck !== true
       ) {
-        if (f.checkAndSet(finalCheck)) {
+        if (
+          checkFieldForErrorsAndSet(
+            f.setError,
+            getInputField(f.fieldRef.current),
+            finalCheck,
+            f.fieldMetadata
+          )
+        ) {
           error = true;
         }
       }
@@ -123,117 +327,52 @@ export class FormFields {
     return error;
   }
 
-  registerProps(
-    name: string,
-    fieldRef: React.RefObject<HTMLDivElement>,
-    error: string,
-    setError: (message: string) => void,
-    fieldMetadata?: FieldMetadata
-  ): OutlinedTextFieldProps {
-    const checkErrorFn = (finalCheck: boolean) =>
-      checkFieldForErrorsAndSet(
-        setError,
-        getInputField(fieldRef.current),
-        finalCheck,
-        fieldMetadata
+  setValuesObject(values: {} | null | undefined) {
+    this.#fields.forEach(f => f.setError(''));
+    const valuesMap = new Map(Object.entries(values ?? {}));
+
+    this.#fields.forEach(f => {
+      f.setStringValue(
+        valuesMap.get(f.name) == null ? '' : String(valuesMap.get(f.name))
       );
-
-    const checkAndSet = (finalCheck: boolean) => {
-      if (checkErrorFn(finalCheck)) {
-        const input = getInputField(fieldRef.current);
-        if (input != null) {
-          input.scrollIntoView(true);
-          input.focus();
-        }
-        return true;
-      }
-      return false;
-    };
-
-    this.#fields.set(name, {
-      name,
-      fieldRef,
-      setError,
-      error,
-      fieldMetadata,
-      checkAndSet,
     });
-
-    return {
-      ...(fieldMetadata?.params ?? {}),
-      type:
-        fieldMetadata?.isPassword?.showPasswords === false
-          ? 'password'
-          : fieldMetadata?.isEmail
-          ? 'email'
-          : fieldMetadata?.isInteger != null
-          ? 'number'
-          : 'text',
-      variant: 'outlined',
-      fullWidth: true,
-      size: 'small',
-      name: name,
-      ref: fieldRef,
-      helperText: error,
-      error: !!error,
-      onChange: () => {
-        setError('');
-        checkErrorFn(true);
-      },
-      onBlur: () => {
-        setError('');
-        checkErrorFn(true);
-      },
-      InputProps: {
-        ...fieldMetadata?.params?.InputProps,
-        startAdornment: fieldMetadata?.startIcon ? (
-          <InputAdornment position="start" style={{cursor: 'not-allowed'}}>
-            {fieldMetadata.startIcon}
-          </InputAdornment>
-        ) : undefined,
-        endAdornment: fieldMetadata?.isPassword ? (
-          fieldMetadata.isPassword?.showPasswords ? (
-            <Visibility
-              onClick={() => fieldMetadata?.isPassword?.setShowPasswords(false)}
-              style={{cursor: 'pointer'}}
-            />
-          ) : (
-            <VisibilityOff
-              onClick={() => fieldMetadata?.isPassword?.setShowPasswords(true)}
-              style={{cursor: 'pointer'}}
-            />
-          )
-        ) : undefined,
-      },
-      inputProps: {
-        ...fieldMetadata?.params?.inputProps,
-        minLength:
-          fieldMetadata?.isPassword &&
-          fieldMetadata?.isPassword?.skipPasswordCheck !== true
-            ? MIN_PASSWORD_LENGTH
-            : undefined,
-        maxLength:
-          fieldMetadata?.maxLength ??
-          (fieldMetadata?.isZipCode
-            ? MAX_ZIP_CODE_LENGTH
-            : fieldMetadata?.isPassword &&
-              fieldMetadata?.isPassword?.skipPasswordCheck !== true
-            ? MAX_PASSWORD_LENGTH
-            : undefined),
-        min: fieldMetadata?.isInteger?.min,
-        max: fieldMetadata?.isInteger?.max,
-      },
-    };
   }
 
-  get(name: string): string | number | undefined {
-    const field = this.#fields.get(name);
-    if (!field) {
-      // We don't have a field to search under yet.
-      return undefined;
-    }
+  getValuesObject() {
+    const values: {[key: string]: string | number} = {};
 
-    return getInputValue(getInputField(field.fieldRef.current));
+    this.#fields.forEach(f => {
+      const value = f.getTypedValue();
+      if (value != null) {
+        values[f.name] = value;
+      }
+    });
+
+    return values;
+  }
+
+  getValuesURLSearchParams() {
+    const params = new URLSearchParams();
+
+    this.#fields.forEach(f => {
+      if (f.stringValue == null || f.stringValue.trim() === '') {
+        return;
+      }
+      params.append(f.name, f.stringValue);
+    });
+
+    return params;
+  }
+
+  isTentativelyOkToSubmit() {
+    let okToSubmit = true;
+    this.#fields.forEach(f => {
+      okToSubmit &&= !f.error;
+      if (okToSubmit && getInputField(f.fieldRef.current)?.required) {
+        okToSubmit &&= !!f.stringValue;
+      }
+    });
+    return okToSubmit;
   }
 }
 
@@ -267,33 +406,6 @@ export function getInputField(
   }
 
   return input;
-}
-
-export function getAllInputFields(
-  form: HTMLFormElement | undefined
-): (HTMLInputElement | HTMLTextAreaElement)[] {
-  if (form == null) {
-    // We don't have a form to search under yet.
-    return [];
-  }
-
-  const inputFields: (HTMLInputElement | HTMLTextAreaElement)[] = [];
-
-  const inputs = form.getElementsByTagName('INPUT');
-  for (let i = 0; i < inputs.length; ++i) {
-    inputFields.push(inputs.item(i) as HTMLInputElement);
-  }
-  const textAreas = form.getElementsByTagName('TEXTAREA');
-  for (let i = 0; i < textAreas.length; ++i) {
-    inputFields.push(textAreas.item(i) as HTMLTextAreaElement);
-  }
-
-  return inputFields.filter(
-    i =>
-      // MUI will create multiple input elements for an TextField. We only
-      // want the visible one.
-      getComputedStyle(i).visibility !== 'hidden'
-  );
 }
 
 export function checkFieldForErrorsAndSet(
@@ -387,69 +499,4 @@ export function checkFieldForErrors(
     return 'This field must be 5 digits optionally followed by a dash and 4 digits.';
   }
   return;
-}
-
-export function getInputValue(
-  input: HTMLInputElement | HTMLTextAreaElement | undefined
-) {
-  if (input == null) {
-    // We don't have a field to extract a value from yet.
-    return;
-  }
-
-  if (['email', 'password', 'text', 'textarea'].includes(input.type)) {
-    if (input.value.length === 0) {
-      return;
-    }
-    return input.value.trim();
-  }
-
-  if (input.type === 'number') {
-    if (
-      input.value.length === 0 ||
-      ('valueAsNumber' in input && isNaN(input.valueAsNumber))
-    ) {
-      return;
-    }
-    if (NUMBER_PATTERN.exec(input.value)) {
-      return INTEGER_PATTERN.exec(input.value)
-        ? parseInt(input.value)
-        : parseFloat(input.value);
-    }
-    throw new Error(`Input value '${input.value}' is not a number.`);
-  }
-
-  throw new Error(`Input type '${input.type}' is not recognized.`);
-}
-
-export function convertFormValuesToObject(
-  form: HTMLFormElement | null | undefined
-) {
-  if (!form) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    getAllInputFields(form)
-      .map(input => [input.name, getInputValue(input)])
-      //eslint-disable-next-line @typescript-eslint/no-unused-vars
-      .filter(([k, v]) => v !== undefined)
-  );
-}
-
-export function convertFormValuesToURLSearchParams(
-  form: HTMLFormElement | null | undefined
-) {
-  const params = new URLSearchParams();
-
-  if (!form) {
-    return params;
-  }
-
-  getAllInputFields(form)
-    .map(input => [input.name, getInputValue(input)])
-    //eslint-disable-next-line @typescript-eslint/no-unused-vars
-    .filter(([k, v]) => v !== undefined)
-    .forEach(([k, v]) => params.append(String(k), String(v)));
-  return params;
 }
