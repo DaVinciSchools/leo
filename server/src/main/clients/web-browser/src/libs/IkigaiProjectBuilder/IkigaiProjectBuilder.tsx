@@ -19,6 +19,7 @@ import IOption = pl_types.ProjectInputCategory.IOption;
 import ValueType = pl_types.ProjectInputCategory.ValueType;
 import {OPTION_SORTER, TEXT_SORTER} from '../sorters';
 import {getInputField} from '../forms';
+import {addClassName} from '../tags';
 
 const MODAL_STYLE: Partial<CSSProperties> = {
   position: 'absolute',
@@ -39,19 +40,6 @@ interface CategoryElement {
   hue: number;
   stringValues: string[];
   optionValues: IOption[];
-}
-
-function addClassName(
-  tagProps: {className?: string},
-  additionalClassNames: string
-) {
-  const newTagProps = {...tagProps};
-  newTagProps.className = (
-    additionalClassNames +
-    ' ' +
-    (newTagProps.className ?? '')
-  ).trim();
-  return newTagProps;
 }
 
 function FreeTextInput(props: {
