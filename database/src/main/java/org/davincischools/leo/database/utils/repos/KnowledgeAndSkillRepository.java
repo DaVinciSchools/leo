@@ -46,6 +46,15 @@ public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndS
       @Param("id") Iterable<Integer> ids, @Param("type") String type);
 
   @Query(
+      """
+          SELECT ks
+          FROM KnowledgeAndSkill ks
+          WHERE ks.type IN (:types)
+          AND (ks.global OR ks.userX.id = (:user_x_id))""")
+  List<KnowledgeAndSkill> findAllByTypes(
+      @Param("types") Iterable<String> types, @Param("user_x_id") int userXId);
+
+  @Query(
       "SELECT ks FROM KnowledgeAndSkill ks"
           + " INNER JOIN FETCH AssignmentKnowledgeAndSkill aks"
           + " ON aks.knowledgeAndSkill.id = ks.id"

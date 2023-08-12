@@ -8,6 +8,7 @@ import IDistrict = pl_types.IDistrict;
 import IProject = pl_types.IProject;
 import State = pl_types.ProjectDefinition.State;
 import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
+import Type = pl_types.KnowledgeAndSkill.Type;
 
 export const TEXT_SORTER = (a: string, b: string) => a.localeCompare(b);
 
@@ -20,6 +21,7 @@ export const KNOWLEDGE_AND_SKILL_SORTER = (
   a: IKnowledgeAndSkill,
   b: IKnowledgeAndSkill
 ) =>
+  (a.type ?? Type.UNSET) - (b.type ?? Type.UNSET) ||
   (a.category ?? '').localeCompare(b.category ?? '') ||
   (a.name ?? '').localeCompare(b.name ?? '') ||
   (a.shortDescr ?? '').localeCompare(b.shortDescr ?? '');

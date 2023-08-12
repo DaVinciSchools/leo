@@ -27,15 +27,19 @@ import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectPost;
+import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
+import org.davincischools.leo.protos.pl_types.KnowledgeAndSkill;
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
+import org.davincischools.leo.protos.project_management.AddKnowledgeAndSkillRequest;
+import org.davincischools.leo.protos.project_management.AddKnowledgeAndSkillResponse;
 import org.davincischools.leo.protos.project_management.DeletePostRequest;
 import org.davincischools.leo.protos.project_management.DeletePostResponse;
 import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsRequest;
@@ -46,6 +50,8 @@ import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefi
 import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionResponse;
 import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionsRequest;
 import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionsResponse;
+import org.davincischools.leo.protos.project_management.GetKnowledgeAndSkillsRequest;
+import org.davincischools.leo.protos.project_management.GetKnowledgeAndSkillsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionCategoryTypesRequest;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionCategoryTypesResponse;
 import org.davincischools.leo.protos.project_management.GetProjectDetailsRequest;
@@ -91,6 +97,79 @@ public class ProjectManagementService {
 
   @Autowired Database db;
   @Autowired OpenAi3V2ProjectGenerator openAi3V2ProjectGenerator;
+
+  @PostMapping(value = "/api/protos/ProjectManagementService/GetKnowledgeAndSkills")
+  @ResponseBody
+  public GetKnowledgeAndSkillsResponse getKnowledgeAndSkills(
+      @Authenticated HttpUser user,
+      @RequestBody Optional<GetKnowledgeAndSkillsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(GetKnowledgeAndSkillsResponse.getDefaultInstance());
+    }
+
+    var response = GetKnowledgeAndSkillsResponse.newBuilder();
+
+    return httpExecutors
+        .start(optionalRequest.orElse(GetKnowledgeAndSkillsRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              response.addAllKnowledgeAndSkills(
+                  db
+                      .getKnowledgeAndSkillRepository()
+                      .findAllByTypes(
+                          request.getTypesList().stream().map(Enum::name).toList(),
+                          user.get().map(UserX::getId).orElse(0))
+                      .stream()
+                      .map(DataAccess::toKnowledgeAndSkillProto)
+                      .map(KnowledgeAndSkill.Builder::build)
+                      .toList());
+
+              return response.build();
+            })
+        .finish();
+  }
+
+  @PostMapping(value = "/api/protos/ProjectManagementService/AddKnowledgeAndSkill")
+  @ResponseBody
+  public AddKnowledgeAndSkillResponse AddKnowledgeAndSkill(
+      @Authenticated HttpUser user,
+      @RequestBody Optional<AddKnowledgeAndSkillRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    if (user.isNotAuthorized()) {
+      return user.returnForbidden(AddKnowledgeAndSkillResponse.getDefaultInstance());
+    }
+
+    var response = AddKnowledgeAndSkillResponse.newBuilder();
+
+    return httpExecutors
+        .start(optionalRequest.orElse(AddKnowledgeAndSkillRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              if (!switch (request.getKnowledgeAndSkill().getType()) {
+                case EKS -> user.isAdmin() || user.isTeacher();
+                case XQ_COMPETENCY -> user.isAdmin();
+                case UNSET, UNRECOGNIZED -> throw new IllegalArgumentException(
+                    "Unknown knowledge and skill type: "
+                        + request.getKnowledgeAndSkill().getType().name());
+              }) {
+                return user.returnForbidden(AddKnowledgeAndSkillResponse.getDefaultInstance());
+              }
+
+              org.davincischools.leo.database.daos.KnowledgeAndSkill dao =
+                  DataAccess.toDao(request.getKnowledgeAndSkill())
+                      .setUserX(user.get().orElseThrow());
+
+              db.getKnowledgeAndSkillRepository().save(dao);
+
+              return response
+                  .setKnowledgeAndSkill(DataAccess.toKnowledgeAndSkillProto(dao))
+                  .build();
+            })
+        .finish();
+  }
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GenerateProjects")
   @ResponseBody

@@ -9,6 +9,8 @@ package project_management;
 
 service ProjectManagementService {
   rpc GetMotivations (GetMotivationsRequest) returns (GetMotivationsResponse) {}
+  rpc GetKnowledgeAndSkills (GetKnowledgeAndSkillsRequest) returns (GetKnowledgeAndSkillsResponse) {}
+  rpc AddKnowledgeAndSkill (AddKnowledgeAndSkillRequest) returns (AddKnowledgeAndSkillResponse) {}
   rpc GenerateProjects (GenerateProjectsRequest) returns (GenerateProjectsResponse) {}
   rpc GenerateAnonymousProjects (GenerateAnonymousProjectsRequest) returns (GenerateAnonymousProjectsResponse) {}
   rpc RegisterAnonymousProjects (RegisterAnonymousProjectsRequest) returns (RegisterAnonymousProjectsResponse) {}
@@ -138,4 +140,20 @@ message RegisterAnonymousProjectsRequest {
 }
 
 message RegisterAnonymousProjectsResponse {
+}
+
+message GetKnowledgeAndSkillsRequest {
+  repeated pl_types.KnowledgeAndSkill.Type types = 1;
+}
+
+message GetKnowledgeAndSkillsResponse {
+  repeated pl_types.KnowledgeAndSkill knowledge_and_skills = 1;
+}
+
+message AddKnowledgeAndSkillRequest {
+  optional pl_types.KnowledgeAndSkill knowledge_and_skill = 1;
+}
+
+message AddKnowledgeAndSkillResponse {
+  optional pl_types.KnowledgeAndSkill knowledge_and_skill = 1;
 }

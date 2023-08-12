@@ -1,0 +1,18 @@
+@use '../../../libs/IkigaiProjectBuilder/IkigaiProjectBuilder';
+
+.teacher-edit-classes-expand-buttons {
+  display: flex;
+  width: 100%;
+  flex-flow: row nowrap;
+  gap: 1em;
+
+  button {
+    width: 100%;
+  }
+}
+
+.teacher-edit-classes-chips {
+  @include IkigaiProjectBuilder.ikigai-project-builder-chip-values;
+
+  white-space: nowrap;
+}

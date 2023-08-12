@@ -1,0 +1,32 @@
+.standard-modal-layout {
+  background: white;
+  border: 2px solid black;
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 2em;
+  height: fit-content;
+  justify-content: space-between;
+  left: 50%;
+  min-height: fit-content;
+  min-width: fit-content;
+  padding: 2em;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: fit-content;
+
+  .standard-modal-title {
+    font-size: 2em;
+    font-weight: bold;
+    margin-bottom: 1em;
+    text-align: center;
+  }
+
+  .standard-modal-footer {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 1em;
+    justify-content: flex-end;
+    width: 100%;
+  }
+}
