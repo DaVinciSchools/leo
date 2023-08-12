@@ -142,8 +142,11 @@ public class DataAccess {
         .setId(knowledgeAndSkill.getId())
         .setType(Type.valueOf(knowledgeAndSkill.getType()))
         .setName(knowledgeAndSkill.getName())
+        .setCategory(coalesce(knowledgeAndSkill::getCategory, () -> ""))
         .setShortDescr(coalesce(knowledgeAndSkill::getShortDescr, () -> ""))
-        .setLongDescrHtml(coalesce(knowledgeAndSkill::getLongDescrHtml, () -> ""));
+        .setLongDescrHtml(coalesce(knowledgeAndSkill::getLongDescrHtml, () -> ""))
+        .setGlobal(Boolean.TRUE.equals(knowledgeAndSkill.getGlobal()))
+        .setUserXId(knowledgeAndSkill.getUserX().getId());
   }
 
   public static org.davincischools.leo.protos.pl_types.Assignment convertAssignmentToProto(
@@ -284,23 +287,6 @@ public class DataAccess {
         .setName(projectPost.getName())
         .setMessageHtml(projectPost.getMessageHtml())
         .setPostEpochSec((int) projectPost.getCreationTime().getEpochSecond())
-        .build();
-  }
-
-  public static org.davincischools.leo.protos.pl_types.Eks getProtoEks(KnowledgeAndSkill kas) {
-    return org.davincischools.leo.protos.pl_types.Eks.newBuilder()
-        .setId(kas.getId())
-        .setName(kas.getName())
-        .setShortDescr(coalesce(kas::getShortDescr, () -> ""))
-        .build();
-  }
-
-  public static org.davincischools.leo.protos.pl_types.XqCompetency orProtoXqCompetency(
-      KnowledgeAndSkill kas) {
-    return org.davincischools.leo.protos.pl_types.XqCompetency.newBuilder()
-        .setId(kas.getId())
-        .setName(kas.getName())
-        .setShortDescr(coalesce(kas::getShortDescr, () -> ""))
         .build();
   }
 }

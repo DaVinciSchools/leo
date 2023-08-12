@@ -263,8 +263,8 @@ function DropdownSelectInput(props: {
                 autoHighlight
                 autoFocus
                 disableCloseOnSelect
-                tabIndex={1}
                 value={selectedValues}
+                groupBy={option => option.category ?? ''}
                 renderInput={params => (
                   <TextField
                     {...params}

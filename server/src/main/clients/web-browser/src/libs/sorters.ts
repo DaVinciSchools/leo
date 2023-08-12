@@ -7,10 +7,20 @@ import ISchool = pl_types.ISchool;
 import IDistrict = pl_types.IDistrict;
 import IProject = pl_types.IProject;
 import State = pl_types.ProjectDefinition.State;
+import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
 
 export const TEXT_SORTER = (a: string, b: string) => a.localeCompare(b);
 
 export const OPTION_SORTER = (a: IOption, b: IOption) =>
+  (a.category ?? '').localeCompare(b.category ?? '') ||
+  (a.name ?? '').localeCompare(b.name ?? '') ||
+  (a.shortDescr ?? '').localeCompare(b.shortDescr ?? '');
+
+export const KNOWLEDGE_AND_SKILL_SORTER = (
+  a: IKnowledgeAndSkill,
+  b: IKnowledgeAndSkill
+) =>
+  (a.category ?? '').localeCompare(b.category ?? '') ||
   (a.name ?? '').localeCompare(b.name ?? '') ||
   (a.shortDescr ?? '').localeCompare(b.shortDescr ?? '');
 

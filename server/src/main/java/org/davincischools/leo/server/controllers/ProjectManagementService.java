@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
 import java.time.Duration;
 import java.time.Instant;
@@ -47,8 +46,6 @@ import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefi
 import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionResponse;
 import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionsRequest;
 import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionsResponse;
-import org.davincischools.leo.protos.project_management.GetEksRequest;
-import org.davincischools.leo.protos.project_management.GetEksResponse;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionCategoryTypesRequest;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionCategoryTypesResponse;
 import org.davincischools.leo.protos.project_management.GetProjectDetailsRequest;
@@ -57,8 +54,6 @@ import org.davincischools.leo.protos.project_management.GetProjectPostsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectPostsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectsResponse;
-import org.davincischools.leo.protos.project_management.GetXqCompetenciesRequest;
-import org.davincischools.leo.protos.project_management.GetXqCompetenciesResponse;
 import org.davincischools.leo.protos.project_management.PostMessageRequest;
 import org.davincischools.leo.protos.project_management.PostMessageResponse;
 import org.davincischools.leo.protos.project_management.RegisterAnonymousProjectsRequest;
@@ -96,60 +91,6 @@ public class ProjectManagementService {
 
   @Autowired Database db;
   @Autowired OpenAi3V2ProjectGenerator openAi3V2ProjectGenerator;
-
-  @PostMapping(value = "/api/protos/ProjectManagementService/GetEks")
-  @ResponseBody
-  public GetEksResponse getEks(
-      @Authenticated HttpUser user,
-      @RequestBody Optional<GetEksRequest> optionalRequest,
-      HttpExecutors httpExecutors)
-      throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(GetEksResponse.getDefaultInstance());
-    }
-
-    return httpExecutors
-        .start(optionalRequest.orElse(GetEksRequest.getDefaultInstance()))
-        .andThen(
-            (request, log) -> {
-              var response = GetEksResponse.newBuilder();
-
-              response.addAllEks(
-                  Lists.transform(
-                      db.getKnowledgeAndSkillRepository().findAll(Type.EKS.name()),
-                      DataAccess::getProtoEks));
-
-              return response.build();
-            })
-        .finish();
-  }
-
-  @PostMapping(value = "/api/protos/ProjectManagementService/GetXqCompetencies")
-  @ResponseBody
-  public GetXqCompetenciesResponse getXqCompetencies(
-      @Authenticated HttpUser user,
-      @RequestBody Optional<GetXqCompetenciesRequest> optionalRequest,
-      HttpExecutors httpExecutors)
-      throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(GetXqCompetenciesResponse.getDefaultInstance());
-    }
-
-    return httpExecutors
-        .start(optionalRequest.orElse(GetXqCompetenciesRequest.getDefaultInstance()))
-        .andThen(
-            (request, log) -> {
-              var response = GetXqCompetenciesResponse.newBuilder();
-
-              response.addAllXqCompentencies(
-                  Lists.transform(
-                      db.getKnowledgeAndSkillRepository().findAll(Type.XQ_COMPETENCY.name()),
-                      DataAccess::orProtoXqCompetency));
-
-              return response.build();
-            })
-        .finish();
-  }
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GenerateProjects")
   @ResponseBody
@@ -474,16 +415,20 @@ public class ProjectManagementService {
           i ->
               Option.newBuilder()
                   .setId(i.getId())
+                  .setCategory(i.getCategory())
                   .setName(i.getName())
-                  .setShortDescr(i.getShortDescr()),
+                  .setShortDescr(i.getShortDescr())
+                  .setUserXId(i.getUserX().getId()),
           input);
       case XQ_COMPETENCY -> populateOptions(
           db.getKnowledgeAndSkillRepository().findAll(Type.XQ_COMPETENCY.name()),
           i ->
               Option.newBuilder()
                   .setId(i.getId())
+                  .setCategory(i.getCategory())
                   .setName(i.getName())
-                  .setShortDescr(i.getShortDescr()),
+                  .setShortDescr(i.getShortDescr())
+                  .setUserXId(i.getUserX().getId()),
           input);
       case MOTIVATION -> populateOptions(
           db.getMotivationRepository().findAll(),

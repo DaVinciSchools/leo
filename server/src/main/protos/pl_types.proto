@@ -41,8 +41,11 @@ message KnowledgeAndSkill {
   optional int32 id = 1;
   optional Type type = 2;
   optional string name = 3;
+  optional string category = 6;
   optional string short_descr = 4;
   optional string long_descr_html = 5;
+  optional bool global = 7;
+  optional int32 user_x_id = 8;
 }
 
 message Project {
@@ -109,18 +112,6 @@ message User {
   optional bool is_authenticated = 13;
 }
 
-message Eks {
-  optional int32 id = 1;
-  optional string name = 2;
-  optional string short_descr = 3;
-}
-
-message XqCompetency {
-  optional int32 id = 1;
-  optional string name = 2;
-  optional string short_descr = 3;
-}
-
 message ProjectDefinition {
   enum State {
     UNSET = 0;
@@ -160,7 +151,9 @@ message ProjectInputCategory {
   message Option {
     optional int32 id = 1;
     optional string name = 2;
+    optional string category = 4;
     optional string short_descr = 3;
+    optional int32 user_x_id = 5;
   }
 
   optional int32 id = 1;

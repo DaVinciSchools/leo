@@ -8,8 +8,6 @@ option java_package = "org.davincischools.leo.protos.project_management";
 package project_management;
 
 service ProjectManagementService {
-  rpc GetEks (GetEksRequest) returns (GetEksResponse) {}
-  rpc GetXqCompetencies (GetXqCompetenciesRequest) returns (GetXqCompetenciesResponse) {}
   rpc GetMotivations (GetMotivationsRequest) returns (GetMotivationsResponse) {}
   rpc GenerateProjects (GenerateProjectsRequest) returns (GenerateProjectsResponse) {}
   rpc GenerateAnonymousProjects (GenerateAnonymousProjectsRequest) returns (GenerateAnonymousProjectsResponse) {}
@@ -25,20 +23,6 @@ service ProjectManagementService {
   rpc GetProjectPosts (GetProjectPostsRequest) returns (GetProjectPostsResponse) {}
   rpc PostMessage (PostMessageRequest) returns (PostMessageResponse) {}
   rpc DeletePost (DeletePostRequest) returns (DeletePostResponse) {}
-}
-
-message GetEksRequest {
-}
-
-message GetEksResponse {
-  repeated pl_types.Eks eks = 1;
-}
-
-message GetXqCompetenciesRequest {
-}
-
-message GetXqCompetenciesResponse {
-  repeated pl_types.XqCompetency xq_compentencies = 1;
 }
 
 message GetMotivationsRequest {
