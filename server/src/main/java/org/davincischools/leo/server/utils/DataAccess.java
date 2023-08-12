@@ -1,10 +1,32 @@
 package org.davincischools.leo.server.utils;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimaps;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.EnumValueDescriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
+import com.google.protobuf.Message;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -288,5 +310,201 @@ public class DataAccess {
         .setMessageHtml(projectPost.getMessageHtml())
         .setPostEpochSec((int) projectPost.getCreationTime().getEpochSecond())
         .build();
+  }
+
+  public static KnowledgeAndSkill toDao(
+      org.davincischools.leo.protos.pl_types.KnowledgeAndSkill p) {
+    return translateToDao(p, new KnowledgeAndSkill().setCreationTime(Instant.now()));
+  }
+
+  private record ProtoDaoFields(
+      Class<? extends Message> protoClass, Class<?> daoClass, Set<Integer> ignoredFieldNumbers) {}
+
+  private static final Map<
+          ProtoDaoFields, Map<Integer, BiConsumer</* message= */ Message, /* dao= */ Object>>>
+      protoToDaoSetters = Collections.synchronizedMap(new HashMap<>());
+
+  // TODO: This needs to be code generated at compile time with compile time errors. It's
+  // dangerous that fields could be overlooked.
+  private static <M extends Message, D> D translateToDao(
+      M fromMessage, D toDao, int... ignoreFieldNumbers) {
+    checkNotNull(fromMessage);
+    checkNotNull(toDao);
+
+    Class<? extends Message> protoClass = fromMessage.getClass();
+    Descriptor protoDescriptor = fromMessage.getDescriptorForType();
+    Class<?> daoClass = toDao.getClass();
+
+    Set<Integer> ignoredFieldNumbers =
+        Arrays.stream(ignoreFieldNumbers).boxed().collect(Collectors.toSet());
+
+    Map<Integer, BiConsumer</* message= */ Message, /* dao= */ Object>> daoSetters =
+        protoToDaoSetters.computeIfAbsent(
+            new ProtoDaoFields(protoClass, daoClass, ignoredFieldNumbers),
+            (protoDao) -> {
+              Map<Integer, BiConsumer</* message= */ Message, /* dao= */ Object>> setters =
+                  new HashMap<>();
+
+              // Get the list of all uniquely named methods.
+              ImmutableMap<String, Method> setMethods =
+                  ImmutableMap.copyOf(
+                      Maps.filterValues(
+                          Maps.transformValues(
+                              Maps.filterValues(
+                                  Multimaps.index(
+                                          Arrays.asList(daoClass.getMethods()), Method::getName)
+                                      .asMap(),
+                                  methods -> methods.size() == 1),
+                              Iterables::getOnlyElement),
+                          method ->
+                              method.getName().startsWith("set")
+                                  && method.getParameterTypes().length == 1));
+
+              // Build the translators for each proto field.
+              for (FieldDescriptor field : protoDescriptor.getFields()) {
+                try {
+                  // Skip field if it's ignored.
+                  if (ignoredFieldNumbers.contains(field.getNumber())) {
+                    continue;
+                  }
+                  Optional<Method> setMethod =
+                      Optional.ofNullable(setMethods.get(toDaoSetMethod(field)));
+
+                  // Check for a proto ID field that maps to a dao foreign object field.
+                  if (setMethod.isEmpty()) {
+                    // Make sure it's an ID field.
+                    if (!field.getName().endsWith("_id")
+                        || field.getType() != FieldDescriptor.Type.INT32) {
+                      continue;
+                    }
+
+                    // Make sure the dao has a setter for a foreign object.
+                    Optional<Method> setDaoMethod =
+                        Optional.ofNullable(setMethods.get(toDaoSetDaoMethod(field)));
+                    if (setDaoMethod.isEmpty()) {
+                      continue;
+                    }
+
+                    // Get supposed dao type.
+                    Class<?> innerDaoType = setDaoMethod.get().getParameterTypes()[0];
+                    Constructor<?>[] constructors = innerDaoType.getConstructors();
+                    if (constructors.length != 1) {
+                      continue;
+                    }
+                    if (constructors[0].getParameterTypes().length != 0) {
+                      continue;
+                    }
+
+                    // Add translator to set the inner dao object.
+                    setters.put(
+                        field.getNumber(),
+                        (message, dao) -> {
+                          try {
+                            Object innerDao = constructors[0].newInstance();
+                            innerDao
+                                .getClass()
+                                .getMethod("setId", Integer.class)
+                                .invoke(innerDao, (Integer) message.getField(field));
+                            setDaoMethod.get().invoke(dao, innerDao);
+                          } catch (Exception e) {
+                            throw new RuntimeException(
+                                "Error processing proto field as id to inner dao value: "
+                                    + field.getFullName(),
+                                e);
+                          }
+                        });
+                    continue;
+                  }
+
+                  // Check for an enum field, it needs to be translated to a string.
+                  if (field.getType() == FieldDescriptor.Type.ENUM) {
+                    setters.put(
+                        field.getNumber(),
+                        (message, dao) -> {
+                          try {
+                            setMethod
+                                .get()
+                                .invoke(
+                                    dao, ((EnumValueDescriptor) message.getField(field)).getName());
+                          } catch (Exception e) {
+                            throw new RuntimeException(
+                                "Error processing proto field as enum to string dao value: "
+                                    + field.getFullName(),
+                                e);
+                          }
+                        });
+                    continue;
+                  }
+
+                  // Assume that it's the same type.
+                  setters.put(
+                      field.getNumber(),
+                      (message, dao) -> {
+                        try {
+                          setMethod.get().invoke(dao, message.getField(field));
+                        } catch (Exception e) {
+                          throw new RuntimeException(
+                              "Error processing proto field as direct dao value: "
+                                  + field.getFullName(),
+                              e);
+                        }
+                      });
+                } catch (Exception e) {
+                  throw new RuntimeException(
+                      "Error processing proto field: " + field.getFullName(), e);
+                }
+              }
+
+              return setters;
+            });
+
+    // Translate each proto field.
+    for (FieldDescriptor field : fromMessage.getDescriptorForType().getFields()) {
+      if (ignoredFieldNumbers.contains(field.getNumber())) {
+        continue;
+      }
+      if (!daoSetters.containsKey(field.getNumber())) {
+        throw new RuntimeException("Proto field is not accounted for: " + field.getFullName());
+      }
+      if (fromMessage.hasField(field)) {
+        daoSetters.get(field.getNumber()).accept(fromMessage, toDao);
+      }
+    }
+
+    return toDao;
+  }
+
+  private static String toDaoSetMethod(FieldDescriptor field) {
+    checkNotNull(field);
+
+    return "set" + capitalizeFirst(field.getJsonName());
+  }
+
+  private static String toDaoSetDaoMethod(FieldDescriptor field) {
+    checkNotNull(field);
+    checkArgument(field.getName().endsWith("_id"));
+
+    return "set" + capitalizeFirst(field.getJsonName().replaceFirst("Id$", ""));
+  }
+
+  private static String capitalizeFirst(String value) {
+    checkNotNull(value);
+
+    if (value.isEmpty()) {
+      return value;
+    }
+
+    return value.substring(0, 1).toUpperCase(Locale.US) + value.substring(1);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> T valueOrNull(Message message, int fieldNumber) {
+    checkNotNull(message);
+
+    FieldDescriptor descriptor = message.getDescriptorForType().findFieldByNumber(fieldNumber);
+    if (message.hasField(descriptor)) {
+      return (T) message.getField(descriptor);
+    }
+    return null;
   }
 }
