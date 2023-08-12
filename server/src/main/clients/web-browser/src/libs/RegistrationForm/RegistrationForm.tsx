@@ -87,7 +87,7 @@ export function RegistrationForm(props: {
             autoFocus
             autoComplete="given-name"
             label="First Name"
-            {...firstName.params()}
+            {...firstName.textFieldParams()}
           />
         </Grid>
         <Grid item xs={6}>
@@ -95,7 +95,7 @@ export function RegistrationForm(props: {
             required
             autoComplete="family-name"
             label="Last Name"
-            {...lastName.params()}
+            {...lastName.textFieldParams()}
           />
         </Grid>
         <Grid item xs={12}>
@@ -103,7 +103,7 @@ export function RegistrationForm(props: {
             required
             autoComplete="email"
             label="Email Address"
-            {...emailAddress.params()}
+            {...emailAddress.textFieldParams()}
           />
         </Grid>
         <Grid item xs={6}>
@@ -111,7 +111,7 @@ export function RegistrationForm(props: {
             required
             autoComplete="current-password"
             label="Password"
-            {...password.params()}
+            {...password.textFieldParams()}
           />
         </Grid>
         <Grid item xs={6}>
@@ -119,7 +119,7 @@ export function RegistrationForm(props: {
             required
             autoComplete="new-password"
             label="Verify Password"
-            {...verifyPassword.params()}
+            {...verifyPassword.textFieldParams()}
           />
         </Grid>
         <Grid item xs={12}>
@@ -137,7 +137,7 @@ export function RegistrationForm(props: {
                 required
                 autoComplete="organization-title"
                 label="Profession"
-                {...profession.params(params)}
+                {...profession.textFieldParams(params)}
               />
             )}
           />
@@ -148,37 +148,52 @@ export function RegistrationForm(props: {
             multiline
             rows={3}
             label="Let us know why you're interested."
-            {...reasonForInterest.params()}
+            {...reasonForInterest.textFieldParams()}
           />
         </Grid>
         <Grid item xs={12} />
         <Grid item xs={12}>
-          <TextField label="District Name" {...districtName.params()} />
+          <TextField
+            label="District Name"
+            {...districtName.textFieldParams()}
+          />
         </Grid>
         <Grid item xs={12}>
-          <TextField label="School Name" {...schoolName.params()} />
+          <TextField label="School Name" {...schoolName.textFieldParams()} />
         </Grid>
         <Grid item xs={12}>
-          <TextField label="Address Line 1" {...addressLine1.params()} />
+          <TextField
+            label="Address Line 1"
+            {...addressLine1.textFieldParams()}
+          />
         </Grid>
         <Grid item xs={12}>
-          <TextField label="Address Line 2" {...addressLine2.params()} />
+          <TextField
+            label="Address Line 2"
+            {...addressLine2.textFieldParams()}
+          />
         </Grid>
         <Grid item xs={4}>
-          <TextField label="City" {...city.params()} />
+          <TextField label="City" {...city.textFieldParams()} />
         </Grid>
         <Grid item xs={4}>
-          <TextField label="State" {...state.params()} />
+          <TextField label="State" {...state.textFieldParams()} />
         </Grid>
         <Grid item xs={4}>
-          <TextField label="Zip Code" {...zipCode.params()} />
+          <TextField label="Zip Code" {...zipCode.textFieldParams()} />
         </Grid>
         <Grid item xs={12} />
         <Grid item xs={6}>
-          <TextField label="Number of Educators" {...numTeachers.params()} />
+          <TextField
+            label="Number of Educators"
+            {...numTeachers.textFieldParams()}
+          />
         </Grid>
         <Grid item xs={6}>
-          <TextField label="Number of Students" {...numStudents.params()} />
+          <TextField
+            label="Number of Students"
+            {...numStudents.textFieldParams()}
+          />
         </Grid>
         <Grid item xs={12} />
         <Grid item xs={12} className="registration-form-buttons">

@@ -2,6 +2,7 @@ import {AutocompleteRenderInputParams, InputAdornment} from '@mui/material';
 import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
 import {ReactElement, RefObject, useRef, useState} from 'react';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
+import {CheckboxProps} from '@mui/material/Checkbox/Checkbox';
 
 const MAX_ZIP_CODE_LENGTH = 10;
 const MIN_PASSWORD_LENGTH = 8;
@@ -26,15 +27,16 @@ export interface FieldMetadata {
     min?: number;
     max?: number;
   };
+  isBoolean?: boolean;
   isEmail?: boolean;
   isZipCode?: boolean;
   startIcon?: ReactElement;
   maxLength?: number;
 }
 
-export interface FormField<T extends number | string> {
+export interface FormField<T extends number | string | boolean> {
   readonly name: string;
-  readonly fieldRef: RefObject<HTMLDivElement>;
+  readonly fieldRef: RefObject<HTMLDivElement | HTMLButtonElement>;
   readonly fieldMetadata?: FieldMetadata;
 
   readonly stringValue: string;
@@ -45,9 +47,11 @@ export interface FormField<T extends number | string> {
 
   readonly getTypedValue: () => T | undefined;
 
-  readonly params: (
+  readonly textFieldParams: (
     params?: AutocompleteRenderInputParams
   ) => OutlinedTextFieldProps;
+
+  readonly checkboxParams: (params?: CheckboxProps) => CheckboxProps;
 }
 
 export interface FormFields {
@@ -61,11 +65,17 @@ export interface FormFields {
     fieldMetadata?: FieldMetadata
   ) => FormField<string>;
 
+  readonly useBooleanFormField: (
+    name: string,
+    fieldMetadata?: FieldMetadata
+  ) => FormField<boolean>;
+
   readonly setValuesObject: (values: {} | null | undefined) => void;
 
   readonly getValuesObject: () => {};
   readonly getValuesURLSearchParams: () => URLSearchParams;
 
+  readonly reset: () => void;
   readonly verifyOk: (finalCheck: boolean) => boolean;
   readonly isTentativelyOkToSubmit: () => boolean;
 }
@@ -94,9 +104,11 @@ class FormFieldsImpl implements FormFields {
     name: string,
     fieldMetadata?: FieldMetadata
   ): FormField<string> {
-    if (fieldMetadata?.isInteger) {
+    if (fieldMetadata?.isInteger || fieldMetadata?.isBoolean) {
       throw new Error(
-        'useStringFormField requires FieldMetadata.isInteger to be unset.'
+        `fieldMetadata does not indicate a string: ${JSON.stringify(
+          fieldMetadata ?? {}
+        )}`
       );
     }
     return this.#useFormField<string>(name, fieldMetadata);
@@ -106,21 +118,37 @@ class FormFieldsImpl implements FormFields {
     name: string,
     fieldMetadata?: FieldMetadata
   ): FormField<number> {
-    if (!fieldMetadata?.isInteger) {
+    if (!fieldMetadata?.isInteger || fieldMetadata?.isBoolean) {
       throw new Error(
-        'useNumberFormField requires FieldMetadata.isInteger to be set.'
+        `fieldMetadata does not indicate a number: ${JSON.stringify(
+          fieldMetadata ?? {}
+        )}`
       );
     }
     return this.#useFormField<number>(name, fieldMetadata);
   }
 
-  #useFormField<T extends number | string>(
+  useBooleanFormField(
+    name: string,
+    fieldMetadata?: FieldMetadata
+  ): FormField<boolean> {
+    if (fieldMetadata?.isInteger || !fieldMetadata?.isBoolean) {
+      throw new Error(
+        `fieldMetadata does not indicate a boolean: ${JSON.stringify(
+          fieldMetadata ?? {}
+        )}`
+      );
+    }
+    return this.#useFormField<boolean>(name, fieldMetadata);
+  }
+
+  #useFormField<T extends number | string | boolean>(
     name: string,
     fieldMetadata?: FieldMetadata
   ): FormField<T> {
     const [stringValue, setStringValue] = useState('');
     const [error, setError] = useState('');
-    const fieldRef = useRef<HTMLDivElement>(null);
+    const fieldRef = useRef<HTMLDivElement | HTMLButtonElement>(null);
 
     const formField: FormField<T> = {
       name,
@@ -131,7 +159,9 @@ class FormFieldsImpl implements FormFields {
       setError,
       fieldMetadata,
 
-      params: (params?: AutocompleteRenderInputParams) => {
+      textFieldParams: (
+        params?: AutocompleteRenderInputParams
+      ): OutlinedTextFieldProps => {
         const checkErrorFn = (finalCheck: boolean) =>
           checkFieldForErrorsAndSet(
             setError,
@@ -155,7 +185,7 @@ class FormFieldsImpl implements FormFields {
           fullWidth: true,
           size: 'small',
           name: name,
-          ref: fieldRef,
+          ref: fieldRef as RefObject<HTMLDivElement>,
           helperText: error,
           error: !!error,
           onChange: e => {
@@ -213,6 +243,19 @@ class FormFieldsImpl implements FormFields {
         };
       },
 
+      checkboxParams(): CheckboxProps {
+        return {
+          checked: stringValue === 'true',
+          size: 'small',
+          name: name,
+          ref: fieldRef as RefObject<HTMLButtonElement>,
+          onChange: e => {
+            setError('');
+            setStringValue(e.target.checked ? 'true' : '');
+          },
+        };
+      },
+
       getTypedValue: () => {
         const input = getInputField(fieldRef.current);
         if (input == null || stringValue == null || stringValue.length === 0) {
@@ -236,6 +279,10 @@ class FormFieldsImpl implements FormFields {
           return;
         }
 
+        if (input.type === 'checkbox') {
+          return (stringValue === 'true') as T;
+        }
+
         throw new Error(`Input type '${input.type}' is not recognized.`);
       },
     };
@@ -244,6 +291,11 @@ class FormFieldsImpl implements FormFields {
     this.#fields.set(name, formField as FormField<any>);
 
     return formField;
+  }
+
+  reset() {
+    this.#fields.forEach(f => f.setError(''));
+    this.setValuesObject({});
   }
 
   verifyOk(finalCheck: boolean) {
@@ -339,7 +391,9 @@ class FormFieldsImpl implements FormFields {
   }
 
   getValuesObject() {
-    const values: {[key: string]: string | number} = {};
+    const values: {
+      [key: string]: string | number | boolean;
+    } = {};
 
     this.#fields.forEach(f => {
       const value = f.getTypedValue();
@@ -432,7 +486,9 @@ export function checkFieldForErrors(
   }
 
   if (
-    !['email', 'number', 'password', 'text', 'textarea'].includes(input.type)
+    !['checkbox', 'email', 'number', 'password', 'text', 'textarea'].includes(
+      input.type
+    )
   ) {
     throw new Error(`Input type '${input.type}' is not recognized.`);
   }
