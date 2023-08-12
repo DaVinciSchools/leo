@@ -117,7 +117,6 @@ public class ServerApplication {
                 HttpMethod.POST.name()),
             new AntPathRequestMatcher(
                 "/api/protos/UserManagementService/RegisterUser", HttpMethod.POST.name()),
-            new AntPathRequestMatcher("/dashboards/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/demos/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/docs/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/error**", HttpMethod.GET.name()),
@@ -222,19 +221,7 @@ public class ServerApplication {
                       .fullyAuthenticated())
 
           // Remaining pages require authentication.
-          .authorizeHttpRequests(
-              config ->
-                  config
-                      .requestMatchers(
-                          new AntPathRequestMatcher("/admin/**", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher("/api/**", HttpMethod.POST.name()),
-                          new AntPathRequestMatcher("/profiles/**", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher("/projects/**", HttpMethod.GET.name()),
-                          new AntPathRequestMatcher("/users/**", HttpMethod.GET.name()))
-                      .authenticated())
-
-          // Deny everything else.
-          .authorizeHttpRequests(config -> config.anyRequest().denyAll())
+          .authorizeHttpRequests(config -> config.anyRequest().authenticated())
 
           // TODO: Set security realm.
           // .httpBasic(config -> config.realmName("project.leo"))

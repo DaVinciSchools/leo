@@ -54,6 +54,7 @@ public class ReactResourceController {
     // This needs to be kept in sync with ServerApplication.SecurityConfigurer.
     "/",
     "/admin/**",
+    "/classes/**",
     "/dashboards/**",
     "/demos/**",
     "/docs/**",
