@@ -87,11 +87,7 @@ export function LoginForm(props: {
             {...password.textFieldParams()}
           />
           <div className="login-form-buttons">
-            <Button
-              variant="contained"
-              type="submit"
-              disabled={!formFields.isTentativelyOkToSubmit()}
-            >
+            <Button variant="contained" type="submit">
               Log In and Continue
             </Button>
             <Button variant="contained" onClick={props.onCancel}>

@@ -1,7 +1,7 @@
 import './RegistrationForm.scss';
 
-import {Autocomplete, Button, Grid, TextField} from '@mui/material';
 import {AccountCircle, Comment, Email, Lock} from '@mui/icons-material';
+import {Autocomplete, Button, Grid, TextField} from '@mui/material';
 import {FormEvent} from 'react';
 import {useFormFields} from '../forms';
 import {user_management} from '../../generated/protobuf-js';
@@ -34,9 +34,12 @@ export function RegistrationForm(props: {
     isPassword: {},
     startIcon: <Lock />,
   });
-  const profession = formFields.useStringFormField('profession', {
-    maxLength: 255,
-  });
+  const profession = formFields.useAutocompleteFormField<string | null>(
+    'profession',
+    {
+      maxLength: 255,
+    }
+  );
   const reasonForInterest = formFields.useStringFormField('reasonForInterest', {
     startIcon: <Comment />,
     maxLength: 8192,
@@ -140,6 +143,7 @@ export function RegistrationForm(props: {
                 {...profession.textFieldParams(params)}
               />
             )}
+            {...profession.autocompleteParams()}
           />
         </Grid>
         <Grid item xs={12}>
@@ -201,7 +205,6 @@ export function RegistrationForm(props: {
             variant="contained"
             className="project-builder-button"
             type="submit"
-            disabled={!formFields.isTentativelyOkToSubmit()}
           >
             Register and Continue
           </Button>

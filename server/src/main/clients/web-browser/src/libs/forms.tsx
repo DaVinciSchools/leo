@@ -1,13 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {
-  AutocompleteProps,
-  AutocompleteRenderInputParams,
-  AutocompleteValue,
-  InputAdornment,
-} from '@mui/material';
-import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
+import {AutocompleteRenderInputParams, InputAdornment} from '@mui/material';
+import {CheckboxProps} from '@mui/material/Checkbox/Checkbox';
 import {
   DetailedHTMLProps,
   FormHTMLAttributes,
@@ -17,10 +11,8 @@ import {
   useRef,
   useState,
 } from 'react';
+import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
-import {CheckboxProps} from '@mui/material/Checkbox/Checkbox';
-import * as React from 'react';
-import {ChipTypeMap} from '@mui/material/Chip';
 
 const MAX_ZIP_CODE_LENGTH = 10;
 const MIN_PASSWORD_LENGTH = 8;
@@ -36,8 +28,9 @@ const ZIP_CODE_PATTERN = RegExp('^[0-9]{5}(-[0-9]{4})?$');
 
 const PASSWORD_ERROR_MESSAGE =
   'Passwords must have 8+ characters, a number, and a lower and upper case letter.';
+const PASSWORDS_DONT_MATCH = 'Passwords do not match.';
 
-export interface FieldMetadata {
+export interface FormFieldMetadata {
   isPassword?: {
     skipPasswordCheck?: boolean;
   };
@@ -50,42 +43,24 @@ export interface FieldMetadata {
   isZipCode?: boolean;
   startIcon?: ReactElement;
   maxLength?: number;
-  isAutocomplete?: boolean;
-  isMultiple?: boolean;
-}
-
-export type FormFieldsMetadata = {
-  onChange?: (formFields: FormFields, formField: FormField<any>) => void;
-};
-
-export function useFormFields(formFieldsMetadata?: FormFieldsMetadata) {
-  return useState(FormFields.useFormFields(formFieldsMetadata))[0];
+  isAutocomplete?: {
+    isMultiple?: boolean;
+  };
 }
 
 export interface FormField<T> {
-  name: string;
-  fieldRef: RefObject<HTMLDivElement | HTMLButtonElement>;
-  fieldMetadata?: FieldMetadata;
+  readonly name: string;
 
   getValue: () => T | undefined;
   setValue: (value: T | undefined) => void;
 
-  error: string;
+  readonly error: string;
   setError: (message: string) => void;
 
-  autocompleteParams<
-    DisableClearable extends boolean | undefined = false,
-    FreeSolo extends boolean | undefined = false,
-    ChipComponent extends React.ElementType = ChipTypeMap['defaultComponent']
-  >(): Partial<
-    AutocompleteProps<
-      T extends (infer R)[] ? R : T,
-      T extends (infer R)[] ? true : false,
-      DisableClearable,
-      FreeSolo,
-      ChipComponent
-    >
-  >;
+  autocompleteParams(): {
+    value: T;
+    onChange: (event: React.SyntheticEvent, value: T) => void;
+  };
 
   textFieldParams: (
     params?: AutocompleteRenderInputParams
@@ -94,41 +69,71 @@ export interface FormField<T> {
   checkboxParams: (params?: CheckboxProps) => CheckboxProps;
 }
 
-export class FormFields {
-  readonly #fields: Map<string, FormField<any>> = new Map();
-  #formFieldsMetadata?: FormFieldsMetadata;
-  #formRef?: RefObject<HTMLFormElement>;
-  #showPasswords = false;
-  #setShowPasswords: (showPasswords: boolean) => void = () => {
-    throw new Error(
-      'Use FormFields.useFormFields() to create a FormFields object.'
-    );
-  };
+interface InternalFormField<T> extends FormField<T> {
+  fieldRef: RefObject<HTMLDivElement | HTMLButtonElement>;
+  fieldMetadata?: FormFieldMetadata;
 
-  static useFormFields(formFieldsMetadata?: FormFieldsMetadata) {
-    const formFields = useState(new FormFields())[0];
-    formFields.#formFieldsMetadata = formFieldsMetadata;
-    formFields.#formRef = useRef<HTMLFormElement>(null);
-    [formFields.#showPasswords, formFields.#setShowPasswords] = useState(false);
-    return formFields;
-  }
+  reset: () => void;
+
+  optionallyEvaluateField: () => void;
+  verifyOkOrSetError: (finalCheck: boolean) => boolean;
+  calculateError: (finalCheck: boolean) => string | undefined;
+}
+
+export type FormFieldsMetadata = {
+  onChange?: (formFields: FormFields, formField: FormField<any>) => void;
+};
+
+interface FormFields {
+  useStringFormField(
+    name: string,
+    fieldMetadata?: FormFieldMetadata
+  ): FormField<string>;
+
+  useNumberFormField(
+    name: string,
+    fieldMetadata?: FormFieldMetadata
+  ): FormField<number>;
+
+  useBooleanFormField(
+    name: string,
+    fieldMetadata?: FormFieldMetadata
+  ): FormField<boolean>;
+
+  useAutocompleteFormField<T>(
+    name: string,
+    fieldMetadata?: FormFieldMetadata
+  ): FormField<T>;
 
   params(): DetailedHTMLProps<
     FormHTMLAttributes<HTMLFormElement>,
     HTMLFormElement
-  > {
-    return {ref: this.#formRef};
-  }
+  >;
 
-  #formChanged(formField: FormField<any>) {
-    if (this.#formFieldsMetadata && this.#formFieldsMetadata.onChange) {
-      this.#formFieldsMetadata.onChange(this, formField);
-    }
-  }
+  reset(): void;
 
-  useStringFormField(
+  verifyOk(finalCheck: boolean): boolean;
+
+  setValuesObject(values: {} | null | undefined): void;
+
+  getValuesObject(): {
+    [p: string]: any;
+  };
+
+  getValuesURLSearchParams(): URLSearchParams;
+}
+
+export function useFormFields(
+  formFieldsMetadata?: FormFieldsMetadata
+): FormFields {
+  const fields: Map<string, InternalFormField<any>> = new Map();
+  const formRef = useRef<HTMLFormElement>(null);
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [evaluateAllFields, setEvaluateAllFields] = useState(false);
+
+  function useStringFormField(
     name: string,
-    fieldMetadata?: FieldMetadata
+    fieldMetadata?: FormFieldMetadata
   ): FormField<string> {
     if (
       fieldMetadata?.isInteger ||
@@ -136,282 +141,426 @@ export class FormFields {
       fieldMetadata?.isAutocomplete
     ) {
       throw new Error(
-        `fieldMetadata does not indicate a string: ${JSON.stringify(
+        `fieldMetadata for ${name} does not indicate a string: ${JSON.stringify(
           fieldMetadata ?? {}
         )}`
       );
     }
-    return this.#useFormField<string>(name, fieldMetadata);
+    return useFormField<string>(name, fieldMetadata);
   }
 
-  useNumberFormField(
+  function useNumberFormField(
     name: string,
-    fieldMetadata?: FieldMetadata
+    fieldMetadata?: FormFieldMetadata
   ): FormField<number> {
+    fieldMetadata = {...fieldMetadata};
+    fieldMetadata.isInteger = fieldMetadata.isInteger ?? {};
     if (
       !fieldMetadata?.isInteger ||
       fieldMetadata?.isBoolean ||
       fieldMetadata?.isAutocomplete
     ) {
       throw new Error(
-        `fieldMetadata does not indicate a number: ${JSON.stringify(
+        `fieldMetadata for ${name} does not indicate a number: ${JSON.stringify(
           fieldMetadata ?? {}
         )}`
       );
     }
-    return this.#useFormField<number>(name, fieldMetadata);
+    return useFormField<number>(name, fieldMetadata);
   }
 
-  useBooleanFormField(
+  function useBooleanFormField(
     name: string,
-    fieldMetadata?: FieldMetadata
+    fieldMetadata?: FormFieldMetadata
   ): FormField<boolean> {
+    fieldMetadata = {...fieldMetadata};
+    fieldMetadata.isBoolean = true;
     if (
       fieldMetadata?.isInteger ||
       !fieldMetadata?.isBoolean ||
       fieldMetadata?.isAutocomplete
     ) {
       throw new Error(
-        `fieldMetadata does not indicate a boolean: ${JSON.stringify(
+        `fieldMetadata for ${name} does not indicate a boolean: ${JSON.stringify(
           fieldMetadata ?? {}
         )}`
       );
     }
-    return this.#useFormField<boolean>(name, fieldMetadata);
+    return useFormField<boolean>(name, fieldMetadata);
   }
 
-  useMultiFormField<T>(
+  function useAutocompleteFormField<T>(
     name: string,
-    fieldMetadata?: FieldMetadata
+    fieldMetadata?: FormFieldMetadata
   ): FormField<T> {
+    fieldMetadata = {...fieldMetadata};
+    fieldMetadata.isAutocomplete = fieldMetadata.isAutocomplete ?? {};
     if (
       fieldMetadata?.isInteger ||
       fieldMetadata?.isBoolean ||
       !fieldMetadata?.isAutocomplete
     ) {
       throw new Error(
-        `fieldMetadata does not indicate a multi field: ${JSON.stringify(
+        `fieldMetadata for ${name} does not indicate a string: ${JSON.stringify(
           fieldMetadata ?? {}
         )}`
       );
     }
-    return this.#useFormField<T>(name, fieldMetadata);
+    return useFormField<T>(name, fieldMetadata);
   }
 
-  #useFormField<T>(name: string, fieldMetadata?: FieldMetadata): FormField<T> {
+  function useFormField<T>(
+    name: string,
+    fieldMetadata?: FormFieldMetadata
+  ): FormField<T> {
     const [stringValue, setStringValue] = useState('');
-    const [autocompleteValue, setAutocompleteValue] = useState<T | null>(
-      fieldMetadata?.isMultiple ? ([] as T) : null
+    const [autocompleteValue, setAutocompleteValue] = useState<T>(
+      fieldMetadata?.isAutocomplete?.isMultiple ? ([] as T) : ('' as T)
     );
     const [error, setError] = useState('');
+    const [evaluateField, setEvaluateField] = useState(false);
     const fieldRef = useRef<HTMLDivElement | HTMLButtonElement>(null);
 
-    const formField: FormField<T> = {
+    useEffect(() => {
+      fields.forEach(f => f.optionallyEvaluateField());
+    }, [
+      stringValue,
+      autocompleteValue,
+      fieldRef.current,
+      evaluateAllFields,
+      evaluateField,
+    ]);
+
+    function optionallyEvaluateField() {
+      if (evaluateAllFields || evaluateField) {
+        setError('');
+        verifyOkOrSetError(true);
+      }
+    }
+
+    function reset() {
+      setError('');
+      setEvaluateField(false);
+      setStringValue('');
+      if (fieldMetadata?.isAutocomplete?.isMultiple) {
+        setAutocompleteValue([] as T);
+      }
+    }
+
+    function textFieldParams(
+      params?: AutocompleteRenderInputParams
+    ): OutlinedTextFieldProps {
+      return {
+        ...(params ?? {}),
+        value: stringValue,
+        type:
+          fieldMetadata?.isPassword && !showPasswords
+            ? 'password'
+            : fieldMetadata?.isEmail
+            ? 'email'
+            : fieldMetadata?.isInteger != null
+            ? 'number'
+            : 'text',
+        variant: 'outlined',
+        fullWidth: true,
+        size: 'small',
+        name: name,
+        ref: fieldRef as RefObject<HTMLDivElement>,
+        helperText: error,
+        error: !!error,
+        onChange: e => {
+          setStringValue(e.target.value);
+        },
+        onBlur: e => {
+          setEvaluateField(true);
+          setStringValue(e.target.value);
+        },
+        InputProps: {
+          ...(params?.InputProps ?? {}),
+          startAdornment: fieldMetadata?.startIcon ? (
+            <InputAdornment position="start" style={{cursor: 'not-allowed'}}>
+              {fieldMetadata.startIcon}
+            </InputAdornment>
+          ) : (
+            params?.InputProps?.startAdornment
+          ),
+          endAdornment: fieldMetadata?.isPassword ? (
+            showPasswords ? (
+              <Visibility
+                onClick={() => setShowPasswords(false)}
+                style={{cursor: 'pointer'}}
+              />
+            ) : (
+              <VisibilityOff
+                onClick={() => setShowPasswords(true)}
+                style={{cursor: 'pointer'}}
+              />
+            )
+          ) : (
+            params?.InputProps?.endAdornment
+          ),
+        },
+        inputProps: {
+          ...(params?.inputProps ?? {}),
+          minLength:
+            fieldMetadata?.isPassword &&
+            fieldMetadata?.isPassword?.skipPasswordCheck !== true
+              ? MIN_PASSWORD_LENGTH
+              : undefined,
+          maxLength:
+            fieldMetadata?.maxLength ??
+            (fieldMetadata?.isZipCode
+              ? MAX_ZIP_CODE_LENGTH
+              : fieldMetadata?.isPassword &&
+                fieldMetadata?.isPassword?.skipPasswordCheck !== true
+              ? MAX_PASSWORD_LENGTH
+              : undefined),
+          min: fieldMetadata?.isInteger?.min,
+          max: fieldMetadata?.isInteger?.max,
+        },
+      } as OutlinedTextFieldProps;
+    }
+
+    function checkboxParams(): CheckboxProps {
+      return {
+        checked: stringValue === 'true',
+        size: 'small',
+        name: name,
+        ref: fieldRef as RefObject<HTMLButtonElement>,
+        onChange: e => {
+          setStringValue(e.target.checked ? 'true' : '');
+        },
+      };
+    }
+
+    function autocompleteParams() {
+      return {
+        value: autocompleteValue,
+        onChange: (e: React.SyntheticEvent, value: T) => {
+          if (fieldMetadata?.isAutocomplete?.isMultiple) {
+            setAutocompleteValue(value as T);
+          } else {
+            setStringValue(String(value ?? ''));
+          }
+        },
+      };
+    }
+
+    function getValue() {
+      if (fieldMetadata?.isAutocomplete?.isMultiple) {
+        return autocompleteValue ?? ([] as T);
+      }
+
+      const input = getInputField(fieldRef.current);
+      if (input == null) {
+        // We don't have a value to process.
+        return;
+      }
+
+      if (stringValue !== input.value) {
+        console.warn(
+          `Field value is out of sync from getValue(): '${stringValue}' !== '${input.value}'.`
+        );
+        setStringValue(input.value);
+        return;
+      }
+
+      const trimmedValue = stringValue.trim();
+      if (trimmedValue === '') {
+        return;
+      }
+
+      if (['email', 'password', 'text', 'textarea'].includes(input.type)) {
+        return trimmedValue as T;
+      }
+
+      if (input.type === 'number') {
+        if (NUMBER_PATTERN.exec(trimmedValue)) {
+          return (
+            INTEGER_PATTERN.exec(trimmedValue)
+              ? parseInt(trimmedValue)
+              : parseFloat(trimmedValue)
+          ) as T;
+        }
+        return;
+      }
+
+      if (input.type === 'checkbox') {
+        return (trimmedValue === 'true') as T;
+      }
+
+      throw new Error(`Input type '${input.type}' is not recognized.`);
+    }
+
+    function setValue(value: T | undefined) {
+      if (fieldMetadata?.isAutocomplete?.isMultiple) {
+        setAutocompleteValue(value ?? ([] as T));
+      }
+    }
+
+    function verifyOkOrSetError(finalCheck: boolean): boolean {
+      const error = calculateError(finalCheck);
+      if (error) {
+        setError(error);
+      } else if (
+        fieldMetadata?.isPassword &&
+        verifyPasswordsMatch(finalCheck).length > 0
+      ) {
+        setError(PASSWORDS_DONT_MATCH);
+      }
+      return !error;
+    }
+
+    function calculateError(finalCheck: boolean): string | undefined {
+      const input = getInputField(fieldRef.current);
+      if (input == null) {
+        // We don't have a field to check yet.
+        return;
+      }
+
+      if (
+        ![
+          'checkbox',
+          'email',
+          'number',
+          'password',
+          'text',
+          'textarea',
+        ].includes(input.type)
+      ) {
+        throw new Error(`Input type '${input.type}' is not recognized.`);
+      }
+
+      if (stringValue !== input.value) {
+        console.warn(
+          `Field value is out of sync from calculateError(): '${stringValue}' !== '${input.value}'.`
+        );
+        setStringValue(input.value);
+        return;
+      }
+
+      if (
+        (input.type === 'password' || fieldMetadata?.isPassword) &&
+        fieldMetadata?.isPassword?.skipPasswordCheck !== true &&
+        !PASSWORD_PATTERN.exec(stringValue)
+      ) {
+        return PASSWORD_ERROR_MESSAGE;
+      }
+
+      if (finalCheck) {
+        if (input.required && stringValue.trim() === '') {
+          return 'This field is required.';
+        }
+        if (input.minLength > 0 && stringValue.length < input.minLength) {
+          return `This field must have at least ${input.minLength} character(s).`;
+        }
+        if (input.maxLength >= 0 && stringValue.length > input.maxLength) {
+          return `This field must have less than ${input.maxLength} character(s).`;
+        }
+      }
+
+      if (stringValue.trim() === '' && (!input.required || !finalCheck)) {
+        return;
+      }
+
+      if (input.type === 'number') {
+        if (NUMBER_PATTERN.exec(stringValue) == null) {
+          return 'This field must be a number.';
+        }
+        if (
+          fieldMetadata?.isInteger &&
+          INTEGER_PATTERN.exec(stringValue) == null
+        ) {
+          return 'This field must be an integer.';
+        }
+        const value = getValue() as number;
+        if (
+          'min' in input &&
+          input.min.length > 0 &&
+          (INTEGER_PATTERN.exec(input.min) != null
+            ? parseInt(input.min)
+            : parseFloat(input.min)) > value
+        ) {
+          return `This field must be greater than or equal to ${input.min}.`;
+        }
+        if (
+          'max' in input &&
+          input.max.length > 0 &&
+          (INTEGER_PATTERN.exec(input.max) != null
+            ? parseInt(input.max)
+            : parseFloat(input.max)) < value
+        ) {
+          return `This field must be less than or equal to ${input.max}.`;
+        }
+      }
+      if (input.type === 'email' && EMAIL_PATTERN.exec(stringValue) == null) {
+        return 'This field is not a valid e-mail address.';
+      }
+      if (
+        fieldMetadata?.isZipCode &&
+        ZIP_CODE_PATTERN.exec(stringValue) == null
+      ) {
+        return 'This field must be 5 digits optionally followed by a dash and 4 digits.';
+      }
+      return;
+    }
+
+    const formField: InternalFormField<T> = {
       name,
-      fieldRef,
+
+      getValue,
+      setValue,
+
       error,
       setError,
+
+      autocompleteParams,
+      textFieldParams,
+      checkboxParams,
+
+      fieldRef,
       fieldMetadata,
 
-      textFieldParams: (
-        params?: AutocompleteRenderInputParams
-      ): OutlinedTextFieldProps => {
-        const checkErrorFn = (finalCheck: boolean) =>
-          checkFieldForErrorsAndSet(
-            setError,
-            getInputField(fieldRef.current),
-            finalCheck,
-            fieldMetadata
-          );
+      reset,
 
-        return {
-          ...(params ?? {}),
-          value: stringValue,
-          type:
-            fieldMetadata?.isPassword && !this.#showPasswords
-              ? 'password'
-              : fieldMetadata?.isEmail
-              ? 'email'
-              : fieldMetadata?.isInteger != null
-              ? 'number'
-              : 'text',
-          variant: 'outlined',
-          fullWidth: true,
-          size: 'small',
-          name: name,
-          ref: fieldRef as RefObject<HTMLDivElement>,
-          helperText: error,
-          error: !!error,
-          onChange: e => {
-            setError('');
-            setStringValue(e.target.value);
-            checkErrorFn(true);
-          },
-          onBlur: () => {
-            setError('');
-            checkErrorFn(true);
-          },
-          InputProps: {
-            ...(params?.InputProps ?? {}),
-            startAdornment: fieldMetadata?.startIcon ? (
-              <InputAdornment position="start" style={{cursor: 'not-allowed'}}>
-                {fieldMetadata.startIcon}
-              </InputAdornment>
-            ) : (
-              params?.InputProps?.startAdornment
-            ),
-            endAdornment: fieldMetadata?.isPassword ? (
-              this.#showPasswords ? (
-                <Visibility
-                  onClick={() => this.#setShowPasswords(false)}
-                  style={{cursor: 'pointer'}}
-                />
-              ) : (
-                <VisibilityOff
-                  onClick={() => this.#setShowPasswords(true)}
-                  style={{cursor: 'pointer'}}
-                />
-              )
-            ) : (
-              params?.InputProps?.endAdornment
-            ),
-          },
-          inputProps: {
-            ...(params?.inputProps ?? {}),
-            minLength:
-              fieldMetadata?.isPassword &&
-              fieldMetadata?.isPassword?.skipPasswordCheck !== true
-                ? MIN_PASSWORD_LENGTH
-                : undefined,
-            maxLength:
-              fieldMetadata?.maxLength ??
-              (fieldMetadata?.isZipCode
-                ? MAX_ZIP_CODE_LENGTH
-                : fieldMetadata?.isPassword &&
-                  fieldMetadata?.isPassword?.skipPasswordCheck !== true
-                ? MAX_PASSWORD_LENGTH
-                : undefined),
-            min: fieldMetadata?.isInteger?.min,
-            max: fieldMetadata?.isInteger?.max,
-          },
-        };
-      },
-
-      checkboxParams(): CheckboxProps {
-        return {
-          checked: stringValue === 'true',
-          size: 'small',
-          name: name,
-          ref: fieldRef as RefObject<HTMLButtonElement>,
-          onChange: e => {
-            setError('');
-            setStringValue(e.target.checked ? 'true' : '');
-          },
-        };
-      },
-
-      autocompleteParams<
-        DisableClearable extends boolean | undefined = false,
-        FreeSolo extends boolean | undefined = false,
-        ChipComponent extends React.ElementType = ChipTypeMap['defaultComponent']
-      >(): Partial<
-        AutocompleteProps<
-          T extends (infer R)[] ? R : T,
-          T extends (infer R)[] ? true : false,
-          DisableClearable,
-          FreeSolo,
-          ChipComponent
-        >
-      > {
-        type ValueType = AutocompleteValue<
-          T extends (infer R)[] ? R : T,
-          T extends (infer R)[] ? true : false,
-          DisableClearable,
-          FreeSolo
-        >;
-        return {
-          value: autocompleteValue as ValueType,
-          onChange: (e, value: ValueType) => {
-            setAutocompleteValue(
-              (Array.isArray(value) ? [...value] : value) as T
-            );
-          },
-        };
-      },
-
-      getValue: () => {
-        if (fieldMetadata?.isAutocomplete) {
-          return autocompleteValue ?? ([] as T);
-        }
-
-        const input = getInputField(fieldRef.current);
-        if (input == null || (stringValue ?? '') === '') {
-          // We don't have a value to process.
-          return;
-        }
-
-        if (['email', 'password', 'text', 'textarea'].includes(input.type)) {
-          const trimmedValue = stringValue.trim();
-          return trimmedValue.length === 0 ? undefined : (trimmedValue as T);
-        }
-
-        if (input.type === 'number') {
-          const trimmedValue = stringValue.trim();
-          if (NUMBER_PATTERN.exec(trimmedValue)) {
-            return (
-              INTEGER_PATTERN.exec(trimmedValue)
-                ? parseInt(trimmedValue)
-                : parseFloat(trimmedValue)
-            ) as T;
-          }
-          return;
-        }
-
-        if (input.type === 'checkbox') {
-          return (stringValue === 'true') as T;
-        }
-
-        throw new Error(`Input type '${input.type}' is not recognized.`);
-      },
-
-      setValue: (value: T | undefined) => {
-        if (fieldMetadata?.isAutocomplete) {
-          setAutocompleteValue(value ?? ([] as T));
-        } else {
-          setStringValue(String(value ?? ''));
-        }
-      },
+      optionallyEvaluateField,
+      verifyOkOrSetError,
+      calculateError,
     };
 
-    this.#fields.set(name, formField as FormField<any>);
+    fields.set(name, formField);
 
     useEffect(() => {
-      this.#formChanged(formField);
+      formChanged(formField);
     }, [stringValue]);
+
     useEffect(() => {
-      this.#formChanged(formField);
+      formChanged(formField);
     }, [autocompleteValue]);
 
     return formField;
   }
 
-  reset() {
-    this.#fields.forEach(f => f.setError(''));
-    this.setValuesObject({});
+  function params(): DetailedHTMLProps<
+    FormHTMLAttributes<HTMLFormElement>,
+    HTMLFormElement
+  > {
+    return {ref: formRef};
   }
 
-  verifyOk(finalCheck: boolean) {
-    this.#fields.forEach(f => f.setError(''));
-    let errorField;
+  function reset() {
+    setValuesObject({});
+  }
 
-    const passwordFields: FormField<string>[] = [];
+  function verifyPasswordsMatch(finalCheck: boolean) {
+    const passwordFields: InternalFormField<string>[] = [];
     const passwordInputs: (
       | HTMLInputElement
       | HTMLTextAreaElement
       | undefined
     )[] = [];
 
-    for (const [name, field] of this.#fields) {
+    for (const field of fields.values()) {
       if (
         field.fieldMetadata?.isPassword != null &&
         field?.fieldMetadata?.isPassword?.skipPasswordCheck !== true
@@ -428,19 +577,26 @@ export class FormFields {
       (finalCheck && passwordsSet.size > 1) ||
       passwordsSetNonBlank.size > 1
     ) {
-      passwordFields.forEach(f => f.setError('Passwords do not match.'));
-      errorField = passwordFields[0];
+      return passwordFields;
     }
 
-    this.#fields.forEach(f => {
-      if (
-        checkFieldForErrorsAndSet(
-          f.setError,
-          getInputField(f.fieldRef.current),
-          finalCheck,
-          f.fieldMetadata
-        )
-      ) {
+    return [];
+  }
+
+  function verifyOk(finalCheck: boolean) {
+    fields.forEach(f => f.setError(''));
+    setEvaluateAllFields(evaluateAllFields || finalCheck);
+
+    let errorField: InternalFormField<any> | undefined;
+
+    const passwordFields = verifyPasswordsMatch(finalCheck);
+    if (passwordFields.length > 0) {
+      errorField = passwordFields[0];
+      passwordFields.forEach(f => f.setError(PASSWORDS_DONT_MATCH));
+    }
+
+    fields.forEach(f => {
+      if (!f.verifyOkOrSetError(finalCheck)) {
         errorField = f;
       }
     });
@@ -456,47 +612,25 @@ export class FormFields {
     return !errorField;
   }
 
-  #checkPasswords(finalCheck: boolean) {
-    let error = false;
+  function setValuesObject(values: {} | null | undefined) {
+    setEvaluateAllFields(false);
+    fields.forEach(f => f.reset());
 
-    this.#fields.forEach(f => {
-      if (
-        f.fieldMetadata?.isPassword &&
-        f.fieldMetadata?.isPassword?.skipPasswordCheck !== true
-      ) {
-        if (
-          checkFieldForErrorsAndSet(
-            f.setError,
-            getInputField(f.fieldRef.current),
-            finalCheck,
-            f.fieldMetadata
-          )
-        ) {
-          error = true;
-        }
-      }
-    });
-
-    return error;
-  }
-
-  setValuesObject(values: {} | null | undefined) {
-    this.#fields.forEach(f => f.setError(''));
     const valuesMap = new Map(Object.entries(values ?? {}));
 
-    this.#fields.forEach(f => {
+    fields.forEach(f => {
       if (valuesMap.has(f.name)) {
         f.setValue(valuesMap.get(f.name));
       } else {
-        f.setValue(f.fieldMetadata?.isMultiple ? [] : '');
+        f.setValue(f.fieldMetadata?.isAutocomplete?.isMultiple ? [] : '');
       }
     });
   }
 
-  getValuesObject() {
+  function getValuesObject() {
     const valuesMap = new Map<string, any>();
 
-    this.#fields.forEach(f => {
+    fields.forEach(f => {
       const value = f.getValue();
       if (value != null) {
         valuesMap.set(f.name, value);
@@ -506,10 +640,10 @@ export class FormFields {
     return Object.fromEntries(valuesMap.entries());
   }
 
-  getValuesURLSearchParams() {
+  function getValuesURLSearchParams() {
     const params = new URLSearchParams();
 
-    this.#fields.forEach(f => {
+    fields.forEach(f => {
       const value = f.getValue();
       if (value == null || value.trim() === '') {
         return;
@@ -520,16 +654,26 @@ export class FormFields {
     return params;
   }
 
-  isTentativelyOkToSubmit() {
-    let okToSubmit = true;
-    this.#fields.forEach(f => {
-      okToSubmit &&= !f.error;
-      if (okToSubmit && getInputField(f.fieldRef.current)?.required) {
-        okToSubmit &&= f.getValue() != null;
-      }
-    });
-    return okToSubmit;
+  const formFields: FormFields = {
+    useStringFormField,
+    useNumberFormField,
+    useBooleanFormField,
+    useAutocompleteFormField,
+    params,
+    reset,
+    verifyOk,
+    setValuesObject,
+    getValuesObject,
+    getValuesURLSearchParams,
+  };
+
+  function formChanged(formField: FormField<any>) {
+    if (formFieldsMetadata && formFieldsMetadata.onChange) {
+      formFieldsMetadata.onChange(formFields, formField);
+    }
   }
+
+  return formFields;
 }
 
 // We have to do this complex search because MUI input refs do not refer
@@ -562,99 +706,4 @@ export function getInputField(
   }
 
   return input;
-}
-
-function checkFieldForErrorsAndSet(
-  setError: (error: string) => void,
-  input: HTMLInputElement | HTMLTextAreaElement | undefined,
-  finalCheck: boolean,
-  extraErrorChecks?: FieldMetadata
-): string | undefined {
-  const error = checkFieldForErrors(input, finalCheck, extraErrorChecks);
-  if (error) {
-    setError(error);
-  }
-  return error;
-}
-
-function checkFieldForErrors(
-  input: HTMLInputElement | HTMLTextAreaElement | undefined,
-  finalCheck: boolean,
-  extraErrorChecks?: FieldMetadata
-): string | undefined {
-  if (input == null) {
-    // We don't have a field to check yet.
-    return;
-  }
-
-  if (
-    !['checkbox', 'email', 'number', 'password', 'text', 'textarea'].includes(
-      input.type
-    )
-  ) {
-    throw new Error(`Input type '${input.type}' is not recognized.`);
-  }
-
-  if (finalCheck) {
-    if (input.required && input.value.trim().length === 0) {
-      return 'This field is required.';
-    }
-    if (input.minLength > 0 && input.value.trim().length < input.minLength) {
-      return `This field must have at least ${input.minLength} character(s).`;
-    }
-    if (input.maxLength >= 0 && input.value.trim().length > input.maxLength) {
-      return `This field must have less than ${input.maxLength} character(s).`;
-    }
-  }
-
-  if (input.value.length === 0 && (!finalCheck || !input.required)) {
-    return;
-  }
-
-  if (input.type === 'number' && finalCheck && input.value.length > 0) {
-    if (NUMBER_PATTERN.exec(input.value) == null) {
-      return 'This field must be a number.';
-    }
-    if (
-      extraErrorChecks?.isInteger &&
-      INTEGER_PATTERN.exec(input.value) == null
-    ) {
-      return 'This field must be an integer.';
-    }
-    if (
-      'min' in input &&
-      input.min.length > 0 &&
-      (INTEGER_PATTERN.exec(input.min) != null
-        ? parseInt(input.min)
-        : parseFloat(input.min)) > input.valueAsNumber
-    ) {
-      return `This field must be greater than or equal to ${input.min}.`;
-    }
-    if (
-      'max' in input &&
-      input.max.length > 0 &&
-      (INTEGER_PATTERN.exec(input.max) != null
-        ? parseInt(input.max)
-        : parseFloat(input.max)) < input.valueAsNumber
-    ) {
-      return `This field must be less than or equal to ${input.max}.`;
-    }
-  }
-  if (input.type === 'email' && EMAIL_PATTERN.exec(input.value) == null) {
-    return 'This field is not a valid e-mail address.';
-  }
-  if (
-    (input.type === 'password' || extraErrorChecks?.isPassword) &&
-    extraErrorChecks?.isPassword?.skipPasswordCheck !== true &&
-    !PASSWORD_PATTERN.exec(input.value)
-  ) {
-    return PASSWORD_ERROR_MESSAGE;
-  }
-  if (
-    extraErrorChecks?.isZipCode &&
-    ZIP_CODE_PATTERN.exec(input.value) == null
-  ) {
-    return 'This field must be 5 digits optionally followed by a dash and 4 digits.';
-  }
-  return;
 }

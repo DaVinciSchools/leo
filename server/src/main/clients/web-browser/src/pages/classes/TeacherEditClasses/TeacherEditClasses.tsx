@@ -252,12 +252,10 @@ export function TeacherEditClasses() {
           title="Create a New EKS"
           onClose={() => setShowNewEks(false)}
           okText="Add EKS"
-          enableOk={eksFormFields.isTentativelyOkToSubmit()}
           onOk={() => {
             if (!eksFormFields.verifyOk(true)) {
               return;
             }
-
             setShowNewEks(false);
 
             createService(ProjectManagementService, 'ProjectManagementService')
