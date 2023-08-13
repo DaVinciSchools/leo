@@ -491,23 +491,33 @@ public class ProjectManagementService {
     switch (input.getValueType()) {
       case EKS -> populateOptions(
           db.getKnowledgeAndSkillRepository().findAll(Type.EKS.name()),
-          i ->
-              Option.newBuilder()
-                  .setId(i.getId())
-                  .setCategory(i.getCategory())
-                  .setName(i.getName())
-                  .setShortDescr(i.getShortDescr())
-                  .setUserXId(i.getUserX().getId()),
+          i -> {
+            var option =
+                Option.newBuilder()
+                    .setId(i.getId())
+                    .setName(i.getName())
+                    .setShortDescr(i.getShortDescr())
+                    .setUserXId(i.getUserX().getId());
+            if (i.getCategory() != null) {
+              option.setCategory(i.getCategory());
+            }
+            return option;
+          },
           input);
       case XQ_COMPETENCY -> populateOptions(
           db.getKnowledgeAndSkillRepository().findAll(Type.XQ_COMPETENCY.name()),
-          i ->
-              Option.newBuilder()
-                  .setId(i.getId())
-                  .setCategory(i.getCategory())
-                  .setName(i.getName())
-                  .setShortDescr(i.getShortDescr())
-                  .setUserXId(i.getUserX().getId()),
+          i -> {
+            var option =
+                Option.newBuilder()
+                    .setId(i.getId())
+                    .setName(i.getName())
+                    .setShortDescr(i.getShortDescr())
+                    .setUserXId(i.getUserX().getId());
+            if (i.getCategory() != null) {
+              option.setCategory(i.getCategory());
+            }
+            return option;
+          },
           input);
       case MOTIVATION -> populateOptions(
           db.getMotivationRepository().findAll(),
