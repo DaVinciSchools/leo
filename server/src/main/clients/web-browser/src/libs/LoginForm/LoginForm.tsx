@@ -58,8 +58,8 @@ export function LoginForm(props: {
 
     login(
       global,
-      username.getTypedValue() ?? '',
-      password.getTypedValue() ?? '',
+      username.getValue()!,
+      password.getValue()!,
       props.onLoggedIn,
       () => setFailure(true),
       global.setError

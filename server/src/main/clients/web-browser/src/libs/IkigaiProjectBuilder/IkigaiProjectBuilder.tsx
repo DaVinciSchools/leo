@@ -78,14 +78,12 @@ function FreeTextInput(props: {
 
   function onSave() {
     setModalOpen(false);
-    const unenteredValue = getInputField(
-      getInputField(inputRef.current)
-    )?.value?.trim();
-    if (unenteredValue != null && unenteredValue !== '') {
+    const unenteredValue = getInputField(inputRef.current)?.value;
+    if (unenteredValue != null) {
       selectedValues.push(unenteredValue);
     }
     props.onValuesUpdated([
-      ...new Set(selectedValues.map(e => e.trim()).filter(e => e.length > 0)),
+      ...new Set(selectedValues.map(e => e.trim()).filter(e => e !== '')),
     ]);
   }
 

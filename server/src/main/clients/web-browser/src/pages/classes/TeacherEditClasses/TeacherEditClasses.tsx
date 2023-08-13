@@ -263,9 +263,9 @@ export function TeacherEditClasses() {
             createService(ProjectManagementService, 'ProjectManagementService')
               .addKnowledgeAndSkill({
                 knowledgeAndSkill: {
-                  name: eksName.getTypedValue()!,
-                  shortDescr: eksShortDescr.getTypedValue()!,
-                  global: eksGlobal.getTypedValue()!,
+                  name: eksName.getValue()!,
+                  shortDescr: eksShortDescr.getValue()!,
+                  global: eksGlobal.getValue()!,
                   type: Type.EKS,
                 },
               })

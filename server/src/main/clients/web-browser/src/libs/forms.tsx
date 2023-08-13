@@ -1,8 +1,26 @@
-import {AutocompleteRenderInputParams, InputAdornment} from '@mui/material';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+import {
+  AutocompleteProps,
+  AutocompleteRenderInputParams,
+  AutocompleteValue,
+  InputAdornment,
+} from '@mui/material';
 import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
-import {ReactElement, RefObject, useRef, useState} from 'react';
+import {
+  DetailedHTMLProps,
+  FormHTMLAttributes,
+  ReactElement,
+  RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
 import {CheckboxProps} from '@mui/material/Checkbox/Checkbox';
+import * as React from 'react';
+import {ChipTypeMap} from '@mui/material/Chip';
 
 const MAX_ZIP_CODE_LENGTH = 10;
 const MIN_PASSWORD_LENGTH = 8;
@@ -32,61 +50,54 @@ export interface FieldMetadata {
   isZipCode?: boolean;
   startIcon?: ReactElement;
   maxLength?: number;
+  isAutocomplete?: boolean;
+  isMultiple?: boolean;
 }
 
-export interface FormField<T extends number | string | boolean> {
-  readonly name: string;
-  readonly fieldRef: RefObject<HTMLDivElement | HTMLButtonElement>;
-  readonly fieldMetadata?: FieldMetadata;
+export type FormFieldsMetadata = {
+  onChange?: (formFields: FormFields, formField: FormField<any>) => void;
+};
 
-  readonly stringValue: string;
-  readonly setStringValue: (value: string) => void;
+export function useFormFields(formFieldsMetadata?: FormFieldsMetadata) {
+  return useState(FormFields.useFormFields(formFieldsMetadata))[0];
+}
 
-  readonly error: string;
-  readonly setError: (message: string) => void;
+export interface FormField<T> {
+  name: string;
+  fieldRef: RefObject<HTMLDivElement | HTMLButtonElement>;
+  fieldMetadata?: FieldMetadata;
 
-  readonly getTypedValue: () => T | undefined;
+  getValue: () => T | undefined;
+  setValue: (value: T | undefined) => void;
 
-  readonly textFieldParams: (
+  error: string;
+  setError: (message: string) => void;
+
+  autocompleteParams<
+    DisableClearable extends boolean | undefined = false,
+    FreeSolo extends boolean | undefined = false,
+    ChipComponent extends React.ElementType = ChipTypeMap['defaultComponent']
+  >(): Partial<
+    AutocompleteProps<
+      T extends (infer R)[] ? R : T,
+      T extends (infer R)[] ? true : false,
+      DisableClearable,
+      FreeSolo,
+      ChipComponent
+    >
+  >;
+
+  textFieldParams: (
     params?: AutocompleteRenderInputParams
   ) => OutlinedTextFieldProps;
 
-  readonly checkboxParams: (params?: CheckboxProps) => CheckboxProps;
+  checkboxParams: (params?: CheckboxProps) => CheckboxProps;
 }
 
-export interface FormFields {
-  readonly useNumberFormField: (
-    name: string,
-    fieldMetadata?: FieldMetadata
-  ) => FormField<number>;
-
-  readonly useStringFormField: (
-    name: string,
-    fieldMetadata?: FieldMetadata
-  ) => FormField<string>;
-
-  readonly useBooleanFormField: (
-    name: string,
-    fieldMetadata?: FieldMetadata
-  ) => FormField<boolean>;
-
-  readonly setValuesObject: (values: {} | null | undefined) => void;
-
-  readonly getValuesObject: () => {};
-  readonly getValuesURLSearchParams: () => URLSearchParams;
-
-  readonly reset: () => void;
-  readonly verifyOk: (finalCheck: boolean) => boolean;
-  readonly isTentativelyOkToSubmit: () => boolean;
-}
-
-export function useFormFields() {
-  return FormFieldsImpl.useFormFields();
-}
-
-class FormFieldsImpl implements FormFields {
-  //eslint-disable-next-line @typescript-eslint/no-explicit-any
+export class FormFields {
   readonly #fields: Map<string, FormField<any>> = new Map();
+  #formFieldsMetadata?: FormFieldsMetadata;
+  #formRef?: RefObject<HTMLFormElement>;
   #showPasswords = false;
   #setShowPasswords: (showPasswords: boolean) => void = () => {
     throw new Error(
@@ -94,17 +105,36 @@ class FormFieldsImpl implements FormFields {
     );
   };
 
-  static useFormFields() {
-    const formFields = useState(new FormFieldsImpl())[0];
+  static useFormFields(formFieldsMetadata?: FormFieldsMetadata) {
+    const formFields = useState(new FormFields())[0];
+    formFields.#formFieldsMetadata = formFieldsMetadata;
+    formFields.#formRef = useRef<HTMLFormElement>(null);
     [formFields.#showPasswords, formFields.#setShowPasswords] = useState(false);
     return formFields;
+  }
+
+  params(): DetailedHTMLProps<
+    FormHTMLAttributes<HTMLFormElement>,
+    HTMLFormElement
+  > {
+    return {ref: this.#formRef};
+  }
+
+  #formChanged(formField: FormField<any>) {
+    if (this.#formFieldsMetadata && this.#formFieldsMetadata.onChange) {
+      this.#formFieldsMetadata.onChange(this, formField);
+    }
   }
 
   useStringFormField(
     name: string,
     fieldMetadata?: FieldMetadata
   ): FormField<string> {
-    if (fieldMetadata?.isInteger || fieldMetadata?.isBoolean) {
+    if (
+      fieldMetadata?.isInteger ||
+      fieldMetadata?.isBoolean ||
+      fieldMetadata?.isAutocomplete
+    ) {
       throw new Error(
         `fieldMetadata does not indicate a string: ${JSON.stringify(
           fieldMetadata ?? {}
@@ -118,7 +148,11 @@ class FormFieldsImpl implements FormFields {
     name: string,
     fieldMetadata?: FieldMetadata
   ): FormField<number> {
-    if (!fieldMetadata?.isInteger || fieldMetadata?.isBoolean) {
+    if (
+      !fieldMetadata?.isInteger ||
+      fieldMetadata?.isBoolean ||
+      fieldMetadata?.isAutocomplete
+    ) {
       throw new Error(
         `fieldMetadata does not indicate a number: ${JSON.stringify(
           fieldMetadata ?? {}
@@ -132,7 +166,11 @@ class FormFieldsImpl implements FormFields {
     name: string,
     fieldMetadata?: FieldMetadata
   ): FormField<boolean> {
-    if (fieldMetadata?.isInteger || !fieldMetadata?.isBoolean) {
+    if (
+      fieldMetadata?.isInteger ||
+      !fieldMetadata?.isBoolean ||
+      fieldMetadata?.isAutocomplete
+    ) {
       throw new Error(
         `fieldMetadata does not indicate a boolean: ${JSON.stringify(
           fieldMetadata ?? {}
@@ -142,18 +180,34 @@ class FormFieldsImpl implements FormFields {
     return this.#useFormField<boolean>(name, fieldMetadata);
   }
 
-  #useFormField<T extends number | string | boolean>(
+  useMultiFormField<T>(
     name: string,
     fieldMetadata?: FieldMetadata
   ): FormField<T> {
+    if (
+      fieldMetadata?.isInteger ||
+      fieldMetadata?.isBoolean ||
+      !fieldMetadata?.isAutocomplete
+    ) {
+      throw new Error(
+        `fieldMetadata does not indicate a multi field: ${JSON.stringify(
+          fieldMetadata ?? {}
+        )}`
+      );
+    }
+    return this.#useFormField<T>(name, fieldMetadata);
+  }
+
+  #useFormField<T>(name: string, fieldMetadata?: FieldMetadata): FormField<T> {
     const [stringValue, setStringValue] = useState('');
+    const [autocompleteValue, setAutocompleteValue] = useState<T | null>(
+      fieldMetadata?.isMultiple ? ([] as T) : null
+    );
     const [error, setError] = useState('');
     const fieldRef = useRef<HTMLDivElement | HTMLButtonElement>(null);
 
     const formField: FormField<T> = {
       name,
-      stringValue,
-      setStringValue,
       fieldRef,
       error,
       setError,
@@ -256,9 +310,42 @@ class FormFieldsImpl implements FormFields {
         };
       },
 
-      getTypedValue: () => {
+      autocompleteParams<
+        DisableClearable extends boolean | undefined = false,
+        FreeSolo extends boolean | undefined = false,
+        ChipComponent extends React.ElementType = ChipTypeMap['defaultComponent']
+      >(): Partial<
+        AutocompleteProps<
+          T extends (infer R)[] ? R : T,
+          T extends (infer R)[] ? true : false,
+          DisableClearable,
+          FreeSolo,
+          ChipComponent
+        >
+      > {
+        type ValueType = AutocompleteValue<
+          T extends (infer R)[] ? R : T,
+          T extends (infer R)[] ? true : false,
+          DisableClearable,
+          FreeSolo
+        >;
+        return {
+          value: autocompleteValue as ValueType,
+          onChange: (e, value: ValueType) => {
+            setAutocompleteValue(
+              (Array.isArray(value) ? [...value] : value) as T
+            );
+          },
+        };
+      },
+
+      getValue: () => {
+        if (fieldMetadata?.isAutocomplete) {
+          return autocompleteValue ?? ([] as T);
+        }
+
         const input = getInputField(fieldRef.current);
-        if (input == null || stringValue == null || stringValue.length === 0) {
+        if (input == null || (stringValue ?? '') === '') {
           // We don't have a value to process.
           return;
         }
@@ -269,11 +356,12 @@ class FormFieldsImpl implements FormFields {
         }
 
         if (input.type === 'number') {
-          if (NUMBER_PATTERN.exec(input.value)) {
+          const trimmedValue = stringValue.trim();
+          if (NUMBER_PATTERN.exec(trimmedValue)) {
             return (
-              INTEGER_PATTERN.exec(input.value)
-                ? parseInt(input.value)
-                : parseFloat(input.value)
+              INTEGER_PATTERN.exec(trimmedValue)
+                ? parseInt(trimmedValue)
+                : parseFloat(trimmedValue)
             ) as T;
           }
           return;
@@ -285,10 +373,24 @@ class FormFieldsImpl implements FormFields {
 
         throw new Error(`Input type '${input.type}' is not recognized.`);
       },
+
+      setValue: (value: T | undefined) => {
+        if (fieldMetadata?.isAutocomplete) {
+          setAutocompleteValue(value ?? ([] as T));
+        } else {
+          setStringValue(String(value ?? ''));
+        }
+      },
     };
 
-    //eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.#fields.set(name, formField as FormField<any>);
+
+    useEffect(() => {
+      this.#formChanged(formField);
+    }, [stringValue]);
+    useEffect(() => {
+      this.#formChanged(formField);
+    }, [autocompleteValue]);
 
     return formField;
   }
@@ -309,7 +411,6 @@ class FormFieldsImpl implements FormFields {
       | undefined
     )[] = [];
 
-    //eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [name, field] of this.#fields) {
       if (
         field.fieldMetadata?.isPassword != null &&
@@ -384,35 +485,36 @@ class FormFieldsImpl implements FormFields {
     const valuesMap = new Map(Object.entries(values ?? {}));
 
     this.#fields.forEach(f => {
-      f.setStringValue(
-        valuesMap.get(f.name) == null ? '' : String(valuesMap.get(f.name))
-      );
+      if (valuesMap.has(f.name)) {
+        f.setValue(valuesMap.get(f.name));
+      } else {
+        f.setValue(f.fieldMetadata?.isMultiple ? [] : '');
+      }
     });
   }
 
   getValuesObject() {
-    const values: {
-      [key: string]: string | number | boolean;
-    } = {};
+    const valuesMap = new Map<string, any>();
 
     this.#fields.forEach(f => {
-      const value = f.getTypedValue();
+      const value = f.getValue();
       if (value != null) {
-        values[f.name] = value;
+        valuesMap.set(f.name, value);
       }
     });
 
-    return values;
+    return Object.fromEntries(valuesMap.entries());
   }
 
   getValuesURLSearchParams() {
     const params = new URLSearchParams();
 
     this.#fields.forEach(f => {
-      if (f.stringValue == null || f.stringValue.trim() === '') {
+      const value = f.getValue();
+      if (value == null || value.trim() === '') {
         return;
       }
-      params.append(f.name, f.stringValue);
+      params.append(f.name, value);
     });
 
     return params;
@@ -423,7 +525,7 @@ class FormFieldsImpl implements FormFields {
     this.#fields.forEach(f => {
       okToSubmit &&= !f.error;
       if (okToSubmit && getInputField(f.fieldRef.current)?.required) {
-        okToSubmit &&= !!f.stringValue;
+        okToSubmit &&= f.getValue() != null;
       }
     });
     return okToSubmit;
@@ -462,7 +564,7 @@ export function getInputField(
   return input;
 }
 
-export function checkFieldForErrorsAndSet(
+function checkFieldForErrorsAndSet(
   setError: (error: string) => void,
   input: HTMLInputElement | HTMLTextAreaElement | undefined,
   finalCheck: boolean,
@@ -475,7 +577,7 @@ export function checkFieldForErrorsAndSet(
   return error;
 }
 
-export function checkFieldForErrors(
+function checkFieldForErrors(
   input: HTMLInputElement | HTMLTextAreaElement | undefined,
   finalCheck: boolean,
   extraErrorChecks?: FieldMetadata
