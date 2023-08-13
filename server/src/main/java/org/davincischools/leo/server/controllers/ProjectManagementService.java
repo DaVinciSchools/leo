@@ -34,7 +34,6 @@ import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryType
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
-import org.davincischools.leo.protos.pl_types.KnowledgeAndSkill;
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
@@ -67,8 +66,8 @@ import org.davincischools.leo.protos.project_management.RegisterAnonymousProject
 import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
 import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V2ProjectGenerator;
-import org.davincischools.leo.server.utils.DataAccess;
 import org.davincischools.leo.server.utils.OpenAiUtils;
+import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user.Anonymous;
@@ -122,8 +121,7 @@ public class ProjectManagementService {
                           request.getTypesList().stream().map(Enum::name).toList(),
                           user.get().map(UserX::getId).orElse(0))
                       .stream()
-                      .map(DataAccess::toKnowledgeAndSkillProto)
-                      .map(KnowledgeAndSkill.Builder::build)
+                      .map(ProtoDaoConverter::toKnowledgeAndSkillProto)
                       .toList());
 
               return response.build();
@@ -159,13 +157,13 @@ public class ProjectManagementService {
               }
 
               org.davincischools.leo.database.daos.KnowledgeAndSkill dao =
-                  DataAccess.toDao(request.getKnowledgeAndSkill())
+                  ProtoDaoConverter.toKnowledgeAndSkillDao(request.getKnowledgeAndSkill())
                       .setUserX(user.get().orElseThrow());
 
               db.getKnowledgeAndSkillRepository().save(dao);
 
               return response
-                  .setKnowledgeAndSkill(DataAccess.toKnowledgeAndSkillProto(dao))
+                  .setKnowledgeAndSkill(ProtoDaoConverter.toKnowledgeAndSkillProto(dao))
                   .build();
             })
         .finish();
@@ -365,7 +363,7 @@ public class ProjectManagementService {
               }
 
               return GetProjectDetailsResponse.newBuilder()
-                  .setProject(DataAccess.convertProjectWithMilestonesToProto(project))
+                  .setProject(ProtoDaoConverter.toProjectProto(project))
                   .build();
             })
         .finish();
@@ -404,7 +402,7 @@ public class ProjectManagementService {
                       .getProjectRepository()
                       .findProjectsByUserXId(userId, request.getActiveOnly())
                       .stream()
-                      .map(DataAccess::convertProjectToProto)
+                      .map(ProtoDaoConverter::toProjectProto)
                       .toList());
 
               if (request.getIncludeUnsuccessful()) {
@@ -413,9 +411,7 @@ public class ProjectManagementService {
                         .getProjectInputRepository()
                         .findFullProjectInputByUserAndUnsuccessful(userId)
                         .stream()
-                        .map(DataAccess::convertFullProjectInput)
-                        .map(
-                            org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder::build)
+                        .map(ProtoDaoConverter::toProjectDefinition)
                         .toList());
               }
 
@@ -561,7 +557,7 @@ public class ProjectManagementService {
 
               for (FullProjectDefinition fullDefinition : fullDefinitions) {
                 response.addDefinitions(
-                    DataAccess.convertFullProjectDefinition(fullDefinition)
+                    ProtoDaoConverter.toProjectDefinition(fullDefinition).toBuilder()
                         .setSelected(fullDefinition == selectedFullDefinition));
               }
 
@@ -636,7 +632,7 @@ public class ProjectManagementService {
               db.getProjectRepository().save(project);
 
               return UpdateProjectResponse.newBuilder()
-                  .setProject(DataAccess.convertProjectToProto(project))
+                  .setProject(ProtoDaoConverter.toProjectProto(project))
                   .build();
             })
         .finish();
@@ -660,7 +656,7 @@ public class ProjectManagementService {
               var response = GetProjectPostsResponse.newBuilder();
               response.addAllProjectPosts(
                   db.getProjectPostRepository().findAllByProjectId(request.getProjectId()).stream()
-                      .map(DataAccess::convertProjectPostToProto)
+                      .map(ProtoDaoConverter::toProjectPostProto)
                       .toList());
               return response.build();
             })

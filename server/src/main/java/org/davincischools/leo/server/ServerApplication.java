@@ -17,7 +17,7 @@ import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.pl_types.User;
 import org.davincischools.leo.server.controllers.project_generators.ProjectGenerator;
-import org.davincischools.leo.server.utils.DataAccess;
+import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.davincischools.leo.server.utils.QueryWithNullsToRecordConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutor;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorArgumentResolver;
@@ -186,7 +186,7 @@ public class ServerApplication {
                               Authentication authentication) -> {
                             // Return the user in the reply after authentication.
                             UserX userX = ((UserXDetails) authentication.getPrincipal()).getUserX();
-                            User user = DataAccess.convertFullUserXToProto(userX);
+                            User user = ProtoDaoConverter.toUserProto(userX);
 
                             response.setContentType(
                                 ProtobufHttpMessageConverter.PROTOBUF.toString());

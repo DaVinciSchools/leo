@@ -32,7 +32,7 @@ import org.davincischools.leo.protos.user_management.RemoveUserRequest;
 import org.davincischools.leo.protos.user_management.RemoveUserResponse;
 import org.davincischools.leo.protos.user_management.UpsertUserRequest;
 import org.davincischools.leo.protos.user_management.UpsertUserResponse;
-import org.davincischools.leo.server.utils.DataAccess;
+import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user.Admin;
@@ -86,7 +86,7 @@ public class UserManagementService {
                   GetPagedUsersDetailsResponse.newBuilder()
                       .addAllUsers(
                           pagedUsers.getContent().stream()
-                              .map(DataAccess::convertFullUserXToDetailsProto)
+                              .map(ProtoDaoConverter::toFullUserDetailsProto)
                               .toList())
                       .setTotalUsers((int) pagedUsers.getTotalElements());
               return response.build();
@@ -309,7 +309,7 @@ public class UserManagementService {
               db.getUserXRepository().save(userX);
 
               if (!response.hasError()) {
-                response.setUser(DataAccess.convertFullUserXToDetailsProto(userX));
+                response.setUser(ProtoDaoConverter.toFullUserDetailsProto(userX));
               }
               return response.build();
             })
@@ -485,7 +485,7 @@ public class UserManagementService {
     }
 
     // Set user details.
-    details.setUser(DataAccess.convertFullUserXToProto(userX));
+    details.setUser(ProtoDaoConverter.toUserProto(userX));
 
     // Set teacher details.
     Optional.ofNullable(userX.getTeacher())

@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -29,7 +28,6 @@ import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
@@ -41,7 +39,6 @@ import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.UserX;
-import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.ClassXRepository.FullClassX;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.FullProjectInput;
@@ -54,10 +51,10 @@ import org.davincischools.leo.protos.pl_types.ProjectDefinition.State;
 import org.davincischools.leo.protos.pl_types.ProjectInputValue;
 import org.davincischools.leo.protos.user_management.FullUserDetails;
 
-public class DataAccess {
+public class ProtoDaoConverter {
 
   @SafeVarargs
-  public static <T> T coalesce(Callable<T>... values) throws NullPointerException {
+  private static <T> T coalesce(Callable<T>... values) throws NullPointerException {
     return Stream.of(values)
         .map(
             value -> {
@@ -72,7 +69,7 @@ public class DataAccess {
         .orElseThrow(NullPointerException::new);
   }
 
-  public static org.davincischools.leo.protos.pl_types.User convertFullUserXToProto(UserX user) {
+  public static org.davincischools.leo.protos.pl_types.User toUserProto(UserX user) {
     var userProto = org.davincischools.leo.protos.pl_types.User.newBuilder();
     if (user.getId() != null) {
       userProto
@@ -102,8 +99,8 @@ public class DataAccess {
     return userProto.build();
   }
 
-  public static FullUserDetails convertFullUserXToDetailsProto(UserX userX) {
-    var proto = FullUserDetails.newBuilder().setUser(convertFullUserXToProto(userX));
+  public static FullUserDetails toFullUserDetailsProto(UserX userX) {
+    var proto = FullUserDetails.newBuilder().setUser(toUserProto(userX));
     if (UserXRepository.isStudent(userX)) {
       if (userX.getStudent().getDistrictStudentId() != null) {
         proto.setDistrictStudentId(userX.getStudent().getDistrictStudentId());
@@ -115,15 +112,7 @@ public class DataAccess {
     return proto.build();
   }
 
-  public static List<org.davincischools.leo.protos.pl_types.User> getProtoFullUserXsByDistrictId(
-      Database db, int districtId) {
-    return StreamSupport.stream(
-            db.getUserXRepository().findAllByDistrictId(districtId).spliterator(), false)
-        .map(DataAccess::convertFullUserXToProto)
-        .collect(Collectors.toList());
-  }
-
-  public static org.davincischools.leo.protos.pl_types.School convertSchoolToProto(School school) {
+  public static org.davincischools.leo.protos.pl_types.School toSchoolProto(School school) {
     return org.davincischools.leo.protos.pl_types.School.newBuilder()
         .setId(coalesce(school::getId, () -> -1))
         .setDistrictId(coalesce(school.getDistrict()::getId, () -> -1))
@@ -132,16 +121,7 @@ public class DataAccess {
         .build();
   }
 
-  public static List<org.davincischools.leo.protos.pl_types.School> getProtoSchoolsByDistrictId(
-      Database db, int districtId) {
-    return StreamSupport.stream(
-            db.getSchoolRepository().findAllByDistrictId(districtId).spliterator(), false)
-        .map(DataAccess::convertSchoolToProto)
-        .collect(Collectors.toList());
-  }
-
-  public static org.davincischools.leo.protos.pl_types.ClassX.Builder toFullClassXProto(
-      FullClassX fullClassX) {
+  public static org.davincischools.leo.protos.pl_types.ClassX toClassXProto(FullClassX fullClassX) {
     var classX = fullClassX.classX();
     return org.davincischools.leo.protos.pl_types.ClassX.newBuilder()
         .setId(classX.getId())
@@ -153,13 +133,13 @@ public class DataAccess {
         .setLongDescrHtml(coalesce(classX::getLongDescrHtml, () -> ""))
         .addAllKnowledgeAndSkills(
             fullClassX.knowledgeAndSkills().stream()
-                .map(DataAccess::toKnowledgeAndSkillProto)
-                .map(org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Builder::build)
-                .toList());
+                .map(ProtoDaoConverter::toKnowledgeAndSkillProto)
+                .toList())
+        .build();
   }
 
-  public static org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Builder
-      toKnowledgeAndSkillProto(KnowledgeAndSkill knowledgeAndSkill) {
+  public static org.davincischools.leo.protos.pl_types.KnowledgeAndSkill toKnowledgeAndSkillProto(
+      KnowledgeAndSkill knowledgeAndSkill) {
     return org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.newBuilder()
         .setId(knowledgeAndSkill.getId())
         .setType(Type.valueOf(knowledgeAndSkill.getType()))
@@ -168,22 +148,23 @@ public class DataAccess {
         .setShortDescr(coalesce(knowledgeAndSkill::getShortDescr, () -> ""))
         .setLongDescrHtml(coalesce(knowledgeAndSkill::getLongDescrHtml, () -> ""))
         .setGlobal(Boolean.TRUE.equals(knowledgeAndSkill.getGlobal()))
-        .setUserXId(knowledgeAndSkill.getUserX().getId());
+        .setUserXId(knowledgeAndSkill.getUserX().getId())
+        .build();
   }
 
-  public static org.davincischools.leo.protos.pl_types.Assignment convertAssignmentToProto(
+  public static org.davincischools.leo.protos.pl_types.Assignment toAssignmentProto(
       ClassX classX, Assignment assignment) {
     return org.davincischools.leo.protos.pl_types.Assignment.newBuilder()
         .setId(coalesce(assignment::getId, () -> -1))
         .setName(assignment.getName())
         .setShortDescr(coalesce(assignment::getShortDescr, () -> ""))
         .setLongDescrHtml(coalesce(assignment::getLongDescrHtml, () -> ""))
-        .setClassX(DataAccess.toFullClassXProto(new FullClassX(classX, new ArrayList<>())))
+        .setClassX(ProtoDaoConverter.toClassXProto(new FullClassX(classX, new ArrayList<>())))
         .build();
   }
 
-  public static org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder
-      convertFullProjectDefinition(FullProjectDefinition fullProjectDefinition) {
+  public static org.davincischools.leo.protos.pl_types.ProjectDefinition toProjectDefinition(
+      FullProjectDefinition fullProjectDefinition) {
     var projectDefinitionProto =
         org.davincischools.leo.protos.pl_types.ProjectDefinition.newBuilder()
             .setId(fullProjectDefinition.definition().getId())
@@ -194,11 +175,11 @@ public class DataAccess {
       createProjectInputValueProto(
           categoryDao.getId(), type, projectDefinitionProto.addInputsBuilder());
     }
-    return projectDefinitionProto;
+    return projectDefinitionProto.build();
   }
 
-  public static org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder
-      convertFullProjectInput(FullProjectInput fullProjectInput) {
+  public static org.davincischools.leo.protos.pl_types.ProjectDefinition toProjectDefinition(
+      FullProjectInput fullProjectInput) {
     var projectDefinitionProto =
         org.davincischools.leo.protos.pl_types.ProjectDefinition.newBuilder()
             .setId(fullProjectInput.definition().getId())
@@ -231,7 +212,7 @@ public class DataAccess {
         case UNSET -> throw new IllegalStateException("Unset value type");
       }
     }
-    return projectDefinitionProto;
+    return projectDefinitionProto.build();
   }
 
   private static ProjectInputValue.Builder createProjectInputValueProto(
@@ -252,8 +233,7 @@ public class DataAccess {
     return projectInputValueProto;
   }
 
-  public static org.davincischools.leo.protos.pl_types.Project convertProjectToProto(
-      Project project) {
+  public static org.davincischools.leo.protos.pl_types.Project toProjectProto(Project project) {
     return org.davincischools.leo.protos.pl_types.Project.newBuilder()
         .setId(coalesce(project::getId, () -> -1))
         .setName(project.getName())
@@ -268,51 +248,51 @@ public class DataAccess {
         .build();
   }
 
-  public static org.davincischools.leo.protos.pl_types.Project.Milestone
-      convertProjectMilestoneToProto(ProjectMilestone projectMilestone) {
+  public static org.davincischools.leo.protos.pl_types.Project.Milestone toMilestoneProto(
+      ProjectMilestone projectMilestone) {
     return org.davincischools.leo.protos.pl_types.Project.Milestone.newBuilder()
         .setId(projectMilestone.getId())
         .setName(projectMilestone.getName())
         .build();
   }
 
-  public static org.davincischools.leo.protos.pl_types.Project.Milestone.Step
-      convertProjectMilestoneStepToProto(ProjectMilestoneStep projectMilestoneStep) {
+  public static org.davincischools.leo.protos.pl_types.Project.Milestone.Step toMilestoneStepProto(
+      ProjectMilestoneStep projectMilestoneStep) {
     return org.davincischools.leo.protos.pl_types.Project.Milestone.Step.newBuilder()
         .setId(projectMilestoneStep.getId())
         .setName(projectMilestoneStep.getName())
         .build();
   }
 
-  public static org.davincischools.leo.protos.pl_types.Project.Milestone
-      convertMilestoneWithStepsToProto(MilestoneWithSteps milestone) {
-    return convertProjectMilestoneToProto(milestone.milestone()).toBuilder()
+  public static org.davincischools.leo.protos.pl_types.Project.Milestone toMilestoneProto(
+      MilestoneWithSteps milestone) {
+    return toMilestoneProto(milestone.milestone()).toBuilder()
         .addAllSteps(
-            milestone.steps().stream().map(DataAccess::convertProjectMilestoneStepToProto).toList())
+            milestone.steps().stream().map(ProtoDaoConverter::toMilestoneStepProto).toList())
         .build();
   }
 
-  public static org.davincischools.leo.protos.pl_types.Project convertProjectWithMilestonesToProto(
+  public static org.davincischools.leo.protos.pl_types.Project toProjectProto(
       ProjectWithMilestones projectWithMilestones) {
-    return convertProjectToProto(projectWithMilestones.project()).toBuilder()
+    return toProjectProto(projectWithMilestones.project()).toBuilder()
         .addAllMilestones(
             projectWithMilestones.milestones().stream()
-                .map(DataAccess::convertMilestoneWithStepsToProto)
+                .map(ProtoDaoConverter::toMilestoneProto)
                 .toList())
         .build();
   }
 
-  public static org.davincischools.leo.protos.pl_types.ProjectPost convertProjectPostToProto(
+  public static org.davincischools.leo.protos.pl_types.ProjectPost toProjectPostProto(
       ProjectPost projectPost) {
     return org.davincischools.leo.protos.pl_types.ProjectPost.newBuilder()
-        .setUser(convertFullUserXToProto(projectPost.getUserX()))
+        .setUser(toUserProto(projectPost.getUserX()))
         .setName(projectPost.getName())
         .setMessageHtml(projectPost.getMessageHtml())
         .setPostEpochSec((int) projectPost.getCreationTime().getEpochSecond())
         .build();
   }
 
-  public static KnowledgeAndSkill toDao(
+  public static KnowledgeAndSkill toKnowledgeAndSkillDao(
       org.davincischools.leo.protos.pl_types.KnowledgeAndSkill p) {
     return translateToDao(p, new KnowledgeAndSkill().setCreationTime(Instant.now()));
   }

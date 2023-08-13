@@ -4,8 +4,7 @@ import java.util.Optional;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.class_management_service.GetClassesRequest;
 import org.davincischools.leo.protos.class_management_service.GetClassesResponse;
-import org.davincischools.leo.protos.pl_types.ClassX;
-import org.davincischools.leo.server.utils.DataAccess;
+import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user.Authenticated;
@@ -49,8 +48,7 @@ public class ClassManagementService {
                       .getClassXRepository()
                       .findFullClassXsByUserId(user.teacherId(), user.studentId())
                       .stream()
-                      .map(DataAccess::toFullClassXProto)
-                      .map(ClassX.Builder::build)
+                      .map(ProtoDaoConverter::toClassXProto)
                       .toList());
 
               return response.build();

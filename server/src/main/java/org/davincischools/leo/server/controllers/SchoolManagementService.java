@@ -8,7 +8,7 @@ import org.davincischools.leo.protos.school_management.GetSchoolsRequest;
 import org.davincischools.leo.protos.school_management.RemoveSchoolRequest;
 import org.davincischools.leo.protos.school_management.SchoolInformationResponse;
 import org.davincischools.leo.protos.school_management.UpsertSchoolRequest;
-import org.davincischools.leo.server.utils.DataAccess;
+import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user.Admin;
@@ -101,7 +101,10 @@ public class SchoolManagementService {
     SchoolInformationResponse.Builder response = SchoolInformationResponse.newBuilder();
     response.setDistrictId(districtId);
     response.setNextSchoolId(nextSchoolId);
-    response.addAllSchools(DataAccess.getProtoSchoolsByDistrictId(db, districtId));
+    response.addAllSchools(
+        db.getSchoolRepository().findAllByDistrictId(districtId).stream()
+            .map(ProtoDaoConverter::toSchoolProto)
+            .toList());
     return response.build();
   }
 }
