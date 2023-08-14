@@ -1,7 +1,6 @@
 package org.davincischools.leo.server.utils;
 
 import com.fasterxml.jackson.datatype.jdk8.WrappedIOException;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Bytes;
 import com.google.protobuf.GeneratedMessageV3.Builder;
@@ -29,12 +28,10 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
