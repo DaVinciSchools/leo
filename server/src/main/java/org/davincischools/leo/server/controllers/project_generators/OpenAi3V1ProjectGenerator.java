@@ -59,7 +59,7 @@ public class OpenAi3V1ProjectGenerator {
     }
 
     request
-        .setModel(OpenAiUtils.GPT_4_MODEL)
+        .setModel(OpenAiUtils.GPT_3_5_TURBO_MODEL)
         .addMessagesBuilder()
         .setRole("system")
         .setContent(
