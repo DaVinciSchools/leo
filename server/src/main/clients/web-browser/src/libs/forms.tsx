@@ -60,6 +60,7 @@ export interface FormField<T> {
   autocompleteParams(): {
     value: T;
     onChange: (event: React.SyntheticEvent, value: T) => void;
+    disabled: boolean;
   };
 
   textFieldParams: (
@@ -105,7 +106,7 @@ interface FormFields {
     fieldMetadata?: FormFieldMetadata
   ): FormField<T>;
 
-  params(): DetailedHTMLProps<
+  formParams(): DetailedHTMLProps<
     FormHTMLAttributes<HTMLFormElement>,
     HTMLFormElement
   >;
@@ -116,11 +117,13 @@ interface FormFields {
 
   setValuesObject(values: {} | null | undefined): void;
 
-  getValuesObject(): {
-    [p: string]: any;
-  };
+  getValuesObject<O extends {}>(includeNulls?: boolean, startWithObject?: O): O;
 
   getValuesURLSearchParams(): URLSearchParams;
+
+  setEnabled(enabled: boolean): void;
+
+  getDisabled(): boolean;
 }
 
 export function useFormFields(
@@ -130,6 +133,7 @@ export function useFormFields(
   const formRef = useRef<HTMLFormElement>(null);
   const [showPasswords, setShowPasswords] = useState(false);
   const [evaluateAllFields, setEvaluateAllFields] = useState(false);
+  const [enabled, setEnabled] = useState(true);
 
   function useStringFormField(
     name: string,
@@ -318,18 +322,20 @@ export function useFormFields(
           min: fieldMetadata?.isInteger?.min,
           max: fieldMetadata?.isInteger?.max,
         },
+        disabled: !enabled,
       } as OutlinedTextFieldProps;
     }
 
     function checkboxParams(): CheckboxProps {
       return {
-        checked: stringValue === 'true',
+        checked: stringValue === 'on',
         size: 'small',
         name: name,
         ref: fieldRef as RefObject<HTMLButtonElement>,
         onChange: e => {
-          setStringValue(e.target.checked ? 'true' : '');
+          setStringValue(e.target.checked ? 'on' : 'off');
         },
+        disabled: !enabled,
       };
     }
 
@@ -343,6 +349,7 @@ export function useFormFields(
             setStringValue(String(value ?? ''));
           }
         },
+        disabled: !enabled,
       };
     }
 
@@ -386,7 +393,7 @@ export function useFormFields(
       }
 
       if (input.type === 'checkbox') {
-        return (trimmedValue === 'true') as T;
+        return (trimmedValue === 'on') as T;
       }
 
       throw new Error(`Input type '${input.type}' is not recognized.`);
@@ -395,6 +402,12 @@ export function useFormFields(
     function setValue(value: T | undefined) {
       if (fieldMetadata?.isAutocomplete?.isMultiple) {
         setAutocompleteValue(value ?? ([] as T));
+      } else {
+        if (fieldMetadata?.isBoolean) {
+          setStringValue(value ? 'on' : 'off');
+        } else {
+          setStringValue(String(value ?? ''));
+        }
       }
     }
 
@@ -541,7 +554,7 @@ export function useFormFields(
     return formField;
   }
 
-  function params(): DetailedHTMLProps<
+  function formParams(): DetailedHTMLProps<
     FormHTMLAttributes<HTMLFormElement>,
     HTMLFormElement
   > {
@@ -627,17 +640,18 @@ export function useFormFields(
     });
   }
 
-  function getValuesObject() {
-    const valuesMap = new Map<string, any>();
-
+  function getValuesObject<O extends {}>(
+    includeNulls?: boolean,
+    startWithObject?: O
+  ): O {
+    const object = (startWithObject ?? {}) as {[key: string]: any};
     fields.forEach(f => {
       const value = f.getValue();
-      if (value != null) {
-        valuesMap.set(f.name, value);
+      if (value != null || includeNulls === true) {
+        object[f.name] = value;
       }
     });
-
-    return Object.fromEntries(valuesMap.entries());
+    return object as O;
   }
 
   function getValuesURLSearchParams() {
@@ -655,11 +669,13 @@ export function useFormFields(
   }
 
   const formFields: FormFields = {
+    setEnabled,
+    getDisabled: () => !enabled,
     useStringFormField,
     useNumberFormField,
     useBooleanFormField,
     useAutocompleteFormField,
-    params,
+    formParams,
     reset,
     verifyOk,
     setValuesObject,

@@ -1,6 +1,7 @@
 import './TeacherEditClasses.scss';
 import '../../../libs/IkigaiProjectBuilder/IkigaiProjectBuilder.scss';
 
+import {Add, Clear} from '@mui/icons-material';
 import {
   Autocomplete,
   Button,
@@ -13,6 +14,8 @@ import {
 import {CLASS_SORTER, KNOWLEDGE_AND_SKILL_SORTER} from '../../../libs/sorters';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {GlobalStateContext} from '../../../libs/GlobalState';
+import {StandardModal} from '../../../libs/StandardModal/StandardModal';
+import {addClassName, spread} from '../../../libs/tags';
 import {
   class_management_service,
   pl_types,
@@ -20,14 +23,13 @@ import {
 } from '../../../generated/protobuf-js';
 import {createService} from '../../../libs/protos';
 import {useContext, useEffect, useState} from 'react';
+import {useDelayedAction} from '../../../libs/delayed_action';
 import {useFormFields} from '../../../libs/forms';
-import {addClassName, spread} from '../../../libs/tags';
-import {Add, Clear} from '@mui/icons-material';
-import {StandardModal} from '../../../libs/StandardModal/StandardModal';
+
 import ClassManagementService = class_management_service.ClassManagementService;
 import IClassX = pl_types.IClassX;
-import ProjectManagementService = project_management.ProjectManagementService;
 import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
+import ProjectManagementService = project_management.ProjectManagementService;
 import Type = pl_types.KnowledgeAndSkill.Type;
 
 export function TeacherEditClasses() {
@@ -38,25 +40,55 @@ export function TeacherEditClasses() {
   const [sortedKnowledgeAndSkills, setSortedKnowledgeAndSkills] = useState<
     IKnowledgeAndSkill[]
   >([]);
-  const [
-    sortedSelectedKnowledgeAndSkills,
-    setSortedSelectedKnowledgeAndSkills,
-  ] = useState<IKnowledgeAndSkill[]>([]);
+  const [classSaveStatus, setClassSaveStatus] = useState<string>('');
 
-  const formFields = useFormFields();
-  const name = formFields.useStringFormField('name', {maxLength: 255});
-  const number = formFields.useStringFormField('number', {maxLength: 16});
-  const eks = formFields.useStringFormField('eks', {
+  // --- AutoSave ---
+
+  const autoSave = useDelayedAction(
+    () => setClassSaveStatus('Modified'),
+    () => {
+      setClassSaveStatus('Saving...');
+      if (selectedClass?.id != null && classFormFields.verifyOk(true)) {
+        classFormFields.getValuesObject(true, selectedClass);
+        setClassSaveStatus('Saved');
+        // return createService(ClassManagementService, 'ClassManagementService')
+        //   .saveClass(classFormFields.getValuesObject())
+        //   .then(() => setClassSaveStatus('Saved'))
+        //   .catch(global.setError);
+      } else {
+        setClassSaveStatus('Invalid values, Not saved');
+      }
+      return;
+    },
+    1000
+  );
+
+  // --- Class Form ---
+
+  const classFormFields = useFormFields({onChange: () => autoSave.trigger()});
+  const className = classFormFields.useStringFormField('name', {
     maxLength: 255,
   });
-  const period = formFields.useStringFormField('period', {maxLength: 16});
-  const grade = formFields.useStringFormField('grade', {maxLength: 16});
-  const shortDescr = formFields.useStringFormField('shortDescr', {
+  const classNumber = classFormFields.useStringFormField('number', {
+    maxLength: 16,
+  });
+  const classEks = classFormFields.useAutocompleteFormField<
+    IKnowledgeAndSkill[]
+  >('eks', {isAutocomplete: {isMultiple: true}});
+  const classPeriod = classFormFields.useStringFormField('period', {
+    maxLength: 16,
+  });
+  const classGrade = classFormFields.useStringFormField('grade', {
+    maxLength: 16,
+  });
+  const classShortDescr = classFormFields.useStringFormField('shortDescr', {
     maxLength: 255,
   });
-  const longDescr = formFields.useStringFormField('longDescr', {
+  const classLongDescr = classFormFields.useStringFormField('longDescr', {
     maxLength: 255,
   });
+
+  // --- New EKS Form ---
 
   const [showNewEks, setShowNewEks] = useState<boolean>(false);
   const eksFormFields = useFormFields();
@@ -67,6 +99,8 @@ export function TeacherEditClasses() {
   const eksGlobal = eksFormFields.useBooleanFormField('global', {
     isBoolean: true,
   });
+
+  // --- Effects ---
 
   useEffect(() => {
     createService(ProjectManagementService, 'ProjectManagementService')
@@ -80,9 +114,9 @@ export function TeacherEditClasses() {
   }, []);
 
   useEffect(() => {
+    setSelectedClass(null);
     if (global.user == null) {
       setClasses([]);
-      setSelectedClass(null);
       return;
     }
     createService(ClassManagementService, 'ClassManagementService')
@@ -97,6 +131,11 @@ export function TeacherEditClasses() {
     }
   }, [showNewEks]);
 
+  useEffect(() => {
+    classFormFields.setValuesObject(selectedClass ?? {});
+    classFormFields.setEnabled(selectedClass?.id != null);
+  }, [selectedClass]);
+
   if (!global.requireUser(user => user?.isTeacher || user?.isAdmin)) {
     return <></>;
   }
@@ -105,6 +144,9 @@ export function TeacherEditClasses() {
     <>
       <DefaultPage title="Edit Classes">
         <Grid container spacing={2}>
+          <Grid item xs={12} className="section-heading">
+            <div className="section-title">Select Class:</div>
+          </Grid>
           <Grid item {...spread({sm: 12, md: 7})}>
             <Autocomplete
               autoHighlight
@@ -114,7 +156,7 @@ export function TeacherEditClasses() {
               isOptionEqualToValue={(option, value) => option.id === value.id}
               //eslint-disable-next-line @typescript-eslint/no-unused-vars
               renderOption={(props, option, {selected}) => (
-                <li {...props}>
+                <li {...props} key={option.id}>
                   {option.number}:&nbsp;
                   <i>{option.name}</i>
                 </li>
@@ -133,8 +175,9 @@ export function TeacherEditClasses() {
                 (option?.name ?? 'undefined')
               }
               onChange={(e, option) => {
-                setSelectedClass(option);
-                formFields.setValuesObject(option);
+                autoSave.forceDelayedAction(() => {
+                  setSelectedClass(option);
+                });
               }}
             />
           </Grid>
@@ -156,20 +199,30 @@ export function TeacherEditClasses() {
             </Button>
           </Grid>
         </Grid>
-        <form style={{paddingTop: '2em'}}>
+        <form style={{paddingTop: '2em'}} {...classFormFields.formParams()}>
           <Grid container spacing={2}>
+            <Grid item xs={12} className="section-heading">
+              <div className="section-title">Edit Class:</div>
+              <div className="section-links">
+                <div
+                  style={{display: selectedClass == null ? 'none' : undefined}}
+                >
+                  {classSaveStatus}
+                </div>
+              </div>
+            </Grid>
             <Grid item {...spread({sm: 12, md: 4})}>
               <TextField
                 required
                 label="Class ID"
-                {...number.textFieldParams()}
+                {...classNumber.textFieldParams()}
               />
             </Grid>
             <Grid item {...spread({sm: 12, md: 8})}>
               <TextField
                 required
                 label="Class Name"
-                {...name.textFieldParams()}
+                {...className.textFieldParams()}
               />
             </Grid>
             <Grid item {...spread({sm: 12, md: 9.5})}>
@@ -177,18 +230,17 @@ export function TeacherEditClasses() {
                 multiple
                 autoHighlight
                 disableCloseOnSelect
-                value={sortedSelectedKnowledgeAndSkills}
                 options={sortedKnowledgeAndSkills}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 renderInput={params => (
                   <TextField
                     label="Select knowledge and skills"
                     autoComplete="off"
-                    {...eks.textFieldParams(params)}
+                    {...classEks.textFieldParams(params)}
                   />
                 )}
                 renderOption={(props, option, {selected}) => (
-                  <li {...props}>
+                  <li {...props} key={option.id}>
                     <Checkbox style={{marginRight: 8}} checked={selected} />
                     {option.name}:&nbsp;
                     <i>{option.shortDescr ?? 'undefined'}</i>
@@ -197,11 +249,6 @@ export function TeacherEditClasses() {
                 getOptionLabel={option =>
                   option.name + ': ' + (option?.shortDescr ?? 'undefined')
                 }
-                onChange={(e, options) => {
-                  setSortedSelectedKnowledgeAndSkills([
-                    ...options.sort(KNOWLEDGE_AND_SKILL_SORTER),
-                  ]);
-                }}
                 renderTags={(tagValue, getTagProps) =>
                   tagValue.map((option, index) => (
                     <Chip
@@ -215,6 +262,7 @@ export function TeacherEditClasses() {
                     />
                   ))
                 }
+                {...classEks.autocompleteParams()}
               />
             </Grid>
             <Grid item {...spread({sm: 12, md: 2.5})}>
@@ -223,26 +271,27 @@ export function TeacherEditClasses() {
                 className="teacher-edit-classes-expand-buttons"
                 startIcon={<Add />}
                 onClick={() => setShowNewEks(true)}
+                disabled={classFormFields.getDisabled()}
               >
                 New EKS
               </Button>
             </Grid>
             <Grid item {...spread({sm: 12, md: 6})}>
-              <TextField label="Period" {...period.textFieldParams()} />
+              <TextField label="Period" {...classPeriod.textFieldParams()} />
             </Grid>
             <Grid item {...spread({sm: 12, md: 6})}>
-              <TextField label="Grade" {...grade.textFieldParams()} />
+              <TextField label="Grade" {...classGrade.textFieldParams()} />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 label="Short Description"
-                {...shortDescr.textFieldParams()}
+                {...classShortDescr.textFieldParams()}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 label="Long Description"
-                {...longDescr.textFieldParams()}
+                {...classLongDescr.textFieldParams()}
               />
             </Grid>
           </Grid>
@@ -261,10 +310,8 @@ export function TeacherEditClasses() {
             createService(ProjectManagementService, 'ProjectManagementService')
               .addKnowledgeAndSkill({
                 knowledgeAndSkill: {
-                  name: eksName.getValue()!,
-                  shortDescr: eksShortDescr.getValue()!,
-                  global: eksGlobal.getValue()!,
                   type: Type.EKS,
+                  ...eksFormFields.getValuesObject(),
                 },
               })
               .then(response => {
@@ -275,58 +322,59 @@ export function TeacherEditClasses() {
                     response.knowledgeAndSkill!,
                   ].sort(KNOWLEDGE_AND_SKILL_SORTER)
                 );
-                setSortedSelectedKnowledgeAndSkills(
-                  [
-                    ...sortedSelectedKnowledgeAndSkills,
-                    response.knowledgeAndSkill!,
-                  ].sort(KNOWLEDGE_AND_SKILL_SORTER)
+                classEks.setValue(
+                  [...classEks.getValue()!, response.knowledgeAndSkill!].sort(
+                    KNOWLEDGE_AND_SKILL_SORTER
+                  )
                 );
               })
               .catch(global.setError);
           }}
         >
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              A name should be a one or two word summary to uniquely identify
-              it.
-              <TextField
-                required
-                label="Name"
-                InputLabelProps={{shrink: true}}
-                placeholder="e.g., Camera Types"
-                style={{marginTop: '1em'}}
-                {...eksName.textFieldParams()}
-              />
+          <form style={{paddingTop: '2em'}} {...classFormFields.formParams()}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                A name should be a one or two word summary to uniquely identify
+                it.
+                <TextField
+                  required
+                  label="Name"
+                  InputLabelProps={{shrink: true}}
+                  placeholder="e.g., Camera Types"
+                  style={{marginTop: '1em'}}
+                  {...eksName.textFieldParams()}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                A description should:
+                <ul style={{marginTop: 0}}>
+                  <li>
+                    Follow the statement: "After completing this course, a
+                    student can..."
+                  </li>
+                  <li>
+                    Address a <i>single</i> capability. I.e., it probably
+                    shouldn't include "and" or a comma.
+                  </li>
+                </ul>
+                <TextField
+                  required
+                  multiline
+                  minRows={3}
+                  label="Description"
+                  placeholder="e.g., Differentiate between camera types for specific types of videography."
+                  InputLabelProps={{shrink: true}}
+                  {...eksShortDescr.textFieldParams()}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControlLabel
+                  label="Visible to other teachers"
+                  control={<Checkbox {...eksGlobal.checkboxParams()} />}
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={12}>
-              A description should:
-              <ul style={{marginTop: 0}}>
-                <li>
-                  Follow the statement: "After completing this course, a student
-                  can..."
-                </li>
-                <li>
-                  Address a <i>single</i> capability. I.e., it probably
-                  shouldn't include "and" or a comma.
-                </li>
-              </ul>
-              <TextField
-                required
-                multiline
-                minRows={3}
-                label="Description"
-                placeholder="e.g., Differentiate between camera types for specific types of videography."
-                InputLabelProps={{shrink: true}}
-                {...eksShortDescr.textFieldParams()}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                label="Visible to other teachers"
-                control={<Checkbox {...eksGlobal.checkboxParams()} />}
-              />
-            </Grid>
-          </Grid>
+          </form>
         </StandardModal>
       </DefaultPage>
     </>

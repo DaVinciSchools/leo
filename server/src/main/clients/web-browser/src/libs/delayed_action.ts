@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import {MutableRefObject, useRef, useState} from 'react';
+import {useRef} from 'react';
 import PromiseQueue from './PromiseQueue';
 
 enum DelayedState {
@@ -10,7 +10,7 @@ enum DelayedState {
 
 export interface DelayedAction {
   trigger: () => void;
-  forceDelayedAction: (onFinished: () => void) => void;
+  forceDelayedAction: (onFinished: () => Promise<any> | void) => void;
 }
 
 export function useDelayedAction(
@@ -18,79 +18,64 @@ export function useDelayedAction(
   onDelayed: () => Promise<any> | void,
   delayMs: number
 ) {
-  return DelayedActionImpl.useDelayedAction(onAction, onDelayed, delayMs);
-}
+  const delayTimeout = useRef<NodeJS.Timeout>();
+  const state = useRef(DelayedState.NONE);
+  const actionTriggered = useRef(false);
+  const promiseQueue = useRef<PromiseQueue>(new PromiseQueue());
 
-class DelayedActionImpl implements DelayedAction {
-  onAction?: () => void;
-  onDelayed?: () => Promise<any> | void;
-  delayMs?: number;
-  delayTimeout?: MutableRefObject<NodeJS.Timeout | undefined>;
-  state?: MutableRefObject<DelayedState>;
-  actionTriggered?: MutableRefObject<boolean>;
-  promiseQueue?: MutableRefObject<PromiseQueue>;
-
-  static useDelayedAction<T>(
-    onAction: () => void,
-    onDelayed: () => Promise<T> | void,
-    delayMs: number
-  ): DelayedAction {
-    const delayedAction = useState(new DelayedActionImpl())[0];
-    delayedAction.onAction = onAction;
-    delayedAction.onDelayed = onDelayed;
-    delayedAction.delayMs = delayMs;
-    delayedAction.delayTimeout = useRef<NodeJS.Timeout>();
-    delayedAction.state = useRef(DelayedState.NONE);
-    delayedAction.actionTriggered = useRef(false);
-    delayedAction.promiseQueue = useRef<PromiseQueue>(new PromiseQueue());
-    return delayedAction;
+  function trigger() {
+    doTrigger();
   }
 
-  timedOut(retrigger: boolean) {
-    this.state!.current = DelayedState.EXECUTING_DELAYED_ACTION;
-    this.actionTriggered!.current = false;
-
-    this.promiseQueue!.current.enqueue(() =>
-      new Promise<void>(resolve => resolve())
-        .then(() => this.onDelayed!())
-        .finally(() => {
-          this.state!.current = DelayedState.NONE;
-          if (this.actionTriggered!.current) {
-            this.actionTriggered!.current = false;
-            if (retrigger) {
-              this.trigger();
-            }
-          }
-        })
-    );
+  function forceDelayedAction(onFinish: () => void) {
+    doTrigger(onFinish);
   }
 
-  trigger() {
-    this.onAction!();
+  function doTrigger(onFinish?: () => Promise<any> | void) {
+    try {
+      onAction();
+    } catch (err) {
+      // Ignore any errors.
+    }
 
-    if (this.state!.current !== DelayedState.NONE) {
-      this.actionTriggered!.current = true;
+    if (!onFinish && state.current !== DelayedState.NONE) {
+      actionTriggered.current = true;
       return;
     }
 
-    clearTimeout(this.delayTimeout!.current);
-    this.delayTimeout!.current = undefined;
+    clearTimeout(delayTimeout.current);
+    delayTimeout.current = undefined;
 
-    this.delayTimeout!.current = setTimeout(() => {
-      this.timedOut(true);
-    }, this.delayMs);
+    const newPromise = () =>
+      Promise.resolve()
+        .then(() => {
+          state.current = DelayedState.EXECUTING_DELAYED_ACTION;
+          actionTriggered.current = false;
+          onDelayed();
+        })
+        .finally(async () => {
+          if (onFinish) {
+            return onFinish();
+          }
+        })
+        .finally(() => {
+          state.current = DelayedState.NONE;
+          if (actionTriggered.current) {
+            doTrigger();
+          }
+        });
+
+    if (onFinish) {
+      promiseQueue.current.enqueue(newPromise);
+    } else {
+      delayTimeout.current = setTimeout(() => {
+        promiseQueue.current.enqueue(newPromise);
+      }, delayMs);
+    }
   }
 
-  forceDelayedAction(onFinished: () => void) {
-    this.onAction!();
-
-    clearTimeout(this.delayTimeout!.current);
-    this.delayTimeout!.current = undefined;
-
-    this.promiseQueue!.current.enqueue(() =>
-      new Promise<void>(resolve => resolve())
-        .then(() => this.timedOut(false))
-        .finally(() => onFinished())
-    );
-  }
+  return {
+    trigger,
+    forceDelayedAction,
+  };
 }
