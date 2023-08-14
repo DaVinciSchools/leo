@@ -37,8 +37,6 @@ import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWith
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
-import org.davincischools.leo.protos.project_management.AddKnowledgeAndSkillRequest;
-import org.davincischools.leo.protos.project_management.AddKnowledgeAndSkillResponse;
 import org.davincischools.leo.protos.project_management.DeletePostRequest;
 import org.davincischools.leo.protos.project_management.DeletePostResponse;
 import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsRequest;
@@ -65,6 +63,8 @@ import org.davincischools.leo.protos.project_management.RegisterAnonymousProject
 import org.davincischools.leo.protos.project_management.RegisterAnonymousProjectsResponse;
 import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
 import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
+import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillRequest;
+import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillResponse;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V2ProjectGenerator;
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.ProtoDaoConverter;
@@ -129,21 +129,21 @@ public class ProjectManagementService {
         .finish();
   }
 
-  @PostMapping(value = "/api/protos/ProjectManagementService/AddKnowledgeAndSkill")
+  @PostMapping(value = "/api/protos/ProjectManagementService/UpsertKnowledgeAndSkill")
   @ResponseBody
-  public AddKnowledgeAndSkillResponse AddKnowledgeAndSkill(
+  public UpsertKnowledgeAndSkillResponse upsertKnowledgeAndSkill(
       @Authenticated HttpUser user,
-      @RequestBody Optional<AddKnowledgeAndSkillRequest> optionalRequest,
+      @RequestBody Optional<UpsertKnowledgeAndSkillRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
     if (user.isNotAuthorized()) {
-      return user.returnForbidden(AddKnowledgeAndSkillResponse.getDefaultInstance());
+      return user.returnForbidden(UpsertKnowledgeAndSkillResponse.getDefaultInstance());
     }
 
-    var response = AddKnowledgeAndSkillResponse.newBuilder();
+    var response = UpsertKnowledgeAndSkillResponse.newBuilder();
 
     return httpExecutors
-        .start(optionalRequest.orElse(AddKnowledgeAndSkillRequest.getDefaultInstance()))
+        .start(optionalRequest.orElse(UpsertKnowledgeAndSkillRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               if (!switch (request.getKnowledgeAndSkill().getType()) {
@@ -153,14 +153,15 @@ public class ProjectManagementService {
                     "Unknown knowledge and skill type: "
                         + request.getKnowledgeAndSkill().getType().name());
               }) {
-                return user.returnForbidden(AddKnowledgeAndSkillResponse.getDefaultInstance());
+                return user.returnForbidden(UpsertKnowledgeAndSkillResponse.getDefaultInstance());
               }
 
               org.davincischools.leo.database.daos.KnowledgeAndSkill dao =
                   ProtoDaoConverter.toKnowledgeAndSkillDao(request.getKnowledgeAndSkill())
                       .setUserX(user.get().orElseThrow());
 
-              db.getKnowledgeAndSkillRepository().save(dao);
+              db.getKnowledgeAndSkillRepository()
+                  .guardedUpsert(dao, user.isAdmin() ? null : user.userXId());
 
               return response
                   .setKnowledgeAndSkill(ProtoDaoConverter.toKnowledgeAndSkillProto(dao))

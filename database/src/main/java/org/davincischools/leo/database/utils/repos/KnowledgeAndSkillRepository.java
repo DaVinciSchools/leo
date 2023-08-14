@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -68,4 +69,24 @@ public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndS
           + " AND ks.type = (:type)")
   Optional<KnowledgeAndSkill> findByNameAndType(
       @Param("name") String name, @Param("type") String type);
+
+  @Modifying
+  @Query(
+      """
+          UPDATE KnowledgeAndSkill ks
+          SET ks = (:dao)
+          WHERE ks.id = (:dao).id
+          AND ((:requiredUserXId) IS NULL OR ks.userX.id = (:requiredUserXId))""")
+  void guardedUpdate(
+      @Param("dao") KnowledgeAndSkill dao, @Param("user_x_id") Integer requiredUserXId);
+
+  default void guardedUpsert(
+      @Param("dao") KnowledgeAndSkill knowledgeAndSkill,
+      @Param("user_x_id") Integer requiredUserXId) {
+    checkNotNull(knowledgeAndSkill);
+    if (knowledgeAndSkill.getId() == null) {
+      save(knowledgeAndSkill);
+    }
+    guardedUpdate(knowledgeAndSkill, requiredUserXId);
+  }
 }
