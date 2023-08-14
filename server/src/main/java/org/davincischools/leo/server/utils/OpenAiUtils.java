@@ -1,6 +1,7 @@
 package org.davincischools.leo.server.utils;
 
 import com.fasterxml.jackson.datatype.jdk8.WrappedIOException;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Bytes;
 import com.google.protobuf.GeneratedMessageV3.Builder;
@@ -12,6 +13,8 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -24,6 +27,7 @@ import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -31,6 +35,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 @Component
@@ -95,7 +100,9 @@ public class OpenAiUtils {
                                       new ReadTimeoutHandler(TIMEOUT_MIN, TimeUnit.MINUTES))
                                   .addHandlerFirst(
                                       new WriteTimeoutHandler(TIMEOUT_MIN, TimeUnit.MINUTES)));
-              ResponseSpec responseSpec =
+
+              // Stream the response body because the buffer is limited.
+              ImmutableList<byte[]> streamedBytes =
                   WebClient.builder()
                       .clientConnector(new ReactorClientHttpConnector(client))
                       .build()
@@ -107,18 +114,28 @@ public class OpenAiUtils {
                       .header(HttpHeaders.PRAGMA, "No-Cache")
                       .header(HttpHeaders.EXPIRES, "0") // I.e., now.
                       .bodyValue(JsonFormat.printer().print(request))
-                      .retrieve();
-
-              // Get response header.
-              ResponseEntity<?> responseHeader =
-                  Objects.requireNonNull(responseSpec.toBodilessEntity().block());
-              if (responseHeader.getStatusCode().isError()) {
-                throw new HttpClientErrorException(responseHeader.getStatusCode());
-              }
-
-              // Stream the response body because the buffer is limited.
-              ImmutableList<byte[]> streamedBytes =
-                  responseSpec
+                      .retrieve()
+                      .onStatus(
+                          HttpStatusCode::isError,
+                          response -> {
+                            StringWriter sw = new StringWriter();
+                            PrintWriter pw = new PrintWriter(sw);
+                            pw.println("OpenAI returned status: " + response.statusCode());
+                            response
+                                .headers()
+                                .asHttpHeaders()
+                                .forEach(
+                                    (key, values) -> {
+                                      pw.println(" - Header: " + key + ": " + values);
+                                    });
+                            pw.println("Done logging OpenAI status.");
+                            pw.flush();
+                            log.addNote(sw.toString());
+                            return Mono.error(
+                                new HttpClientErrorException(
+                                    response.statusCode(),
+                                    "OpenAI returned status: " + response.statusCode()));
+                          })
                       .bodyToFlux(DataBuffer.class)
                       .map(
                           buffer -> {
