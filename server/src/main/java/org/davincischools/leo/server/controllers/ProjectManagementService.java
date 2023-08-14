@@ -67,6 +67,7 @@ import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
 import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V2ProjectGenerator;
 import org.davincischools.leo.server.utils.DataAccess;
+import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user.Anonymous;
@@ -183,7 +184,7 @@ public class ProjectManagementService {
                       .setProjectDefinition(definition.definition())
                       .setUserX(user.get().orElse(null))
                       .setState(State.PROCESSING.name())
-                      .setTimeout(Instant.now().plus(Duration.ofMinutes(10)))
+                      .setTimeout(Instant.now().plus(Duration.ofMinutes(OpenAiUtils.TIMEOUT_MIN)))
                       .setAssignment(
                           request.hasAssignmentId()
                               ? new Assignment().setId(request.getAssignmentId())
