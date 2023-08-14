@@ -560,12 +560,13 @@ public class ProjectManagementService {
         .start(optionalRequest.orElse(UpdateProjectRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              Optional<Project> optionalProject =
-                  db.getProjectRepository().findById(request.getId());
+              // TODO: This is a quick fix to avoid a lazy loading of the UserX id.
+              Optional<ProjectWithMilestones> optionalProject =
+                  db.getProjectRepository().findFullProjectById(request.getId());
               if (optionalProject.isEmpty()) {
                 return user.returnNotFound(UpdateProjectResponse.getDefaultInstance());
               }
-              Project project = optionalProject.get();
+              Project project = optionalProject.get().project();
 
               if (user.isAdmin()) {
                 // Do nothing.
