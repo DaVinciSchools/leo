@@ -1,9 +1,6 @@
 package org.davincischools.leo.server.controllers;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimaps;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,8 +8,7 @@ import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.TeacherClassXId;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.repos.AssignmentRepository.ClassXAssignment;
-import org.davincischools.leo.database.utils.repos.ClassXRepository.FullClassX;
+import org.davincischools.leo.database.utils.repos.AssignmentRepository.FullClassXAssignment;
 import org.davincischools.leo.protos.assignment_management.CreateAssignmentRequest;
 import org.davincischools.leo.protos.assignment_management.CreateAssignmentResponse;
 import org.davincischools.leo.protos.assignment_management.DeleteAssignmentRequest;
@@ -53,7 +49,7 @@ public class AssignmentManagementService {
                 return user.returnForbidden(response.build());
               }
 
-              List<ClassXAssignment> assignments;
+              List<FullClassXAssignment> classXAssignments;
               switch (request.getUserIdCase()) {
                 case TEACHER_ID -> {
                   if (!user.isAdmin()
@@ -63,9 +59,8 @@ public class AssignmentManagementService {
                               request.getTeacherId()))) {
                     return user.returnForbidden(response.build());
                   }
-                  assignments =
-                      Lists.newArrayList(
-                          db.getAssignmentRepository().findAllByTeacherId(request.getTeacherId()));
+                  classXAssignments =
+                      db.getAssignmentRepository().findAllByTeacherId(request.getTeacherId());
                 }
                 case STUDENT_ID -> {
                   if (!user.isAdmin()
@@ -75,31 +70,25 @@ public class AssignmentManagementService {
                               request.getStudentId()))) {
                     return user.returnForbidden(response.build());
                   }
-                  assignments =
-                      Lists.newArrayList(
-                          db.getAssignmentRepository().findAllByStudentId(request.getStudentId()));
+                  classXAssignments =
+                      db.getAssignmentRepository().findAllByStudentId(request.getStudentId());
                 }
                 default -> throw new IllegalArgumentException("Unsupported user type.");
               }
 
-              var assignmentsByClassX =
-                  Multimaps.filterValues(
-                      Multimaps.transformValues(
-                          Multimaps.index(assignments, ClassXAssignment::getClassX),
-                          ClassXAssignment::getAssignment),
-                      Objects::nonNull);
-              assignmentsByClassX
-                  .asMap()
-                  .forEach(
-                      (key, value) -> {
-                        var classProto =
-                            ProtoDaoConverter.toClassXProto(new FullClassX(key, new ArrayList<>()));
-                        response.addClassXs(classProto);
-                        value.forEach(
-                            assignment ->
-                                response.addAssignments(
-                                    ProtoDaoConverter.toAssignmentProto(key, assignment)));
-                      });
+              classXAssignments.forEach(
+                  classXAssignment -> {
+                    classXAssignment
+                        .assignments()
+                        .forEach(
+                            assignment -> {
+                              assignment.assignment().setClassX(classXAssignment.classX());
+                              ProtoDaoConverter.toAssignmentProto(
+                                  assignment.assignment(), response.addAssignmentsBuilder());
+                            });
+                    ProtoDaoConverter.toClassXProto(
+                        classXAssignment.classX(), response.addClassXsBuilder());
+                  });
 
               return response.build();
             })
@@ -138,13 +127,13 @@ public class AssignmentManagementService {
 
               response.setAssignment(
                   ProtoDaoConverter.toAssignmentProto(
-                      classX,
                       db.getAssignmentRepository()
                           .save(
                               new Assignment()
                                   .setCreationTime(Instant.now())
                                   .setName("New Assignment")
-                                  .setClassX(classX))));
+                                  .setClassX(classX)),
+                      null));
 
               return response.build();
             })

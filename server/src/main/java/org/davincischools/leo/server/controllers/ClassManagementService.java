@@ -43,13 +43,10 @@ public class ClassManagementService {
                 return user.returnForbidden(response.build());
               }
 
-              response.addAllClasses(
-                  db
-                      .getClassXRepository()
-                      .findFullClassXsByUserId(user.teacherId(), user.studentId())
-                      .stream()
-                      .map(ProtoDaoConverter::toClassXProto)
-                      .toList());
+              db.getClassXRepository()
+                  .findFullClassXsByUserId(user.teacherId(), user.studentId())
+                  .forEach(
+                      e -> ProtoDaoConverter.toFullClassXProto(e, response.addClassesBuilder()));
 
               return response.build();
             })

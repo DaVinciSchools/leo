@@ -27,7 +27,6 @@ import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectPost;
-import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
@@ -114,15 +113,14 @@ public class ProjectManagementService {
         .start(optionalRequest.orElse(GetKnowledgeAndSkillsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              response.addAllKnowledgeAndSkills(
-                  db
-                      .getKnowledgeAndSkillRepository()
-                      .findAllByTypes(
-                          request.getTypesList().stream().map(Enum::name).toList(),
-                          user.get().map(UserX::getId).orElse(0))
-                      .stream()
-                      .map(ProtoDaoConverter::toKnowledgeAndSkillProto)
-                      .toList());
+              db.getKnowledgeAndSkillRepository()
+                  .findAllByTypes(
+                      request.getTypesList().stream().map(Enum::name).toList(),
+                      user.isAdmin() ? null : user.userXId())
+                  .forEach(
+                      e ->
+                          ProtoDaoConverter.toKnowledgeAndSkillProto(
+                              e, response.addKnowledgeAndSkillsBuilder()));
 
               return response.build();
             })
@@ -156,16 +154,18 @@ public class ProjectManagementService {
                 return user.returnForbidden(UpsertKnowledgeAndSkillResponse.getDefaultInstance());
               }
 
-              org.davincischools.leo.database.daos.KnowledgeAndSkill dao =
-                  ProtoDaoConverter.toKnowledgeAndSkillDao(request.getKnowledgeAndSkill())
-                      .setUserX(user.get().orElseThrow());
-
               db.getKnowledgeAndSkillRepository()
-                  .guardedUpsert(dao, user.isAdmin() ? null : user.userXId());
+                  .guardedUpsert(
+                      ProtoDaoConverter.toKnowledgeAndSkillDao(request.getKnowledgeAndSkill())
+                          .setUserX(user.get().orElseThrow()),
+                      user.isAdmin() ? null : user.userXId())
+                  .ifPresent(
+                      ks -> {
+                        ProtoDaoConverter.toKnowledgeAndSkillProto(
+                            ks, response.getKnowledgeAndSkillBuilder());
+                      });
 
-              return response
-                  .setKnowledgeAndSkill(ProtoDaoConverter.toKnowledgeAndSkillProto(dao))
-                  .build();
+              return response.build();
             })
         .finish();
   }

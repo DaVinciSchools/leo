@@ -4,8 +4,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
+import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
@@ -51,9 +53,9 @@ public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndS
           SELECT ks
           FROM KnowledgeAndSkill ks
           WHERE ks.type IN (:types)
-          AND (ks.global OR ks.userX.id = (:user_x_id))""")
+          AND (ks.global OR ((:requiredUserXId) IS NULL OR ks.userX.id = (:requiredUserXId)))""")
   List<KnowledgeAndSkill> findAllByTypes(
-      @Param("types") Iterable<String> types, @Param("user_x_id") int userXId);
+      @Param("types") Iterable<String> types, @Param("requiredUserXId") Integer userXId);
 
   @Query(
       "SELECT ks FROM KnowledgeAndSkill ks"
@@ -71,22 +73,19 @@ public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndS
       @Param("name") String name, @Param("type") String type);
 
   @Modifying
-  @Query(
-      """
-          UPDATE KnowledgeAndSkill ks
-          SET ks = (:dao)
-          WHERE ks.id = (:dao).id
-          AND ((:requiredUserXId) IS NULL OR ks.userX.id = (:requiredUserXId))""")
-  void guardedUpdate(
-      @Param("dao") KnowledgeAndSkill dao, @Param("user_x_id") Integer requiredUserXId);
-
-  default void guardedUpsert(
-      @Param("dao") KnowledgeAndSkill knowledgeAndSkill,
-      @Param("user_x_id") Integer requiredUserXId) {
+  @Transactional
+  default Optional<KnowledgeAndSkill> guardedUpsert(
+      KnowledgeAndSkill knowledgeAndSkill, Integer requiredUserXId) {
     checkNotNull(knowledgeAndSkill);
-    if (knowledgeAndSkill.getId() == null) {
-      save(knowledgeAndSkill);
+
+    if (knowledgeAndSkill.getId() == null || requiredUserXId == null) {
+      return Optional.of(save(knowledgeAndSkill));
     }
-    guardedUpdate(knowledgeAndSkill, requiredUserXId);
+
+    Optional<KnowledgeAndSkill> old = findById(knowledgeAndSkill.getId());
+    if (old.isPresent() && Objects.equals(old.get().getUserX().getId(), requiredUserXId)) {
+      return Optional.of(save(knowledgeAndSkill));
+    }
+    return old;
   }
 }

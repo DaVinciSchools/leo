@@ -35,13 +35,15 @@ public class QueryToRecordConverterTest {
                 .map(
                     a ->
                         ImmutableList.of(
-                            a.getClassX().getName(),
-                            a.getAssignment() != null ? a.getAssignment().getName() : "[null]"))
+                            a.classX().getName(),
+                            a.assignments().stream()
+                                .map(e -> e.assignment().getName())
+                                .collect(ImmutableList.toImmutableList())))
                 .toList())
         .containsAtLeast(
             ImmutableList.of(
                 testData.getChemistryClass().getName(),
-                testData.getChemistryValenceElectronsAssignment().getName()),
-            ImmutableList.of(testData.getDanceClass().getName(), "[null]"));
+                ImmutableList.of(testData.getChemistryValenceElectronsAssignment().getName())),
+            ImmutableList.of(testData.getDanceClass().getName(), ImmutableList.of()));
   }
 }
