@@ -62,21 +62,42 @@ public class OpenAi3V2ProjectGenerator implements ProjectGenerator {
         .setRole("user")
         .setContent(
             String.format(
-                "Generate %s projects that would fit the system criteria. Return a JSON object"
-                    + " with a \"projects\" array. For each \"projects\" array object, return 1)"
-                    + " a \"name\" property containing a short declarative command statement that"
-                    + " summarizes the project in plain text (be sure to escape any quotation marks"
-                    + " in the JSON string value), then 2) a \"short_descr\" property that contains"
-                    + " a sentence describing the project in plain text (be sure to escape any"
-                    + " quotation marks in the JSON string value), then 3) a \"long_descr_html\""
-                    + " property containing multiple paragraphs with a very detailed explanation"
-                    + " of the entire project formatted with HTML (be sure to escape any quotation"
-                    + " marks in the JSON string value), then 4) a \"milestones\" array property"
-                    + " that contains objects representing milestones with a \"name\" property in"
-                    + " plain text (be sure to escape any quotation marks in the JSON string value)"
-                    + " and a \"steps\" array property in plain text (be sure to escape any"
-                    + " quotation marks in the JSON string value). Do not include any text other"
-                    + " than the json object.",
+                """
+                    The response to the following must be constructed as a JSON object. Wrap
+                    strings in double quotes. Double quotes within strings must be escaped with a
+                    backslash. Single quotes within strings will not be escaped.
+
+                    If there is an error at any point, return a JSON object with an single "error"
+                    property that has the description of the error in plain text (be sure to escape
+                    any double quotation marks in the JSON string value).
+
+                    The request is to generate %s projects that would fit the system criteria. For
+                    each project in the JSON "projects" array object, return:
+
+                    1) a "name" property containing a short declarative command statement that
+                    summarizes the project in plain text (be sure to escape any double quotation
+                    marks in the JSON string value), then
+
+                    2) a "short_descr" property that contains a sentence describing the project in
+                    plain text (be sure to escape any double quotation marks in the JSON string
+                    value), then
+
+                    3) a "long_descr_html" property containing multiple paragraphs with a very
+                    detailed explanation of the entire project formatted with HTML (be sure to
+                    escape any double quotation marks in the JSON string value), then
+
+                    4) a "milestones" array property that contains objects representing milestones.
+                    Each milestone object will have:
+
+                        a) a "name" property in plain text (be sure to escape any double quotation
+                        marks in the JSON string value), and
+
+                        b) a "steps" array property with a list of plain text strings (be sure to
+                        escape any double quotation marks in the JSON string values, and be sure
+                        to return an array of strings here, not just a single string).
+
+                    Do not include any text other than the json object.
+""",
                 numberOfProjects));
 
     return httpExecutors
@@ -121,14 +142,32 @@ public class OpenAi3V2ProjectGenerator implements ProjectGenerator {
       Database db, HttpExecutorLog log, String responseContent, ProjectInput projectInput)
       throws InvalidProtocolBufferException {
     try {
+      // We have to do a little pre-formatting of response content because OpenAI's API will
+      // send back inconsistent results sometimes.
+
+      // Remove a prefix that appears to be for formatting purposes for chate responses.
+      if (responseContent.startsWith("```json")) {
+        log.addNote("- Removed ```json prefix from response.");
+      }
+      String cleanedResponse = responseContent.replaceAll("^(?s:```json\\s*)", "");
+
+      // Add the outside object declaration if it's missing. Sometimes, there's just an array by
+      // itself, which is invalid.
+      if (!cleanedResponse.startsWith("{")) {
+        log.addNote("- Added JSON {} to response.");
+        cleanedResponse = "{ projects: " + cleanedResponse.trim() + " }";
+      }
+
+      // Sometimes, last entries will have an incorrect comma at the end. Remove them.
+      if (cleanedResponse.matches(".*(?s:([]}])\\s*,\\s*([]}])).*")) {
+        log.addNote("- Removed trailing commas from response.");
+        cleanedResponse = cleanedResponse.replaceAll("(?s:([]}])\\s*,\\s*([]}]))", "\\1\\2");
+      }
+
+      log.addNote("- Cleaned response:\n\n%s\n", cleanedResponse);
+
       OpenAiProjectsWithSteps.Builder projectsWithSteps = OpenAiProjectsWithSteps.newBuilder();
-      JsonFormat.parser()
-          .ignoringUnknownFields()
-          .merge(
-              responseContent.startsWith("{")
-                  ? responseContent
-                  : "{ projects: " + responseContent + " }",
-              projectsWithSteps);
+      JsonFormat.parser().ignoringUnknownFields().merge(cleanedResponse, projectsWithSteps);
 
       List<Project> projects = new ArrayList<>();
       AtomicInteger position = new AtomicInteger(0);

@@ -214,4 +214,5 @@ message OpenAiProjectsWithSteps {
   }
 
   repeated OpenAiProjectWithSteps projects = 1;
+  optional string error = 2;
 }

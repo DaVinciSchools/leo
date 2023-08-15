@@ -26,7 +26,6 @@ import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
@@ -85,12 +84,29 @@ public class OpenAiUtils {
                         + " https://github.com/DaVinciSchools/leo/blob/main/BUILDING.md#external-dependencies");
               }
 
+              return null;
+            })
+        .retryNextStep(3, (int) Duration.ofSeconds(20).toMillis())
+        .andThen(
+            (unused, log) -> {
               // Make the call to OpenAI.
               HttpClient client =
                   HttpClient.create()
-                      .responseTimeout(Duration.ofSeconds(TIMEOUT_MIN * 60))
+                      .responseTimeout(Duration.ofMinutes(TIMEOUT_MIN))
                       .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT_MIN * 60 * 1000)
                       .option(ChannelOption.SO_KEEPALIVE, true)
+                      // .option(ChannelOption.SO_TIMEOUT, 0)
+                      // .option(NioChannelOption.of(ExtendedSocketOptions.TCP_KEEPIDLE), 3 * 60)
+                      // .option(NioChannelOption.of(ExtendedSocketOptions.TCP_KEEPINTERVAL), 60)
+                      // .option(NioChannelOption.of(ExtendedSocketOptions.TCP_KEEPCOUNT), 65535)
+                      // .option(EpollChannelOption.TCP_KEEPIDLE, 3 * 60)
+                      // .option(EpollChannelOption.TCP_KEEPINTVL, 60)
+                      // .option(EpollChannelOption.TCP_KEEPCNT, 65535)
+                      // .wiretap(true)
+                      // .wiretap(
+                      // "reactor.netty.http.client.HttpClient",
+                      // LogLevel.DEBUG,
+                      // AdvancedByteBufFormat.HEX_DUMP)
                       .doOnConnected(
                           conn ->
                               conn.addHandlerFirst(
@@ -113,7 +129,7 @@ public class OpenAiUtils {
                       .bodyValue(JsonFormat.printer().print(request))
                       .retrieve()
                       .onStatus(
-                          HttpStatusCode::isError,
+                          httpStatusCode -> true,
                           response -> {
                             StringWriter sw = new StringWriter();
                             PrintWriter pw = new PrintWriter(sw);
@@ -128,10 +144,14 @@ public class OpenAiUtils {
                             pw.println("Done logging OpenAI status.");
                             pw.flush();
                             log.addNote(sw.toString());
-                            return Mono.error(
-                                new HttpClientErrorException(
-                                    response.statusCode(),
-                                    "OpenAI returned status: " + response.statusCode()));
+                            if (response.statusCode().isError()) {
+                              return Mono.error(
+                                  new HttpClientErrorException(
+                                      response.statusCode(),
+                                      "OpenAI returned status: " + response.statusCode()));
+                            } else {
+                              return Mono.empty();
+                            }
                           })
                       .bodyToFlux(DataBuffer.class)
                       .map(
