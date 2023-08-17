@@ -34,8 +34,8 @@ import IProjectInputValue = pl_types.IProjectInputValue;
 import IUser = pl_types.IUser;
 import ProjectManagementService = project_management.ProjectManagementService;
 import {
+  ASSIGNMENT_SORTER,
   CLASS_SORTER,
-  CLASS_THEN_ASSIGNMENT_SORTER,
   PROJECT_DEFINITION_SORTER,
 } from '../../../libs/sorters';
 
@@ -195,7 +195,7 @@ export function AssignmentsTab(props: {user: IUser | undefined}) {
             id="assignment"
             value={assignment}
             autoHighlight
-            options={(assignments ?? []).sort(CLASS_THEN_ASSIGNMENT_SORTER)}
+            options={(assignments ?? []).sort(ASSIGNMENT_SORTER)}
             onChange={(e, value) => setAssignment(value)}
             getOptionLabel={assignment =>
               assignment?.name ?? '(Unnamed Assignment)'

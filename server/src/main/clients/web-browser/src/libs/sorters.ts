@@ -26,14 +26,21 @@ export const KNOWLEDGE_AND_SKILL_SORTER = (
   (a.name ?? '').localeCompare(b.name ?? '') ||
   (a.shortDescr ?? '').localeCompare(b.shortDescr ?? '');
 
+export const DISTRICT_SORTER = (a: IDistrict, b: IDistrict) =>
+  (a.name ?? '').localeCompare(b.name ?? '');
+
+export const SCHOOL_SORTER = (a: ISchool, b: ISchool) =>
+  DISTRICT_SORTER(a.district ?? {}, b.district ?? {}) ||
+  (a.name ?? '').localeCompare(b.name ?? '') ||
+  (a.address ?? '').localeCompare(b.address ?? '');
+
 export const CLASS_SORTER = (a: IClassX, b: IClassX) =>
+  SCHOOL_SORTER(a.school ?? {}, b.school ?? {}) ||
   (a.name ?? '').localeCompare(b.name ?? '');
 
 export const ASSIGNMENT_SORTER = (a: IAssignment, b: IAssignment) =>
+  CLASS_SORTER(a.classX ?? {}, b.classX ?? {}) ||
   (a.name ?? '').localeCompare(b.name ?? '');
-
-export const CLASS_THEN_ASSIGNMENT_SORTER = (a: IAssignment, b: IAssignment) =>
-  CLASS_SORTER(a.classX ?? {}, b.classX ?? {}) || ASSIGNMENT_SORTER(a, b);
 
 export const PROJECT_SORTER = (a: IProject, b: IProject) =>
   (a.name ?? '').localeCompare(b.name ?? '') ||
@@ -52,11 +59,4 @@ export const PROJECT_DEFINITION_SORTER = (
   (b.state === State.PROCESSING ? -1 : 1) -
     (b.state === State.PROCESSING ? -1 : 1) ||
   (b.template === true ? 1 : -1) - (a.template === true ? 1 : -1) ||
-  (a.name ?? '').localeCompare(b.name ?? '');
-
-export const SCHOOL_SORTER = (a: ISchool, b: ISchool) =>
-  (a.name ?? '').localeCompare(b.name ?? '') ||
-  (a.address ?? '').localeCompare(b.address ?? '');
-
-export const DISTRICT_SORTER = (a: IDistrict, b: IDistrict) =>
   (a.name ?? '').localeCompare(b.name ?? '');
