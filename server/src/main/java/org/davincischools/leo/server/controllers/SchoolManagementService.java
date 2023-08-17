@@ -64,7 +64,7 @@ public class SchoolManagementService {
                       .setCreationTime(Instant.now())
                       .setDistrict(
                           db.getDistrictRepository()
-                              .findById(request.getSchool().getDistrictId())
+                              .findById(request.getSchool().getDistrict().getId())
                               .orElseThrow())
                       .setId(request.getSchool().hasId() ? request.getSchool().getId() : null)
                       .setName(request.getSchool().getName())
@@ -103,7 +103,7 @@ public class SchoolManagementService {
     response.setNextSchoolId(nextSchoolId);
     response.addAllSchools(
         db.getSchoolRepository().findAllByDistrictId(districtId).stream()
-            .map(ProtoDaoConverter::toSchoolProto)
+            .map(s -> ProtoDaoConverter.toSchoolProto(s, null).build())
             .toList());
     return response.build();
   }

@@ -139,7 +139,9 @@ export function EditSchools() {
     schoolManagementService
       .upsertSchool({
         school: {
-          districtId: districtId,
+          district: {
+            id: districtId,
+          },
           id: schoolId !== -1 ? schoolId : undefined,
           name: name,
           address: address,

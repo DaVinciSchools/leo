@@ -3,7 +3,6 @@ package org.davincischools.leo.server.utils;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -31,6 +30,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
+import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.Project;
@@ -50,6 +50,8 @@ import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition.State;
 import org.davincischools.leo.protos.pl_types.ProjectInputValue;
 import org.davincischools.leo.protos.user_management.FullUserDetails;
+import org.hibernate.Hibernate;
+import org.hibernate.LazyInitializationException;
 
 public class ProtoDaoConverter {
 
@@ -125,15 +127,6 @@ public class ProtoDaoConverter {
       }
     }
     return proto.build();
-  }
-
-  public static org.davincischools.leo.protos.pl_types.School toSchoolProto(School school) {
-    return org.davincischools.leo.protos.pl_types.School.newBuilder()
-        .setId(coalesce(school::getId, () -> -1))
-        .setDistrictId(coalesce(school.getDistrict()::getId, () -> -1))
-        .setName(school.getName())
-        .setAddress(Strings.nullToEmpty(school.getAddress()))
-        .build();
   }
 
   public static org.davincischools.leo.protos.pl_types.ProjectDefinition toProjectDefinition(
@@ -269,62 +262,145 @@ public class ProtoDaoConverter {
   // ---- Automated and tested converters. ----
   //
 
-  public static org.davincischools.leo.protos.pl_types.Assignment.Builder toAssignmentProto(
-      Assignment d, @Nullable org.davincischools.leo.protos.pl_types.Assignment.Builder p) {
-    var assignment =
-        translateToProto(
-            d,
-            p != null ? p : org.davincischools.leo.protos.pl_types.Assignment.newBuilder(),
+  public static Assignment toAssignmentDao(
+      org.davincischools.leo.protos.pl_types.AssignmentOrBuilder assignment) {
+    Assignment dao =
+        translateToDao(
+            assignment,
+            new Assignment().setCreationTime(Instant.now()),
             org.davincischools.leo.protos.pl_types.Assignment.CLASS_X_FIELD_NUMBER);
-    toClassXProto(d.getClassX(), assignment.getClassXBuilder());
-    return assignment;
+    if (assignment.hasClassX()) {
+      dao.setClassX(toClassXDao(assignment.getClassX()));
+    }
+    return dao;
   }
 
-  public static ClassX toClassXDao(org.davincischools.leo.protos.pl_types.ClassXOrBuilder p) {
-    return translateToDao(
-        p,
-        new ClassX().setCreationTime(Instant.now()),
-        org.davincischools.leo.protos.pl_types.ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
+  public static org.davincischools.leo.protos.pl_types.Assignment.Builder toAssignmentProto(
+      Assignment assignment,
+      @Nullable org.davincischools.leo.protos.pl_types.Assignment.Builder builder) {
+    builder =
+        builder != null ? builder : org.davincischools.leo.protos.pl_types.Assignment.newBuilder();
+    if (assignment != null) {
+      translateToProto(
+          assignment,
+          builder,
+          org.davincischools.leo.protos.pl_types.Assignment.CLASS_X_FIELD_NUMBER);
+      if (Hibernate.isInitialized(assignment)) {
+        if (assignment.getClassX() != null) {
+          toClassXProto(assignment.getClassX(), builder.getClassXBuilder());
+        }
+      }
+    }
+    return builder;
   }
 
-  public static FullClassX toFullClassXRecord(
-      org.davincischools.leo.protos.pl_types.ClassXOrBuilder p) {
-    return new FullClassX(
-        toClassXDao(p),
-        p.getKnowledgeAndSkillsOrBuilderList().stream()
-            .map(ProtoDaoConverter::toKnowledgeAndSkillDao)
-            .collect(Collectors.toList()));
+  public static ClassX toClassXDao(org.davincischools.leo.protos.pl_types.ClassXOrBuilder classX) {
+    ClassX dao =
+        translateToDao(
+            classX,
+            new ClassX().setCreationTime(Instant.now()),
+            org.davincischools.leo.protos.pl_types.ClassX.SCHOOL_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
+    if (classX.hasSchool()) {
+      dao.setSchool(toSchoolDao(classX.getSchool()));
+    }
+    return dao;
   }
 
   public static org.davincischools.leo.protos.pl_types.ClassX.Builder toClassXProto(
-      ClassX d, @Nullable org.davincischools.leo.protos.pl_types.ClassX.Builder p) {
-    return translateToProto(
-        d,
-        p != null ? p : org.davincischools.leo.protos.pl_types.ClassX.newBuilder(),
-        org.davincischools.leo.protos.pl_types.ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
+      ClassX classX, @Nullable org.davincischools.leo.protos.pl_types.ClassX.Builder builder) {
+    builder =
+        builder != null ? builder : org.davincischools.leo.protos.pl_types.ClassX.newBuilder();
+    if (classX != null) {
+      translateToProto(
+          classX,
+          builder,
+          org.davincischools.leo.protos.pl_types.ClassX.SCHOOL_FIELD_NUMBER,
+          org.davincischools.leo.protos.pl_types.ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
+      if (Hibernate.isInitialized(classX)) {
+        if (classX.getSchool() != null) {
+          toSchoolProto(classX.getSchool(), builder.getSchoolBuilder());
+        }
+      }
+    }
+    return builder;
+  }
+
+  public static FullClassX toFullClassXRecord(
+      org.davincischools.leo.protos.pl_types.ClassXOrBuilder classX) {
+    return new FullClassX(
+        toClassXDao(classX),
+        classX.getKnowledgeAndSkillsOrBuilderList().stream()
+            .map(ProtoDaoConverter::toKnowledgeAndSkillDao)
+            .toList());
   }
 
   public static org.davincischools.leo.protos.pl_types.ClassX.Builder toFullClassXProto(
-      FullClassX fullClassX, @Nullable org.davincischools.leo.protos.pl_types.ClassX.Builder p) {
-    org.davincischools.leo.protos.pl_types.ClassX.Builder cp =
-        toClassXProto(fullClassX.classX(), p);
-    fullClassX
-        .knowledgeAndSkills()
-        .forEach(ks -> toKnowledgeAndSkillProto(ks, cp.addKnowledgeAndSkillsBuilder()));
-    return cp;
+      FullClassX fullClassX,
+      @Nullable org.davincischools.leo.protos.pl_types.ClassX.Builder builder) {
+    builder = toClassXProto(fullClassX.classX(), builder);
+    for (var knowledgeAndSkill : fullClassX.knowledgeAndSkills()) {
+      toKnowledgeAndSkillProto(knowledgeAndSkill, builder.addKnowledgeAndSkillsBuilder());
+    }
+    return builder;
+  }
+
+  public static District toDistrictDao(
+      org.davincischools.leo.protos.pl_types.DistrictOrBuilder district) {
+    return translateToDao(district, new District().setCreationTime(Instant.now()));
+  }
+
+  public static org.davincischools.leo.protos.pl_types.District.Builder toDistrictProto(
+      District district,
+      @Nullable org.davincischools.leo.protos.pl_types.District.Builder builder) {
+    builder =
+        builder != null ? builder : org.davincischools.leo.protos.pl_types.District.newBuilder();
+    return translateToProto(district, builder);
   }
 
   public static KnowledgeAndSkill toKnowledgeAndSkillDao(
-      org.davincischools.leo.protos.pl_types.KnowledgeAndSkillOrBuilder p) {
-    return translateToDao(p, new KnowledgeAndSkill().setCreationTime(Instant.now()));
+      org.davincischools.leo.protos.pl_types.KnowledgeAndSkillOrBuilder knowledgeAndSkill) {
+    return translateToDao(
+        knowledgeAndSkill, new KnowledgeAndSkill().setCreationTime(Instant.now()));
   }
 
   public static org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Builder
       toKnowledgeAndSkillProto(
-          KnowledgeAndSkill d,
-          @Nullable org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Builder p) {
-    return translateToProto(
-        d, p != null ? p : org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.newBuilder());
+          KnowledgeAndSkill knowledgeAndSkill,
+          @Nullable org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Builder builder) {
+    builder =
+        builder != null
+            ? builder
+            : org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.newBuilder();
+    return translateToProto(knowledgeAndSkill, builder);
+  }
+
+  public static School toSchoolDao(org.davincischools.leo.protos.pl_types.SchoolOrBuilder school) {
+    School dao =
+        translateToDao(
+            school,
+            new School().setCreationTime(Instant.now()),
+            org.davincischools.leo.protos.pl_types.School.DISTRICT_FIELD_NUMBER);
+    if (school.hasDistrict()) {
+      dao.setDistrict(toDistrictDao(school.getDistrict()));
+    }
+    return dao;
+  }
+
+  public static org.davincischools.leo.protos.pl_types.School.Builder toSchoolProto(
+      School school, @Nullable org.davincischools.leo.protos.pl_types.School.Builder builder) {
+    builder =
+        builder != null ? builder : org.davincischools.leo.protos.pl_types.School.newBuilder();
+    if (school != null) {
+      translateToProto(
+          school, builder, org.davincischools.leo.protos.pl_types.School.DISTRICT_FIELD_NUMBER);
+      if (Hibernate.isInitialized(school)) {
+        if (school.getDistrict() != null) {
+          toDistrictProto(school.getDistrict(), builder.getDistrictBuilder());
+        }
+      }
+    }
+    return builder;
   }
 
   // TODO: These need to be code generated at compile time with compile time errors. It's
@@ -489,8 +565,11 @@ public class ProtoDaoConverter {
   // dangerous that fields could be overlooked.
   static <M extends Message.Builder, D> M translateToProto(
       D fromDao, M toMessage, int... ignoreFieldNumbers) {
-    checkNotNull(fromDao);
     checkNotNull(toMessage);
+
+    if (fromDao == null) {
+      return toMessage;
+    }
 
     Class<? extends Message.Builder> protoClass = toMessage.getClass();
     Descriptor protoDescriptor = toMessage.getDescriptorForType();
@@ -633,7 +712,18 @@ public class ProtoDaoConverter {
       if (!protoSetters.containsKey(field.getNumber())) {
         throw new RuntimeException("Proto field is not accounted for: " + field.getFullName());
       }
-      protoSetters.get(field.getNumber()).accept(fromDao, toMessage);
+      try {
+        protoSetters.get(field.getNumber()).accept(fromDao, toMessage);
+      } catch (/* InvocationTargetException */ Exception e) {
+        if (e.getCause() != null
+            && e.getCause().getCause() instanceof LazyInitializationException) {
+          // Do nothing. Hibernate.isPropertyInitialized() will return false for the id field of
+          // an unitialized proxy, even though we can still retrieve it. So, we catch the exception
+          // for the other fields instead of doing a check ahead of time.
+        } else {
+          throw e;
+        }
+      }
     }
 
     return toMessage;
