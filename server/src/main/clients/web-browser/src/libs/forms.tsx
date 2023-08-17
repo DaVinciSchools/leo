@@ -44,6 +44,7 @@ export interface FormFieldMetadata {
   startIcon?: ReactElement;
   maxLength?: number;
   isAutocomplete?: {
+    isFreeSolo?: boolean;
     isMultiple?: boolean;
   };
 }
@@ -117,7 +118,10 @@ interface FormFields {
 
   setValuesObject(values: {} | null | undefined): void;
 
-  getValuesObject<O extends {}>(includeNulls?: boolean, startWithObject?: O): O;
+  getValuesObject<O extends {}>(
+    includeNulls?: boolean,
+    startWithObject?: O | null | undefined
+  ): O;
 
   getValuesURLSearchParams(): URLSearchParams;
 
@@ -205,7 +209,7 @@ export function useFormFields(
       !fieldMetadata?.isAutocomplete
     ) {
       throw new Error(
-        `fieldMetadata for ${name} does not indicate a string: ${JSON.stringify(
+        `fieldMetadata for ${name} does not indicate an autocomplete: ${JSON.stringify(
           fieldMetadata ?? {}
         )}`
       );
@@ -219,7 +223,7 @@ export function useFormFields(
   ): FormField<T> {
     const [stringValue, setStringValue] = useState('');
     const [autocompleteValue, setAutocompleteValue] = useState<T>(
-      fieldMetadata?.isAutocomplete?.isMultiple ? ([] as T) : ('' as T)
+      fieldMetadata?.isAutocomplete?.isMultiple ? ([] as T) : (null as T)
     );
     const [error, setError] = useState('');
     const [evaluateField, setEvaluateField] = useState(false);
@@ -246,8 +250,12 @@ export function useFormFields(
       setError('');
       setEvaluateField(false);
       setStringValue('');
-      if (fieldMetadata?.isAutocomplete?.isMultiple) {
-        setAutocompleteValue([] as T);
+      if (fieldMetadata?.isAutocomplete) {
+        if (fieldMetadata?.isAutocomplete?.isMultiple) {
+          setAutocompleteValue([] as T);
+        } else {
+          setAutocompleteValue(null as T);
+        }
       }
     }
 
@@ -343,10 +351,10 @@ export function useFormFields(
       return {
         value: autocompleteValue,
         onChange: (e: React.SyntheticEvent, value: T) => {
-          if (fieldMetadata?.isAutocomplete?.isMultiple) {
+          if (!fieldMetadata?.isAutocomplete?.isFreeSolo) {
             setAutocompleteValue(value as T);
           } else {
-            setStringValue(String(value ?? ''));
+            setStringValue(value != null ? String(value ?? '') : '');
           }
         },
         disabled: !enabled,
@@ -354,8 +362,12 @@ export function useFormFields(
     }
 
     function getValue() {
-      if (fieldMetadata?.isAutocomplete?.isMultiple) {
-        return autocompleteValue ?? ([] as T);
+      if (fieldMetadata?.isAutocomplete) {
+        if (fieldMetadata?.isAutocomplete?.isMultiple) {
+          return autocompleteValue ?? ([] as T);
+        } else if (!fieldMetadata?.isAutocomplete?.isFreeSolo) {
+          return autocompleteValue ?? ({} as T);
+        }
       }
 
       const input = getInputField(fieldRef.current);
@@ -364,15 +376,16 @@ export function useFormFields(
         return;
       }
 
+      let value = stringValue;
       if (stringValue !== input.value) {
-        console.warn(
-          `Field value is out of sync from getValue(): '${stringValue}' !== '${input.value}'.`
-        );
+        // console.warn(
+        // `Field value is out of sync with getValue(): '${stringValue}' !== '${input.value}'.`
+        // );
         setStringValue(input.value);
-        return;
+        value = input.value;
       }
 
-      const trimmedValue = stringValue.trim();
+      const trimmedValue = value.trim();
       if (trimmedValue === '') {
         return;
       }
@@ -400,13 +413,20 @@ export function useFormFields(
     }
 
     function setValue(value: T | undefined) {
-      if (fieldMetadata?.isAutocomplete?.isMultiple) {
-        setAutocompleteValue(value ?? ([] as T));
+      setStringValue('');
+      if (fieldMetadata?.isAutocomplete) {
+        if (fieldMetadata?.isAutocomplete?.isMultiple) {
+          setAutocompleteValue(value ?? ([] as T));
+        } else if (!fieldMetadata?.isAutocomplete?.isFreeSolo) {
+          setAutocompleteValue(value ?? (null as T));
+        } else if (value != null) {
+          setStringValue(String(value));
+        }
       } else {
         if (fieldMetadata?.isBoolean) {
           setStringValue(value ? 'on' : 'off');
-        } else {
-          setStringValue(String(value ?? ''));
+        } else if (value != null) {
+          setStringValue(String(value));
         }
       }
     }
@@ -635,14 +655,14 @@ export function useFormFields(
       if (valuesMap.has(f.name)) {
         f.setValue(valuesMap.get(f.name));
       } else {
-        f.setValue(f.fieldMetadata?.isAutocomplete?.isMultiple ? [] : '');
+        f.reset();
       }
     });
   }
 
   function getValuesObject<O extends {}>(
     includeNulls?: boolean,
-    startWithObject?: O
+    startWithObject?: O | null | undefined
   ): O {
     const object = (startWithObject ?? {}) as {[key: string]: any};
     fields.forEach(f => {
