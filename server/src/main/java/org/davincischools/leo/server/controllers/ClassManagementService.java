@@ -1,8 +1,10 @@
 package org.davincischools.leo.server.controllers;
 
+import java.util.Objects;
 import java.util.Optional;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.class_management_service.GetClassesRequest;
+import org.davincischools.leo.protos.class_management_service.GetClassesRequest.IdCase;
 import org.davincischools.leo.protos.class_management_service.GetClassesResponse;
 import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
@@ -33,18 +35,20 @@ public class ClassManagementService {
         .start(optionalRequest.orElse(GetClassesRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              boolean accessDenied =
-                  switch (request.getIdCase()) {
-                    case STUDENT_ID -> !user.isStudent();
-                    case TEACHER_ID -> !user.isTeacher();
-                    case ID_NOT_SET -> true;
-                  };
-              if (accessDenied) {
+              if (!switch (request.getIdCase()) {
+                case TEACHER_ID -> user.isAdmin()
+                    || Objects.equals(user.teacherId(), request.getTeacherId());
+                case STUDENT_ID -> user.isAdmin()
+                    || Objects.equals(user.studentId(), request.getStudentId());
+                case ID_NOT_SET -> false;
+              }) {
                 return user.returnForbidden(response.build());
               }
 
               db.getClassXRepository()
-                  .findFullClassXsByUserId(user.teacherId(), user.studentId())
+                  .findFullClassXsByUserId(
+                      request.getIdCase() == IdCase.TEACHER_ID ? request.getTeacherId() : null,
+                      request.getIdCase() == IdCase.STUDENT_ID ? request.getStudentId() : null)
                   .forEach(
                       e -> ProtoDaoConverter.toFullClassXProto(e, response.addClassesBuilder()));
 
