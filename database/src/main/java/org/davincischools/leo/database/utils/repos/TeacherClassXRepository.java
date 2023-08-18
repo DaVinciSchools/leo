@@ -13,6 +13,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TeacherClassXRepository extends JpaRepository<TeacherClassX, TeacherClassXId> {
 
+  default TeacherClassXId createId(int teacherId, int classXId) {
+    return new TeacherClassXId().setTeacherId(teacherId).setClassXId(classXId);
+  }
+
   default TeacherClassX upsert(Teacher teacher, ClassX classX) {
     checkNotNull(teacher);
     checkNotNull(classX);
@@ -20,8 +24,12 @@ public interface TeacherClassXRepository extends JpaRepository<TeacherClassX, Te
     return saveAndFlush(
         new TeacherClassX()
             .setCreationTime(Instant.now())
-            .setId(new TeacherClassXId().setTeacherId(teacher.getId()).setClassXId(classX.getId()))
+            .setId(createId(teacher.getId(), classX.getId()))
             .setTeacher(teacher)
             .setClassX(classX));
+  }
+
+  default boolean canTeacherUpdateClassX(int teacherId, int classXId) {
+    return findById(createId(teacherId, classXId)).isPresent();
   }
 }
