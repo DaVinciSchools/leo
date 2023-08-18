@@ -2,10 +2,14 @@ package org.davincischools.leo.server.controllers;
 
 import java.util.Objects;
 import java.util.Optional;
+import org.davincischools.leo.database.exceptions.UnauthorizedUser;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.ClassXRepository.FullClassX;
 import org.davincischools.leo.protos.class_management_service.GetClassesRequest;
 import org.davincischools.leo.protos.class_management_service.GetClassesRequest.IdCase;
 import org.davincischools.leo.protos.class_management_service.GetClassesResponse;
+import org.davincischools.leo.protos.class_management_service.UpsertClassRequest;
+import org.davincischools.leo.protos.class_management_service.UpsertClassResponse;
 import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
@@ -51,6 +55,33 @@ public class ClassManagementService {
                       request.getIdCase() == IdCase.STUDENT_ID ? request.getStudentId() : null)
                   .forEach(
                       e -> ProtoDaoConverter.toFullClassXProto(e, response.addClassesBuilder()));
+
+              return response.build();
+            })
+        .finish();
+  }
+
+  @PostMapping(value = "/api/protos/ClassManagementService/UpsertClass")
+  @ResponseBody
+  public UpsertClassResponse upsertClass(
+      @Authenticated HttpUser user,
+      @RequestBody Optional<UpsertClassRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    var response = UpsertClassResponse.newBuilder();
+
+    return httpExecutors
+        .start(optionalRequest.orElse(UpsertClassRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              if (!user.isAdmin() && !user.isTeacher()) {
+                throw new UnauthorizedUser();
+              }
+
+              FullClassX fullClassX = ProtoDaoConverter.toFullClassXRecord(request.getClassX());
+              db.getClassXRepository()
+                  .guardedUpsert(db, fullClassX, user.isAdmin() ? null : user.teacherId());
+              ProtoDaoConverter.toFullClassXProto(fullClassX, response.getClassXBuilder());
 
               return response.build();
             })

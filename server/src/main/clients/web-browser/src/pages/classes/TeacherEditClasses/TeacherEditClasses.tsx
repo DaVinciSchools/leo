@@ -66,15 +66,14 @@ export function TeacherEditClasses() {
     () => {
       setClassSaveStatus('Saving...');
       if (selectedClass?.id != null && classFormFields.verifyOk(true)) {
-        // return createService(ClassManagementService, 'ClassManagementService')
-        //   .upsertClass({
-        //     classX: classFormFields.getValuesObject(true, selectedClass),
-        //   })
-        //   .then(response => {
-        //     setClassSaveStatus('Saved');
-        //   })
-        //   .catch(global.setError);
-        setClassSaveStatus('Saved');
+        return createService(ClassManagementService, 'ClassManagementService')
+          .upsertClass({
+            classX: classFormFields.getValuesObject(true, selectedClass),
+          })
+          .then(() => {
+            setClassSaveStatus('Saved');
+          })
+          .catch(global.setError);
       } else {
         setClassSaveStatus('Invalid values, Not saved');
       }
@@ -110,9 +109,12 @@ export function TeacherEditClasses() {
   const classShortDescr = classFormFields.useStringFormField('shortDescr', {
     maxLength: 255,
   });
-  const classLongDescr = classFormFields.useStringFormField('longDescr', {
-    maxLength: 255,
-  });
+  const classLongDescrHtml = classFormFields.useStringFormField(
+    'longDescrHtml',
+    {
+      maxLength: 255,
+    }
+  );
 
   // --- New / Edit EKS Form ---
 
@@ -335,7 +337,7 @@ export function TeacherEditClasses() {
                 startIcon={<Add />}
                 onClick={() => {
                   setEditKsOp('ADD');
-                  setEditKs({type: Type.EKS});
+                  setEditKs({type: Type.EKS, global: true});
                 }}
                 disabled={classFormFields.getDisabled()}
               >
@@ -357,7 +359,7 @@ export function TeacherEditClasses() {
             <Grid item xs={12}>
               <TextField
                 label="Long Description"
-                {...classLongDescr.textFieldParams()}
+                {...classLongDescrHtml.textFieldParams()}
               />
             </Grid>
           </Grid>

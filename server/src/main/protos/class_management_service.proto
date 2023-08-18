@@ -9,6 +9,7 @@ package class_management_service;
 
 service ClassManagementService {
   rpc GetClasses (GetClassesRequest) returns (GetClassesResponse) {}
+  rpc UpsertClass (UpsertClassRequest) returns (UpsertClassResponse) {}
 }
 
 message GetClassesRequest {
@@ -20,4 +21,12 @@ message GetClassesRequest {
 
 message GetClassesResponse {
   repeated pl_types.ClassX classes = 1;
+}
+
+message UpsertClassRequest {
+  pl_types.ClassX class_x = 1;
+}
+
+message UpsertClassResponse {
+  pl_types.ClassX class_X = 1;
 }

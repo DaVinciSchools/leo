@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
+import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,10 @@ import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.School;
+import org.davincischools.leo.database.exceptions.UnauthorizedUser;
+import org.davincischools.leo.database.utils.Database;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -51,7 +55,7 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
           SELECT c, cxks
           FROM ClassX c
           LEFT JOIN FETCH c.school
-		  LEFT JOIN FETCH c.school.district
+          LEFT JOIN FETCH c.school.district
           LEFT JOIN TeacherClassX tcx
           ON (:teacherId) IS NOT NULL AND c.id = tcx.classX.id
           LEFT JOIN StudentClassX scx
@@ -89,4 +93,23 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
   }
 
   List<ClassX> findAllBySchool(School school);
+
+  @Modifying
+  @Transactional
+  default void guardedUpsert(Database db, FullClassX fullClassX, Integer requiredTeacherId)
+      throws UnauthorizedUser {
+    checkNotNull(db);
+    checkNotNull(fullClassX);
+
+    if (fullClassX.classX().getId() != null
+        && requiredTeacherId != null
+        && !db.getTeacherClassXRepository()
+            .canTeacherUpdateClassX(requiredTeacherId, fullClassX.classX().getId())) {
+      throw new UnauthorizedUser("Teacher does not have write access to this class.");
+    }
+
+    save(fullClassX.classX);
+    db.getClassXKnowledgeAndSkillRepository()
+        .setClassXKnoweldgeAndSkills(fullClassX.classX, fullClassX.knowledgeAndSkills);
+  }
 }
