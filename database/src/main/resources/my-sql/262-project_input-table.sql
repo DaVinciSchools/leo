@@ -17,7 +17,7 @@ CREATE TABLE project_input
             ON UPDATE RESTRICT,
 
     assignment_id         INT,
-    CONSTRAINT project__assignment_id
+    CONSTRAINT project_input__assignment_id
         FOREIGN KEY (assignment_id)
             REFERENCES assignment (id)
             ON DELETE RESTRICT

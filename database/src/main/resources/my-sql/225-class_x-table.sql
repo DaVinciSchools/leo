@@ -20,6 +20,6 @@ CREATE TABLE class_x
             ON UPDATE RESTRICT,
 
     CONSTRAINT class_x__school_id__number
-        UNIQUE (school_id, number)
+        UNIQUE (id, school_id, number)
 ) ENGINE InnoDB
   CHAR SET UTF8MB4;

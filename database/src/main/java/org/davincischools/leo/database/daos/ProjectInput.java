@@ -24,7 +24,7 @@ public class ProjectInput implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_TIMEOUT_NAME = "timeout";
   public static final String COLUMN_STATE_NAME = "state";
-  private static final long serialVersionUID = -5172215258809144256L;
+  private static final long serialVersionUID = -485174057239849268L;
 
   private Integer id;
 
