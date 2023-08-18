@@ -256,6 +256,8 @@ export function useFormFields(
         } else {
           setAutocompleteValue(null as T);
         }
+      } else if (fieldMetadata?.isBoolean) {
+        setStringValue('off');
       }
     }
 
@@ -376,16 +378,7 @@ export function useFormFields(
         return;
       }
 
-      let value = stringValue;
-      if (stringValue !== input.value) {
-        // console.warn(
-        // `Field value is out of sync with getValue(): '${stringValue}' !== '${input.value}'.`
-        // );
-        setStringValue(input.value);
-        value = input.value;
-      }
-
-      const trimmedValue = value.trim();
+      const trimmedValue = stringValue.trim();
       if (trimmedValue === '') {
         return;
       }
@@ -462,14 +455,6 @@ export function useFormFields(
         ].includes(input.type)
       ) {
         throw new Error(`Input type '${input.type}' is not recognized.`);
-      }
-
-      if (stringValue !== input.value) {
-        console.warn(
-          `Field value is out of sync from calculateError(): '${stringValue}' !== '${input.value}'.`
-        );
-        setStringValue(input.value);
-        return;
       }
 
       if (
