@@ -12,14 +12,11 @@ CREATE TABLE class_x
     short_descr     TEXT,
     long_descr_html TEXT,
 
-    school_id       INT          NOT NULL,
+    school_id       INT,
     CONSTRAINT class_x__school_id
         FOREIGN KEY (school_id)
             REFERENCES school (id)
             ON DELETE RESTRICT
-            ON UPDATE RESTRICT,
-
-    CONSTRAINT class_x__school_id__number
-        UNIQUE (id, school_id, number)
+            ON UPDATE RESTRICT
 ) ENGINE InnoDB
   CHAR SET UTF8MB4;

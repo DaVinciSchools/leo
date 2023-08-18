@@ -6,7 +6,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
@@ -15,15 +14,7 @@ import java.io.Serializable;
 import java.time.Instant;
 
 @Entity(name = ClassX.ENTITY_NAME)
-@Table(
-    name = ClassX.TABLE_NAME,
-    schema = "leo_temp",
-    indexes = {
-      @Index(
-          name = "class_x__school_id__number",
-          columnList = "id, number, school_id",
-          unique = true)
-    })
+@Table(name = ClassX.TABLE_NAME, schema = "leo_temp")
 public class ClassX implements Serializable {
 
   public static final String ENTITY_NAME = "ClassX";
@@ -153,8 +144,8 @@ public class ClassX implements Serializable {
     return this;
   }
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "school_id", nullable = false)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "school_id")
   public School getSchool() {
     return school;
   }
