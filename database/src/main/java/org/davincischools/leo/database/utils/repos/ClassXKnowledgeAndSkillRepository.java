@@ -83,7 +83,7 @@ public interface ClassXKnowledgeAndSkillRepository
     saveAll(newKnowledgeAndSkills);
 
     Set<Integer> knowledgeAndSkillIds =
-        knowledgeAndSkills.stream().map(e -> e.getId()).collect(toSet());
+        knowledgeAndSkills.stream().map(KnowledgeAndSkill::getId).collect(toSet());
     List<ClassXKnowledgeAndSkill> toDelete =
         current.stream()
             .filter(e -> !knowledgeAndSkillIds.contains(e.getKnowledgeAndSkill().getId()))

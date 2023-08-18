@@ -19,7 +19,6 @@ import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.exceptions.UnauthorizedUser;
 import org.davincischools.leo.database.utils.Database;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -94,7 +93,6 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
 
   List<ClassX> findAllBySchool(School school);
 
-  @Modifying
   @Transactional
   default void guardedUpsert(Database db, FullClassX fullClassX, Integer requiredTeacherId)
       throws UnauthorizedUser {
@@ -108,8 +106,18 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
       throw new UnauthorizedUser("Teacher does not have write access to this class.");
     }
 
-    save(fullClassX.classX);
-    db.getClassXKnowledgeAndSkillRepository()
-        .setClassXKnoweldgeAndSkills(fullClassX.classX, fullClassX.knowledgeAndSkills);
+    // TODO: Find a better way to "clone without transient children".
+    School oldSchool = fullClassX.classX().getSchool();
+    try {
+      if (fullClassX.classX().getSchool() != null) {
+        fullClassX.classX().setSchool(new School().setId(fullClassX.classX().getSchool().getId()));
+      }
+
+      save(fullClassX.classX());
+      db.getClassXKnowledgeAndSkillRepository()
+          .setClassXKnoweldgeAndSkills(fullClassX.classX(), fullClassX.knowledgeAndSkills());
+    } finally {
+      fullClassX.classX().setSchool(oldSchool);
+    }
   }
 }

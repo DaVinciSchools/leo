@@ -28,5 +28,5 @@ message UpsertClassRequest {
 }
 
 message UpsertClassResponse {
-  pl_types.ClassX class_X = 1;
+  pl_types.ClassX class_x = 1;
 }

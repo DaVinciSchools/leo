@@ -168,6 +168,23 @@ export function TeacherEditClasses() {
     return <></>;
   }
 
+  function createNewClass() {
+    createService(ClassManagementService, 'ClassManagementService')
+      .upsertClass({
+        classX: {
+          name: 'New Class',
+          number: (global?.user?.lastName ?? 'CLASS').toUpperCase() + ' 101',
+        },
+      })
+      .then(response => {
+        setSortedClasses(
+          [...sortedClasses, response.classX!].sort(CLASS_SORTER)
+        );
+        setSelectedClass(response.classX!);
+      })
+      .catch(global.setError);
+  }
+
   return (
     <>
       <DefaultPage title="Edit Classes">
@@ -185,7 +202,7 @@ export function TeacherEditClasses() {
               groupBy={
                 !haveMultipleSchools
                   ? undefined
-                  : option => option.school?.name ?? 'undefined'
+                  : option => option.school?.name ?? 'No School Selected'
               }
               renderOption={(props, option) => (
                 <li {...props} key={option.id}>
@@ -218,7 +235,11 @@ export function TeacherEditClasses() {
             {...spread({sm: 12, md: 5})}
             className="teacher-edit-classes-expand-buttons"
           >
-            <Button variant="contained" startIcon={<Add />}>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={createNewClass}
+            >
               New Class
             </Button>
             <Button
@@ -256,10 +277,10 @@ export function TeacherEditClasses() {
                 )}
                 renderOption={(props, option) => (
                   <li {...props} key={option.id}>
-                    {option.name ?? 'undefined'}
+                    {option.name ?? 'School is Unnamed'}
                   </li>
                 )}
-                getOptionLabel={option => option?.name ?? 'undefined'}
+                getOptionLabel={option => option?.name ?? 'School is Unnamed'}
                 {...classSchool.autocompleteParams()}
               />
             </Grid>
