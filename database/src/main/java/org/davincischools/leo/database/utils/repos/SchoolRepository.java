@@ -42,7 +42,13 @@ public interface SchoolRepository extends JpaRepository<School, Integer> {
     return saveAndFlush(school);
   }
 
-  List<School> findAllByDistrictId(Integer districtId);
+  @Query(
+      """
+          SELECT s FROM School s
+          INNER JOIN FETCH s.district
+          WHERE s.district.id = (:districtId)
+          """)
+  List<School> findAllByDistrictId(@Param("districtId") int districtId);
 
   @Query(
       "SELECT s"
