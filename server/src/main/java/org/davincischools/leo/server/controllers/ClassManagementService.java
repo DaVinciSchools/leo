@@ -2,6 +2,7 @@ package org.davincischools.leo.server.controllers;
 
 import java.util.Objects;
 import java.util.Optional;
+import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.exceptions.UnauthorizedUser;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.ClassXRepository.FullClassX;
@@ -82,6 +83,11 @@ public class ClassManagementService {
               db.getClassXRepository()
                   .guardedUpsert(db, fullClassX, user.isAdmin() ? null : user.teacherId());
               ProtoDaoConverter.toFullClassXProto(fullClassX, response.getClassXBuilder());
+
+              if (user.teacherId() != null) {
+                db.getTeacherClassXRepository()
+                    .upsert(new Teacher().setId(user.teacherId()), fullClassX.classX());
+              }
 
               return response.build();
             })
