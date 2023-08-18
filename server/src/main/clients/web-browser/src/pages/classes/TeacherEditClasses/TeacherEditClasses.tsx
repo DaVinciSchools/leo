@@ -10,7 +10,11 @@ import {
   Grid,
   TextField,
 } from '@mui/material';
-import {CLASS_SORTER, KNOWLEDGE_AND_SKILL_SORTER} from '../../../libs/sorters';
+import {
+  CLASS_SORTER,
+  KNOWLEDGE_AND_SKILL_SORTER,
+  SCHOOL_SORTER,
+} from '../../../libs/sorters';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {addClassName, spread} from '../../../libs/tags';
@@ -18,6 +22,7 @@ import {
   class_management_service,
   pl_types,
   project_management,
+  school_management,
 } from '../../../generated/protobuf-js';
 import {createService} from '../../../libs/protos';
 import {useContext, useEffect, useState} from 'react';
@@ -30,40 +35,63 @@ import IClassX = pl_types.IClassX;
 import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
 import ProjectManagementService = project_management.ProjectManagementService;
 import Type = pl_types.KnowledgeAndSkill.Type;
+import ISchool = pl_types.ISchool;
+import SchoolManagementService = school_management.SchoolManagementService;
 
 export function TeacherEditClasses() {
   const global = useContext(GlobalStateContext);
 
-  const [classes, setClasses] = useState<IClassX[]>([]);
+  const [sortedClasses, setSortedClasses] = useState<IClassX[]>([]);
+  const [haveMultipleSchools, setHaveMultipleSchools] = useState(false);
   const [selectedClass, setSelectedClass] = useState<IClassX | null>(null);
   const [sortedKnowledgeAndSkills, setSortedKnowledgeAndSkills] = useState<
     IKnowledgeAndSkill[]
   >([]);
+  const [sortedSchools, setSortedSchools] = useState<ISchool[]>([]);
   const [classSaveStatus, setClassSaveStatus] = useState<string>('');
 
   // --- AutoSave ---
   const autoSave = useDelayedAction(
-    () => setClassSaveStatus('Modified'),
+    () => {
+      setClassSaveStatus('Modified');
+      if (selectedClass?.id != null) {
+        const newClass = classFormFields.getValuesObject(true, selectedClass);
+        setSortedClasses(
+          replaceInPlace([...sortedClasses], newClass, e => e?.id).sort(
+            CLASS_SORTER
+          )
+        );
+      }
+    },
     () => {
       setClassSaveStatus('Saving...');
       if (selectedClass?.id != null && classFormFields.verifyOk(true)) {
-        classFormFields.getValuesObject(true, selectedClass);
-        setClassSaveStatus('Saved');
         // return createService(ClassManagementService, 'ClassManagementService')
-        //   .saveClass(classFormFields.getValuesObject())
-        //   .then(() => setClassSaveStatus('Saved'))
+        //   .upsertClass({
+        //     classX: classFormFields.getValuesObject(true, selectedClass),
+        //   })
+        //   .then(response => {
+        //     setClassSaveStatus('Saved');
+        //   })
         //   .catch(global.setError);
+        setClassSaveStatus('Saved');
       } else {
         setClassSaveStatus('Invalid values, Not saved');
       }
       return;
     },
-    1000
+    1500
   );
 
   // --- Class Form ---
 
   const classFormFields = useFormFields({onChange: () => autoSave.trigger()});
+  const classSchool = classFormFields.useAutocompleteFormField<ISchool | null>(
+    'school',
+    {
+      isAutocomplete: {},
+    }
+  );
   const className = classFormFields.useStringFormField('name', {
     maxLength: 255,
   });
@@ -72,7 +100,7 @@ export function TeacherEditClasses() {
   });
   const classEks = classFormFields.useAutocompleteFormField<
     IKnowledgeAndSkill[]
-  >('eks', {isAutocomplete: {isMultiple: true}});
+  >('knowledgeAndSkills', {isAutocomplete: {isMultiple: true}});
   const classPeriod = classFormFields.useStringFormField('period', {
     maxLength: 16,
   });
@@ -94,6 +122,25 @@ export function TeacherEditClasses() {
   // --- Effects ---
 
   useEffect(() => {
+    if (global.user == null) {
+      setSelectedClass(null);
+      setHaveMultipleSchools(false);
+      setSortedSchools([]);
+      setSortedClasses([]);
+      setSortedKnowledgeAndSkills([]);
+      return;
+    }
+    createService(SchoolManagementService, 'SchoolManagementService')
+      .getSchools({districtId: global.user?.districtId})
+      .then(response => setSortedSchools(response.schools.sort(SCHOOL_SORTER)))
+      .catch(global.setError);
+    createService(ClassManagementService, 'ClassManagementService')
+      .getClasses({teacherId: global.user.teacherId})
+      .then(response => {
+        setSortedClasses(response.classes.sort(CLASS_SORTER));
+        setHaveMultipleSchools(false);
+      })
+      .catch(global.setError);
     createService(ProjectManagementService, 'ProjectManagementService')
       .getKnowledgeAndSkills({types: [Type.EKS]})
       .then(response =>
@@ -102,19 +149,13 @@ export function TeacherEditClasses() {
         )
       )
       .catch(global.setError);
-  }, []);
+  }, [global.user]);
 
   useEffect(() => {
-    setSelectedClass(null);
-    if (global.user == null) {
-      setClasses([]);
-      return;
-    }
-    createService(ClassManagementService, 'ClassManagementService')
-      .getClasses({teacherId: global.user.teacherId})
-      .then(response => setClasses(response.classes))
-      .catch(global.setError);
-  }, [global.user]);
+    setHaveMultipleSchools(
+      new Set(sortedClasses.map(e => e.school?.id)).size > 1
+    );
+  }, [sortedClasses]);
 
   useEffect(() => {
     classFormFields.setValuesObject(selectedClass ?? {});
@@ -137,10 +178,14 @@ export function TeacherEditClasses() {
               autoHighlight
               autoFocus
               value={selectedClass}
-              options={classes.sort(CLASS_SORTER)}
+              options={sortedClasses}
               isOptionEqualToValue={(option, value) => option.id === value.id}
-              //eslint-disable-next-line @typescript-eslint/no-unused-vars
-              renderOption={(props, option, {selected}) => (
+              groupBy={
+                !haveMultipleSchools
+                  ? undefined
+                  : option => option.school?.name ?? 'undefined'
+              }
+              renderOption={(props, option) => (
                 <li {...props} key={option.id}>
                   {option.number}:&nbsp;
                   <i>{option.name}</i>
@@ -196,6 +241,26 @@ export function TeacherEditClasses() {
                 </div>
               </div>
             </Grid>
+            <Grid item xs={12}>
+              <Autocomplete
+                autoHighlight
+                options={sortedSchools}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                renderInput={params => (
+                  <TextField
+                    label="Select school"
+                    {...classSchool.textFieldParams(params)}
+                  />
+                )}
+                renderOption={(props, option) => (
+                  <li {...props} key={option.id}>
+                    {option.name ?? 'undefined'}
+                  </li>
+                )}
+                getOptionLabel={option => option?.name ?? 'undefined'}
+                {...classSchool.autocompleteParams()}
+              />
+            </Grid>
             <Grid item {...spread({sm: 12, md: 4})}>
               <TextField
                 required
@@ -231,13 +296,16 @@ export function TeacherEditClasses() {
                     <i>{option.shortDescr ?? 'undefined'}</i>{' '}
                     {(option.userXId === global.user?.userXId ||
                       global.user?.isAdmin) && (
-                      <Edit
-                        onClick={e => {
-                          setEditKsOp('UPDATE');
-                          setEditKs(option);
-                          e.stopPropagation();
-                        }}
-                      />
+                      <>
+                        &nbsp;
+                        <Edit
+                          onClick={e => {
+                            setEditKsOp('UPDATE');
+                            setEditKs(option);
+                            e.stopPropagation();
+                          }}
+                        />
+                      </>
                     )}
                   </li>
                 )}
