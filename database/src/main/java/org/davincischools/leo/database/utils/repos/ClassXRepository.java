@@ -48,18 +48,20 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
 
   @Query(
       """
-    SELECT c, cxks
-    FROM ClassX c
-    RIGHT JOIN TeacherClassX tcx
-    ON c.id = tcx.classX.id
-    RIGHT JOIN StudentClassX scx
-    ON c.id = scx.classX.id
-    LEFT JOIN ClassXKnowledgeAndSkill cxks
-    ON (c.id = cxks.classX.id)
-    LEFT JOIN FETCH cxks.knowledgeAndSkill
-    WHERE ((:teacherId) IS NULL OR tcx.teacher.id = (:teacherId))
-    AND ((:studentId) IS NULL OR scx.student.id = (:studentId))
-    ORDER BY c.id""")
+          SELECT c, cxks
+          FROM ClassX c
+          LEFT JOIN FETCH c.school
+		  LEFT JOIN FETCH c.school.district
+          LEFT JOIN TeacherClassX tcx
+          ON (:teacherId) IS NOT NULL AND c.id = tcx.classX.id
+          LEFT JOIN StudentClassX scx
+          ON (:studentId) IS NOT NULL AND c.id = scx.classX.id
+          LEFT JOIN ClassXKnowledgeAndSkill cxks
+          ON (c.id = cxks.classX.id)
+          LEFT JOIN FETCH cxks.knowledgeAndSkill
+          WHERE ((:teacherId) IS NULL OR tcx.teacher.id = (:teacherId))
+          AND ((:studentId) IS NULL OR scx.student.id = (:studentId))
+          ORDER BY c.id""")
   List<FullClassXRow> findFullClassXRowsByUserId(
       @Nullable @Param("teacherId") Integer teacherId,
       @Nullable @Param("studentId") Integer studentId);
