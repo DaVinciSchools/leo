@@ -28,7 +28,6 @@ import java.time.Instant;
       @Index(name = "user_x__email_address", columnList = "email_address")
     })
 public class UserX implements Serializable {
-
   public static final String ENTITY_NAME = "UserX";
   public static final String TABLE_NAME = "user_x";
   public static final String COLUMN_ID_NAME = "id";
@@ -38,7 +37,10 @@ public class UserX implements Serializable {
   public static final String COLUMN_LASTNAME_NAME = "last_name";
   public static final String COLUMN_EMAILADDRESS_NAME = "email_address";
   public static final String COLUMN_ENCODEDPASSWORD_NAME = "encoded_password";
-  private static final long serialVersionUID = -8483564968144944481L;
+  public static final String COLUMN_TEMPORARYPASSWORDGOODUNTIL_NAME =
+      "temporary_password_good_until";
+  public static final String COLUMN_TEMPORARYENCODEDPASSWORD_NAME = "temporary_encoded_password";
+  private static final long serialVersionUID = 2120918976503868544L;
 
   private Integer id;
 
@@ -53,6 +55,10 @@ public class UserX implements Serializable {
   private String emailAddress;
 
   private String encodedPassword;
+
+  private Instant temporaryPasswordGoodUntil;
+
+  private String temporaryEncodedPassword;
 
   private District district;
 
@@ -134,6 +140,27 @@ public class UserX implements Serializable {
 
   public UserX setEncodedPassword(String encodedPassword) {
     this.encodedPassword = encodedPassword;
+    return this;
+  }
+
+  @Column(name = COLUMN_TEMPORARYPASSWORDGOODUNTIL_NAME)
+  public Instant getTemporaryPasswordGoodUntil() {
+    return temporaryPasswordGoodUntil;
+  }
+
+  public UserX setTemporaryPasswordGoodUntil(Instant temporaryPasswordGoodUntil) {
+    this.temporaryPasswordGoodUntil = temporaryPasswordGoodUntil;
+    return this;
+  }
+
+  @Lob
+  @Column(name = COLUMN_TEMPORARYENCODEDPASSWORD_NAME)
+  public String getTemporaryEncodedPassword() {
+    return temporaryEncodedPassword;
+  }
+
+  public UserX setTemporaryEncodedPassword(String temporaryEncodedPassword) {
+    this.temporaryEncodedPassword = temporaryEncodedPassword;
     return this;
   }
 
