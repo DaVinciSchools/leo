@@ -11,7 +11,26 @@ export function AdminDashboard() {
 
   return (
     <>
-      <DefaultPage title="Admin Dashboard">TODO</DefaultPage>
+      <DefaultPage title="Admin Dashboard">
+        <ul>
+          <li>
+            <a
+              href="https://analytics.google.com/analytics/web/?utm_source=marketingplatform.google.com&utm_medium=et&utm_campaign=marketingplatform.google.com%2Fabout%2Fanalytics%2F#/p398130888/reports/intelligenthome"
+              target="_blank"
+            >
+              Google Analytics
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://trends.google.com/trends/explore?q=project%20leo&date=now%201-d&geo=US&hl=en"
+              target="_blank"
+            >
+              Google Trends
+            </a>
+          </li>
+        </ul>
+      </DefaultPage>
     </>
   );
 }
