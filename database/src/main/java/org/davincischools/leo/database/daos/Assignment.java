@@ -16,7 +16,6 @@ import java.time.Instant;
 @Entity(name = Assignment.ENTITY_NAME)
 @Table(name = Assignment.TABLE_NAME, schema = "leo_temp")
 public class Assignment implements Serializable {
-
   public static final String ENTITY_NAME = "Assignment";
   public static final String TABLE_NAME = "assignment";
   public static final String COLUMN_ID_NAME = "id";
@@ -25,7 +24,7 @@ public class Assignment implements Serializable {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = -947512661891497306L;
+  private static final long serialVersionUID = 298709429381368969L;
 
   private Integer id;
 
@@ -105,8 +104,8 @@ public class Assignment implements Serializable {
     return this;
   }
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "class_x_id", nullable = false)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "class_x_id")
   public ClassX getClassX() {
     return classX;
   }

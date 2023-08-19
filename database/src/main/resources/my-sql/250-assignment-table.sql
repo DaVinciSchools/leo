@@ -8,7 +8,7 @@ CREATE TABLE assignment
     short_descr     TEXT,
     long_descr_html TEXT,
 
-    class_x_id      INT          NOT NULL,
+    class_x_id      INT,
     CONSTRAINT assignment__class_x_id
         FOREIGN KEY (class_x_id)
             REFERENCES class_x (id)
