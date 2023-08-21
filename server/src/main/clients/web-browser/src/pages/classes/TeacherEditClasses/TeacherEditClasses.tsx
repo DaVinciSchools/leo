@@ -95,7 +95,7 @@ export function TeacherEditClasses() {
     maxLength: 255,
   });
   const classNumber = classFormFields.useStringFormField('number', {
-    maxLength: 16,
+    maxLength: 255,
   });
   const classEks = classFormFields.useAutocompleteFormField<
     IKnowledgeAndSkill[]

@@ -6,7 +6,7 @@ CREATE TABLE class_x
     deleted         DATETIME,
 
     name            VARCHAR(255) NOT NULL,
-    number          VARCHAR(16) NOT NULL,
+    number          VARCHAR(255) NOT NULL,
     period          VARCHAR(16),
     grade           VARCHAR(16),
     short_descr     TEXT,
