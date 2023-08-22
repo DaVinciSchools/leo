@@ -42,9 +42,11 @@ public class WebSession {
   }
 
   public static <T extends Message> T bodyAsProto(ResponseSpec spec, Class<T> protoClass) {
-    byte[] body = spec.bodyToMono(byte[].class).block();
-    assertThat(body).isNotNull();
     try {
+      byte[] body = spec.bodyToMono(byte[].class).block();
+      if (body == null) {
+        return (T) protoClass.getMethod("getDefaultInstance").invoke(null);
+      }
       return (T) protoClass.getMethod("parseFrom", byte[].class).invoke(null, body);
     } catch (Exception e) {
       throw new RuntimeException(e);
