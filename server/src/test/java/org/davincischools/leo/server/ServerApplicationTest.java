@@ -14,11 +14,12 @@ import com.google.common.net.HttpHeaders;
 import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.test.TestData;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.protos.interest_service.RegisterInterestRequest;
-import org.davincischools.leo.protos.interest_service.RegisterInterestResponse;
 import org.davincischools.leo.protos.pl_types.UserX;
+import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
+import org.davincischools.leo.protos.user_x_management.RegisterUserXResponse;
 import org.davincischools.leo.server.controllers.ReactResourceController;
 import org.davincischools.leo.server.test_helpers.WebSession;
+import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -140,12 +141,14 @@ public class ServerApplicationTest {
   }
 
   @Test
-  public void registerInterestTest() throws Exception {
-    RegisterInterestRequest request =
-        RegisterInterestRequest.newBuilder()
-            .setFirstName(String.valueOf(System.nanoTime()))
+  public void registerUserXTest() throws Exception {
+    RegisterUserXRequest request =
+        RegisterUserXRequest.newBuilder()
+            .setFirstName("first")
             .setLastName("last")
             .setEmailAddress("email@address.net")
+            .setPassword("password")
+            .setVerifyPassword("verify_password")
             .setProfession("profession")
             .setReasonForInterest("interest")
             .setDistrictName("district")
@@ -159,32 +162,33 @@ public class ServerApplicationTest {
             .setNumStudents(11)
             .build();
 
-    RegisterInterestResponse response =
+    RegisterUserXResponse response =
         session.protoRequest(
             webClient(),
-            "/api/protos/InterestService/RegisterInterest",
+            "/api/protos/UserXManagementService/RegisterUserX",
             request,
-            RegisterInterestResponse.class);
+            RegisterUserXResponse.class);
 
-    Interest interest = db.getInterestRepository().findById(response.getId()).orElseThrow();
+    org.davincischools.leo.database.daos.UserX userX =
+        db.getUserXRepository().findByEmailAddress(request.getEmailAddress()).orElseThrow();
+    Interest interest =
+        db.getInterestRepository().findById(userX.getInterest().getId()).orElseThrow();
 
-    assertThat(
-            RegisterInterestRequest.newBuilder()
-                .setFirstName(interest.getFirstName())
-                .setLastName(interest.getLastName())
-                .setEmailAddress(interest.getEmailAddress())
-                .setProfession(interest.getProfession())
-                .setReasonForInterest(interest.getReasonForInterest())
-                .setDistrictName(interest.getDistrictName())
-                .setSchoolName(interest.getSchoolName())
-                .setAddressLine1(interest.getAddressLine1())
-                .setAddressLine2(interest.getAddressLine2())
-                .setCity(interest.getCity())
-                .setState(interest.getState())
-                .setZipCode(interest.getZipCode())
-                .setNumTeachers(interest.getNumTeachers())
-                .setNumStudents(interest.getNumStudents())
-                .build())
+    assertThat(ProtoDaoConverter.toUserXProto(userX, null).build())
+        .ignoringFields(UserX.USER_X_ID_FIELD_NUMBER)
+        .isEqualTo(
+            UserX.newBuilder()
+                .setEmailAddress(request.getEmailAddress())
+                .setFirstName(request.getFirstName())
+                .setLastName(request.getLastName())
+                .setIsDemo(true)
+                .setIsAuthenticated(true)
+                .build());
+
+    assertThat(ProtoDaoConverter.toRegisterUserXRequestProto(interest, null).build())
+        .ignoringFields(
+            RegisterUserXRequest.PASSWORD_FIELD_NUMBER,
+            RegisterUserXRequest.VERIFY_PASSWORD_FIELD_NUMBER)
         .isEqualTo(request);
   }
 }

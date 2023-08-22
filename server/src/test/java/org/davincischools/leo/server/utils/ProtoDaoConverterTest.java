@@ -11,6 +11,8 @@ import org.davincischools.leo.protos.pl_types.ClassX;
 import org.davincischools.leo.protos.pl_types.District;
 import org.davincischools.leo.protos.pl_types.KnowledgeAndSkill;
 import org.davincischools.leo.protos.pl_types.School;
+import org.davincischools.leo.protos.pl_types.UserX;
+import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
 import org.davincischools.leo.server.ServerApplication;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -290,6 +292,159 @@ public class ProtoDaoConverterTest {
             School.class);
 
     assertThat(ProtoDaoConverter.toSchoolProto(ProtoDaoConverter.toSchoolDao(proto), null).build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toUserXConvertersNull() throws ParseException {
+    assertThat(ProtoDaoConverter.toUserXProto(null, null).build())
+        .isEqualTo(UserX.getDefaultInstance());
+  }
+
+  @Test
+  public void toUserXConvertersUninitialized() throws ParseException {
+    assertThat(
+            ProtoDaoConverter.toUserXProto(
+                    newUninitialized(org.davincischools.leo.database.daos.UserX.class), null)
+                .build())
+        .isEqualTo(UserX.getDefaultInstance());
+  }
+
+  @Test
+  public void toUserXConvertersJustId() throws ParseException {
+    UserX proto =
+        TextFormat.parse(
+            """
+                user_x_id: 1
+                is_demo: true
+                is_authenticated: true
+                """,
+            UserX.class);
+
+    assertThat(ProtoDaoConverter.toUserXProto(ProtoDaoConverter.toUserXDao(proto), null).build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toUserXConvertersEmpty() throws ParseException {
+    UserX proto =
+        TextFormat.parse(
+            """
+                          is_demo: false
+                          is_authenticated: false
+                          """,
+            UserX.class);
+
+    assertThat(
+            ProtoDaoConverter.toUserXProto(
+                    ProtoDaoConverter.toUserXDao(UserX.getDefaultInstance()), null)
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toUserXConvertersAllNonDemo() throws ParseException {
+    UserX proto =
+        TextFormat.parse(
+            """
+                        user_x_id: 1
+                        district_id: 2
+                        first_name: "first"
+                        last_name: "last"
+                        email_address: "email"
+                        is_admin_x: true
+                        admin_x_id: 3
+                        is_teacher: true
+                        teacher_id: 4
+                        is_student: true
+                        student_id: 5
+                        is_demo: false
+                        is_authenticated: true
+                        """,
+            UserX.class);
+
+    assertThat(ProtoDaoConverter.toUserXProto(ProtoDaoConverter.toUserXDao(proto), null).build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toUserXConvertersAllDemo() throws ParseException {
+    UserX proto =
+        TextFormat.parse(
+            """
+                                user_x_id: 1
+                                district_id: 2
+                                first_name: "first"
+                                last_name: "last"
+                                email_address: "email"
+                                is_demo: true
+                                is_authenticated: true
+                                """,
+            UserX.class);
+
+    assertThat(ProtoDaoConverter.toUserXProto(ProtoDaoConverter.toUserXDao(proto), null).build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toInterestConvertersNull() throws ParseException {
+    assertThat(ProtoDaoConverter.toRegisterUserXRequestProto(null, null).build())
+        .isEqualTo(RegisterUserXRequest.getDefaultInstance());
+  }
+
+  @Test
+  public void toInterestConvertersUninitialized() throws ParseException {
+    assertThat(
+            ProtoDaoConverter.toRegisterUserXRequestProto(
+                    newUninitialized(org.davincischools.leo.database.daos.Interest.class), null)
+                .build())
+        .isEqualTo(RegisterUserXRequest.getDefaultInstance());
+  }
+
+  @Test
+  public void toInterestConvertersEmpty() throws ParseException {
+    RegisterUserXRequest proto = RegisterUserXRequest.getDefaultInstance();
+
+    assertThat(
+            ProtoDaoConverter.toRegisterUserXRequestProto(
+                    ProtoDaoConverter.toInterestDao(proto), null)
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toInterestConvertersAll() throws ParseException {
+    RegisterUserXRequest proto =
+        TextFormat.parse(
+            """
+                first_name: "first_name"
+                last_name: "last_name"
+                email_address: "email_address"
+                password: "password"
+                verify_password: "verify_password"
+                profession: "profession"
+                reason_for_interest: "reason_for_interest"
+                district_name: "district_name"
+                school_name: "school_name"
+                address_line_1: "address_line_1"
+                address_line_2: "address_line_2"
+                city: "city"
+                state: "state"
+                zip_code: "zip_code"
+                num_teachers: 1
+                num_students: 2
+                """,
+            RegisterUserXRequest.class);
+
+    assertThat(
+            ProtoDaoConverter.toRegisterUserXRequestProto(
+                    ProtoDaoConverter.toInterestDao(proto), null)
+                .build())
+        .ignoringFieldDescriptors(
+            RegisterUserXRequest.getDescriptor()
+                .findFieldByNumber(RegisterUserXRequest.PASSWORD_FIELD_NUMBER),
+            RegisterUserXRequest.getDescriptor()
+                .findFieldByNumber(RegisterUserXRequest.VERIFY_PASSWORD_FIELD_NUMBER))
         .isEqualTo(proto);
   }
 

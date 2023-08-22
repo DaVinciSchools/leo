@@ -85,7 +85,7 @@ public class UserXManagementService {
                   GetPagedUserXsDetailsResponse.newBuilder()
                       .addAllUserXs(
                           pagedUserXs.getContent().stream()
-                              .map(ProtoDaoConverter::toFullUserXDetailsProto)
+                              .map(e -> ProtoDaoConverter.toFullUserXDetailsProto(e, null).build())
                               .toList())
                       .setTotalUserXs((int) pagedUserXs.getTotalElements());
               return response.build();
@@ -308,7 +308,7 @@ public class UserXManagementService {
               db.getUserXRepository().save(existingUserX);
 
               if (!response.hasError()) {
-                response.setUserX(ProtoDaoConverter.toFullUserXDetailsProto(existingUserX));
+                response.setUserX(ProtoDaoConverter.toFullUserXDetailsProto(existingUserX, null));
               }
               return response.build();
             })
@@ -491,7 +491,7 @@ public class UserXManagementService {
     }
 
     // Set user details.
-    details.setUserX(ProtoDaoConverter.toUserXProto(userX));
+    details.setUserX(ProtoDaoConverter.toUserXProto(userX, null));
 
     // Set teacher details.
     Optional.ofNullable(userX.getTeacher())

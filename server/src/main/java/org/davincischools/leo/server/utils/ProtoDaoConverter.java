@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
+import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.Project;
@@ -50,6 +51,7 @@ import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition.State;
 import org.davincischools.leo.protos.pl_types.ProjectInputValue;
 import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
+import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
 import org.hibernate.Hibernate;
 import org.hibernate.LazyInitializationException;
 
@@ -84,49 +86,6 @@ public class ProtoDaoConverter {
         .filter(Objects::nonNull)
         .findFirst()
         .orElseThrow(NullPointerException::new);
-  }
-
-  public static org.davincischools.leo.protos.pl_types.UserX toUserXProto(UserX userX) {
-    var userProto = org.davincischools.leo.protos.pl_types.UserX.newBuilder();
-    if (userX.getId() != null) {
-      userProto
-          .setUserXId(userX.getId())
-          .setFirstName(userX.getFirstName())
-          .setLastName(userX.getLastName())
-          .setEmailAddress(userX.getEmailAddress());
-    }
-    if (UserXRepository.isAdminX(userX)) {
-      userProto.setIsAdminX(true).setAdminXId(userX.getAdminX().getId());
-    }
-    if (UserXRepository.isTeacher(userX)) {
-      userProto.setIsTeacher(true).setTeacherId(userX.getTeacher().getId());
-    }
-    if (UserXRepository.isStudent(userX)) {
-      userProto.setIsStudent(true).setStudentId(userX.getStudent().getId());
-    }
-    if (UserXRepository.isDemo(userX)) {
-      userProto.setIsDemo(true);
-    }
-    if (UserXRepository.isAuthenticated(userX)) {
-      userProto.setIsAuthenticated(true);
-    }
-    if (userX.getDistrict() != null && userX.getDistrict().getId() != null) {
-      userProto.setDistrictId(userX.getDistrict().getId());
-    }
-    return userProto.build();
-  }
-
-  public static FullUserXDetails toFullUserXDetailsProto(UserX userX) {
-    var proto = FullUserXDetails.newBuilder().setUserX(toUserXProto(userX));
-    if (UserXRepository.isStudent(userX)) {
-      if (userX.getStudent().getDistrictStudentId() != null) {
-        proto.setDistrictStudentId(userX.getStudent().getDistrictStudentId());
-      }
-      if (userX.getStudent().getGrade() != null) {
-        proto.setStudentGrade(userX.getStudent().getGrade());
-      }
-    }
-    return proto.build();
   }
 
   public static org.davincischools.leo.protos.pl_types.ProjectDefinition toProjectDefinition(
@@ -251,7 +210,7 @@ public class ProtoDaoConverter {
   public static org.davincischools.leo.protos.pl_types.ProjectPost toProjectPostProto(
       ProjectPost projectPost) {
     return org.davincischools.leo.protos.pl_types.ProjectPost.newBuilder()
-        .setUserX(toUserXProto(projectPost.getUserX()))
+        .setUserX(toUserXProto(projectPost.getUserX(), null))
         .setName(projectPost.getName())
         .setMessageHtml(projectPost.getMessageHtml())
         .setPostEpochSec((int) projectPost.getCreationTime().getEpochSecond())
@@ -261,6 +220,92 @@ public class ProtoDaoConverter {
   //
   // ---- Automated and tested converters. ----
   //
+
+  public static Interest toInterestDao(RegisterUserXRequest register_userX_request) {
+    return translateToDao(
+        register_userX_request,
+        new Interest().setCreationTime(Instant.now()),
+        RegisterUserXRequest.PASSWORD_FIELD_NUMBER,
+        RegisterUserXRequest.VERIFY_PASSWORD_FIELD_NUMBER);
+  }
+
+  public static RegisterUserXRequest.Builder toRegisterUserXRequestProto(
+      Interest interest, RegisterUserXRequest.Builder builder) {
+    builder = builder != null ? builder : RegisterUserXRequest.newBuilder();
+    if (interest != null && Hibernate.isInitialized(interest)) {
+      translateToProto(
+          interest,
+          builder,
+          RegisterUserXRequest.PASSWORD_FIELD_NUMBER,
+          RegisterUserXRequest.VERIFY_PASSWORD_FIELD_NUMBER);
+    }
+    return builder;
+  }
+
+  public static UserX toUserXDao(org.davincischools.leo.protos.pl_types.UserXOrBuilder userX) {
+    return translateToDao(
+        userX,
+        new UserX()
+            .setCreationTime(Instant.now())
+            .setId(
+                valueOrNull(
+                    userX, org.davincischools.leo.protos.pl_types.UserX.USER_X_ID_FIELD_NUMBER)),
+        org.davincischools.leo.protos.pl_types.UserX.USER_X_ID_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.UserX.IS_ADMIN_X_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.UserX.IS_TEACHER_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.UserX.IS_STUDENT_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.UserX.IS_DEMO_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.UserX.IS_AUTHENTICATED_FIELD_NUMBER);
+  }
+
+  public static org.davincischools.leo.protos.pl_types.UserX.Builder toUserXProto(
+      UserX userX, @Nullable org.davincischools.leo.protos.pl_types.UserX.Builder builder) {
+    builder = builder != null ? builder : org.davincischools.leo.protos.pl_types.UserX.newBuilder();
+    if (userX != null && Hibernate.isInitialized(userX)) {
+      if (userX.getId() != null) {
+        builder.setUserXId(userX.getId());
+      }
+      translateToProto(
+          userX,
+          builder,
+          org.davincischools.leo.protos.pl_types.UserX.USER_X_ID_FIELD_NUMBER,
+          org.davincischools.leo.protos.pl_types.UserX.IS_ADMIN_X_FIELD_NUMBER,
+          org.davincischools.leo.protos.pl_types.UserX.IS_TEACHER_FIELD_NUMBER,
+          org.davincischools.leo.protos.pl_types.UserX.IS_STUDENT_FIELD_NUMBER,
+          org.davincischools.leo.protos.pl_types.UserX.IS_DEMO_FIELD_NUMBER,
+          org.davincischools.leo.protos.pl_types.UserX.IS_AUTHENTICATED_FIELD_NUMBER);
+      if (userX.getAdminX() != null) {
+        builder.setIsAdminX(UserXRepository.isAdminX(userX));
+      }
+      if (userX.getTeacher() != null) {
+        builder.setIsTeacher(UserXRepository.isTeacher(userX));
+      }
+      if (userX.getStudent() != null) {
+        builder.setIsStudent(UserXRepository.isStudent(userX));
+      }
+      builder
+          .setIsDemo(UserXRepository.isDemo(userX))
+          .setIsAuthenticated(UserXRepository.isAuthenticated(userX));
+    }
+    return builder;
+  }
+
+  public static FullUserXDetails.Builder toFullUserXDetailsProto(
+      UserX userX, FullUserXDetails.Builder builder) {
+    builder = builder != null ? builder : FullUserXDetails.newBuilder();
+    if (userX != null && Hibernate.isInitialized(userX)) {
+      toUserXProto(userX, builder.getUserXBuilder());
+      if (UserXRepository.isStudent(userX)) {
+        if (userX.getStudent().getDistrictStudentId() != null) {
+          builder.setDistrictStudentId(userX.getStudent().getDistrictStudentId());
+        }
+        if (userX.getStudent().getGrade() != null) {
+          builder.setStudentGrade(userX.getStudent().getGrade());
+        }
+      }
+    }
+    return builder;
+  }
 
   public static Assignment toAssignmentDao(
       org.davincischools.leo.protos.pl_types.AssignmentOrBuilder assignment) {
@@ -766,7 +811,7 @@ public class ProtoDaoConverter {
   }
 
   @SuppressWarnings("unchecked")
-  private static <T> T valueOrNull(Message message, int fieldNumber) {
+  private static <T> T valueOrNull(MessageOrBuilder message, int fieldNumber) {
     checkNotNull(message);
 
     FieldDescriptor descriptor = message.getDescriptorForType().findFieldByNumber(fieldNumber);

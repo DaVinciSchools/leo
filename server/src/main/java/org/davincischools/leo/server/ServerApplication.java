@@ -186,7 +186,7 @@ public class ServerApplication {
                             // Return the user in the reply after authentication.
                             UserX userX = ((UserXDetails) authentication.getPrincipal()).getUserX();
                             org.davincischools.leo.protos.pl_types.UserX userXProto =
-                                ProtoDaoConverter.toUserXProto(userX);
+                                ProtoDaoConverter.toUserXProto(userX, null).build();
 
                             response.setContentType(
                                 ProtobufHttpMessageConverter.PROTOBUF.toString());
