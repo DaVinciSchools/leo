@@ -12,6 +12,7 @@ import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user.Admin;
+import org.davincischools.leo.server.utils.http_user.Authenticated;
 import org.davincischools.leo.server.utils.http_user.HttpUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -27,7 +28,7 @@ public class SchoolManagementService {
   @PostMapping(value = "/api/protos/SchoolManagementService/GetSchools")
   @ResponseBody
   public SchoolInformationResponse getSchools(
-      @Admin HttpUser user,
+      @Authenticated HttpUser user,
       @RequestBody Optional<GetSchoolsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
