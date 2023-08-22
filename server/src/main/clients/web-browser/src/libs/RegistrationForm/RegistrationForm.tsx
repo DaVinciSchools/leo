@@ -38,6 +38,9 @@ export function RegistrationForm(props: {
     'profession',
     {
       maxLength: 255,
+      isAutocomplete: {
+        isFreeSolo: true,
+      },
     }
   );
   const reasonForInterest = formFields.useStringFormField('reasonForInterest', {
@@ -50,10 +53,10 @@ export function RegistrationForm(props: {
   const schoolName = formFields.useStringFormField('schoolName', {
     maxLength: 255,
   });
-  const addressLine1 = formFields.useStringFormField('addressLine1', {
+  const addressLine1 = formFields.useStringFormField('addressLine_1', {
     maxLength: 255,
   });
-  const addressLine2 = formFields.useStringFormField('addressLine2', {
+  const addressLine2 = formFields.useStringFormField('addressLine_2', {
     maxLength: 255,
   });
   const city = formFields.useStringFormField('city', {maxLength: 20});
