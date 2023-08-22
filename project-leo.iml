@@ -3,6 +3,7 @@
   <component name="AdditionalModuleElements">
     <content url="file://$MODULE_DIR$" dumb="true">
       <excludeFolder url="file://$MODULE_DIR$/bin/git-hooks/pre-commit.d/staged_files_temp_dir.tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
   </component>
 </module>
