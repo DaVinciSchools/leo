@@ -178,6 +178,8 @@ message ProjectPost {
   optional int32 id = 1;
   optional UserX user_x = 2;
   optional string name = 3;
-  optional string message_html = 4;
-  optional int32 post_epoch_sec = 5;
+  optional string long_descr_html = 4;
+  optional string desired_feedback = 6;
+  repeated string tags = 7;
+  optional int64 post_time_ms = 8;
 }

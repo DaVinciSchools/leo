@@ -12,6 +12,7 @@ import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
 import com.google.protobuf.MessageOrBuilder;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.time.Instant;
@@ -207,19 +208,41 @@ public class ProtoDaoConverter {
         .build();
   }
 
-  public static org.davincischools.leo.protos.pl_types.ProjectPost toProjectPostProto(
-      ProjectPost projectPost) {
-    return org.davincischools.leo.protos.pl_types.ProjectPost.newBuilder()
-        .setUserX(toUserXProto(projectPost.getUserX(), null))
-        .setName(projectPost.getName())
-        .setMessageHtml(projectPost.getMessageHtml())
-        .setPostEpochSec((int) projectPost.getCreationTime().getEpochSecond())
-        .build();
-  }
-
   //
   // ---- Automated and tested converters. ----
   //
+
+  public static ProjectPost toProjectPostDao(
+      org.davincischools.leo.protos.pl_types.ProjectPostOrBuilder projectPost) {
+    ProjectPost dao =
+        translateToDao(
+            projectPost,
+            new ProjectPost().setCreationTime(Instant.now()),
+            org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER);
+    if (projectPost.hasUserX()) {
+      dao.setUserX(toUserXDao(projectPost.getUserX()));
+    }
+    return dao;
+  }
+
+  public static org.davincischools.leo.protos.pl_types.ProjectPost.Builder toProjectPostProto(
+      ProjectPost projectPost,
+      @Nullable org.davincischools.leo.protos.pl_types.ProjectPost.Builder builder) {
+    builder =
+        builder != null ? builder : org.davincischools.leo.protos.pl_types.ProjectPost.newBuilder();
+    if (projectPost != null && Hibernate.isInitialized(projectPost)) {
+      translateToProto(
+          projectPost,
+          builder,
+          org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
+          org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER);
+      if (projectPost.getUserX() != null) {
+        toUserXProto(projectPost.getUserX(), builder.getUserXBuilder());
+      }
+    }
+    return builder;
+  }
 
   public static Interest toInterestDao(RegisterUserXRequest register_userX_request) {
     return translateToDao(
@@ -492,55 +515,94 @@ public class ProtoDaoConverter {
                   if (ignoredFieldNumbers.contains(field.getNumber())) {
                     continue;
                   }
+                  if (field.isRepeated()) {
+                    throw new IOException(
+                        "A repeated field cannot be translated to a dao field: "
+                            + field.getFullName());
+                  }
+
                   Optional<Method> setMethod =
                       Optional.ofNullable(setMethods.get(toDaoSetMethod(field)));
 
-                  // Check for a proto ID field that maps to a dao foreign object field.
+                  // Check for special mappings.
                   if (setMethod.isEmpty()) {
-                    // Make sure it's an ID field.
-                    if (!field.getName().endsWith("_id")
-                        || field.getType() != FieldDescriptor.Type.INT32) {
-                      continue;
-                    }
+                    // Process id fields specially.
+                    if (field.getName().endsWith("_id")
+                        && field.getType() == FieldDescriptor.Type.INT32) {
 
-                    // Make sure the dao has a setter for a foreign object.
-                    Optional<Method> setDaoMethod =
-                        Optional.ofNullable(setMethods.get(toDaoSetDaoMethod(field)));
-                    if (setDaoMethod.isEmpty()) {
-                      continue;
-                    }
+                      // Make sure the dao has a setter for a foreign object.
+                      Optional<Method> setDaoMethod =
+                          Optional.ofNullable(setMethods.get(toDaoSetDaoMethod(field)));
+                      if (setDaoMethod.isEmpty()) {
+                        throw new IOException("Unmapped id field: " + field.getFullName());
+                      }
 
-                    // Get supposed dao type.
-                    Class<?> innerDaoType = setDaoMethod.get().getParameterTypes()[0];
-                    Constructor<?>[] constructors = innerDaoType.getConstructors();
-                    if (constructors.length != 1) {
-                      continue;
-                    }
-                    if (constructors[0].getParameterTypes().length != 0) {
-                      continue;
-                    }
+                      // Get supposed dao type.
+                      Class<?> innerDaoType = setDaoMethod.get().getParameterTypes()[0];
+                      Constructor<?>[] constructors = innerDaoType.getConstructors();
+                      if (constructors.length != 1) {
+                        continue;
+                      }
+                      if (constructors[0].getParameterTypes().length != 0) {
+                        throw new IOException("Cannot create inner dao: " + field.getFullName());
+                      }
 
-                    // Add translator to set the inner dao object.
-                    setters.put(
-                        field.getNumber(),
-                        (message, dao) -> {
-                          try {
-                            if (message.hasField(field)) {
-                              Object innerDao = constructors[0].newInstance();
-                              innerDao
-                                  .getClass()
-                                  .getMethod("setId", Integer.class)
-                                  .invoke(innerDao, (Integer) message.getField(field));
-                              setDaoMethod.get().invoke(dao, innerDao);
+                      // Add translator to set the inner dao object.
+                      setters.put(
+                          field.getNumber(),
+                          (message, dao) -> {
+                            try {
+                              if (message.hasField(field)) {
+                                Object innerDao = constructors[0].newInstance();
+                                innerDao
+                                    .getClass()
+                                    .getMethod("setId", Integer.class)
+                                    .invoke(innerDao, (Integer) message.getField(field));
+                                setDaoMethod.get().invoke(dao, innerDao);
+                              }
+                            } catch (Exception e) {
+                              throw new RuntimeException(
+                                  "Error processing proto field as id to inner dao value: "
+                                      + field.getFullName(),
+                                  e);
                             }
-                          } catch (Exception e) {
-                            throw new RuntimeException(
-                                "Error processing proto field as id to inner dao value: "
-                                    + field.getFullName(),
-                                e);
-                          }
-                        });
-                    continue;
+                          });
+                      continue;
+                    }
+
+                    // Process time fields specially.
+                    if (field.getName().endsWith("_time_ms")
+                        && field.getType() == FieldDescriptor.Type.INT64) {
+
+                      // Make sure the dao has a setter for time.
+                      Optional<Method> setTimeMethod =
+                          Optional.ofNullable(setMethods.get(toDaoSetTimeMethod(field)));
+                      if (setTimeMethod.isEmpty()) {
+                        throw new IOException("Unmapped time field: " + field.getFullName());
+                      }
+
+                      setters.put(
+                          field.getNumber(),
+                          (message, dao) -> {
+                            try {
+                              if (message.hasField(field)) {
+                                setTimeMethod
+                                    .get()
+                                    .invoke(
+                                        dao, Instant.ofEpochMilli((Long) message.getField(field)));
+                              }
+                            } catch (Exception e) {
+                              throw new RuntimeException(
+                                  "Error processing proto field as time value: "
+                                      + field.getFullName(),
+                                  e);
+                            }
+                          });
+
+                      continue;
+                    }
+
+                    throw new IOException("Cannot map the following field: " + field.getFullName());
                   }
 
                   // Check for an enum field, it needs to be translated to a string.
@@ -652,51 +714,89 @@ public class ProtoDaoConverter {
                   if (ignoredFieldNumbers.contains(field.getNumber())) {
                     continue;
                   }
+                  if (field.isRepeated()) {
+                    throw new IOException(
+                        "A dao field cannot be translated to a repeated proto field: "
+                            + field.getFullName());
+                  }
+
                   Optional<Method> getMethod =
                       Optional.ofNullable(getMethods.get(toDaoGetMethod(field)));
 
-                  // Check for a proto ID field that maps to a dao foreign object field.
+                  // Check for special mappings.
                   if (getMethod.isEmpty()) {
-                    // Make sure it's an ID field.
-                    if (!field.getName().endsWith("_id")
-                        || field.getType() != FieldDescriptor.Type.INT32) {
-                      continue;
-                    }
+                    // Process id fields specially.
+                    if (field.getName().endsWith("_id")
+                        && field.getType() == FieldDescriptor.Type.INT32) {
 
-                    // Make sure the dao has a getter for a foreign object.
-                    Optional<Method> getDaoMethod =
-                        Optional.ofNullable(getMethods.get(toDaoGetDaoMethod(field)));
-                    if (getDaoMethod.isEmpty()) {
-                      continue;
-                    }
+                      // Make sure the dao has a getter for a foreign object.
+                      Optional<Method> getDaoMethod =
+                          Optional.ofNullable(getMethods.get(toDaoGetDaoMethod(field)));
+                      if (getDaoMethod.isEmpty()) {
+                        throw new IOException("Unmapped id field: " + field.getFullName());
+                      }
 
-                    // Get supposed dao type id.
-                    Class<?> daoType = getDaoMethod.get().getReturnType();
-                    Method getDaoId = daoType.getMethod("getId");
-                    if (getDaoId.getReturnType() != Integer.class) {
-                      continue;
-                    }
+                      // Get supposed dao type.
+                      Class<?> daoType = getDaoMethod.get().getReturnType();
+                      Method getDaoId = daoType.getMethod("getId");
+                      if (getDaoId.getReturnType() != Integer.class) {
+                        throw new IOException(
+                            "Id field is not an intereger: " + field.getFullName());
+                      }
 
-                    // Add translator to set the inner dao object.
-                    setters.put(
-                        field.getNumber(),
-                        (dao, message) -> {
-                          try {
-                            Object innerDao = getDaoMethod.get().invoke(dao);
-                            if (innerDao != null) {
-                              Integer innerDaoId = (Integer) getDaoId.invoke(innerDao);
-                              if (innerDaoId != null) {
-                                message.setField(field, innerDaoId);
+                      // Add translator to set the inner dao object.
+                      setters.put(
+                          field.getNumber(),
+                          (dao, message) -> {
+                            try {
+                              Object innerDao = getDaoMethod.get().invoke(dao);
+                              if (innerDao != null) {
+                                Integer innerDaoId = (Integer) getDaoId.invoke(innerDao);
+                                if (innerDaoId != null) {
+                                  message.setField(field, innerDaoId);
+                                }
                               }
+                            } catch (Exception e) {
+                              throw new RuntimeException(
+                                  "Error processing proto field as id value from inner dao: "
+                                      + field.getFullName(),
+                                  e);
                             }
-                          } catch (Exception e) {
-                            throw new RuntimeException(
-                                "Error processing proto field as id value from inner dao: "
-                                    + field.getFullName(),
-                                e);
-                          }
-                        });
-                    continue;
+                          });
+                      continue;
+                    }
+
+                    // Process time fields specially.
+                    if (field.getName().endsWith("_time_ms")
+                        && field.getType() == FieldDescriptor.Type.INT64) {
+
+                      // Make sure the dao has a setter for time.
+                      Optional<Method> getTimeMethod =
+                          Optional.ofNullable(getMethods.get(toDaoGetTimeMethod(field)));
+                      if (getTimeMethod.isEmpty()) {
+                        throw new IOException("Unmapped time field: " + field.getFullName());
+                      }
+
+                      setters.put(
+                          field.getNumber(),
+                          (dao, message) -> {
+                            try {
+                              Object value = getTimeMethod.get().invoke(dao);
+                              if (value != null) {
+                                message.setField(field, ((Instant) value).toEpochMilli());
+                              }
+                            } catch (Exception e) {
+                              throw new RuntimeException(
+                                  "Error processing proto field as time value: "
+                                      + field.getFullName(),
+                                  e);
+                            }
+                          });
+
+                      continue;
+                    }
+
+                    throw new IOException("Cannot map the following field: " + field.getFullName());
                   }
 
                   // Check for an enum field, it needs to be translated to a proto enum.
@@ -787,6 +887,13 @@ public class ProtoDaoConverter {
     return "set" + capitalizeFirst(field.getJsonName().replaceFirst("Id$", ""));
   }
 
+  private static String toDaoSetTimeMethod(FieldDescriptor field) {
+    checkNotNull(field);
+    checkArgument(field.getName().endsWith("_time_ms"));
+
+    return "set" + capitalizeFirst(field.getJsonName().replaceFirst("Ms$", ""));
+  }
+
   private static String toDaoGetMethod(FieldDescriptor field) {
     checkNotNull(field);
 
@@ -798,6 +905,13 @@ public class ProtoDaoConverter {
     checkArgument(field.getName().endsWith("_id"));
 
     return "get" + capitalizeFirst(field.getJsonName().replaceFirst("Id$", ""));
+  }
+
+  private static String toDaoGetTimeMethod(FieldDescriptor field) {
+    checkNotNull(field);
+    checkArgument(field.getName().endsWith("_time_ms"));
+
+    return "get" + capitalizeFirst(field.getJsonName().replaceFirst("Ms$", ""));
   }
 
   private static String capitalizeFirst(String value) {

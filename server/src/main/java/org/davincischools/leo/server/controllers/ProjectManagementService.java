@@ -36,8 +36,8 @@ import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWith
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
-import org.davincischools.leo.protos.project_management.DeletePostRequest;
-import org.davincischools.leo.protos.project_management.DeletePostResponse;
+import org.davincischools.leo.protos.project_management.DeleteProjectPostRequest;
+import org.davincischools.leo.protos.project_management.DeleteProjectPostResponse;
 import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsRequest;
 import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsResponse;
 import org.davincischools.leo.protos.project_management.GenerateProjectsRequest;
@@ -56,14 +56,14 @@ import org.davincischools.leo.protos.project_management.GetProjectPostsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectPostsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectsResponse;
-import org.davincischools.leo.protos.project_management.PostMessageRequest;
-import org.davincischools.leo.protos.project_management.PostMessageResponse;
 import org.davincischools.leo.protos.project_management.RegisterAnonymousProjectsRequest;
 import org.davincischools.leo.protos.project_management.RegisterAnonymousProjectsResponse;
 import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
 import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillRequest;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillResponse;
+import org.davincischools.leo.protos.project_management.UpsertProjectPostRequest;
+import org.davincischools.leo.protos.project_management.UpsertProjectPostResponse;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V2ProjectGenerator;
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.ProtoDaoConverter;
@@ -657,26 +657,26 @@ public class ProjectManagementService {
               var response = GetProjectPostsResponse.newBuilder();
               response.addAllProjectPosts(
                   db.getProjectPostRepository().findAllByProjectId(request.getProjectId()).stream()
-                      .map(ProtoDaoConverter::toProjectPostProto)
+                      .map(e -> ProtoDaoConverter.toProjectPostProto(e, null).build())
                       .toList());
               return response.build();
             })
         .finish();
   }
 
-  @PostMapping(value = "/api/protos/ProjectManagementService/PostMessage")
+  @PostMapping(value = "/api/protos/ProjectManagementService/UpsertProjectPost")
   @ResponseBody
-  public PostMessageResponse postMessage(
+  public UpsertProjectPostResponse UpsertProjectPost(
       @Authenticated HttpUserX userX,
-      @RequestBody Optional<PostMessageRequest> optionalRequest,
+      @RequestBody Optional<UpsertProjectPostRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
     if (userX.isNotAuthorized()) {
-      return userX.returnForbidden(PostMessageResponse.getDefaultInstance());
+      return userX.returnForbidden(UpsertProjectPostResponse.getDefaultInstance());
     }
 
     return httpExecutors
-        .start(optionalRequest.orElse(PostMessageRequest.getDefaultInstance()))
+        .start(optionalRequest.orElse(UpsertProjectPostRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               ProjectPost post =
@@ -686,32 +686,33 @@ public class ProjectManagementService {
                               .setCreationTime(Instant.now())
                               .setUserX(userX.get().orElseThrow())
                               .setProject(new Project().setId(request.getProjectId()))
-                              .setName(request.getName())
-                              .setMessageHtml(request.getMessageHtml()));
+                              .setPostTime(Instant.now())
+                              .setName(request.getProjectPost().getName())
+                              .setLongDescrHtml(request.getProjectPost().getLongDescrHtml()));
 
-              return PostMessageResponse.newBuilder().setProjectPostId(post.getId()).build();
+              return UpsertProjectPostResponse.newBuilder().setProjectPostId(post.getId()).build();
             })
         .finish();
   }
 
-  @PostMapping(value = "/api/protos/ProjectManagementService/DeletePost")
+  @PostMapping(value = "/api/protos/ProjectManagementService/DeleteProjectPost")
   @ResponseBody
-  public DeletePostResponse deletePost(
+  public DeleteProjectPostResponse DeleteProjectPost(
       @Authenticated HttpUserX userX,
-      @RequestBody Optional<DeletePostRequest> optionalRequest,
+      @RequestBody Optional<DeleteProjectPostRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
     if (userX.isNotAuthorized()) {
-      return userX.returnForbidden(DeletePostResponse.getDefaultInstance());
+      return userX.returnForbidden(DeleteProjectPostResponse.getDefaultInstance());
     }
 
     return httpExecutors
-        .start(optionalRequest.orElse(DeletePostRequest.getDefaultInstance()))
+        .start(optionalRequest.orElse(DeleteProjectPostRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               db.getProjectPostRepository().deleteById(request.getId());
 
-              return DeletePostResponse.getDefaultInstance();
+              return DeleteProjectPostResponse.getDefaultInstance();
             })
         .finish();
   }

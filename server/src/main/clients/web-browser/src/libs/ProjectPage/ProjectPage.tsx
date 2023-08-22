@@ -91,7 +91,7 @@ export function ProjectPage(props: {
                 <ReactQuill
                   theme={'bubble'}
                   preserveWhitespace={true}
-                  value={post?.messageHtml ?? ''}
+                  value={post?.longDescrHtml ?? ''}
                   readOnly={true}
                 />
               </Card>

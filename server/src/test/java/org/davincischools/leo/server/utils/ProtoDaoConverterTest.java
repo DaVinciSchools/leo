@@ -10,6 +10,7 @@ import org.davincischools.leo.protos.pl_types.Assignment;
 import org.davincischools.leo.protos.pl_types.ClassX;
 import org.davincischools.leo.protos.pl_types.District;
 import org.davincischools.leo.protos.pl_types.KnowledgeAndSkill;
+import org.davincischools.leo.protos.pl_types.ProjectPost;
 import org.davincischools.leo.protos.pl_types.School;
 import org.davincischools.leo.protos.pl_types.UserX;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
@@ -383,6 +384,59 @@ public class ProtoDaoConverterTest {
             UserX.class);
 
     assertThat(ProtoDaoConverter.toUserXProto(ProtoDaoConverter.toUserXDao(proto), null).build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectPostConvertersNull() throws ParseException {
+    assertThat(ProtoDaoConverter.toProjectPostProto(null, null).build())
+        .isEqualTo(ProjectPost.getDefaultInstance());
+  }
+
+  @Test
+  public void toProjectPostConvertersUninitialized() throws ParseException {
+    assertThat(
+            ProtoDaoConverter.toProjectPostProto(
+                    newUninitialized(org.davincischools.leo.database.daos.ProjectPost.class), null)
+                .build())
+        .isEqualTo(ProjectPost.getDefaultInstance());
+  }
+
+  @Test
+  public void toProjectPostConvertersEmpty() throws ParseException {
+    ProjectPost proto = ProjectPost.getDefaultInstance();
+
+    assertThat(
+            ProtoDaoConverter.toProjectPostProto(ProtoDaoConverter.toProjectPostDao(proto), null)
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectPostConvertersAll() throws ParseException {
+    ProjectPost proto =
+        TextFormat.parse(
+            """
+                id: 1
+                user_x {
+                  user_x_id: 2
+                  is_demo: true
+                  is_authenticated: true
+                }
+                name: "name"
+                long_descr_html: "long_descr_html"
+                desired_feedback: "desired_feedback"
+                tags: "tag1"
+                tags: "tag2"
+                tags: "tag3"
+                post_time_ms: 3
+                """,
+            ProjectPost.class);
+
+    assertThat(
+            ProtoDaoConverter.toProjectPostProto(ProtoDaoConverter.toProjectPostDao(proto), null)
+                .build())
+        .ignoringFields(ProjectPost.TAGS_FIELD_NUMBER)
         .isEqualTo(proto);
   }
 

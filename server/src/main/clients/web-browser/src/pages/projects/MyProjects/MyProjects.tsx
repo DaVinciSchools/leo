@@ -63,12 +63,14 @@ export function MyProjects() {
     setProjects(newProjects);
   }
 
-  function postMessage(name: string, messageHtml: string) {
+  function postMessage(name: string, longDescrHtml: string) {
     service
-      .postMessage({
-        projectId: project!.id!,
-        name: name,
-        messageHtml: messageHtml,
+      .upsertProjectPost({
+        projectId: project?.id,
+        projectPost: {
+          name,
+          longDescrHtml,
+        },
       })
       .then(response => {
         if (project!.id! === projectId.current) {
@@ -76,8 +78,8 @@ export function MyProjects() {
             ...(posts ?? []),
             {
               id: response.projectPostId!,
-              name: name,
-              messageHtml: messageHtml,
+              name,
+              longDescrHtml,
               userX: global.userX,
             },
           ];
@@ -89,7 +91,7 @@ export function MyProjects() {
 
   function deletePost(post: pl_types.IProjectPost) {
     service
-      .deletePost({id: post.id!})
+      .deleteProjectPost({id: post.id!})
       .then(() => {
         if (project!.id! === projectId.current) {
           const newPosts: IProjectPost[] = [...(posts ?? [])].filter(

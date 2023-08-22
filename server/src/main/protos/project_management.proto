@@ -19,12 +19,14 @@ service ProjectManagementService {
   rpc GetProjectDetails (GetProjectDetailsRequest) returns (GetProjectDetailsResponse) {}
   rpc GetProjects (GetProjectsRequest) returns (GetProjectsResponse) {}
   rpc UpdateProject (UpdateProjectRequest) returns (UpdateProjectResponse) {}
+
   rpc GetProjectDefinition (GetProjectDefinitionRequest) returns (GetProjectDefinitionResponse) {}
   rpc GetAssignmentProjectDefinitions (GetAssignmentProjectDefinitionsRequest) returns (GetAssignmentProjectDefinitionsResponse) {}
   rpc GetAssignmentProjectDefinition (GetAssignmentProjectDefinitionRequest) returns (GetAssignmentProjectDefinitionResponse) {}
+
   rpc GetProjectPosts (GetProjectPostsRequest) returns (GetProjectPostsResponse) {}
-  rpc PostMessage (PostMessageRequest) returns (PostMessageResponse) {}
-  rpc DeletePost (DeletePostRequest) returns (DeletePostResponse) {}
+  rpc UpsertProjectPost (UpsertProjectPostRequest) returns (UpsertProjectPostResponse) {}
+  rpc DeleteProjectPost (DeleteProjectPostRequest) returns (DeleteProjectPostResponse) {}
 }
 
 message GetMotivationsRequest {
@@ -102,21 +104,20 @@ message GetProjectPostsResponse {
   repeated pl_types.ProjectPost project_posts = 1;
 }
 
-message PostMessageRequest {
+message UpsertProjectPostRequest {
   optional int32 project_id = 1;
-  optional string name = 2;
-  optional string message_html = 3;
+  optional pl_types.ProjectPost project_post = 2;
 }
 
-message PostMessageResponse {
+message UpsertProjectPostResponse {
   optional int32 project_post_id = 1;
 }
 
-message DeletePostRequest {
+message DeleteProjectPostRequest {
   optional int32 id = 1;
 }
 
-message DeletePostResponse {
+message DeleteProjectPostResponse {
 }
 
 message GetProjectDefinitionCategoryTypesRequest {

@@ -24,7 +24,10 @@ public class ProjectPost implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_MESSAGEHTML_NAME = "message_html";
-  private static final long serialVersionUID = 6525477675978236832L;
+  public static final String COLUMN_POSTTIME_NAME = "post_time";
+  public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
+  public static final String COLUMN_DESIREDFEEDBACK_NAME = "desired_feedback";
+  private static final long serialVersionUID = -4869881400292095361L;
 
   private Integer id;
 
@@ -35,6 +38,12 @@ public class ProjectPost implements Serializable {
   private String name;
 
   private String messageHtml;
+
+  private Instant postTime;
+
+  private String longDescrHtml;
+
+  private String desiredFeedback;
 
   private UserX userX;
 
@@ -72,7 +81,7 @@ public class ProjectPost implements Serializable {
     return this;
   }
 
-  @Column(name = COLUMN_NAME_NAME)
+  @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
   }
@@ -90,6 +99,38 @@ public class ProjectPost implements Serializable {
 
   public ProjectPost setMessageHtml(String messageHtml) {
     this.messageHtml = messageHtml;
+    return this;
+  }
+
+  @Column(name = COLUMN_POSTTIME_NAME, nullable = false)
+  public Instant getPostTime() {
+    return postTime;
+  }
+
+  public ProjectPost setPostTime(Instant postTime) {
+    this.postTime = postTime;
+    return this;
+  }
+
+  @Lob
+  @Column(name = COLUMN_LONGDESCRHTML_NAME)
+  public String getLongDescrHtml() {
+    return longDescrHtml;
+  }
+
+  public ProjectPost setLongDescrHtml(String longDescrHtml) {
+    this.longDescrHtml = longDescrHtml;
+    return this;
+  }
+
+  @Lob
+  @Column(name = COLUMN_DESIREDFEEDBACK_NAME)
+  public String getDesiredFeedback() {
+    return desiredFeedback;
+  }
+
+  public ProjectPost setDesiredFeedback(String desiredFeedback) {
+    this.desiredFeedback = desiredFeedback;
     return this;
   }
 
