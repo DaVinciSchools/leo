@@ -19,12 +19,14 @@ import org.davincischools.leo.protos.interest_service.RegisterInterestResponse;
 import org.davincischools.leo.protos.pl_types.User;
 import org.davincischools.leo.server.controllers.ReactResourceController;
 import org.davincischools.leo.server.test_helpers.WebSession;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -33,17 +35,18 @@ import org.springframework.web.reactive.function.client.WebClient;
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     classes = {ServerApplication.class, TestData.class})
+@RunWith(SpringJUnit4ClassRunner.class)
 public class ServerApplicationTest {
-  @Autowired private ReactResourceController controller;
-  @Autowired private Database db;
-  @Autowired private TestData testData;
+  @Autowired public ReactResourceController controller;
+  @Autowired public Database db;
+  @Autowired public TestData testData;
 
   @Value(value = "${" + LOCAL_SERVER_PORT_PROPERTY + "}")
   private int port;
 
   private WebSession session = new WebSession();
 
-  @BeforeEach
+  @Before
   public void setup() {
     testData.addTestData();
     session = new WebSession();

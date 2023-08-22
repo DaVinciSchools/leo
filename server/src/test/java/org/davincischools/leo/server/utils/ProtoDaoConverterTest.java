@@ -5,37 +5,44 @@ import static com.google.common.truth.extensions.proto.ProtoTruth.assertThat;
 import com.google.protobuf.TextFormat;
 import com.google.protobuf.TextFormat.ParseException;
 import jakarta.persistence.EntityManager;
+import org.davincischools.leo.database.test.TestData;
 import org.davincischools.leo.protos.pl_types.Assignment;
 import org.davincischools.leo.protos.pl_types.ClassX;
 import org.davincischools.leo.protos.pl_types.District;
 import org.davincischools.leo.protos.pl_types.KnowledgeAndSkill;
 import org.davincischools.leo.protos.pl_types.School;
-import org.junit.jupiter.api.Test;
+import org.davincischools.leo.server.ServerApplication;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-@SpringBootTest
-class ProtoDaoConverterTest {
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    classes = {ServerApplication.class, TestData.class})
+@RunWith(SpringJUnit4ClassRunner.class)
+public class ProtoDaoConverterTest {
 
   @Autowired EntityManager entityManager;
 
   @Test
-  void toAssignmentConvertersNull() throws ParseException {
+  public void toAssignmentConvertersNull() throws ParseException {
     assertThat(ProtoDaoConverter.toAssignmentProto(null, null).build())
         .isEqualTo(Assignment.getDefaultInstance());
   }
 
   @Test
-  void toAssignmentConvertersUninitialized() throws ParseException {
+  public void toAssignmentConvertersUninitialized() throws ParseException {
     assertThat(
             ProtoDaoConverter.toAssignmentProto(
-                    uninitialized(org.davincischools.leo.database.daos.Assignment.class), null)
+                    newUninitialized(org.davincischools.leo.database.daos.Assignment.class), null)
                 .build())
         .isEqualTo(Assignment.newBuilder().setId(0).build());
   }
 
   @Test
-  void toAssignmentConvertersEmpty() throws ParseException {
+  public void toAssignmentConvertersEmpty() throws ParseException {
     Assignment proto = Assignment.getDefaultInstance();
     assertThat(
             ProtoDaoConverter.toAssignmentProto(ProtoDaoConverter.toAssignmentDao(proto), null)
@@ -44,7 +51,7 @@ class ProtoDaoConverterTest {
   }
 
   @Test
-  void toAssignmentConvertersAll() throws ParseException {
+  public void toAssignmentConvertersAll() throws ParseException {
     Assignment proto =
         TextFormat.parse(
             """
@@ -66,22 +73,22 @@ class ProtoDaoConverterTest {
   }
 
   @Test
-  void toDistrictConvertersNull() throws ParseException {
+  public void toDistrictConvertersNull() throws ParseException {
     assertThat(ProtoDaoConverter.toDistrictProto(null, null).build())
         .isEqualTo(District.getDefaultInstance());
   }
 
   @Test
-  void toDistrictConvertersUninitialized() throws ParseException {
+  public void toDistrictConvertersUninitialized() throws ParseException {
     assertThat(
             ProtoDaoConverter.toDistrictProto(
-                    uninitialized(org.davincischools.leo.database.daos.District.class), null)
+                    newUninitialized(org.davincischools.leo.database.daos.District.class), null)
                 .build())
         .isEqualTo(District.newBuilder().setId(0).build());
   }
 
   @Test
-  void toDistrictConvertersEmpty() throws ParseException {
+  public void toDistrictConvertersEmpty() throws ParseException {
     District proto = District.getDefaultInstance();
     assertThat(
             ProtoDaoConverter.toDistrictProto(ProtoDaoConverter.toDistrictDao(proto), null).build())
@@ -89,7 +96,7 @@ class ProtoDaoConverterTest {
   }
 
   @Test
-  void toDistrictConvertersAll() throws ParseException {
+  public void toDistrictConvertersAll() throws ParseException {
     District proto =
         TextFormat.parse(
             """
@@ -103,22 +110,22 @@ class ProtoDaoConverterTest {
   }
 
   @Test
-  void toClassXConvertersNull() throws ParseException {
+  public void toClassXConvertersNull() throws ParseException {
     assertThat(ProtoDaoConverter.toClassXProto(null, null).build())
         .isEqualTo(ClassX.getDefaultInstance());
   }
 
   @Test
-  void toClassXConvertersUninitialized() throws ParseException {
+  public void toClassXConvertersUninitialized() throws ParseException {
     assertThat(
             ProtoDaoConverter.toClassXProto(
-                    uninitialized(org.davincischools.leo.database.daos.ClassX.class), null)
+                    newUninitialized(org.davincischools.leo.database.daos.ClassX.class), null)
                 .build())
         .isEqualTo(ClassX.newBuilder().setId(0).build());
   }
 
   @Test
-  void toClassXConvertersEmpty() throws ParseException {
+  public void toClassXConvertersEmpty() throws ParseException {
     ClassX proto = ClassX.getDefaultInstance();
     assertThat(ProtoDaoConverter.toClassXProto(ProtoDaoConverter.toClassXDao(proto), null).build())
         .ignoringFieldDescriptors(
@@ -127,7 +134,7 @@ class ProtoDaoConverterTest {
   }
 
   @Test
-  void toClassXConvertersAll() throws ParseException {
+  public void toClassXConvertersAll() throws ParseException {
     ClassX proto =
         TextFormat.parse(
             """
@@ -160,7 +167,7 @@ class ProtoDaoConverterTest {
   }
 
   @Test
-  void toFullClassXConverters() throws ParseException {
+  public void toFullClassXConverters() throws ParseException {
     ClassX proto =
         TextFormat.parse(
             """
@@ -193,23 +200,23 @@ class ProtoDaoConverterTest {
   }
 
   @Test
-  void toKnowledgeAndSkillConvertersNull() throws ParseException {
+  public void toKnowledgeAndSkillConvertersNull() throws ParseException {
     assertThat(ProtoDaoConverter.toKnowledgeAndSkillProto(null, null).build())
         .isEqualTo(KnowledgeAndSkill.getDefaultInstance());
   }
 
   @Test
-  void toKnowledgeAndSkillConvertersUninitialized() throws ParseException {
+  public void toKnowledgeAndSkillConvertersUninitialized() throws ParseException {
     assertThat(
             ProtoDaoConverter.toKnowledgeAndSkillProto(
-                    uninitialized(org.davincischools.leo.database.daos.KnowledgeAndSkill.class),
+                    newUninitialized(org.davincischools.leo.database.daos.KnowledgeAndSkill.class),
                     null)
                 .build())
         .isEqualTo(KnowledgeAndSkill.newBuilder().setId(0).build());
   }
 
   @Test
-  void toKnowledgeAndSkillConvertersEmpty() throws ParseException {
+  public void toKnowledgeAndSkillConvertersEmpty() throws ParseException {
     KnowledgeAndSkill proto = KnowledgeAndSkill.getDefaultInstance();
     assertThat(
             ProtoDaoConverter.toKnowledgeAndSkillProto(
@@ -219,7 +226,7 @@ class ProtoDaoConverterTest {
   }
 
   @Test
-  void toKnowledgeAndSkillConvertersAll() throws ParseException {
+  public void toKnowledgeAndSkillConvertersAll() throws ParseException {
     KnowledgeAndSkill proto =
         TextFormat.parse(
             """
@@ -242,22 +249,22 @@ class ProtoDaoConverterTest {
   }
 
   @Test
-  void toSchoolConvertersNull() throws ParseException {
+  public void toSchoolConvertersNull() throws ParseException {
     assertThat(ProtoDaoConverter.toSchoolProto(null, null).build())
         .isEqualTo(School.getDefaultInstance());
   }
 
   @Test
-  void toSchoolConvertersUninitialized() throws ParseException {
+  public void toSchoolConvertersUninitialized() throws ParseException {
     assertThat(
             ProtoDaoConverter.toSchoolProto(
-                    uninitialized(org.davincischools.leo.database.daos.School.class), null)
+                    newUninitialized(org.davincischools.leo.database.daos.School.class), null)
                 .build())
         .isEqualTo(School.newBuilder().setId(0).build());
   }
 
   @Test
-  void toSchoolConvertersEmpty() throws ParseException {
+  public void toSchoolConvertersEmpty() throws ParseException {
     School proto = TextFormat.parse("""
                 id: 1
                 """, School.class);
@@ -267,7 +274,7 @@ class ProtoDaoConverterTest {
   }
 
   @Test
-  void toSchoolConvertersAll() throws ParseException {
+  public void toSchoolConvertersAll() throws ParseException {
     School proto =
         TextFormat.parse(
             """
@@ -286,7 +293,7 @@ class ProtoDaoConverterTest {
         .isEqualTo(proto);
   }
 
-  private <T> T uninitialized(Class<T> entityClass) {
+  private <T> T newUninitialized(Class<T> entityClass) {
     return entityManager.getReference(entityClass, 0);
   }
 }
