@@ -95,6 +95,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Integer>
           || !Objects.equals(row.classX().getId(), fullClassXAssignment.classX().getId())) {
         fullClassXAssignments.add(
             fullClassXAssignment = new FullClassXAssignment(row.classX(), new ArrayList<>()));
+        fullAssignment = null;
       }
       if (row.assignment() != null) {
         if (fullAssignment == null
