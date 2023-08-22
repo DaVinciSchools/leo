@@ -69,9 +69,9 @@ import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
-import org.davincischools.leo.server.utils.http_user.Anonymous;
-import org.davincischools.leo.server.utils.http_user.Authenticated;
-import org.davincischools.leo.server.utils.http_user.HttpUser;
+import org.davincischools.leo.server.utils.http_user_x.Anonymous;
+import org.davincischools.leo.server.utils.http_user_x.Authenticated;
+import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -99,12 +99,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetKnowledgeAndSkills")
   @ResponseBody
   public GetKnowledgeAndSkillsResponse getKnowledgeAndSkills(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<GetKnowledgeAndSkillsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(GetKnowledgeAndSkillsResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(GetKnowledgeAndSkillsResponse.getDefaultInstance());
     }
 
     var response = GetKnowledgeAndSkillsResponse.newBuilder();
@@ -116,7 +116,7 @@ public class ProjectManagementService {
               db.getKnowledgeAndSkillRepository()
                   .findAllByTypes(
                       request.getTypesList().stream().map(Enum::name).toList(),
-                      user.isAdmin() ? null : user.userXId())
+                      userX.isAdminX() ? null : userX.userXId())
                   .forEach(
                       e ->
                           ProtoDaoConverter.toKnowledgeAndSkillProto(
@@ -130,12 +130,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/UpsertKnowledgeAndSkill")
   @ResponseBody
   public UpsertKnowledgeAndSkillResponse upsertKnowledgeAndSkill(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<UpsertKnowledgeAndSkillRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(UpsertKnowledgeAndSkillResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(UpsertKnowledgeAndSkillResponse.getDefaultInstance());
     }
 
     var response = UpsertKnowledgeAndSkillResponse.newBuilder();
@@ -145,20 +145,20 @@ public class ProjectManagementService {
         .andThen(
             (request, log) -> {
               if (!switch (request.getKnowledgeAndSkill().getType()) {
-                case EKS -> user.isAdmin() || user.isTeacher();
-                case XQ_COMPETENCY -> user.isAdmin();
+                case EKS -> userX.isAdminX() || userX.isTeacher();
+                case XQ_COMPETENCY -> userX.isAdminX();
                 case UNSET, UNRECOGNIZED -> throw new IllegalArgumentException(
                     "Unknown knowledge and skill type: "
                         + request.getKnowledgeAndSkill().getType().name());
               }) {
-                return user.returnForbidden(UpsertKnowledgeAndSkillResponse.getDefaultInstance());
+                return userX.returnForbidden(UpsertKnowledgeAndSkillResponse.getDefaultInstance());
               }
 
               db.getKnowledgeAndSkillRepository()
                   .guardedUpsert(
                       ProtoDaoConverter.toKnowledgeAndSkillDao(request.getKnowledgeAndSkill())
-                          .setUserX(user.get().orElseThrow()),
-                      user.isAdmin() ? null : user.userXId())
+                          .setUserX(userX.get().orElseThrow()),
+                      userX.isAdminX() ? null : userX.userXId())
                   .ifPresent(
                       ks -> {
                         ProtoDaoConverter.toKnowledgeAndSkillProto(
@@ -173,12 +173,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GenerateProjects")
   @ResponseBody
   public GenerateProjectsResponse generateProjects(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<GenerateProjectsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(GenerateProjectsResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(GenerateProjectsResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -201,7 +201,7 @@ public class ProjectManagementService {
                   new ProjectInput()
                       .setCreationTime(Instant.now())
                       .setProjectDefinition(definition.definition())
-                      .setUserX(user.get().orElse(null))
+                      .setUserX(userX.get().orElse(null))
                       .setState(State.PROCESSING.name())
                       .setTimeout(Instant.now().plus(Duration.ofMinutes(OpenAiUtils.TIMEOUT_MIN)))
                       .setAssignment(
@@ -328,12 +328,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjectDetails")
   @ResponseBody
   public GetProjectDetailsResponse getProjectDetails(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<GetProjectDetailsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(GetProjectDetailsResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(GetProjectDetailsResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -347,18 +347,18 @@ public class ProjectManagementService {
                       .findFullProjectById(request.getProjectId())
                       .orElse(null);
               if (project == null) {
-                return user.returnNotFound(GetProjectDetailsResponse.getDefaultInstance());
+                return userX.returnNotFound(GetProjectDetailsResponse.getDefaultInstance());
               }
 
-              if (!user.isAdmin()) {
-                if (user.isTeacher()) {
+              if (!userX.isAdminX()) {
+                if (userX.isTeacher()) {
                   // TODO: Verify the requested project's user is in their class.
-                } else if (user.isStudent()) {
+                } else if (userX.isStudent()) {
                   // Make sure the student is only querying their own projects.
                   if (!Objects.equals(
-                      user.get().orElseThrow().getId(),
+                      userX.get().orElseThrow().getId(),
                       project.project().getProjectInput().getUserX().getId())) {
-                    return user.returnForbidden(GetProjectDetailsResponse.getDefaultInstance());
+                    return userX.returnForbidden(GetProjectDetailsResponse.getDefaultInstance());
                   }
                 }
               }
@@ -373,27 +373,27 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjects")
   @ResponseBody
   public GetProjectsResponse getProjects(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<GetProjectsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(GetProjectsResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(GetProjectsResponse.getDefaultInstance());
     }
 
     return httpExecutors
         .start(optionalRequest.orElse(GetProjectsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              int userId = request.getUserXId();
-              if (user.isAdmin()) {
+              int userXId = request.getUserXId();
+              if (userX.isAdminX()) {
                 // Do nothing.
-              } else if (user.isTeacher()) {
+              } else if (userX.isTeacher()) {
                 // TODO: Verify the requested user is in their class.
-              } else if (user.isStudent()) {
+              } else if (userX.isStudent()) {
                 // Make sure the student is only querying about their own projects.
-                if (userId != user.get().orElseThrow().getId()) {
-                  return user.returnForbidden(GetProjectsResponse.getDefaultInstance());
+                if (userXId != userX.get().orElseThrow().getId()) {
+                  return userX.returnForbidden(GetProjectsResponse.getDefaultInstance());
                 }
               }
               var response = GetProjectsResponse.newBuilder();
@@ -401,7 +401,7 @@ public class ProjectManagementService {
               response.addAllProjects(
                   db
                       .getProjectRepository()
-                      .findProjectsByUserXId(userId, request.getActiveOnly())
+                      .findProjectsByUserXId(userXId, request.getActiveOnly())
                       .stream()
                       .map(ProtoDaoConverter::toProjectProto)
                       .toList());
@@ -410,7 +410,7 @@ public class ProjectManagementService {
                 response.addAllUnsuccessfulInputs(
                     db
                         .getProjectInputRepository()
-                        .findFullProjectInputByUserAndUnsuccessful(userId)
+                        .findFullProjectInputByUserXAndUnsuccessful(userXId)
                         .stream()
                         .map(ProtoDaoConverter::toProjectDefinition)
                         .toList());
@@ -424,12 +424,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetAssignmentProjectDefinition")
   @ResponseBody
   public GetAssignmentProjectDefinitionResponse getAssignmentProjectDefinition(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<GetAssignmentProjectDefinitionRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(GetAssignmentProjectDefinitionResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(GetAssignmentProjectDefinitionResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -530,12 +530,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetAssignmentProjectDefinitions")
   @ResponseBody
   public GetAssignmentProjectDefinitionsResponse getAssignmentProjectDefinitions(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<GetAssignmentProjectDefinitionsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(GetAssignmentProjectDefinitionsResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(GetAssignmentProjectDefinitionsResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -580,12 +580,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/UpdateProject")
   @ResponseBody
   public UpdateProjectResponse updateProject(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<UpdateProjectRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(UpdateProjectResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(UpdateProjectResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -596,20 +596,20 @@ public class ProjectManagementService {
               Optional<ProjectWithMilestones> optionalProject =
                   db.getProjectRepository().findFullProjectById(request.getId());
               if (optionalProject.isEmpty()) {
-                return user.returnNotFound(UpdateProjectResponse.getDefaultInstance());
+                return userX.returnNotFound(UpdateProjectResponse.getDefaultInstance());
               }
               Project project = optionalProject.get().project();
 
-              if (user.isAdmin()) {
+              if (userX.isAdminX()) {
                 // Do nothing.
-              } else if (user.isTeacher()) {
+              } else if (userX.isTeacher()) {
                 // TODO: Verify the project is for a student in their class.
-              } else if (user.isStudent()) {
+              } else if (userX.isStudent()) {
                 // Make sure the student is only updating their own projects.
                 if (!Objects.equals(
                     project.getProjectInput().getUserX().getId(),
-                    user.get().orElseThrow().getId())) {
-                  return user.returnForbidden(UpdateProjectResponse.getDefaultInstance());
+                    userX.get().orElseThrow().getId())) {
+                  return userX.returnForbidden(UpdateProjectResponse.getDefaultInstance());
                 }
               }
 
@@ -642,12 +642,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjectPosts")
   @ResponseBody
   public GetProjectPostsResponse getProjectPosts(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<GetProjectPostsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(GetProjectPostsResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(GetProjectPostsResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -667,12 +667,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/PostMessage")
   @ResponseBody
   public PostMessageResponse postMessage(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<PostMessageRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(PostMessageResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(PostMessageResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -684,7 +684,7 @@ public class ProjectManagementService {
                       .save(
                           new ProjectPost()
                               .setCreationTime(Instant.now())
-                              .setUserX(user.get().orElseThrow())
+                              .setUserX(userX.get().orElseThrow())
                               .setProject(new Project().setId(request.getProjectId()))
                               .setName(request.getName())
                               .setMessageHtml(request.getMessageHtml()));
@@ -697,12 +697,12 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/DeletePost")
   @ResponseBody
   public DeletePostResponse deletePost(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<DeletePostRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(DeletePostResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(DeletePostResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -719,7 +719,7 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjectDefinitionCategoryTypes")
   @ResponseBody
   public GetProjectDefinitionCategoryTypesResponse GetProjectDefinitionCategoryTypes(
-      @Anonymous HttpUser user,
+      @Anonymous HttpUserX userX,
       @RequestBody Optional<GetProjectDefinitionCategoryTypesRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
@@ -752,7 +752,7 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/GenerateAnonymousProjects")
   @ResponseBody
   public GenerateAnonymousProjectsResponse generateAnonymousProjects(
-      @Anonymous HttpUser user,
+      @Anonymous HttpUserX userX,
       @RequestBody Optional<GenerateAnonymousProjectsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
@@ -770,8 +770,8 @@ public class ProjectManagementService {
                   new ProjectDefinition()
                       .setCreationTime(Instant.now())
                       .setName("Anonymously Created Project Definition");
-              if (user.isAuthenticated()) {
-                definition.setUserX(user.get().orElseThrow());
+              if (userX.isAuthenticated()) {
+                definition.setUserX(userX.get().orElseThrow());
               }
               db.getProjectDefinitionRepository().save(definition);
               generateRequest.getDefinitionBuilder().setId(definition.getId());
@@ -802,7 +802,7 @@ public class ProjectManagementService {
         .andThen(
             (generateRequest, log) -> {
               GenerateProjectsResponse generateProjectsResponse =
-                  generateProjects(user, Optional.of(generateRequest.build()), httpExecutors);
+                  generateProjects(userX, Optional.of(generateRequest.build()), httpExecutors);
               return response
                   .setProjectInputId(generateProjectsResponse.getProjectInputId())
                   .build();
@@ -813,7 +813,7 @@ public class ProjectManagementService {
   @PostMapping(value = "/api/protos/ProjectManagementService/RegisterAnonymousProjects")
   @ResponseBody
   public RegisterAnonymousProjectsResponse registerAnonymousProjects(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<RegisterAnonymousProjectsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
@@ -828,9 +828,9 @@ public class ProjectManagementService {
                       .findById(request.getProjectInputId())
                       .orElseThrow();
               db.getProjectInputRepository()
-                  .updateUserX(request.getProjectInputId(), user.get().get().getId());
+                  .updateUserX(request.getProjectInputId(), userX.get().get().getId());
               db.getProjectDefinitionRepository()
-                  .updateUserX(input.getProjectDefinition().getId(), user.get().get().getId());
+                  .updateUserX(input.getProjectDefinition().getId(), userX.get().get().getId());
 
               return response.build();
             })

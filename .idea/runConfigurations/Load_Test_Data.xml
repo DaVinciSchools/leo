@@ -5,7 +5,7 @@
     <selectedOptions>
       <option name="spring.boot.profiles" visible="false" />
     </selectedOptions>
-    <option name="SPRING_BOOT_MAIN_CLASS" value="org.davincischools.leo.database.admin.AdminUtils" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="org.davincischools.leo.database.admin_x.AdminXUtils" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

@@ -4,7 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.server.utils.http_user.HttpUserService;
+import org.davincischools.leo.server.utils.http_user_x.HttpUserXService;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -36,7 +36,7 @@ public class HttpExecutorArgumentResolver implements HandlerMethodArgumentResolv
 
     return new HttpExecutors(
         db,
-        HttpUserService.getAnonymousHttpUser(
+        HttpUserXService.getAnonymousHttpUserX(
             db,
             webRequest.getNativeRequest(HttpServletRequest.class),
             webRequest.getNativeResponse(HttpServletResponse.class),

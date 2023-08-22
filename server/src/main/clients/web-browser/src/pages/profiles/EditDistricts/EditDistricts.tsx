@@ -37,7 +37,7 @@ export function SelectDistrictFromList(props: {
 
 export function EditDistricts() {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUser(user => user?.isAdmin)) {
+  if (!global.requireUserX(userX => userX?.isAdminX)) {
     return <></>;
   }
 

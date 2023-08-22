@@ -19,8 +19,8 @@ import org.davincischools.leo.protos.partial_text_openai_prompt.GetSuggestionsRe
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
-import org.davincischools.leo.server.utils.http_user.Authenticated;
-import org.davincischools.leo.server.utils.http_user.HttpUser;
+import org.davincischools.leo.server.utils.http_user_x.Authenticated;
+import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -59,12 +59,12 @@ public class PartialTextOpenAiPromptController {
   @PostMapping(value = "/api/protos/PartialTextOpenAiPromptService/GetSuggestions")
   @ResponseBody
   public GetSuggestionsResponse getSuggestions(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<GetSuggestionsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(GetSuggestionsResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(GetSuggestionsResponse.getDefaultInstance());
     }
 
     return httpExecutors

@@ -68,7 +68,7 @@ public interface ProjectInputRepository extends JpaRepository<ProjectInput, Inte
             toFullProjectInputs(findFullProjectInputRowsById(projectInputId, null, null)), null));
   }
 
-  default List<FullProjectInput> findFullProjectInputByUserAndUnsuccessful(int userXId) {
+  default List<FullProjectInput> findFullProjectInputByUserXAndUnsuccessful(int userXId) {
     return toFullProjectInputs(findFullProjectInputRowsById(null, userXId, true));
   }
 

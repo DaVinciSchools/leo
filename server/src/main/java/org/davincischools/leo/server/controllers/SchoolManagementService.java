@@ -11,9 +11,9 @@ import org.davincischools.leo.protos.school_management.UpsertSchoolRequest;
 import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
-import org.davincischools.leo.server.utils.http_user.Admin;
-import org.davincischools.leo.server.utils.http_user.Authenticated;
-import org.davincischools.leo.server.utils.http_user.HttpUser;
+import org.davincischools.leo.server.utils.http_user_x.AdminX;
+import org.davincischools.leo.server.utils.http_user_x.Authenticated;
+import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,12 +28,12 @@ public class SchoolManagementService {
   @PostMapping(value = "/api/protos/SchoolManagementService/GetSchools")
   @ResponseBody
   public SchoolInformationResponse getSchools(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<GetSchoolsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(SchoolInformationResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(SchoolInformationResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -48,12 +48,12 @@ public class SchoolManagementService {
   @PostMapping(value = "/api/protos/SchoolManagementService/UpsertSchool")
   @ResponseBody
   public SchoolInformationResponse upsertSchool(
-      @Admin HttpUser user,
+      @AdminX HttpUserX userX,
       @RequestBody Optional<UpsertSchoolRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(SchoolInformationResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(SchoolInformationResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -80,12 +80,12 @@ public class SchoolManagementService {
   @PostMapping(value = "/api/protos/SchoolManagementService/RemoveSchool")
   @ResponseBody
   public SchoolInformationResponse removeSchool(
-      @Admin HttpUser user,
+      @AdminX HttpUserX userX,
       @RequestBody Optional<RemoveSchoolRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(SchoolInformationResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(SchoolInformationResponse.getDefaultInstance());
     }
 
     return httpExecutors

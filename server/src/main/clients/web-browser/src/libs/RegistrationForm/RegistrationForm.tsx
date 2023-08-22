@@ -4,12 +4,12 @@ import {AccountCircle, Comment, Email, Lock} from '@mui/icons-material';
 import {Autocomplete, Button, Grid, TextField} from '@mui/material';
 import {FormEvent} from 'react';
 import {useFormFields} from '../forms';
-import {user_management} from '../../generated/protobuf-js';
+import {user_x_management} from '../../generated/protobuf-js';
 
-import IRegisterUserRequest = user_management.IRegisterUserRequest;
+import IRegisterUserXRequest = user_x_management.IRegisterUserXRequest;
 
 export function RegistrationForm(props: {
-  onRegisterUser: (registerUserRequest: IRegisterUserRequest) => void;
+  onRegisterUserX: (registerUserXRequest: IRegisterUserXRequest) => void;
   onCancel: () => void;
 }) {
   const formFields = useFormFields();
@@ -74,7 +74,9 @@ export function RegistrationForm(props: {
       return;
     }
 
-    props.onRegisterUser(formFields.getValuesObject() as IRegisterUserRequest);
+    props.onRegisterUserX(
+      formFields.getValuesObject() as IRegisterUserXRequest
+    );
   }
 
   return (

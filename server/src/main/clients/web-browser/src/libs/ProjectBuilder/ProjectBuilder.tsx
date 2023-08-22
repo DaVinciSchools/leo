@@ -13,12 +13,12 @@ import {login} from '../authentication';
 import {
   pl_types,
   project_management,
-  user_management,
+  user_x_management,
 } from '../../generated/protobuf-js';
 import {useNavigate} from 'react-router';
 
 import ProjectManagementService = project_management.ProjectManagementService;
-import UserManagementService = user_management.UserManagementService;
+import UserXManagementService = user_x_management.UserXManagementService;
 
 enum State {
   GETTING_STARTED,
@@ -49,15 +49,15 @@ export function ProjectBuilder(props: {
   );
   const [projectInputId, setProjectInputId] = useState<number | undefined>();
 
-  const [loginUserVisible, setLoginUserVisible] = useState(false);
-  const [registerUserVisible, setRegisterUserVisible] = useState(false);
+  const [loginUserXVisible, setLoginUserXVisible] = useState(false);
+  const [registerUserXVisible, setRegisterUserXVisible] = useState(false);
   const [accountAlreadyExistsVisible, setAccountAlreadyExistsVisible] =
     useState(false);
 
   // All states. But, filter out REGISTER depending on whether a user is already logged in.
   const steps: State[] = Object.values(State)
     .filter(i => typeof i === 'number')
-    .filter(i => !global.user?.isAuthenticated || i !== State.REGISTER)
+    .filter(i => !global.userX?.isAuthenticated || i !== State.REGISTER)
     .map(i => i as State);
   const [activeStep, setActiveStep] = useState(State.GETTING_STARTED);
 
@@ -89,7 +89,7 @@ export function ProjectBuilder(props: {
   }
 
   function onLoggedIn() {
-    setLoginUserVisible(false);
+    setLoginUserXVisible(false);
     createService(ProjectManagementService, 'ProjectManagementService')
       .registerAnonymousProjects({projectInputId})
       .then(() => {
@@ -99,9 +99,9 @@ export function ProjectBuilder(props: {
       .catch(global.setError);
   }
 
-  function onRegisterUser(request: user_management.IRegisterUserRequest) {
-    createService(UserManagementService, 'UserManagementService')
-      .registerUser(request)
+  function onRegisterUserX(request: user_x_management.IRegisterUserXRequest) {
+    createService(UserXManagementService, 'UserXManagementService')
+      .registerUserX(request)
       .then(response => {
         if (response.accountAlreadyExists) {
           setAccountAlreadyExistsVisible(true);
@@ -321,28 +321,28 @@ export function ProjectBuilder(props: {
                 <Button
                   variant="contained"
                   className="project-builder-button"
-                  onClick={() => setLoginUserVisible(true)}
+                  onClick={() => setLoginUserXVisible(true)}
                 >
                   Log in with an existing account
                 </Button>
                 <Button
                   variant="contained"
                   className="project-builder-button"
-                  onClick={() => setRegisterUserVisible(true)}
+                  onClick={() => setRegisterUserXVisible(true)}
                 >
                   Register for a new account
                 </Button>
               </Box>
               <div />
               <ModalLoginForm
-                open={loginUserVisible}
+                open={loginUserXVisible}
                 onLoggedIn={onLoggedIn}
-                onCancel={() => setLoginUserVisible(false)}
+                onCancel={() => setLoginUserXVisible(false)}
               />
               <ModalRegistrationForm
-                open={registerUserVisible}
-                onRegisterUser={onRegisterUser}
-                onCancel={() => setRegisterUserVisible(false)}
+                open={registerUserXVisible}
+                onRegisterUserX={onRegisterUserX}
+                onCancel={() => setRegisterUserXVisible(false)}
               />
               <Modal
                 open={accountAlreadyExistsVisible}
@@ -372,8 +372,8 @@ export function ProjectBuilder(props: {
                       className="project-builder-button"
                       onClick={() => {
                         setAccountAlreadyExistsVisible(false);
-                        setRegisterUserVisible(false);
-                        setLoginUserVisible(true);
+                        setRegisterUserXVisible(false);
+                        setLoginUserXVisible(true);
                       }}
                     >
                       Login using the existing account

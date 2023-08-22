@@ -16,7 +16,7 @@ import org.davincischools.leo.database.test.TestData;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.interest_service.RegisterInterestRequest;
 import org.davincischools.leo.protos.interest_service.RegisterInterestResponse;
-import org.davincischools.leo.protos.pl_types.User;
+import org.davincischools.leo.protos.pl_types.UserX;
 import org.davincischools.leo.server.controllers.ReactResourceController;
 import org.davincischools.leo.server.test_helpers.WebSession;
 import org.junit.Before;
@@ -89,7 +89,7 @@ public class ServerApplicationTest {
         .uri("/api/login.html")
         .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
         .body(
-            BodyInserters.fromFormData("username", testData.getAdmin().getEmailAddress())
+            BodyInserters.fromFormData("username", testData.getAdminX().getEmailAddress())
                 .with("password", TestData.PASSWORD))
         .exchange()
         .expectAll(
@@ -100,11 +100,11 @@ public class ServerApplicationTest {
                 spec.expectCookie()
                     .value(DEFAULT_JSESSIONID_COOKIE_NAME, matchesRegex("[0-9A-Z]{32}")),
             spec ->
-                assertThat(bodyAsProto(spec, User.class))
+                assertThat(bodyAsProto(spec, UserX.class))
                     .comparingExpectedFieldsOnly()
                     .isEqualTo(
-                        User.newBuilder()
-                            .setEmailAddress(testData.getAdmin().getEmailAddress())
+                        UserX.newBuilder()
+                            .setEmailAddress(testData.getAdminX().getEmailAddress())
                             .build()));
   }
 
@@ -119,7 +119,7 @@ public class ServerApplicationTest {
             .uri("/api/login.html")
             .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
             .body(
-                BodyInserters.fromFormData("username", testData.getAdmin().getEmailAddress())
+                BodyInserters.fromFormData("username", testData.getAdminX().getEmailAddress())
                     .with("password", TestData.PASSWORD))
             .exchange()
             .block();
@@ -135,7 +135,8 @@ public class ServerApplicationTest {
         .expectAll(
             spec -> spec.expectStatus().is3xxRedirection(),
             spec -> spec.expectCookie().doesNotExist(DEFAULT_JSESSIONID_COOKIE_NAME),
-            spec -> assertThat(bodyAsProto(spec, User.class)).isEqualTo(User.getDefaultInstance()));
+            spec ->
+                assertThat(bodyAsProto(spec, UserX.class)).isEqualTo(UserX.getDefaultInstance()));
   }
 
   @Test

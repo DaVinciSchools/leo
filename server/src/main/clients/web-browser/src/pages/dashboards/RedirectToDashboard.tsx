@@ -4,19 +4,19 @@ import {GlobalStateContext} from '../../libs/GlobalState';
 
 export function RedirectToDashboard() {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUser(user => user?.isAuthenticated)) {
+  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
     return <></>;
   }
 
   const navigate = useNavigate();
   useEffect(() => {
-    if (global.user?.isAdmin) {
+    if (global.userX?.isAdminX) {
       navigate('/dashboards/admin-dashboard.html');
-    } else if (global.user?.isTeacher) {
+    } else if (global.userX?.isTeacher) {
       navigate('/dashboards/teacher-dashboard.html');
-    } else if (global.user?.isStudent) {
+    } else if (global.userX?.isStudent) {
       navigate('/dashboards/student-dashboard.html');
-    } else if (global.user?.isAuthenticated) {
+    } else if (global.userX?.isAuthenticated) {
       navigate('/projects/all-projects.html');
     }
   });

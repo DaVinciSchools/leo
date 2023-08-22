@@ -31,7 +31,7 @@ import IAssignment = pl_types.IAssignment;
 import IClassX = pl_types.IClassX;
 import IProjectDefinition = pl_types.IProjectDefinition;
 import IProjectInputValue = pl_types.IProjectInputValue;
-import IUser = pl_types.IUser;
+import IUserX = pl_types.IUserX;
 import ProjectManagementService = project_management.ProjectManagementService;
 import {
   ASSIGNMENT_SORTER,
@@ -39,7 +39,7 @@ import {
   PROJECT_DEFINITION_SORTER,
 } from '../../../libs/sorters';
 
-export function AssignmentsTab(props: {user: IUser | undefined}) {
+export function AssignmentsTab(props: {userX: IUserX | undefined}) {
   const global = useContext(GlobalStateContext);
 
   const [classXs, setClassXs] = useState<IClassX[]>([]);
@@ -68,7 +68,7 @@ export function AssignmentsTab(props: {user: IUser | undefined}) {
   useEffect(() => {
     createService(AssignmentManagementService, 'AssignmentManagementService')
       .getAssignments({
-        teacherId: props.user?.teacherId,
+        teacherId: props.userX?.teacherId,
       })
       .then(response => {
         setClassXs(response.classXs);
@@ -130,7 +130,7 @@ export function AssignmentsTab(props: {user: IUser | undefined}) {
     setCategories(projectDefinition.inputs);
   }, [projectDefinition]);
 
-  if (!global.requireUser(user => user?.isTeacher)) {
+  if (!global.requireUserX(userX => userX?.isTeacher)) {
     return <></>;
   }
 

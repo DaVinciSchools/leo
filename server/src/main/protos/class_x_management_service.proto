@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+import "pl_types.proto";
+
+option java_multiple_files = true;
+option java_package = "org.davincischools.leo.protos.class_x_management_service";
+
+package class_x_management_service;
+
+service ClassXManagementService {
+  rpc GetClassXs (GetClassXsRequest) returns (GetClassXsResponse) {}
+  rpc UpsertClassX (UpsertClassXRequest) returns (UpsertClassXResponse) {}
+}
+
+message GetClassXsRequest {
+  oneof id {
+    int32 student_id = 1;
+    int32 teacher_id = 2;
+  }
+}
+
+message GetClassXsResponse {
+  repeated pl_types.ClassX class_xs = 1;
+}
+
+message UpsertClassXRequest {
+  pl_types.ClassX class_x = 1;
+}
+
+message UpsertClassXResponse {
+  pl_types.ClassX class_x = 1;
+}

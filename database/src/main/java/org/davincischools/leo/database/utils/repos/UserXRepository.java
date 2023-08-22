@@ -33,13 +33,13 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
   public static final String INVALID_ENCODED_PASSWORD = "INVALID ENCODED PASSWORD";
 
   enum Role {
-    ADMIN,
+    ADMIN_X,
     TEACHER,
     STUDENT,
     DEMO
   }
 
-  static boolean isAdmin(UserX userX) {
+  static boolean isAdminX(UserX userX) {
     return userX.getAdminX() != null && userX.getAdminX().getId() != null;
   }
 
@@ -52,7 +52,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
   }
 
   static boolean isDemo(UserX userX) {
-    return isAuthenticated(userX) && !isAdmin(userX) && !isTeacher(userX) && !isStudent(userX);
+    return isAuthenticated(userX) && !isAdminX(userX) && !isTeacher(userX) && !isStudent(userX);
   }
 
   static boolean isAuthenticated(UserX userX) {
@@ -63,8 +63,8 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
     checkNotNull(user);
 
     EnumSet<Role> roles = EnumSet.noneOf(Role.class);
-    if (isAdmin(user)) {
-      roles.add(Role.ADMIN);
+    if (isAdminX(user)) {
+      roles.add(Role.ADMIN_X);
     }
     if (isTeacher(user)) {
       roles.add(Role.TEACHER);

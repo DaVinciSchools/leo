@@ -5,7 +5,7 @@ import {GlobalStateContext} from '../../../libs/GlobalState';
 
 export function Overview() {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUser(user => user?.isAuthenticated)) {
+  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
     return <></>;
   }
 

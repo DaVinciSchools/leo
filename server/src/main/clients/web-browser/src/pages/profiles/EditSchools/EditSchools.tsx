@@ -94,7 +94,7 @@ export function SelectMultipleSchoolsFromList(props: {
 
 export function EditSchools() {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUser(user => user?.isAdmin)) {
+  if (!global.requireUserX(userX => userX?.isAdminX)) {
     return <></>;
   }
 

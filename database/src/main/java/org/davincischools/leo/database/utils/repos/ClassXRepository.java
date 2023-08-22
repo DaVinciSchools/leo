@@ -16,7 +16,7 @@ import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.School;
-import org.davincischools.leo.database.exceptions.UnauthorizedUser;
+import org.davincischools.leo.database.exceptions.UnauthorizedUserX;
 import org.davincischools.leo.database.utils.Database;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -65,14 +65,14 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
           WHERE ((:teacherId) IS NULL OR tcx.teacher.id = (:teacherId))
           AND ((:studentId) IS NULL OR scx.student.id = (:studentId))
           ORDER BY c.id""")
-  List<FullClassXRow> findFullClassXRowsByUserId(
+  List<FullClassXRow> findFullClassXRowsByUserXId(
       @Nullable @Param("teacherId") Integer teacherId,
       @Nullable @Param("studentId") Integer studentId);
 
-  default List<FullClassX> findFullClassXsByUserId(
+  default List<FullClassX> findFullClassXsByUserXId(
       @Nullable @Param("teacherId") Integer teacherId,
       @Nullable @Param("studentId") Integer studentId) {
-    return toFullClassX(findFullClassXRowsByUserId(teacherId, studentId));
+    return toFullClassX(findFullClassXRowsByUserXId(teacherId, studentId));
   }
 
   private List<FullClassX> toFullClassX(Iterable<FullClassXRow> rows) {
@@ -95,7 +95,7 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
 
   @Transactional
   default void guardedUpsert(Database db, FullClassX fullClassX, Integer requiredTeacherId)
-      throws UnauthorizedUser {
+      throws UnauthorizedUserX {
     checkNotNull(db);
     checkNotNull(fullClassX);
 
@@ -103,7 +103,7 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
         && requiredTeacherId != null
         && !db.getTeacherClassXRepository()
             .canTeacherUpdateClassX(requiredTeacherId, fullClassX.classX().getId())) {
-      throw new UnauthorizedUser("Teacher does not have write access to this class.");
+      throw new UnauthorizedUserX("Teacher does not have write access to this class.");
     }
 
     // TODO: Find a better way to "clone without transient children".

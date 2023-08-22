@@ -71,7 +71,7 @@ export function login(
               .read()
               .then(result => {
                 try {
-                  global.setUser(pl_types.User.decode(result.value!));
+                  global.setUserX(pl_types.UserX.decode(result.value!));
                   onSuccess();
                 } catch (e) {
                   onError(e);
@@ -88,7 +88,7 @@ export function login(
 }
 
 export function logout(global: IGlobalState) {
-  global.setUser(undefined);
+  global.setUserX(undefined);
   return fetch('/api/logout.html', {
     method: 'POST',
     headers: addXsrfHeader(),

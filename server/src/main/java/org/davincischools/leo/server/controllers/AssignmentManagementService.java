@@ -20,8 +20,8 @@ import org.davincischools.leo.protos.assignment_management.SaveAssignmentRespons
 import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
-import org.davincischools.leo.server.utils.http_user.Authenticated;
-import org.davincischools.leo.server.utils.http_user.HttpUser;
+import org.davincischools.leo.server.utils.http_user_x.Authenticated;
+import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,7 +36,7 @@ public class AssignmentManagementService {
   @PostMapping(value = "/api/protos/AssignmentManagementService/GetAssignments")
   @ResponseBody
   public GetAssignmentsResponse getAssignments(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<GetAssignmentsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
@@ -45,30 +45,30 @@ public class AssignmentManagementService {
         .andThen(
             (request, log) -> {
               var response = GetAssignmentsResponse.newBuilder();
-              if (user.isNotAuthorized()) {
-                return user.returnForbidden(response.build());
+              if (userX.isNotAuthorized()) {
+                return userX.returnForbidden(response.build());
               }
 
               List<FullClassXAssignment> classXAssignments;
-              switch (request.getUserIdCase()) {
+              switch (request.getUserXIdCase()) {
                 case TEACHER_ID -> {
-                  if (!user.isAdmin()
-                      && (!user.isTeacher()
+                  if (!userX.isAdminX()
+                      && (!userX.isTeacher()
                           || !Objects.equals(
-                              user.get().orElseThrow().getTeacher().getId(),
+                              userX.get().orElseThrow().getTeacher().getId(),
                               request.getTeacherId()))) {
-                    return user.returnForbidden(response.build());
+                    return userX.returnForbidden(response.build());
                   }
                   classXAssignments =
                       db.getAssignmentRepository().findAllByTeacherId(request.getTeacherId());
                 }
                 case STUDENT_ID -> {
-                  if (!user.isAdmin()
-                      && (!user.isStudent()
+                  if (!userX.isAdminX()
+                      && (!userX.isStudent()
                           || !Objects.equals(
-                              user.get().orElseThrow().getStudent().getId(),
+                              userX.get().orElseThrow().getStudent().getId(),
                               request.getStudentId()))) {
-                    return user.returnForbidden(response.build());
+                    return userX.returnForbidden(response.build());
                   }
                   classXAssignments =
                       db.getAssignmentRepository().findAllByStudentId(request.getStudentId());
@@ -98,7 +98,7 @@ public class AssignmentManagementService {
   @PostMapping(value = "/api/protos/AssignmentManagementService/CreateAssignment")
   @ResponseBody
   public CreateAssignmentResponse createAssignment(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<CreateAssignmentRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
@@ -107,19 +107,19 @@ public class AssignmentManagementService {
         .andThen(
             (request, log) -> {
               var response = CreateAssignmentResponse.newBuilder();
-              if (user.isNotAuthorized()) {
-                return user.returnForbidden(response.build());
+              if (userX.isNotAuthorized()) {
+                return userX.returnForbidden(response.build());
               }
 
-              if (!user.isAdmin()
-                  && !(user.isTeacher()
+              if (!userX.isAdminX()
+                  && !(userX.isTeacher()
                       && db.getTeacherClassXRepository()
                           .findById(
                               new TeacherClassXId()
-                                  .setTeacherId(user.get().orElseThrow().getTeacher().getId())
+                                  .setTeacherId(userX.get().orElseThrow().getTeacher().getId())
                                   .setClassXId(request.getClassXId()))
                           .isPresent())) {
-                return user.returnForbidden(response.build());
+                return userX.returnForbidden(response.build());
               }
 
               ClassX classX =
@@ -143,7 +143,7 @@ public class AssignmentManagementService {
   @PostMapping(value = "/api/protos/AssignmentManagementService/SaveAssignment")
   @ResponseBody
   public SaveAssignmentResponse saveAssignment(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<SaveAssignmentRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
@@ -152,8 +152,8 @@ public class AssignmentManagementService {
         .andThen(
             (request, log) -> {
               var response = SaveAssignmentResponse.newBuilder();
-              if (user.isNotAuthorized()) {
-                return user.returnForbidden(response.build());
+              if (userX.isNotAuthorized()) {
+                return userX.returnForbidden(response.build());
               }
 
               Assignment assignment =
@@ -161,15 +161,15 @@ public class AssignmentManagementService {
                       .findById(request.getAssignment().getId())
                       .orElseThrow();
 
-              if (!user.isAdmin()
-                  && !(user.isTeacher()
+              if (!userX.isAdminX()
+                  && !(userX.isTeacher()
                       && db.getTeacherClassXRepository()
                           .findById(
                               new TeacherClassXId()
-                                  .setTeacherId(user.get().orElseThrow().getTeacher().getId())
+                                  .setTeacherId(userX.get().orElseThrow().getTeacher().getId())
                                   .setClassXId(assignment.getClassX().getId()))
                           .isPresent())) {
-                return user.returnForbidden(response.build());
+                return userX.returnForbidden(response.build());
               }
 
               db.getAssignmentRepository()
@@ -187,7 +187,7 @@ public class AssignmentManagementService {
   @PostMapping(value = "/api/protos/AssignmentManagementService/DeleteAssignment")
   @ResponseBody
   public DeleteAssignmentResponse deleteAssignment(
-      @Authenticated HttpUser user,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<DeleteAssignmentRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
@@ -196,22 +196,22 @@ public class AssignmentManagementService {
         .andThen(
             (request, log) -> {
               var response = DeleteAssignmentResponse.newBuilder();
-              if (user.isNotAuthorized()) {
-                return user.returnForbidden(response.build());
+              if (userX.isNotAuthorized()) {
+                return userX.returnForbidden(response.build());
               }
 
               Assignment assignment =
                   db.getAssignmentRepository().findById(request.getAssignmentId()).orElseThrow();
 
-              if (!user.isAdmin()
-                  && !(user.isTeacher()
+              if (!userX.isAdminX()
+                  && !(userX.isTeacher()
                       && db.getTeacherClassXRepository()
                           .findById(
                               new TeacherClassXId()
-                                  .setTeacherId(user.get().orElseThrow().getTeacher().getId())
+                                  .setTeacherId(userX.get().orElseThrow().getTeacher().getId())
                                   .setClassXId(assignment.getClassX().getId()))
                           .isPresent())) {
-                return user.returnForbidden(response.build());
+                return userX.returnForbidden(response.build());
               }
 
               db.getAssignmentRepository().delete(assignment);

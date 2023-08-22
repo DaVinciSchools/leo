@@ -10,7 +10,7 @@ if [[ "$(uname -r)" =~ icrosoft ]]; then
   exit
 fi
 
-# User the Mac installer for Mac.
+# Use the Mac installer for Mac.
 if [[ "$(uname -r)" =~ arwin ]]; then
   echo This is only for Ubuntu. Install Docker Desktop for Mac.
   echo Instructions are at https://docs.docker.com/desktop/install/mac-install/

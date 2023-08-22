@@ -115,18 +115,18 @@ export function CommonAccountFields(props: {
           maxLength={255}
           autoComplete="email"
           prefix={<MailOutlined />}
-          disabled={!global.user?.isAdmin || props.disabled}
+          disabled={!global.userX?.isAdminX || props.disabled}
         />
       </Form.Item>
       <Form.Item
         name="currentPassword"
-        style={{display: global.user?.isAdmin ? 'none' : undefined}}
+        style={{display: global.userX?.isAdminX ? 'none' : undefined}}
         rules={[
           {
             message: 'The current password is required for password updates.',
             validator: () => {
               if (
-                !global.user?.isAdmin &&
+                !global.userX?.isAdminX &&
                 ((props.form.getFieldValue('password') ?? '') !== '' ||
                   (props.form.getFieldValue('verifyPassword') ?? '') !== '') &&
                 (props.form.getFieldValue('currentPassword') ?? '') === ''

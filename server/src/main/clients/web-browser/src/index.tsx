@@ -5,25 +5,25 @@ import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
 
 import {Root} from './pages/Root';
-import {Login} from './pages/users/Login/Login';
+import {Login} from './pages/user_xs/Login/Login';
 import {EditDistricts} from './pages/profiles/EditDistricts/EditDistricts';
 import {EditSchools} from './pages/profiles/EditSchools/EditSchools';
 import {DefaultPageNav} from './libs/DefaultPage/DefaultPageNav';
 import {ProjectBuilder} from './pages/projects/ProjectBuilder/ProjectBuilder';
 import {MyProjects} from './pages/projects/MyProjects/MyProjects';
-import {MyAccount} from './pages/users/MyAccount/MyAccount';
+import {MyAccount} from './pages/user_xs/MyAccount/MyAccount';
 import {PrivacyPolicy} from './pages/docs/PrivacyPolicy';
 import {Overview} from './pages/projects/Overview/Overview';
-import {Logout} from './pages/users/Logout/Logout';
+import {Logout} from './pages/user_xs/Logout/Logout';
 import {AllProjects} from './pages/projects/AllProjects/AllProjects';
-import {Accounts} from './pages/admin/Accounts/Accounts';
+import {Accounts} from './pages/admin_x/Accounts/Accounts';
 import {StudentDashboard} from './pages/dashboards/StudentDashboard/StudentDashboard';
 import {TeacherDashboard} from './pages/dashboards/TeacherDashboard/TeacherDashboard';
-import {AdminDashboard} from './pages/dashboards/AdminDashboard/AdminDashboard';
+import {AdminXDashboard} from './pages/dashboards/AdminXDashboard/AdminXDashboard';
 import {RedirectToDashboard} from './pages/dashboards/RedirectToDashboard';
 import {DemoProjectBuilder} from './pages/demos/DemoProjectBuilder/DemoProjectBuilder';
 import {GlobalState} from './libs/GlobalState';
-import {TeacherEditClasses} from './pages/classes/TeacherEditClasses/TeacherEditClasses';
+import {TeacherEditClassXs} from './pages/class_xs/TeacherEditClassXs/TeacherEditClassXs';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -54,7 +54,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: 'teacher-edit-classes.html',
-        element: <TeacherEditClasses />,
+        element: <TeacherEditClassXs />,
       },
     ],
   },
@@ -77,7 +77,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: 'admin-dashboard.html',
-        element: <AdminDashboard />,
+        element: <AdminXDashboard />,
       },
       {
         path: 'student-dashboard.html',

@@ -13,8 +13,8 @@ import org.davincischools.leo.protos.district_management.RemoveDistrictRequest;
 import org.davincischools.leo.protos.district_management.UpdateDistrictRequest;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
-import org.davincischools.leo.server.utils.http_user.Admin;
-import org.davincischools.leo.server.utils.http_user.HttpUser;
+import org.davincischools.leo.server.utils.http_user_x.AdminX;
+import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,12 +29,12 @@ public class DistrictManagementService {
   @PostMapping(value = "/api/protos/DistrictManagementService/GetDistricts")
   @ResponseBody
   public DistrictInformationResponse getDistricts(
-      @Admin HttpUser user,
+      @AdminX HttpUserX userX,
       @RequestBody Optional<GetDistrictsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(DistrictInformationResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(DistrictInformationResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -46,12 +46,12 @@ public class DistrictManagementService {
   @PostMapping(value = "/api/protos/DistrictManagementService/AddDistrict")
   @ResponseBody
   public DistrictInformationResponse addDistrict(
-      @Admin HttpUser user,
+      @AdminX HttpUserX userX,
       @RequestBody Optional<AddDistrictRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(DistrictInformationResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(DistrictInformationResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -72,12 +72,12 @@ public class DistrictManagementService {
   @PostMapping(value = "/api/protos/DistrictManagementService/UpdateDistrict")
   @ResponseBody
   public DistrictInformationResponse updateDistrict(
-      @Admin HttpUser user,
+      @AdminX HttpUserX userX,
       @RequestBody Optional<UpdateDistrictRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(DistrictInformationResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(DistrictInformationResponse.getDefaultInstance());
     }
 
     return httpExecutors
@@ -93,12 +93,12 @@ public class DistrictManagementService {
   @PostMapping(value = "/api/protos/DistrictManagementService/RemoveDistrict")
   @ResponseBody
   public DistrictInformationResponse removeDistrict(
-      @Admin HttpUser user,
+      @AdminX HttpUserX userX,
       @RequestBody Optional<RemoveDistrictRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (user.isNotAuthorized()) {
-      return user.returnForbidden(DistrictInformationResponse.getDefaultInstance());
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(DistrictInformationResponse.getDefaultInstance());
     }
 
     return httpExecutors

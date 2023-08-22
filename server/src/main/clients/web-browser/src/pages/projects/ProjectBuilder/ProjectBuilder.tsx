@@ -7,7 +7,7 @@ import {ProjectBuilder as MainProjectBuilder} from '../../../libs/ProjectBuilder
 
 export function ProjectBuilder() {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUser(user => user?.isAuthenticated)) {
+  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
     return <></>;
   }
 

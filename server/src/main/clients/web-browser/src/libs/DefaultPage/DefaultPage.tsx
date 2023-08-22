@@ -17,22 +17,22 @@ export function DefaultPage(
   }>
 ) {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUser(user => user?.isAuthenticated)) {
+  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
     return <></>;
   }
 
   const avatarPanel =
-    global.user != null ? (
+    global.userX != null ? (
       <div className="avatar-panel">
         <div className="avatar-icon">
           <SmileTwoTone />
         </div>
         <div className="name">
           <span style={{whiteSpace: 'nowrap'}}>
-            {global.user?.firstName ?? ''} {global.user?.lastName ?? ''}
+            {global.userX?.firstName ?? ''} {global.userX?.lastName ?? ''}
           </span>
         </div>
-        <div className="email">{global.user?.emailAddress ?? ''}</div>
+        <div className="email">{global.userX?.emailAddress ?? ''}</div>
         <div className="section-div" />
         <div className="menu">
           <Link to="/users/my-account.html">My Account</Link>
@@ -62,7 +62,7 @@ export function DefaultPage(
                 <span className="avatar-icon">
                   <SmileTwoTone />
                 </span>
-                {global.user?.firstName ?? ''} {global.user?.lastName ?? ''}
+                {global.userX?.firstName ?? ''} {global.userX?.lastName ?? ''}
               </div>
             </Popover>
           </div>

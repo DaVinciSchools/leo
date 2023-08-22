@@ -41,7 +41,7 @@ export function DefaultPageNav() {
 
   // This has to be AFTER the useState() call above, otherwise it will fail.
   const global = useContext(GlobalStateContext);
-  if (!global.requireUser(user => user?.isAuthenticated)) {
+  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
     return <></>;
   }
 
@@ -51,34 +51,34 @@ export function DefaultPageNav() {
       key: MenuKeys.DASHBOARD_ADMIN,
       icon: <HomeOutlined />,
       style: {
-        display: global.user?.isAdmin ? 'block' : 'none',
+        display: global.userX?.isAdminX ? 'block' : 'none',
       },
     },
     {
-      label: (global.user?.isAdmin ? 'Student ' : '') + 'Dashboard',
+      label: (global.userX?.isAdminX ? 'Student ' : '') + 'Dashboard',
       key: MenuKeys.DASHBOARD_STUDENT,
       icon: <HomeOutlined />,
       style: {
         display:
-          global.user?.isAdmin || global.user?.isStudent ? 'block' : 'none',
+          global.userX?.isAdminX || global.userX?.isStudent ? 'block' : 'none',
       },
     },
     {
-      label: (global.user?.isAdmin ? 'Teacher ' : '') + 'Dashboard',
+      label: (global.userX?.isAdminX ? 'Teacher ' : '') + 'Dashboard',
       key: MenuKeys.DASHBOARD_TEACHER,
       icon: <HomeOutlined />,
       style: {
         display:
-          global.user?.isAdmin || global.user?.isTeacher ? 'block' : 'none',
+          global.userX?.isAdminX || global.userX?.isTeacher ? 'block' : 'none',
       },
     },
     {
-      label: (global.user?.isAdmin ? 'Teacher ' : '') + 'Classes',
+      label: (global.userX?.isAdminX ? 'Teacher ' : '') + 'Classes',
       key: MenuKeys.CLASSES,
       icon: <UserOutlined />,
       style: {
         display:
-          global.user?.isAdmin || global.user?.isTeacher ? 'block' : 'none',
+          global.userX?.isAdminX || global.userX?.isTeacher ? 'block' : 'none',
       },
       children: [
         {
@@ -116,7 +116,7 @@ export function DefaultPageNav() {
       icon: <BookOutlined />,
       style: {
         display:
-          global.user?.isAdmin || global.user?.isStudent ? 'block' : 'none',
+          global.userX?.isAdminX || global.userX?.isStudent ? 'block' : 'none',
       },
     },
     {
@@ -124,7 +124,7 @@ export function DefaultPageNav() {
       key: MenuKeys.ADMIN,
       icon: <SettingOutlined />,
       style: {
-        display: global.user?.isAdmin ? 'block' : 'none',
+        display: global.userX?.isAdminX ? 'block' : 'none',
       },
       children: [
         {

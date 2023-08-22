@@ -15,7 +15,7 @@ import ProjectManagementService = project_management.ProjectManagementService;
 
 export function MyProjects() {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUser(user => user?.isAuthenticated)) {
+  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
     return <></>;
   }
 
@@ -31,7 +31,7 @@ export function MyProjects() {
 
   useEffect(() => {
     service
-      .getProjects({userXId: global.user?.userXId, activeOnly: true})
+      .getProjects({userXId: global.userX?.userXId, activeOnly: true})
       .then(response => {
         setProjects(response.projects);
       })
@@ -78,7 +78,7 @@ export function MyProjects() {
               id: response.projectPostId!,
               name: name,
               messageHtml: messageHtml,
-              user: global.user,
+              userX: global.userX,
             },
           ];
           setPosts(newPosts);

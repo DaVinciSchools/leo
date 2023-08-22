@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+import "pl_types.proto";
+
+option java_multiple_files = true;
+option java_package = "org.davincischools.leo.protos.user_x_management";
+
+package user_x_management;
+
+service UserXManagementService {
+  rpc GetPagedUserXsDetails (GetPagedUserXsDetailsRequest) returns (GetPagedUserXsDetailsResponse) {}
+  rpc GetUserXDetails (GetUserXDetailsRequest) returns (GetUserXDetailsResponse) {}
+  rpc UpsertUserX (UpsertUserXRequest) returns (UpsertUserXResponse) {}
+  rpc RemoveUserX (RemoveUserXRequest) returns (RemoveUserXResponse) {}
+  rpc RegisterUserX (RegisterUserXRequest) returns (RegisterUserXResponse) {}
+}
+
+message FullUserXDetails {
+  optional pl_types.UserX user_x = 1;
+
+  repeated int32 school_ids = 2;
+
+  optional int32 district_student_id = 3;
+  optional int32 student_grade = 4;
+}
+
+message GetPagedUserXsDetailsRequest {
+  enum OrderBy {
+    UNSET = 0;
+    EMAIL = 1;
+    NAME = 2;
+  }
+
+  optional int32 district_id = 1;
+
+  // Zero-based page.
+  optional int32 page = 2;
+  optional int32 page_size = 3;
+  optional string search_text = 4;
+}
+
+message GetPagedUserXsDetailsResponse {
+  repeated FullUserXDetails user_xs = 1;
+  optional int32 total_user_xs = 2;
+}
+
+message GetUserXDetailsRequest {
+  // If unset, returns details about the current user_x.
+  optional int32 user_x_id = 1;
+}
+
+message GetUserXDetailsResponse {
+  optional FullUserXDetails user_x = 1;
+}
+
+// Field names in this message and that of the pl_types.UserX message must be
+// unique or mean the same thing. The Accounts.tsx form merges them together.
+message UpsertUserXRequest {
+  optional pl_types.UserX user_x = 1;
+
+  // Only used when a user_x changes their password.
+  optional string current_password = 2;
+  optional string new_password = 3;
+  optional string verify_password = 4;
+
+  // Repeated fields don't have a has_field method. So, it's not possible
+  // to differentiate between "clear all schools" and "don't modify schools."
+  // Here we use the has_field method on the outer message.
+  message SchoolIds {
+    repeated int32 school_ids = 1;
+  }
+  optional SchoolIds school_ids = 5;
+
+  optional int32 district_student_id = 6;
+  optional int32 student_grade = 7;
+}
+
+message UpsertUserXResponse {
+  optional FullUserXDetails user_x = 1;
+
+  optional string error = 5;
+}
+
+message RemoveUserXRequest {
+  optional int32 user_x_id = 2;
+}
+
+message RemoveUserXResponse {
+}
+
+message RegisterUserXRequest {
+  optional string first_name = 2;
+  optional string last_name = 3;
+  optional string email_address = 4;
+  optional string password = 5;
+  optional string verify_password = 6;
+  optional string profession = 7;
+  optional string reason_for_interest = 8;
+  optional string district_name = 9;
+  optional string school_name = 10;
+  optional string address_line_1 = 11;
+  optional string address_line_2 = 12;
+  optional string city = 13;
+  optional string state = 14;
+  optional string zip_code = 15;
+  optional int32 num_teachers = 16;
+  optional int32 num_students = 17;
+}
+
+message RegisterUserXResponse {
+  optional bool account_already_exists = 1;
+}

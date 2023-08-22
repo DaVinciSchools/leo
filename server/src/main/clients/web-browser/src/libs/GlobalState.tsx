@@ -1,44 +1,44 @@
 import {HandleError, HandleErrorType} from './HandleError/HandleError';
 import {createContext, PropsWithChildren, useEffect, useState} from 'react';
 import {createService} from './protos';
-import {pl_types, user_management} from '../generated/protobuf-js';
+import {pl_types, user_x_management} from '../generated/protobuf-js';
 import {useNavigate} from 'react-router';
 
-import UserManagementService = user_management.UserManagementService;
+import UserXManagementService = user_x_management.UserXManagementService;
 import {FORWARD_PARAM, logout} from './authentication';
 
 export interface IGlobalState {
-  readonly user?: pl_types.IUser;
+  readonly userX?: pl_types.IUserX;
   readonly error?: HandleErrorType;
   readonly loaded: boolean;
-  setUser: (user?: pl_types.IUser | null) => void;
+  setUserX: (userX?: pl_types.IUserX | null) => void;
   setError: (error?: HandleErrorType) => void;
-  requireUser: (
-    userReq: (user: pl_types.IUser) => boolean | null | undefined,
+  requireUserX: (
+    userXReq: (userX: pl_types.IUserX) => boolean | null | undefined,
     forwardUrl?: string
   ) => boolean;
 }
 
 export const GlobalStateContext = createContext<IGlobalState>({
   loaded: false,
-  setUser: throwUnimplementedError,
+  setUserX: throwUnimplementedError,
   setError: throwUnimplementedError,
-  requireUser: throwUnimplementedError,
+  requireUserX: throwUnimplementedError,
 });
 
 export function GlobalState(props: PropsWithChildren<{}>) {
-  const [user, setUser] = useState<pl_types.IUser | undefined>();
+  const [userX, setUserX] = useState<pl_types.IUserX | undefined>();
   const [error, setError] = useState<HandleErrorType>();
   const [loaded, setLoaded] = useState(false);
 
   const global = {
-    user,
+    userX,
     error,
     loaded,
-    setUser,
+    setUserX,
     setError,
-    requireUser: (
-      userReq: (user: pl_types.IUser) => boolean,
+    requireUserX: (
+      userXReq: (userX: pl_types.IUserX) => boolean,
       forwardUrl?: string
     ) => {
       const navigate = useNavigate();
@@ -63,7 +63,7 @@ export function GlobalState(props: PropsWithChildren<{}>) {
         return false;
       } else if (!loaded) {
         return false;
-      } else if (user == null || !userReq(user)) {
+      } else if (userX == null || !userXReq(userX)) {
         setDoForwardUrl(true);
         return false;
       }
@@ -73,11 +73,11 @@ export function GlobalState(props: PropsWithChildren<{}>) {
   } as IGlobalState;
 
   useEffect(() => {
-    createService(UserManagementService, 'UserManagementService')
-      .getUserDetails({})
+    createService(UserXManagementService, 'UserXManagementService')
+      .getUserXDetails({})
       .then(response => {
-        if (response?.user?.user != null) {
-          setUser(response.user.user);
+        if (response?.userX?.userX != null) {
+          setUserX(response.userX.userX);
           setLoaded(true);
         } else {
           logout(global).finally(() => setLoaded(true));

@@ -10,7 +10,7 @@ import java.util.Optional;
 import javax.sql.DataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.davincischools.leo.database.admin.DatabaseManagement;
+import org.davincischools.leo.database.admin_x.DatabaseManagement;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -70,7 +70,7 @@ public class TestDatabase {
                 .build();
 
         // Create the user and grant them permission.
-        createUser(dataSource, USERNAME, PASSWORD);
+        createUserX(dataSource, USERNAME, PASSWORD);
         grantAllAccess(dataSource, DATABASE_NAME, USERNAME);
 
         // Load the schema into it.
@@ -117,7 +117,7 @@ public class TestDatabase {
     return container;
   }
 
-  private static void createUser(DataSource source, String username, String password)
+  private static void createUserX(DataSource source, String username, String password)
       throws SQLException {
     try (Connection connection = source.getConnection()) {
       // Drop an existing user.

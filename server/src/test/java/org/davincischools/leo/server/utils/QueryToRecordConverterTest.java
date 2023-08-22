@@ -55,15 +55,15 @@ public class QueryToRecordConverterTest {
                 .toList())
         .containsExactly(
             ImmutableList.of(
-                testData.getProgrammingClass().getName(),
+                testData.getProgrammingClassX().getName(),
                 ImmutableSet.of(
                     testData.getProgrammingContainerAssignment().getName(),
                     testData.getProgrammingSortAssignment().getName())),
             ImmutableList.of(
-                testData.getChemistryClass().getName(),
+                testData.getChemistryClassX().getName(),
                 ImmutableSet.of(
                     testData.getChemistryValenceElectronsAssignment().getName(),
                     testData.getChemistryPeriodicTableAssignment().getName())),
-            ImmutableList.of(testData.getDanceClass().getName(), ImmutableSet.of()));
+            ImmutableList.of(testData.getDanceClassX().getName(), ImmutableSet.of()));
   }
 }

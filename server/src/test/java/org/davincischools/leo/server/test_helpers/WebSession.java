@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import org.davincischools.leo.protos.pl_types.User;
+import org.davincischools.leo.protos.pl_types.UserX;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -226,14 +226,14 @@ public class WebSession {
             new RequestHeadersSpecProxy(requestHeadersSpec));
   }
 
-  public User login(WebClient client, String username, String password) {
+  public UserX login(WebClient client, String username, String password) {
     return client
         .post()
         .uri("/api/login.html")
         .header(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded")
         .body(BodyInserters.fromFormData("username", username).with("password", password))
         .retrieve()
-        .bodyToMono(User.class)
+        .bodyToMono(UserX.class)
         .block();
   }
 

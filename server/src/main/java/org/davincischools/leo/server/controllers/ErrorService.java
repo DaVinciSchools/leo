@@ -29,8 +29,8 @@ import org.davincischools.leo.server.utils.JiraUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorLog;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
-import org.davincischools.leo.server.utils.http_user.Anonymous;
-import org.davincischools.leo.server.utils.http_user.HttpUser;
+import org.davincischools.leo.server.utils.http_user_x.Anonymous;
+import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -69,7 +69,7 @@ public class ErrorService {
   @PostMapping(value = "/api/protos/ErrorService/ReportError")
   @ResponseBody
   public ReportErrorResponse reportError(
-      @Anonymous HttpUser user,
+      @Anonymous HttpUserX userX,
       @RequestBody Optional<ReportErrorRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
@@ -82,7 +82,7 @@ public class ErrorService {
               log.setStatus(Status.ERROR);
               try {
                 if (!Strings.isNullOrEmpty(atlassianAssigneeEmail)) {
-                  CreateIssueResponse issueResponse = createBugForError(log, user, request);
+                  CreateIssueResponse issueResponse = createBugForError(log, userX, request);
                   String issueLink =
                       "https://projectleo.atlassian.net/browse/" + issueResponse.getKey();
                   response.setIssueLink(issueLink);
@@ -99,9 +99,9 @@ public class ErrorService {
   }
 
   public CreateIssueResponse createBugForError(
-      HttpExecutorLog log, HttpUser user, ReportErrorRequest request) {
+      HttpExecutorLog log, HttpUserX userX, ReportErrorRequest request) {
     Optional<String> reporterAccountId =
-        getAccountIdForEmailAddress(user.get().map(UserX::getEmailAddress).orElse(""))
+        getAccountIdForEmailAddress(userX.get().map(UserX::getEmailAddress).orElse(""))
             .or(() -> getAccountIdForEmailAddress(atlassianReporterEmail))
             .or(() -> getAccountIdForEmailAddress(atlassianUsernameEmail));
     Optional<String> assigneeAccountId =
@@ -135,7 +135,7 @@ public class ErrorService {
               + "\n\n");
       description.append("*Stack:* " + request.getStack() + "\n\n");
       description.append(
-          "*User ID:* " + user.get().map(UserX::getId).map(Object::toString).orElse("Unknown"));
+          "*User ID:* " + userX.get().map(UserX::getId).map(Object::toString).orElse("Unknown"));
 
       CreateIssueResponse issueResponse =
           jiraUtils.createIssue(

@@ -3,13 +3,13 @@ import './RegistrationForm.scss';
 import Modal from '@mui/material/Modal';
 import {Backdrop, Box} from '@mui/material';
 import {RegistrationForm} from './RegistrationForm';
-import {user_management} from '../../generated/protobuf-js';
+import {user_x_management} from '../../generated/protobuf-js';
 
-import IRegisterUserRequest = user_management.IRegisterUserRequest;
+import IRegisterUserXRequest = user_x_management.IRegisterUserXRequest;
 
 export function ModalRegistrationForm(props: {
   open: boolean;
-  onRegisterUser: (request: IRegisterUserRequest) => void;
+  onRegisterUserX: (request: IRegisterUserXRequest) => void;
   onCancel: () => void;
 }) {
   return (
@@ -25,7 +25,7 @@ export function ModalRegistrationForm(props: {
       >
         <Box className="registration-form-modal" padding={3}>
           <RegistrationForm
-            onRegisterUser={props.onRegisterUser}
+            onRegisterUserX={props.onRegisterUserX}
             onCancel={props.onCancel}
           />
         </Box>

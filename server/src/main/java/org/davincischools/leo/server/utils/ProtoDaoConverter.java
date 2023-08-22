@@ -49,7 +49,7 @@ import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition.State;
 import org.davincischools.leo.protos.pl_types.ProjectInputValue;
-import org.davincischools.leo.protos.user_management.FullUserDetails;
+import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
 import org.hibernate.Hibernate;
 import org.hibernate.LazyInitializationException;
 
@@ -86,38 +86,38 @@ public class ProtoDaoConverter {
         .orElseThrow(NullPointerException::new);
   }
 
-  public static org.davincischools.leo.protos.pl_types.User toUserProto(UserX user) {
-    var userProto = org.davincischools.leo.protos.pl_types.User.newBuilder();
-    if (user.getId() != null) {
+  public static org.davincischools.leo.protos.pl_types.UserX toUserXProto(UserX userX) {
+    var userProto = org.davincischools.leo.protos.pl_types.UserX.newBuilder();
+    if (userX.getId() != null) {
       userProto
-          .setUserXId(user.getId())
-          .setFirstName(user.getFirstName())
-          .setLastName(user.getLastName())
-          .setEmailAddress(user.getEmailAddress());
+          .setUserXId(userX.getId())
+          .setFirstName(userX.getFirstName())
+          .setLastName(userX.getLastName())
+          .setEmailAddress(userX.getEmailAddress());
     }
-    if (UserXRepository.isAdmin(user)) {
-      userProto.setIsAdmin(true).setAdminId(user.getAdminX().getId());
+    if (UserXRepository.isAdminX(userX)) {
+      userProto.setIsAdminX(true).setAdminXId(userX.getAdminX().getId());
     }
-    if (UserXRepository.isTeacher(user)) {
-      userProto.setIsTeacher(true).setTeacherId(user.getTeacher().getId());
+    if (UserXRepository.isTeacher(userX)) {
+      userProto.setIsTeacher(true).setTeacherId(userX.getTeacher().getId());
     }
-    if (UserXRepository.isStudent(user)) {
-      userProto.setIsStudent(true).setStudentId(user.getStudent().getId());
+    if (UserXRepository.isStudent(userX)) {
+      userProto.setIsStudent(true).setStudentId(userX.getStudent().getId());
     }
-    if (UserXRepository.isDemo(user)) {
+    if (UserXRepository.isDemo(userX)) {
       userProto.setIsDemo(true);
     }
-    if (UserXRepository.isAuthenticated(user)) {
+    if (UserXRepository.isAuthenticated(userX)) {
       userProto.setIsAuthenticated(true);
     }
-    if (user.getDistrict() != null && user.getDistrict().getId() != null) {
-      userProto.setDistrictId(user.getDistrict().getId());
+    if (userX.getDistrict() != null && userX.getDistrict().getId() != null) {
+      userProto.setDistrictId(userX.getDistrict().getId());
     }
     return userProto.build();
   }
 
-  public static FullUserDetails toFullUserDetailsProto(UserX userX) {
-    var proto = FullUserDetails.newBuilder().setUser(toUserProto(userX));
+  public static FullUserXDetails toFullUserXDetailsProto(UserX userX) {
+    var proto = FullUserXDetails.newBuilder().setUserX(toUserXProto(userX));
     if (UserXRepository.isStudent(userX)) {
       if (userX.getStudent().getDistrictStudentId() != null) {
         proto.setDistrictStudentId(userX.getStudent().getDistrictStudentId());
@@ -251,7 +251,7 @@ public class ProtoDaoConverter {
   public static org.davincischools.leo.protos.pl_types.ProjectPost toProjectPostProto(
       ProjectPost projectPost) {
     return org.davincischools.leo.protos.pl_types.ProjectPost.newBuilder()
-        .setUser(toUserProto(projectPost.getUserX()))
+        .setUserX(toUserXProto(projectPost.getUserX()))
         .setName(projectPost.getName())
         .setMessageHtml(projectPost.getMessageHtml())
         .setPostEpochSec((int) projectPost.getCreationTime().getEpochSecond())

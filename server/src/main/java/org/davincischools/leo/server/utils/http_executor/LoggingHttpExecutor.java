@@ -31,7 +31,7 @@ import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.LogRepository;
-import org.davincischools.leo.server.utils.http_user.HttpUser;
+import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Transactional(TxType.NOT_SUPPORTED)
@@ -65,7 +65,7 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
 
   final List<Throwable> throwables = new ArrayList<>();
 
-  LoggingHttpExecutor(@Autowired Database db, @Autowired HttpUser user, String caller, R input) {
+  LoggingHttpExecutor(@Autowired Database db, @Autowired HttpUserX user, String caller, R input) {
     this.db = checkNotNull(db);
     this.log = new Log().setCreationTime(Instant.now());
 

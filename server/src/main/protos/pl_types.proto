@@ -94,17 +94,17 @@ message School {
 }
 
 // Field names in this message and that of the
-// user_management.UpsertUserRequest message must be unique or mean the same
+// user_x_management.UpsertUserXRequest message must be unique or mean the same
 // thing. The Accounts.tsx form merges them together.
-message User {
+message UserX {
   optional int32 user_x_id = 1;
   optional int32 district_id = 2;
   optional string first_name = 3;
   optional string last_name = 4;
   optional string email_address = 5;
 
-  optional bool is_admin = 6;
-  optional int32 admin_id = 7;
+  optional bool is_admin_x = 6;
+  optional int32 admin_x_id = 7;
 
   optional bool is_teacher = 8;
   optional int32 teacher_id = 9;
@@ -176,7 +176,7 @@ message ProjectInputCategory {
 
 message ProjectPost {
   optional int32 id = 1;
-  optional User user = 2;
+  optional UserX user_x = 2;
   optional string name = 3;
   optional string message_html = 4;
   optional int32 post_epoch_sec = 5;

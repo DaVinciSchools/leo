@@ -35,7 +35,7 @@
             "type": "java",
             "name": "Load Test Data",
             "request": "launch",
-            "mainClass": "org.davincischools.leo.database.admin.AdminUtils",
+            "mainClass": "org.davincischools.leo.database.admin_x.AdminXUtils",
             "projectName": "project-leo-database",
             "args": [
                 "--loadTestData"

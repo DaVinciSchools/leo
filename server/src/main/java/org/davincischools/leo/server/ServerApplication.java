@@ -15,15 +15,14 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.post_environment_processors.LoadCustomProjectLeoProperties;
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.protos.pl_types.User;
 import org.davincischools.leo.server.controllers.project_generators.ProjectGenerator;
 import org.davincischools.leo.server.utils.ProtoDaoConverter;
 import org.davincischools.leo.server.utils.QueryWithNullsToRecordConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutor;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorArgumentResolver;
-import org.davincischools.leo.server.utils.http_user.HttpUserArgumentResolver;
-import org.davincischools.leo.server.utils.http_user.HttpUserService;
-import org.davincischools.leo.server.utils.http_user.UserXDetails;
+import org.davincischools.leo.server.utils.http_user_x.HttpUserXArgumentResolver;
+import org.davincischools.leo.server.utils.http_user_x.HttpUserXService;
+import org.davincischools.leo.server.utils.http_user_x.UserXDetails;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
@@ -56,7 +55,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
     scanBasePackageClasses = {
       Database.class,
       HttpExecutor.class,
-      HttpUserService.class,
+      HttpUserXService.class,
       ProjectGenerator.class,
       TestDatabase.class,
       UserX.class
@@ -89,7 +88,7 @@ public class ServerApplication {
 
     @Override
     protected void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
-      argumentResolvers.add(0, new HttpUserArgumentResolver(db, entityManager));
+      argumentResolvers.add(0, new HttpUserXArgumentResolver(db, entityManager));
       argumentResolvers.add(1, new HttpExecutorArgumentResolver(db, entityManager));
     }
   }
@@ -116,7 +115,7 @@ public class ServerApplication {
                 "/api/protos/ProjectManagementService/GenerateAnonymousProjects",
                 HttpMethod.POST.name()),
             new AntPathRequestMatcher(
-                "/api/protos/UserManagementService/RegisterUser", HttpMethod.POST.name()),
+                "/api/protos/UserXManagementService/RegisterUserX", HttpMethod.POST.name()),
             new AntPathRequestMatcher("/demos/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/docs/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/error**", HttpMethod.GET.name()),
@@ -186,17 +185,18 @@ public class ServerApplication {
                               Authentication authentication) -> {
                             // Return the user in the reply after authentication.
                             UserX userX = ((UserXDetails) authentication.getPrincipal()).getUserX();
-                            User user = ProtoDaoConverter.toUserProto(userX);
+                            org.davincischools.leo.protos.pl_types.UserX userXProto =
+                                ProtoDaoConverter.toUserXProto(userX);
 
                             response.setContentType(
                                 ProtobufHttpMessageConverter.PROTOBUF.toString());
                             response.setHeader(
                                 ProtobufHttpMessageConverter.X_PROTOBUF_SCHEMA_HEADER,
-                                user.getDescriptorForType().getFile().getName());
+                                userXProto.getDescriptorForType().getFile().getName());
                             response.setHeader(
                                 ProtobufHttpMessageConverter.X_PROTOBUF_MESSAGE_HEADER,
-                                user.getDescriptorForType().getFullName());
-                            response.getOutputStream().write(user.toByteArray());
+                                userXProto.getDescriptorForType().getFullName());
+                            response.getOutputStream().write(userXProto.toByteArray());
                             response.setStatus(HttpServletResponse.SC_OK);
                           })
                       .failureUrl("/users/login.html?failed=true")

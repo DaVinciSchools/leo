@@ -30,9 +30,12 @@ export function AllProjects() {
   const [projectDetails, setProjectDetails] = useState<IProject | undefined>();
 
   useEffect(() => {
-    if (global.user != null) {
+    if (global.userX != null) {
       createService(ProjectManagementService, 'ProjectManagementService')
-        .getProjects({userXId: global.user!.userXId, includeUnsuccessful: true})
+        .getProjects({
+          userXId: global.userX!.userXId,
+          includeUnsuccessful: true,
+        })
         .then(response => {
           setProjects(response.projects.sort(REVERSE_DATE_THEN_PROJECT_SORTER));
           setUnsuccessfulProjects(
@@ -44,9 +47,9 @@ export function AllProjects() {
       setProjects([]);
       setUnsuccessfulProjects([]);
     }
-  }, [global.user]);
+  }, [global.userX]);
 
-  if (!global.requireUser(user => user?.isAuthenticated)) {
+  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
     return <></>;
   }
 

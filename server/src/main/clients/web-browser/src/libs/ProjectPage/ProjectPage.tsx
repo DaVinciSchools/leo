@@ -75,8 +75,9 @@ export function ProjectPage(props: {
                 title={
                   <>
                     {post.name ?? ''}
-                    <div className="post-user-info">
-                      {post.user?.lastName ?? ''}, {post.user?.firstName ?? ''}
+                    <div className="post-user-x-info">
+                      {post.userX?.lastName ?? ''},&nbsp;
+                      {post.userX?.firstName ?? ''}
                     </div>
                   </>
                 }

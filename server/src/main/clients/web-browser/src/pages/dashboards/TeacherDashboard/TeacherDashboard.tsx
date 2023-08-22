@@ -14,14 +14,14 @@ enum TabValue {
 
 export function TeacherDashboard() {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUser(user => user?.isAdmin || user?.isTeacher)) {
+  if (!global.requireUserX(userX => userX?.isAdminX || userX?.isTeacher)) {
     return <></>;
   }
 
   return (
     <>
       <DefaultPage
-        title={(global.user?.isAdmin ? 'Teacher ' : '') + 'Dashboard'}
+        title={(global.userX?.isAdminX ? 'Teacher ' : '') + 'Dashboard'}
       >
         <div style={{height: '100%'}}>
           <TabbedSwiper
@@ -34,7 +34,7 @@ export function TeacherDashboard() {
               {
                 key: TabValue.ASSIGNMENTS,
                 label: 'Assignments',
-                content: <AssignmentsTab user={global.user} />,
+                content: <AssignmentsTab userX={global.userX} />,
               },
             ]}
           />
