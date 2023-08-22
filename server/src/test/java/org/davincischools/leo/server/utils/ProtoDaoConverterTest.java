@@ -38,7 +38,7 @@ public class ProtoDaoConverterTest {
             ProtoDaoConverter.toAssignmentProto(
                     newUninitialized(org.davincischools.leo.database.daos.Assignment.class), null)
                 .build())
-        .isEqualTo(Assignment.newBuilder().setId(0).build());
+        .isEqualTo(Assignment.getDefaultInstance());
   }
 
   @Test
@@ -84,7 +84,7 @@ public class ProtoDaoConverterTest {
             ProtoDaoConverter.toDistrictProto(
                     newUninitialized(org.davincischools.leo.database.daos.District.class), null)
                 .build())
-        .isEqualTo(District.newBuilder().setId(0).build());
+        .isEqualTo(District.getDefaultInstance());
   }
 
   @Test
@@ -121,7 +121,7 @@ public class ProtoDaoConverterTest {
             ProtoDaoConverter.toClassXProto(
                     newUninitialized(org.davincischools.leo.database.daos.ClassX.class), null)
                 .build())
-        .isEqualTo(ClassX.newBuilder().setId(0).build());
+        .isEqualTo(ClassX.getDefaultInstance());
   }
 
   @Test
@@ -212,7 +212,7 @@ public class ProtoDaoConverterTest {
                     newUninitialized(org.davincischools.leo.database.daos.KnowledgeAndSkill.class),
                     null)
                 .build())
-        .isEqualTo(KnowledgeAndSkill.newBuilder().setId(0).build());
+        .isEqualTo(KnowledgeAndSkill.getDefaultInstance());
   }
 
   @Test
@@ -260,7 +260,7 @@ public class ProtoDaoConverterTest {
             ProtoDaoConverter.toSchoolProto(
                     newUninitialized(org.davincischools.leo.database.daos.School.class), null)
                 .build())
-        .isEqualTo(School.newBuilder().setId(0).build());
+        .isEqualTo(School.getDefaultInstance());
   }
 
   @Test

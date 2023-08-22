@@ -280,15 +280,13 @@ public class ProtoDaoConverter {
       @Nullable org.davincischools.leo.protos.pl_types.Assignment.Builder builder) {
     builder =
         builder != null ? builder : org.davincischools.leo.protos.pl_types.Assignment.newBuilder();
-    if (assignment != null) {
+    if (assignment != null && Hibernate.isInitialized(assignment)) {
       translateToProto(
           assignment,
           builder,
           org.davincischools.leo.protos.pl_types.Assignment.CLASS_X_FIELD_NUMBER);
-      if (Hibernate.isInitialized(assignment)) {
-        if (assignment.getClassX() != null) {
-          toClassXProto(assignment.getClassX(), builder.getClassXBuilder());
-        }
+      if (assignment.getClassX() != null) {
+        toClassXProto(assignment.getClassX(), builder.getClassXBuilder());
       }
     }
     return builder;
@@ -311,16 +309,14 @@ public class ProtoDaoConverter {
       ClassX classX, @Nullable org.davincischools.leo.protos.pl_types.ClassX.Builder builder) {
     builder =
         builder != null ? builder : org.davincischools.leo.protos.pl_types.ClassX.newBuilder();
-    if (classX != null) {
+    if (classX != null && Hibernate.isInitialized(classX)) {
       translateToProto(
           classX,
           builder,
           org.davincischools.leo.protos.pl_types.ClassX.SCHOOL_FIELD_NUMBER,
           org.davincischools.leo.protos.pl_types.ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
-      if (Hibernate.isInitialized(classX)) {
-        if (classX.getSchool() != null) {
-          toSchoolProto(classX.getSchool(), builder.getSchoolBuilder());
-        }
+      if (classX.getSchool() != null) {
+        toSchoolProto(classX.getSchool(), builder.getSchoolBuilder());
       }
     }
     return builder;
@@ -355,7 +351,10 @@ public class ProtoDaoConverter {
       @Nullable org.davincischools.leo.protos.pl_types.District.Builder builder) {
     builder =
         builder != null ? builder : org.davincischools.leo.protos.pl_types.District.newBuilder();
-    return translateToProto(district, builder);
+    if (district != null && Hibernate.isInitialized(district)) {
+      translateToProto(district, builder);
+    }
+    return builder;
   }
 
   public static KnowledgeAndSkill toKnowledgeAndSkillDao(
@@ -372,7 +371,10 @@ public class ProtoDaoConverter {
         builder != null
             ? builder
             : org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.newBuilder();
-    return translateToProto(knowledgeAndSkill, builder);
+    if (knowledgeAndSkill != null && Hibernate.isInitialized(knowledgeAndSkill)) {
+      translateToProto(knowledgeAndSkill, builder);
+    }
+    return builder;
   }
 
   public static School toSchoolDao(org.davincischools.leo.protos.pl_types.SchoolOrBuilder school) {
@@ -391,13 +393,11 @@ public class ProtoDaoConverter {
       School school, @Nullable org.davincischools.leo.protos.pl_types.School.Builder builder) {
     builder =
         builder != null ? builder : org.davincischools.leo.protos.pl_types.School.newBuilder();
-    if (school != null) {
+    if (school != null && Hibernate.isInitialized(school)) {
       translateToProto(
           school, builder, org.davincischools.leo.protos.pl_types.School.DISTRICT_FIELD_NUMBER);
-      if (Hibernate.isInitialized(school)) {
-        if (school.getDistrict() != null) {
-          toDistrictProto(school.getDistrict(), builder.getDistrictBuilder());
-        }
+      if (school.getDistrict() != null) {
+        toDistrictProto(school.getDistrict(), builder.getDistrictBuilder());
       }
     }
     return builder;
