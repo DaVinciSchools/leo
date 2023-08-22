@@ -419,7 +419,7 @@ public class UserManagementService {
                                   valueOrNull(request, RegisterUserRequest.SCHOOLNAME_FIELD_NUMBER))
                               .setAddressLine1(
                                   valueOrNull(
-                                      request, RegisterUserRequest.ADDRESS_LINE_2_FIELD_NUMBER))
+                                      request, RegisterUserRequest.ADDRESS_LINE_1_FIELD_NUMBER))
                               .setAddressLine2(
                                   valueOrNull(
                                       request, RegisterUserRequest.ADDRESS_LINE_2_FIELD_NUMBER))
