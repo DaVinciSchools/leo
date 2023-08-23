@@ -31,7 +31,7 @@ public class Project implements Serializable {
   public static final String COLUMN_THUMBSSTATEREASON_NAME = "thumbs_state_reason";
   public static final String COLUMN_ARCHIVED_NAME = "archived";
   public static final String COLUMN_ACTIVE_NAME = "active";
-  private static final long serialVersionUID = 7055676245998610020L;
+  private static final long serialVersionUID = -8655332155801355703L;
 
   private Integer id;
 
@@ -56,6 +56,8 @@ public class Project implements Serializable {
   private Boolean archived;
 
   private Boolean active;
+
+  private Assignment assignment;
 
   private ProjectInput projectInput;
 
@@ -183,6 +185,17 @@ public class Project implements Serializable {
 
   public Project setActive(Boolean active) {
     this.active = active;
+    return this;
+  }
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "assignment_id")
+  public Assignment getAssignment() {
+    return assignment;
+  }
+
+  public Project setAssignment(Assignment assignment) {
+    this.assignment = assignment;
     return this;
   }
 

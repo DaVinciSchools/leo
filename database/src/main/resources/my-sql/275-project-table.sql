@@ -17,6 +17,13 @@ CREATE TABLE project
     archived            BOOLEAN,
     active              BOOLEAN,
 
+    assignment_id         INT,
+    CONSTRAINT project__assignment_id
+        FOREIGN KEY (assignment_id)
+            REFERENCES assignment (id)
+            ON DELETE RESTRICT
+            ON UPDATE RESTRICT,
+
     project_input_id    INT,
     CONSTRAINT project__project_input_id
         FOREIGN KEY (project_input_id)
