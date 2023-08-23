@@ -34,12 +34,12 @@ export const SCHOOL_SORTER = (a: ISchool, b: ISchool) =>
   (a.name ?? '').localeCompare(b.name ?? '') ||
   (a.address ?? '').localeCompare(b.address ?? '');
 
-export const CLASS_SORTER = (a: IClassX, b: IClassX) =>
+export const CLASS_X_SORTER = (a: IClassX, b: IClassX) =>
   SCHOOL_SORTER(a.school ?? {}, b.school ?? {}) ||
   (a.name ?? '').localeCompare(b.name ?? '');
 
 export const ASSIGNMENT_SORTER = (a: IAssignment, b: IAssignment) =>
-  CLASS_SORTER(a.classX ?? {}, b.classX ?? {}) ||
+  CLASS_X_SORTER(a.classX ?? {}, b.classX ?? {}) ||
   (a.name ?? '').localeCompare(b.name ?? '');
 
 export const PROJECT_SORTER = (a: IProject, b: IProject) =>

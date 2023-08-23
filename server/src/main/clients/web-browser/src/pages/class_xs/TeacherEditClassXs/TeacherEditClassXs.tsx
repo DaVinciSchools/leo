@@ -11,7 +11,7 @@ import {
   TextField,
 } from '@mui/material';
 import {
-  CLASS_SORTER,
+  CLASS_X_SORTER,
   KNOWLEDGE_AND_SKILL_SORTER,
   SCHOOL_SORTER,
 } from '../../../libs/sorters';
@@ -58,7 +58,7 @@ export function TeacherEditClassXs() {
         const newClass = classFormFields.getValuesObject(true, selectedClass);
         setSortedClasses(
           replaceInPlace([...sortedClasses], newClass, e => e?.id).sort(
-            CLASS_SORTER
+            CLASS_X_SORTER
           )
         );
       }
@@ -139,7 +139,7 @@ export function TeacherEditClassXs() {
     createService(ClassXManagementService, 'ClassXManagementService')
       .getClassXs({teacherId: global.userX.teacherId})
       .then(response => {
-        setSortedClasses(response.classXs.sort(CLASS_SORTER));
+        setSortedClasses(response.classXs.sort(CLASS_X_SORTER));
         setHaveMultipleSchools(false);
       })
       .catch(global.setError);
@@ -178,7 +178,7 @@ export function TeacherEditClassXs() {
       })
       .then(response => {
         setSortedClasses(
-          [...sortedClasses, response.classX!].sort(CLASS_SORTER)
+          [...sortedClasses, response.classX!].sort(CLASS_X_SORTER)
         );
         setSelectedClass(response.classX!);
       })
