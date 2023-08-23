@@ -696,6 +696,20 @@ public class ProtoDaoConverterTest {
   }
 
   @Test
+  public void toProjectConvertersEnum() throws ParseException {
+    Project proto =
+        TextFormat.parse(
+            """
+                thumbs_state: UNSET
+                """, Project.class);
+
+    assertThat(
+            ProtoDaoConverter.toProjectProto(ProtoDaoConverter.toProjectDao(proto), null).build())
+        .ignoringFields(Project.MILESTONES_FIELD_NUMBER)
+        .isEqualTo(Project.getDefaultInstance());
+  }
+
+  @Test
   public void toProjectWithMilestoneConvertersAll() throws ParseException {
     Project proto =
         TextFormat.parse(

@@ -684,11 +684,11 @@ public class ProtoDaoConverter {
                         (message, dao) -> {
                           try {
                             if (message.hasField(field)) {
+                              var enumValue = ((EnumValueDescriptor) message.getField(field));
                               setMethod
                                   .get()
                                   .invoke(
-                                      dao,
-                                      ((EnumValueDescriptor) message.getField(field)).getName());
+                                      dao, enumValue.getNumber() != 0 ? enumValue.getName() : null);
                             }
                           } catch (Exception e) {
                             throw new RuntimeException(
