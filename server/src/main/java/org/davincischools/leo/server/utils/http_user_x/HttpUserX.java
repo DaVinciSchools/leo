@@ -38,13 +38,11 @@ public class HttpUserX {
   }
 
   public <T> T returnForbidden(T response) {
-    checkArgument(!authorized);
     this.response.setStatus(HttpServletResponse.SC_FORBIDDEN);
     return response;
   }
 
   public <T> T returnNotFound(T response) {
-    checkArgument(!authorized);
     this.response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     return response;
   }
