@@ -13,6 +13,7 @@ import {
 } from 'react';
 import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
+import {ReactQuillProps} from 'react-quill';
 
 const MAX_ZIP_CODE_LENGTH = 10;
 const MIN_PASSWORD_LENGTH = 8;
@@ -49,6 +50,12 @@ export interface FormFieldMetadata {
   };
 }
 
+export interface IFormAutocompleteParams<T> {
+  value: T;
+  onChange: (event: React.SyntheticEvent, value: T) => void;
+  disabled: boolean;
+}
+
 export interface FormField<T> {
   readonly name: string;
 
@@ -58,17 +65,15 @@ export interface FormField<T> {
   readonly error: string;
   setError: (message: string) => void;
 
-  autocompleteParams(): {
-    value: T;
-    onChange: (event: React.SyntheticEvent, value: T) => void;
-    disabled: boolean;
-  };
+  autocompleteParams(): IFormAutocompleteParams<T>;
 
   textFieldParams: (
     params?: AutocompleteRenderInputParams
   ) => OutlinedTextFieldProps;
 
   checkboxParams: (params?: CheckboxProps) => CheckboxProps;
+
+  quillParams: () => ReactQuillProps;
 }
 
 interface InternalFormField<T> extends FormField<T> {
@@ -84,9 +89,10 @@ interface InternalFormField<T> extends FormField<T> {
 
 export type FormFieldsMetadata = {
   onChange?: (formFields: FormFields, formField: FormField<any>) => void;
+  disabled?: boolean;
 };
 
-interface FormFields {
+export interface FormFields {
   useStringFormField(
     name: string,
     fieldMetadata?: FormFieldMetadata
@@ -124,10 +130,6 @@ interface FormFields {
   ): O;
 
   getValuesURLSearchParams(): URLSearchParams;
-
-  setEnabled(enabled: boolean): void;
-
-  getDisabled(): boolean;
 }
 
 export function useFormFields(
@@ -137,7 +139,6 @@ export function useFormFields(
   const formRef = useRef<HTMLFormElement>(null);
   const [showPasswords, setShowPasswords] = useState(false);
   const [evaluateAllFields, setEvaluateAllFields] = useState(false);
-  const [enabled, setEnabled] = useState(true);
 
   function useStringFormField(
     name: string,
@@ -261,20 +262,25 @@ export function useFormFields(
       }
     }
 
+    function getType() {
+      return fieldMetadata?.isPassword && !showPasswords
+        ? 'password'
+        : fieldMetadata?.isEmail
+        ? 'email'
+        : fieldMetadata?.isInteger != null
+        ? 'number'
+        : fieldMetadata?.isBoolean
+        ? 'checkbox'
+        : 'text';
+    }
+
     function textFieldParams(
       params?: AutocompleteRenderInputParams
     ): OutlinedTextFieldProps {
       return {
         ...(params ?? {}),
         value: stringValue,
-        type:
-          fieldMetadata?.isPassword && !showPasswords
-            ? 'password'
-            : fieldMetadata?.isEmail
-            ? 'email'
-            : fieldMetadata?.isInteger != null
-            ? 'number'
-            : 'text',
+        type: getType(),
         variant: 'outlined',
         fullWidth: true,
         size: 'small',
@@ -332,7 +338,7 @@ export function useFormFields(
           min: fieldMetadata?.isInteger?.min,
           max: fieldMetadata?.isInteger?.max,
         },
-        disabled: !enabled,
+        disabled: formFieldsMetadata?.disabled === true,
       } as OutlinedTextFieldProps;
     }
 
@@ -345,7 +351,7 @@ export function useFormFields(
         onChange: e => {
           setStringValue(e.target.checked ? 'on' : 'off');
         },
-        disabled: !enabled,
+        disabled: formFieldsMetadata?.disabled === true,
       };
     }
 
@@ -359,7 +365,18 @@ export function useFormFields(
             setStringValue(value != null ? String(value ?? '') : '');
           }
         },
-        disabled: !enabled,
+        disabled: formFieldsMetadata?.disabled === true,
+      };
+    }
+
+    function quillParams(): ReactQuillProps {
+      return {
+        value: stringValue,
+        onChange: (value: string) => {
+          setStringValue(value);
+        },
+        preserveWhitespace: true,
+        readOnly: formFieldsMetadata?.disabled === true,
       };
     }
 
@@ -374,22 +391,18 @@ export function useFormFields(
         }
       }
 
-      const input = getInputField(fieldRef.current);
-      if (input == null) {
-        // We don't have a value to process.
-        return;
-      }
-
       const trimmedValue = stringValue.trim();
       if (trimmedValue === '') {
         return;
       }
 
-      if (['email', 'password', 'text', 'textarea'].includes(input.type)) {
+      const type = getType();
+
+      if (['email', 'password', 'text', 'textarea'].includes(type)) {
         return trimmedValue as T;
       }
 
-      if (input.type === 'number') {
+      if (type === 'number') {
         if (NUMBER_PATTERN.exec(trimmedValue)) {
           return (
             INTEGER_PATTERN.exec(trimmedValue)
@@ -400,11 +413,11 @@ export function useFormFields(
         return;
       }
 
-      if (input.type === 'checkbox') {
+      if (type === 'checkbox') {
         return (trimmedValue === 'on') as T;
       }
 
-      throw new Error(`Input type '${input.type}' is not recognized.`);
+      throw new Error(`Input type '${type}' is not recognized.`);
     }
 
     function setValue(value: T | undefined) {
@@ -537,6 +550,7 @@ export function useFormFields(
       autocompleteParams,
       textFieldParams,
       checkboxParams,
+      quillParams,
 
       fieldRef,
       fieldMetadata,
@@ -569,7 +583,7 @@ export function useFormFields(
   }
 
   function reset() {
-    setValuesObject({});
+    fields.forEach(f => f.reset());
   }
 
   function verifyPasswordsMatch(finalCheck: boolean) {
@@ -641,8 +655,6 @@ export function useFormFields(
     fields.forEach(f => {
       if (valuesMap.has(f.name)) {
         f.setValue(valuesMap.get(f.name));
-      } else {
-        f.reset();
       }
     });
   }
@@ -676,8 +688,6 @@ export function useFormFields(
   }
 
   const formFields: FormFields = {
-    setEnabled,
-    getDisabled: () => !enabled,
     useStringFormField,
     useNumberFormField,
     useBooleanFormField,

@@ -84,7 +84,10 @@ export function TeacherEditClassXs() {
 
   // --- Class Form ---
 
-  const classFormFields = useFormFields({onChange: () => autoSave.trigger()});
+  const classFormFields = useFormFields({
+    onChange: () => autoSave.trigger(),
+    disabled: selectedClass == null,
+  });
   const classSchool = classFormFields.useAutocompleteFormField<ISchool | null>(
     'school',
     {
@@ -161,7 +164,6 @@ export function TeacherEditClassXs() {
 
   useEffect(() => {
     classFormFields.setValuesObject(selectedClass ?? {});
-    classFormFields.setEnabled(selectedClass?.id != null);
   }, [selectedClass]);
 
   if (!global.requireUserX(userX => userX?.isTeacher || userX?.isAdminX)) {
@@ -360,7 +362,7 @@ export function TeacherEditClassXs() {
                   setEditKsOp('ADD');
                   setEditKs({type: Type.EKS, global: true});
                 }}
-                disabled={classFormFields.getDisabled()}
+                disabled={selectedClass == null}
               >
                 New EKS
               </Button>
