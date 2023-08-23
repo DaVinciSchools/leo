@@ -364,7 +364,7 @@ public class ProjectManagementService {
               }
 
               return GetProjectDetailsResponse.newBuilder()
-                  .setProject(ProtoDaoConverter.toProjectProto(project))
+                  .setProject(ProtoDaoConverter.toProjectProto(project, null))
                   .build();
             })
         .finish();
@@ -403,7 +403,7 @@ public class ProjectManagementService {
                       .getProjectRepository()
                       .findProjectsByUserXId(userXId, request.getActiveOnly())
                       .stream()
-                      .map(ProtoDaoConverter::toProjectProto)
+                      .map(e -> ProtoDaoConverter.toProjectProto(e, null).build())
                       .toList());
 
               if (request.getIncludeUnsuccessful()) {
@@ -633,7 +633,7 @@ public class ProjectManagementService {
               db.getProjectRepository().save(project);
 
               return UpdateProjectResponse.newBuilder()
-                  .setProject(ProtoDaoConverter.toProjectProto(project))
+                  .setProject(ProtoDaoConverter.toProjectProto(project, null))
                   .build();
             })
         .finish();

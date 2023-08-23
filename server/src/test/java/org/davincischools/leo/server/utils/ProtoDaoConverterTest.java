@@ -10,6 +10,7 @@ import org.davincischools.leo.protos.pl_types.Assignment;
 import org.davincischools.leo.protos.pl_types.ClassX;
 import org.davincischools.leo.protos.pl_types.District;
 import org.davincischools.leo.protos.pl_types.KnowledgeAndSkill;
+import org.davincischools.leo.protos.pl_types.Project;
 import org.davincischools.leo.protos.pl_types.ProjectPost;
 import org.davincischools.leo.protos.pl_types.School;
 import org.davincischools.leo.protos.pl_types.UserX;
@@ -331,9 +332,9 @@ public class ProtoDaoConverterTest {
     UserX proto =
         TextFormat.parse(
             """
-                          is_demo: false
-                          is_authenticated: false
-                          """,
+                is_demo: false
+                is_authenticated: false
+                """,
             UserX.class);
 
     assertThat(
@@ -348,20 +349,20 @@ public class ProtoDaoConverterTest {
     UserX proto =
         TextFormat.parse(
             """
-                        user_x_id: 1
-                        district_id: 2
-                        first_name: "first"
-                        last_name: "last"
-                        email_address: "email"
-                        is_admin_x: true
-                        admin_x_id: 3
-                        is_teacher: true
-                        teacher_id: 4
-                        is_student: true
-                        student_id: 5
-                        is_demo: false
-                        is_authenticated: true
-                        """,
+                user_x_id: 1
+                district_id: 2
+                first_name: "first"
+                last_name: "last"
+                email_address: "email"
+                is_admin_x: true
+                admin_x_id: 3
+                is_teacher: true
+                teacher_id: 4
+                is_student: true
+                student_id: 5
+                is_demo: false
+                is_authenticated: true
+                """,
             UserX.class);
 
     assertThat(ProtoDaoConverter.toUserXProto(ProtoDaoConverter.toUserXDao(proto), null).build())
@@ -373,14 +374,14 @@ public class ProtoDaoConverterTest {
     UserX proto =
         TextFormat.parse(
             """
-                                user_x_id: 1
-                                district_id: 2
-                                first_name: "first"
-                                last_name: "last"
-                                email_address: "email"
-                                is_demo: true
-                                is_authenticated: true
-                                """,
+                user_x_id: 1
+                district_id: 2
+                first_name: "first"
+                last_name: "last"
+                email_address: "email"
+                is_demo: true
+                is_authenticated: true
+                """,
             UserX.class);
 
     assertThat(ProtoDaoConverter.toUserXProto(ProtoDaoConverter.toUserXDao(proto), null).build())
@@ -499,6 +500,244 @@ public class ProtoDaoConverterTest {
                 .findFieldByNumber(RegisterUserXRequest.PASSWORD_FIELD_NUMBER),
             RegisterUserXRequest.getDescriptor()
                 .findFieldByNumber(RegisterUserXRequest.VERIFY_PASSWORD_FIELD_NUMBER))
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectMilestoneStepConvertersNull() throws ParseException {
+    assertThat(ProtoDaoConverter.toMilestoneStepProto(null, null).build())
+        .isEqualTo(Project.Milestone.Step.getDefaultInstance());
+  }
+
+  @Test
+  public void toProjectMilestoneStepConvertersUninitialized() throws ParseException {
+    assertThat(
+            ProtoDaoConverter.toMilestoneStepProto(
+                    newUninitialized(
+                        org.davincischools.leo.database.daos.ProjectMilestoneStep.class),
+                    null)
+                .build())
+        .isEqualTo(Project.Milestone.Step.getDefaultInstance());
+  }
+
+  @Test
+  public void toProjectMilestoneStepConvertersEmpty() throws ParseException {
+    Project.Milestone.Step proto = Project.Milestone.Step.getDefaultInstance();
+
+    assertThat(
+            ProtoDaoConverter.toMilestoneStepProto(
+                    ProtoDaoConverter.toProjectMilestoneStepDao(proto), null)
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectMilestoneStepConvertersAll() throws ParseException {
+    Project.Milestone.Step proto =
+        TextFormat.parse(
+            """
+                id: 1
+                name: "name"
+                """,
+            Project.Milestone.Step.class);
+
+    assertThat(
+            ProtoDaoConverter.toMilestoneStepProto(
+                    ProtoDaoConverter.toProjectMilestoneStepDao(proto), null)
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectMilestoneConvertersNull() throws ParseException {
+    assertThat(
+            ProtoDaoConverter.toMilestoneProto(
+                    (org.davincischools.leo.database.daos.ProjectMilestone) null, null)
+                .build())
+        .isEqualTo(Project.Milestone.getDefaultInstance());
+  }
+
+  @Test
+  public void toProjectMilestoneConvertersUninitialized() throws ParseException {
+    assertThat(
+            ProtoDaoConverter.toMilestoneProto(
+                    newUninitialized(org.davincischools.leo.database.daos.ProjectMilestone.class),
+                    null)
+                .build())
+        .isEqualTo(Project.Milestone.getDefaultInstance());
+  }
+
+  @Test
+  public void toProjectMilestoneConvertersEmpty() throws ParseException {
+    Project.Milestone proto = Project.Milestone.getDefaultInstance();
+
+    assertThat(
+            ProtoDaoConverter.toMilestoneProto(ProtoDaoConverter.toProjectMilestoneDao(proto), null)
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectMilestoneConvertersAll() throws ParseException {
+    Project.Milestone proto =
+        TextFormat.parse(
+            """
+                id: 1
+                name: "name"
+                steps {
+                  id: 2
+                  name: "step name"
+                }
+                """,
+            Project.Milestone.class);
+
+    assertThat(
+            ProtoDaoConverter.toMilestoneProto(ProtoDaoConverter.toProjectMilestoneDao(proto), null)
+                .build())
+        .ignoringFields(Project.Milestone.STEPS_FIELD_NUMBER)
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toMilestoneWithStepsConverters() throws ParseException {
+    Project.Milestone proto =
+        TextFormat.parse(
+            """
+                id: 1
+                name: "name"
+                steps {
+                  id: 2
+                  name: "step name 2"
+                }
+                steps {
+                  id: 3
+                  name: "step name 3"
+                }
+                """,
+            Project.Milestone.class);
+
+    assertThat(
+            ProtoDaoConverter.toMilestoneProto(
+                    ProtoDaoConverter.toMilestoneWithStepsRecord(proto), null)
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectConvertersNull() throws ParseException {
+    assertThat(
+            ProtoDaoConverter.toProjectProto(
+                    (org.davincischools.leo.database.daos.Project) null, null)
+                .build())
+        .isEqualTo(Project.getDefaultInstance());
+  }
+
+  @Test
+  public void toProjectConvertersUninitialized() throws ParseException {
+    assertThat(
+            ProtoDaoConverter.toProjectProto(
+                    newUninitialized(org.davincischools.leo.database.daos.Project.class), null)
+                .build())
+        .isEqualTo(Project.getDefaultInstance());
+  }
+
+  @Test
+  public void toProjectConvertersEmpty() throws ParseException {
+    Project proto = Project.getDefaultInstance();
+
+    assertThat(
+            ProtoDaoConverter.toProjectProto(ProtoDaoConverter.toProjectDao(proto), null).build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectConvertersAll() throws ParseException {
+    Project proto =
+        TextFormat.parse(
+            """
+                id: 1
+                name: "name"
+                short_descr: "short"
+                long_descr_html: "long"
+                favorite: true
+                thumbs_state: THUMBS_UP
+                thumbs_state_reason: "reason"
+                archived: true
+                active: true
+                assignment {
+                  id: 2
+                  name: "assignment name"
+                  short_descr: "assignment short"
+                  long_descr_html: "assignment long"
+                }
+                milestones {
+                  id: 3
+                  name: "milestone name 3"
+                  steps {
+                    id: 4
+                    name: "step name 4"
+                  }
+                  steps {
+                    id: 5
+                    name: "step name 5"
+                  }
+                }
+                milestones {
+                  id: 6
+                  name: "milestone name 6"
+                }
+                """,
+            Project.class);
+
+    assertThat(
+            ProtoDaoConverter.toProjectProto(ProtoDaoConverter.toProjectDao(proto), null).build())
+        .ignoringFields(Project.MILESTONES_FIELD_NUMBER)
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectWithMilestoneConvertersAll() throws ParseException {
+    Project proto =
+        TextFormat.parse(
+            """
+                id: 1
+                name: "name"
+                short_descr: "short"
+                long_descr_html: "long"
+                favorite: true
+                thumbs_state: THUMBS_UP
+                thumbs_state_reason: "reason"
+                archived: true
+                active: true
+                assignment {
+                  id: 2
+                  name: "assignment name"
+                  short_descr: "assignment short"
+                  long_descr_html: "assignment long"
+                }
+                milestones {
+                  id: 3
+                  name: "milestone name 3"
+                  steps {
+                    id: 4
+                    name: "step name 4"
+                  }
+                  steps {
+                    id: 5
+                    name: "step name 5"
+                  }
+                }
+                milestones {
+                  id: 6
+                  name: "milestone name 6"
+                }
+                """,
+            Project.class);
+
+    assertThat(
+            ProtoDaoConverter.toProjectProto(
+                    ProtoDaoConverter.toProjectWithMilestonesRecord(proto), null)
+                .build())
         .isEqualTo(proto);
   }
 

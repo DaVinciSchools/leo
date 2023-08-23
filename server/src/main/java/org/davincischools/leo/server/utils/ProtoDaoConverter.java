@@ -48,7 +48,6 @@ import org.davincischools.leo.database.utils.repos.ProjectInputRepository.FullPr
 import org.davincischools.leo.database.utils.repos.ProjectRepository.MilestoneWithSteps;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
-import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition.State;
 import org.davincischools.leo.protos.pl_types.ProjectInputValue;
 import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
@@ -159,58 +158,131 @@ public class ProtoDaoConverter {
     return projectInputValueProto;
   }
 
-  public static org.davincischools.leo.protos.pl_types.Project toProjectProto(Project project) {
-    return org.davincischools.leo.protos.pl_types.Project.newBuilder()
-        .setId(coalesce(project::getId, () -> -1))
-        .setName(project.getName())
-        .setShortDescr(coalesce(project::getShortDescr, () -> ""))
-        .setLongDescrHtml(coalesce(project::getLongDescrHtml, () -> ""))
-        .setFavorite(Boolean.TRUE.equals(project.getFavorite()))
-        .setThumbsState(
-            ThumbsState.valueOf(coalesce(project::getThumbsState, ThumbsState.UNSET::name)))
-        .setThumbsStateReason(coalesce(project::getThumbsStateReason, () -> ""))
-        .setArchived(Boolean.TRUE.equals(project.getArchived()))
-        .setActive(Boolean.TRUE.equals(project.getActive()))
-        .build();
-  }
-
-  public static org.davincischools.leo.protos.pl_types.Project.Milestone toMilestoneProto(
-      ProjectMilestone projectMilestone) {
-    return org.davincischools.leo.protos.pl_types.Project.Milestone.newBuilder()
-        .setId(projectMilestone.getId())
-        .setName(projectMilestone.getName())
-        .build();
-  }
-
-  public static org.davincischools.leo.protos.pl_types.Project.Milestone.Step toMilestoneStepProto(
-      ProjectMilestoneStep projectMilestoneStep) {
-    return org.davincischools.leo.protos.pl_types.Project.Milestone.Step.newBuilder()
-        .setId(projectMilestoneStep.getId())
-        .setName(projectMilestoneStep.getName())
-        .build();
-  }
-
-  public static org.davincischools.leo.protos.pl_types.Project.Milestone toMilestoneProto(
-      MilestoneWithSteps milestone) {
-    return toMilestoneProto(milestone.milestone()).toBuilder()
-        .addAllSteps(
-            milestone.steps().stream().map(ProtoDaoConverter::toMilestoneStepProto).toList())
-        .build();
-  }
-
-  public static org.davincischools.leo.protos.pl_types.Project toProjectProto(
-      ProjectWithMilestones projectWithMilestones) {
-    return toProjectProto(projectWithMilestones.project()).toBuilder()
-        .addAllMilestones(
-            projectWithMilestones.milestones().stream()
-                .map(ProtoDaoConverter::toMilestoneProto)
-                .toList())
-        .build();
-  }
-
   //
   // ---- Automated and tested converters. ----
   //
+
+  public static org.davincischools.leo.protos.pl_types.Project.Milestone.Step.Builder
+      toMilestoneStepProto(
+          ProjectMilestoneStep projectMilestoneStep,
+          @Nullable org.davincischools.leo.protos.pl_types.Project.Milestone.Step.Builder builder) {
+    builder =
+        builder != null
+            ? builder
+            : org.davincischools.leo.protos.pl_types.Project.Milestone.Step.newBuilder();
+    if (projectMilestoneStep != null && Hibernate.isInitialized(projectMilestoneStep)) {
+      translateToProto(projectMilestoneStep, builder);
+    }
+    return builder;
+  }
+
+  public static ProjectMilestoneStep toProjectMilestoneStepDao(
+      org.davincischools.leo.protos.pl_types.Project.Milestone.StepOrBuilder step) {
+    ProjectMilestoneStep dao =
+        translateToDao(step, new ProjectMilestoneStep().setCreationTime(Instant.now()));
+    return dao;
+  }
+
+  public static org.davincischools.leo.protos.pl_types.Project.Milestone.Builder toMilestoneProto(
+      ProjectMilestone projectMilestone,
+      @Nullable org.davincischools.leo.protos.pl_types.Project.Milestone.Builder builder) {
+    builder =
+        builder != null
+            ? builder
+            : org.davincischools.leo.protos.pl_types.Project.Milestone.newBuilder();
+    if (projectMilestone != null && Hibernate.isInitialized(projectMilestone)) {
+      translateToProto(
+          projectMilestone,
+          builder,
+          org.davincischools.leo.protos.pl_types.Project.Milestone.STEPS_FIELD_NUMBER);
+    }
+    return builder;
+  }
+
+  public static ProjectMilestone toProjectMilestoneDao(
+      org.davincischools.leo.protos.pl_types.Project.MilestoneOrBuilder step) {
+    ProjectMilestone dao =
+        translateToDao(
+            step,
+            new ProjectMilestone().setCreationTime(Instant.now()),
+            org.davincischools.leo.protos.pl_types.Project.Milestone.STEPS_FIELD_NUMBER);
+    return dao;
+  }
+
+  public static org.davincischools.leo.protos.pl_types.Project.Milestone.Builder toMilestoneProto(
+      MilestoneWithSteps milestone,
+      @Nullable org.davincischools.leo.protos.pl_types.Project.Milestone.Builder builder) {
+    builder =
+        builder != null
+            ? builder
+            : org.davincischools.leo.protos.pl_types.Project.Milestone.newBuilder();
+    toMilestoneProto(milestone.milestone(), builder);
+    for (var step : milestone.steps()) {
+      toMilestoneStepProto(step, builder.addStepsBuilder());
+    }
+    return builder;
+  }
+
+  public static MilestoneWithSteps toMilestoneWithStepsRecord(
+      org.davincischools.leo.protos.pl_types.Project.MilestoneOrBuilder milestone) {
+    return new MilestoneWithSteps(
+        toProjectMilestoneDao(milestone),
+        milestone.getStepsList().stream()
+            .map(ProtoDaoConverter::toProjectMilestoneStepDao)
+            .toList());
+  }
+
+  public static Project toProjectDao(
+      org.davincischools.leo.protos.pl_types.ProjectOrBuilder project) {
+    Project dao =
+        translateToDao(
+            project,
+            new Project().setCreationTime(Instant.now()),
+            org.davincischools.leo.protos.pl_types.Project.ASSIGNMENT_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER);
+    if (project.hasAssignment()) {
+      dao.setAssignment(toAssignmentDao(project.getAssignment()));
+    }
+    return dao;
+  }
+
+  public static org.davincischools.leo.protos.pl_types.Project.Builder toProjectProto(
+      Project project, @Nullable org.davincischools.leo.protos.pl_types.Project.Builder builder) {
+    builder =
+        builder != null ? builder : org.davincischools.leo.protos.pl_types.Project.newBuilder();
+    if (project != null && Hibernate.isInitialized(project)) {
+      translateToProto(
+          project,
+          builder,
+          org.davincischools.leo.protos.pl_types.Project.ASSIGNMENT_FIELD_NUMBER,
+          org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER);
+      if (project.getAssignment() != null) {
+        toAssignmentProto(project.getAssignment(), builder.getAssignmentBuilder());
+      }
+    }
+    return builder;
+  }
+
+  public static org.davincischools.leo.protos.pl_types.Project.Builder toProjectProto(
+      ProjectWithMilestones projectWithMilestones,
+      @Nullable org.davincischools.leo.protos.pl_types.Project.Builder builder) {
+    builder =
+        builder != null ? builder : org.davincischools.leo.protos.pl_types.Project.newBuilder();
+    toProjectProto(projectWithMilestones.project(), builder);
+    for (var milestone : projectWithMilestones.milestones()) {
+      toMilestoneProto(milestone, builder.addMilestonesBuilder());
+    }
+    return builder;
+  }
+
+  public static ProjectWithMilestones toProjectWithMilestonesRecord(
+      org.davincischools.leo.protos.pl_types.ProjectOrBuilder project) {
+    return new ProjectWithMilestones(
+        toProjectDao(project),
+        project.getMilestonesList().stream()
+            .map(ProtoDaoConverter::toMilestoneWithStepsRecord)
+            .toList());
+  }
 
   public static ProjectPost toProjectPostDao(
       org.davincischools.leo.protos.pl_types.ProjectPostOrBuilder projectPost) {
