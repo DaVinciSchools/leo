@@ -367,8 +367,10 @@ export function useFormFields(
       if (fieldMetadata?.isAutocomplete) {
         if (fieldMetadata?.isAutocomplete?.isMultiple) {
           return autocompleteValue ?? ([] as T);
-        } else if (!fieldMetadata?.isAutocomplete?.isFreeSolo) {
+        } else if (fieldMetadata?.isAutocomplete?.isFreeSolo) {
           return stringValue as T;
+        } else {
+          return autocompleteValue as T;
         }
       }
 
