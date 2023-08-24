@@ -27,13 +27,13 @@ import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectPost;
+import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
-import org.davincischools.leo.protos.pl_types.Project.ThumbsState;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.project_management.DeleteProjectPostRequest;
@@ -592,13 +592,13 @@ public class ProjectManagementService {
         .start(optionalRequest.orElse(UpdateProjectRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              // TODO: This is a quick fix to avoid a lazy loading of the UserX id.
-              Optional<ProjectWithMilestones> optionalProject =
-                  db.getProjectRepository().findFullProjectById(request.getId());
-              if (optionalProject.isEmpty()) {
+              ProjectWithMilestones existingFullProject =
+                  db.getProjectRepository()
+                      .findFullProjectById(request.getProject().getId())
+                      .orElse(null);
+              if (existingFullProject == null) {
                 return userX.returnNotFound(UpdateProjectResponse.getDefaultInstance());
               }
-              Project project = optionalProject.get().project();
 
               if (userX.isAdminX()) {
                 // Do nothing.
@@ -607,33 +607,31 @@ public class ProjectManagementService {
               } else if (userX.isStudent()) {
                 // Make sure the student is only updating their own projects.
                 if (!Objects.equals(
-                    project.getProjectInput().getUserX().getId(),
+                    existingFullProject.project().getProjectInput().getUserX().getId(),
                     userX.get().orElseThrow().getId())) {
                   return userX.returnForbidden(UpdateProjectResponse.getDefaultInstance());
                 }
               }
 
-              org.davincischools.leo.protos.pl_types.Project modifications =
-                  request.getModifications();
-              if (modifications.hasFavorite()) {
-                project.setFavorite(modifications.getFavorite());
-              }
-              if (modifications.hasThumbsState()) {
-                project.setThumbsState(
-                    modifications.getThumbsState() == ThumbsState.UNSET
-                        ? null
-                        : modifications.getThumbsState().name());
-              }
-              if (modifications.hasThumbsStateReason()) {
-                project.setThumbsStateReason(modifications.getThumbsStateReason());
-              }
-              if (modifications.hasActive()) {
-                project.setActive(modifications.getActive());
-              }
-              db.getProjectRepository().save(project);
+              Project reqProject = ProtoDaoUtils.toProjectDao(request.getProject());
+              existingFullProject
+                  .project()
+                  .setFavorite(reqProject.getFavorite())
+                  .setThumbsState(reqProject.getThumbsState())
+                  .setThumbsStateReason(reqProject.getThumbsStateReason())
+                  .setActive(reqProject.getActive())
+                  .setAssignment(reqProject.getAssignment());
+
+              DaoUtils.removeTransientValues(
+                  existingFullProject.project(), db.getProjectRepository()::save);
 
               return UpdateProjectResponse.newBuilder()
-                  .setProject(ProtoDaoUtils.toProjectProto(project, null))
+                  .setProject(
+                      ProtoDaoUtils.toProjectProto(
+                          db.getProjectRepository()
+                              .findFullProjectById(request.getProject().getId())
+                              .orElseThrow(),
+                          null))
                   .build();
             })
         .finish();

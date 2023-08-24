@@ -54,13 +54,13 @@ export function AllProjects() {
   }
 
   function updateProject(project: IProject, modifications: IProject) {
+    Object.assign(project, modifications);
+
     createService(ProjectManagementService, 'ProjectManagementService')
-      .updateProject({id: project.id!, modifications: modifications})
+      .updateProject({project})
       .catch(global.setError);
 
-    const newProjects = [...projects];
-    Object.assign(project, modifications);
-    setProjects(newProjects);
+    setProjects([...projects]);
   }
 
   function showProjectDetails(project: pl_types.IProject) {

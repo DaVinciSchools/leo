@@ -56,11 +56,11 @@ export function MyProjects() {
   }, [project]);
 
   function updateProject(project: IProject, modifications: IProject) {
-    service.updateProject({id: project.id!, modifications: modifications});
-
-    const newProjects = [...projects];
     Object.assign(project, modifications);
-    setProjects(newProjects);
+
+    service.updateProject({project}).catch(global.setError);
+
+    setProjects([...projects]);
   }
 
   function postMessage(name: string, longDescrHtml: string) {

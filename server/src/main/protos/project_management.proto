@@ -64,8 +64,10 @@ message GetProjectsResponse {
 }
 
 message UpdateProjectRequest {
-  optional int32 id = 1;
-  optional pl_types.Project modifications = 2;
+  optional pl_types.Project project = 2;
+
+  reserved 1;
+  reserved "id";
 }
 
 message UpdateProjectResponse {
