@@ -249,8 +249,9 @@ export function TeacherEditClassXs() {
               color="warning"
               disabled={selectedClass == null}
               startIcon={<Clear />}
+              onClick={() => window.alert('Not implemented yet.')}
             >
-              Delete Class
+              Delete Class (TODO)
             </Button>
           </Grid>
         </Grid>
