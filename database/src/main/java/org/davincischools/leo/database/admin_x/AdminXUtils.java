@@ -454,7 +454,7 @@ public class AdminXUtils {
       }
     }
     for (ClassX classX : db.getClassXRepository().findAll()) {
-      if (schoolIds.contains(classX.getSchool().getId())) {
+      if (classX.getSchool() == null || schoolIds.contains(classX.getSchool().getId())) {
         db.getTeacherClassXRepository().upsert(admin.getTeacher(), classX);
         db.getStudentClassXRepository().upsert(admin.getStudent(), classX);
       }
