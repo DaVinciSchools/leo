@@ -1,11 +1,15 @@
 package org.davincischools.leo.server.utils;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.extensions.proto.ProtoTruth.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.protobuf.TextFormat;
 import com.google.protobuf.TextFormat.ParseException;
 import jakarta.persistence.EntityManager;
+import java.time.Instant;
 import org.davincischools.leo.database.test.TestData;
+import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.pl_types.Assignment;
 import org.davincischools.leo.protos.pl_types.ClassX;
 import org.davincischools.leo.protos.pl_types.District;
@@ -16,10 +20,13 @@ import org.davincischools.leo.protos.pl_types.School;
 import org.davincischools.leo.protos.pl_types.UserX;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
 import org.davincischools.leo.server.ServerApplication;
+import org.hibernate.LazyInitializationException;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @SpringBootTest(
@@ -28,7 +35,14 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @RunWith(SpringJUnit4ClassRunner.class)
 public class ProtoDaoConverterTest {
 
+  @BeforeClass
+  public static void initialSetup() {
+    ((DefaultConversionService) DefaultConversionService.getSharedInstance())
+        .addConverter(new QueryWithNullsToRecordConverter());
+  }
+
   @Autowired EntityManager entityManager;
+  @Autowired Database db;
 
   @Test
   public void toAssignmentConvertersNull() throws ParseException {
@@ -753,6 +767,76 @@ public class ProtoDaoConverterTest {
                     ProtoDaoConverter.toProjectWithMilestonesRecord(proto), null)
                 .build())
         .isEqualTo(proto);
+  }
+
+  @Test
+  public void removeTransientValuesUnusedNoId() throws Exception {
+    Exception e =
+        assertThrows(
+            Exception.class,
+            () ->
+                db.getClassXRepository()
+                    .save(
+                        new org.davincischools.leo.database.daos.ClassX()
+                            .setCreationTime(Instant.now())
+                            .setNumber("TEST101")
+                            .setName("Test Class")
+                            .setSchool(new org.davincischools.leo.database.daos.School())));
+    assertThat(e.getMessage()).contains("unsaved transient instance");
+  }
+
+  @Test
+  public void removeTransientValuesNull() throws Exception {
+    org.davincischools.leo.database.daos.ClassX classX =
+        db.getClassXRepository()
+            .save(
+                ProtoDaoConverter.removeTransientValues(
+                    new org.davincischools.leo.database.daos.ClassX()
+                        .setCreationTime(Instant.now())
+                        .setNumber("TEST101")
+                        .setName("Test Class")
+                        .setSchool(null)));
+    assertThat(classX.getSchool()).isNull();
+  }
+
+  @Test
+  public void removeTransientValuesNoId() throws Exception {
+    org.davincischools.leo.database.daos.ClassX classX =
+        db.getClassXRepository()
+            .save(
+                ProtoDaoConverter.removeTransientValues(
+                    new org.davincischools.leo.database.daos.ClassX()
+                        .setCreationTime(Instant.now())
+                        .setNumber("TEST101")
+                        .setName("Test Class")
+                        .setSchool(new org.davincischools.leo.database.daos.School())));
+    assertThat(classX.getSchool()).isNull();
+  }
+
+  @Test
+  public void removeTransientValuesOtherValues() throws Exception {
+    ClassX proto =
+        TextFormat.parse(
+            """
+                id: 1
+                name: "name"
+                number: "number"
+                period: "period"
+                grade: "grade"
+                short_descr: "short"
+                long_descr_html: "long"
+                school {
+                  id: 2
+                  name: "school 2 name"
+                }
+                """,
+            ClassX.class);
+
+    org.davincischools.leo.database.daos.ClassX classX =
+        db.getClassXRepository()
+            .save(ProtoDaoConverter.removeTransientValues(ProtoDaoConverter.toClassXDao(proto)));
+    assertThat(classX.getSchool().getId()).isEqualTo(2);
+    assertThrows(LazyInitializationException.class, () -> classX.getSchool().getName());
   }
 
   private <T> T newUninitialized(Class<T> entityClass) {
