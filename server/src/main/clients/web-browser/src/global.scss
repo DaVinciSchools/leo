@@ -1,0 +1,28 @@
+.global-flex-column {
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.global-flex-row {
+  display: flex;
+  flex-flow: row nowrap;
+  width: 100%;
+}
+
+.global-form-label {
+  padding-top: 1.5em;
+  padding-bottom: 0.5em;
+  white-space: nowrap;
+}
+
+.global-form-first-label {
+  @extend .global-form-label;
+  padding-top: 0;
+}
+
+.global-react-quill {
+  p:first-child {
+    margin-top: 0;
+  }
+}
+

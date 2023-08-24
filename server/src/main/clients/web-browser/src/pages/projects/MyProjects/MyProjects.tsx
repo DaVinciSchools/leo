@@ -1,151 +1,160 @@
 import './MyProjects.scss';
+import '../../../global.scss';
 
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {Dropdown} from 'antd';
 import {GlobalStateContext} from '../../../libs/GlobalState';
-import {ItemType} from 'antd/es/menu/hooks/useItems';
-import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
 import {createService} from '../../../libs/protos';
-import {pl_types, project_management} from '../../../generated/protobuf-js';
-import {useContext, useEffect, useRef, useState} from 'react';
+import {
+  assignment_management,
+  pl_types,
+  project_management,
+} from '../../../generated/protobuf-js';
+import {useContext, useEffect, useState} from 'react';
 
 import IProject = pl_types.IProject;
-import IProjectPost = pl_types.IProjectPost;
 import ProjectManagementService = project_management.ProjectManagementService;
+import {useDelayedAction} from '../../../libs/delayed_action';
+import {replaceInPlace} from '../../../libs/misc';
+import {ASSIGNMENT_SORTER, PROJECT_SORTER} from '../../../libs/sorters';
+import {useFormFields} from '../../../libs/forms';
+import {ProjectsAutocomplete} from '../../../libs/common_fields/ProjectsAutocomplete';
+import IAssignment = pl_types.IAssignment;
+import AssignmentManagementService = assignment_management.AssignmentManagementService;
+import {TabbedSwiper} from '../../../libs/TabbedSwiper/TabbedSwiper';
+import {ProjectEditor} from '../../../libs/ProjectEditor/ProjectEditor';
+
+enum TabValue {
+  OVERVIEW,
+  EDIT_PROJECT,
+}
 
 export function MyProjects() {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
-    return <></>;
-  }
 
-  const projectId = useRef<number | undefined>();
-  const [projects, setProjects] = useState<IProject[]>([]);
-  const [project, setProject] = useState<IProject | undefined>();
-  const [posts, setPosts] = useState<IProjectPost[] | undefined>();
+  const [sortedProjects, setSortedProjects] = useState<IProject[]>([]);
+  const [selectedProject, setSelectedProject] = useState<IProject | null>(null);
+  const [sortedAssignments, setSortedAssignments] = useState<IAssignment[]>([]);
 
-  const service = createService(
-    ProjectManagementService,
-    'ProjectManagementService'
+  const projectForm = useFormFields({
+    onChange: () => autoSave.trigger(),
+    disabled: selectedProject == null,
+  });
+  const [projectSaveStatus, setProjectSaveStatus] = useState<string>('');
+
+  const hiddenForm = useFormFields({
+    onChange: () => {
+      setSelectedProject(hiddenProject.getValue() ?? null);
+    },
+  });
+  const hiddenProject = hiddenForm.useAutocompleteFormField<IProject | null>(
+    'project'
+  );
+
+  const autoSave = useDelayedAction(
+    () => {
+      setProjectSaveStatus('Modified');
+      if (selectedProject != null) {
+        const newProject = projectForm.getValuesObject(true, selectedProject);
+        setSortedProjects(
+          replaceInPlace([...sortedProjects], newProject, e => e?.id).sort(
+            PROJECT_SORTER
+          )
+        );
+      }
+    },
+    () => {
+      setProjectSaveStatus('Saving...');
+      if (selectedProject != null && projectForm.verifyOk(true)) {
+        return createService(
+          ProjectManagementService,
+          'ProjectManagementService'
+        )
+          .updateProject({
+            project: projectForm.getValuesObject(true, selectedProject),
+          })
+          .then(() => {
+            setProjectSaveStatus('Saved');
+          })
+          .catch(global.setError);
+      } else {
+        setProjectSaveStatus('Invalid values, Not saved');
+      }
+      return;
+    },
+    1500
   );
 
   useEffect(() => {
-    service
+    createService(ProjectManagementService, 'ProjectManagementService')
       .getProjects({userXId: global.userX?.userXId, activeOnly: true})
       .then(response => {
-        setProjects(response.projects);
+        setSortedProjects(response.projects.sort(PROJECT_SORTER));
+        setSelectedProject(null);
       })
       .catch(global.setError);
-  }, []);
-
-  useEffect(() => {
-    if (project == null) {
-      projectId.current = undefined;
-      setPosts(undefined);
-    } else {
-      projectId.current = project.id!;
-      service
-        .getProjectPosts({projectId: project!.id!})
-        .then(response => {
-          if (project.id! === projectId.current) {
-            setPosts(response.projectPosts);
-          }
-        })
-        .catch(reason => global.setError({error: reason, reload: false}));
-    }
-  }, [project]);
-
-  function updateProject(project: IProject, modifications: IProject) {
-    Object.assign(project, modifications);
-
-    service.updateProject({project}).catch(global.setError);
-
-    setProjects([...projects]);
-  }
-
-  function postMessage(name: string, longDescrHtml: string) {
-    service
-      .upsertProjectPost({
-        projectId: project?.id,
-        projectPost: {
-          name,
-          longDescrHtml,
-        },
+    createService(AssignmentManagementService, 'AssignmentManagementService')
+      .getAssignments({
+        teacherId: global.userX?.teacherId,
+        studentId: global.userX?.studentId,
       })
       .then(response => {
-        if (project!.id! === projectId.current) {
-          const newPosts: IProjectPost[] = [
-            ...(posts ?? []),
-            {
-              id: response.projectPostId!,
-              name,
-              longDescrHtml,
-              userX: global.userX,
-            },
-          ];
-          setPosts(newPosts);
-        }
-      })
-      .catch(reason => global.setError({error: reason, reload: false}));
-  }
+        setSortedAssignments(response.assignments.sort(ASSIGNMENT_SORTER));
+      });
+  }, [global.userX]);
 
-  function deletePost(post: pl_types.IProjectPost) {
-    service
-      .deleteProjectPost({id: post.id!})
-      .then(() => {
-        if (project!.id! === projectId.current) {
-          const newPosts: IProjectPost[] = [...(posts ?? [])].filter(
-            p => p.id !== post.id
-          );
-          setPosts(newPosts);
-        }
-      })
-      .catch(reason => global.setError({error: reason, reload: false}));
+  useEffect(() => {
+    projectForm.setValuesObject(selectedProject ?? {});
+  }, [selectedProject]);
+
+  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
+    return <></>;
   }
 
   return (
     <>
       <DefaultPage title="My Projects">
-        <div style={{width: '100%'}}>
-          <Dropdown.Button
-            menu={{
-              items: projects.map(project => ({
-                key: project.id,
-                label: (
-                  <div
-                    className="project-menu"
-                    onClick={() => setProject(project)}
-                    style={{width: '100%'}}
-                  >
-                    <span className="name">{project.name!}</span>
-                    <span className="descr">{project.shortDescr!}</span>
-                  </div>
-                ),
-              })) as ItemType[],
-            }}
+        <div
+          className="global-flex-row"
+          style={{gap: '1em', alignItems: 'center', justifyContent: 'stretch'}}
+        >
+          <span style={{fontWeight: 'bold', whiteSpace: 'nowrap'}}>
+            Select Project
+          </span>
+          <ProjectsAutocomplete
+            sortedProjects={sortedProjects}
+            formField={hiddenProject}
             style={{width: '100%'}}
-          >
-            {project != null ? <>{project.name!}</> : <>Select project...</>}
-          </Dropdown.Button>
-          {project != null ? (
-            <ProjectPage
-              id={project.id!}
-              key={project.id!}
-              name={project.name!}
-              shortDescr={project.shortDescr!}
-              longDescrHtml={project.longDescrHtml!}
-              posts={posts}
-              milestones={[]}
-              updateProject={modifications =>
-                updateProject(project, modifications)
-              }
-              onDeletePost={post => deletePost(post)}
-              onSubmitPost={postMessage}
-              editable={true}
-            />
-          ) : (
-            <></>
-          )}
+          />
+          <span style={{whiteSpace: 'nowrap'}}>{projectSaveStatus}</span>
+        </div>
+        <div style={{height: '100%'}}>
+          <TabbedSwiper
+            tabs={[
+              {
+                key: TabValue.OVERVIEW,
+                label: 'Overview',
+                content: (
+                  <>
+                    <div className="global-flex-column">TODO</div>
+                  </>
+                ),
+              },
+              {
+                key: TabValue.EDIT_PROJECT,
+                label: 'Edit Project',
+                content: (
+                  <>
+                    <div className="global-flex-column">
+                      <ProjectEditor
+                        projectForm={projectForm}
+                        sortedAssignments={sortedAssignments}
+                      />
+                    </div>
+                  </>
+                ),
+              },
+            ]}
+          />
         </div>
       </DefaultPage>
     </>

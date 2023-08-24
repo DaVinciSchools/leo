@@ -25,7 +25,7 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
 
   @Query(
       """
-      SELECT p, m, s
+          SELECT p, m, s
           FROM Project p
           LEFT JOIN FETCH p.projectInput pi
           LEFT JOIN FETCH p.projectInput.userX
@@ -34,18 +34,22 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
           LEFT JOIN ProjectMilestoneStep s
           ON m.id = s.projectMilestone.id
           WHERE p.id = :projectId
-          ORDER BY p.creationTime DESC, m.position, s.position""")
+          ORDER BY p.creationTime DESC, m.position, s.position
+          """)
   List<ProjectMilestoneStepRow> findFullProjectRowsByProjectId(@Param("projectId") int projectId);
 
   @Query(
       """
           SELECT p
           FROM Project p
+          LEFT JOIN FETCH p.assignment a1
           LEFT JOIN FETCH p.projectInput pi
           LEFT JOIN FETCH p.projectInput.userX
+          LEFT JOIN FETCH pi.assignment a2
           WHERE pi.userX.id = :userXId
           AND ((:activeOnly <> TRUE) OR p.active)
-          ORDER BY p.creationTime DESC""")
+          ORDER BY p.creationTime DESC
+          """)
   List<Project> findProjectsByUserXId(
       @Param("userXId") int userXId, @Param("activeOnly") boolean activeOnly);
 
