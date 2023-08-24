@@ -89,4 +89,36 @@ public class DaoUtilsTest {
     assertThat(classX.getSchool().getId()).isEqualTo(2);
     assertThrows(LazyInitializationException.class, () -> classX.getSchool().getName());
   }
+
+  @Test
+  public void copyId() {
+    ClassX classX =
+        new ClassX()
+            .setCreationTime(Instant.now())
+            .setNumber("TEST101")
+            .setName("Test Class")
+            .setSchool(new School().setId(2).setName("School"));
+
+    ClassX newClassX = db.getClassXRepository().save(DaoUtils.removeTransientValues(classX));
+
+    DaoUtils.copyId(newClassX, classX);
+
+    assertThat(classX.getSchool().getId()).isEqualTo(2);
+    assertThat(classX.getId()).isEqualTo(newClassX.getId());
+  }
+
+  @Test
+  public void removeTransientValueConsumer() {
+    ClassX classX =
+        new ClassX()
+            .setCreationTime(Instant.now())
+            .setNumber("TEST101")
+            .setName("Test Class")
+            .setSchool(new School().setId(2).setName("School"));
+
+    DaoUtils.removeTransientValues(classX, db.getClassXRepository()::save);
+
+    assertThat(classX.getSchool().getId()).isEqualTo(2);
+    assertThat(classX.getId()).isGreaterThan(0);
+  }
 }

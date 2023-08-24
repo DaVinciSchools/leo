@@ -17,6 +17,7 @@ import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.exceptions.UnauthorizedUserX;
+import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -106,18 +107,8 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
       throw new UnauthorizedUserX("Teacher does not have write access to this class.");
     }
 
-    // TODO: Find a better way to "clone without transient children".
-    School oldSchool = fullClassX.classX().getSchool();
-    try {
-      if (fullClassX.classX().getSchool() != null) {
-        fullClassX.classX().setSchool(new School().setId(fullClassX.classX().getSchool().getId()));
-      }
-
-      save(fullClassX.classX());
-      db.getClassXKnowledgeAndSkillRepository()
-          .setClassXKnoweldgeAndSkills(fullClassX.classX(), fullClassX.knowledgeAndSkills());
-    } finally {
-      fullClassX.classX().setSchool(oldSchool);
-    }
+    DaoUtils.removeTransientValues(fullClassX.classX(), this::save);
+    db.getClassXKnowledgeAndSkillRepository()
+        .setClassXKnoweldgeAndSkills(fullClassX.classX(), fullClassX.knowledgeAndSkills());
   }
 }

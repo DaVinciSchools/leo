@@ -1,5 +1,6 @@
 package org.davincischools.leo.database.utils;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -22,6 +23,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -185,6 +187,28 @@ public class DaoUtils {
     }
 
     return (T) newDao;
+  }
+
+  public static <T> T removeTransientValues(T dao, Consumer<T> processor) {
+    T nonTransientDao = removeTransientValues(dao);
+    processor.accept(nonTransientDao);
+    copyId(nonTransientDao, dao);
+    return dao;
+  }
+
+  public static void copyId(Object from, Object to) {
+    checkNotNull(from);
+    checkNotNull(to);
+    checkArgument(from.getClass() == to.getClass());
+
+    DaoShallowCopyMethods daoMethods =
+        DaoUtils.getDaoShallowCopyMethods(to.getClass())
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "No shallow copy methods found: " + to.getClass()));
+
+    daoMethods.setId().accept(to, daoMethods.getId().apply(from));
   }
 
   private record DaoShallowCopyMethods(
