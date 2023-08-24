@@ -11,7 +11,7 @@ import org.davincischools.leo.protos.class_x_management_service.GetClassXsReques
 import org.davincischools.leo.protos.class_x_management_service.GetClassXsResponse;
 import org.davincischools.leo.protos.class_x_management_service.UpsertClassXRequest;
 import org.davincischools.leo.protos.class_x_management_service.UpsertClassXResponse;
-import org.davincischools.leo.server.utils.ProtoDaoConverter;
+import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.Authenticated;
@@ -54,8 +54,7 @@ public class ClassXManagementService {
                   .findFullClassXsByUserXId(
                       request.getIdCase() == IdCase.TEACHER_ID ? request.getTeacherId() : null,
                       request.getIdCase() == IdCase.STUDENT_ID ? request.getStudentId() : null)
-                  .forEach(
-                      e -> ProtoDaoConverter.toFullClassXProto(e, response.addClassXsBuilder()));
+                  .forEach(e -> ProtoDaoUtils.toFullClassXProto(e, response.addClassXsBuilder()));
 
               return response.build();
             })
@@ -79,10 +78,10 @@ public class ClassXManagementService {
                 throw new UnauthorizedUserX();
               }
 
-              FullClassX fullClassX = ProtoDaoConverter.toFullClassXRecord(request.getClassX());
+              FullClassX fullClassX = ProtoDaoUtils.toFullClassXRecord(request.getClassX());
               db.getClassXRepository()
                   .guardedUpsert(db, fullClassX, userX.isAdminX() ? null : userX.teacherId());
-              ProtoDaoConverter.toFullClassXProto(fullClassX, response.getClassXBuilder());
+              ProtoDaoUtils.toFullClassXProto(fullClassX, response.getClassXBuilder());
 
               if (userX.teacherId() != null) {
                 db.getTeacherClassXRepository()

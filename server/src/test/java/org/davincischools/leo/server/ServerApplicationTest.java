@@ -19,7 +19,7 @@ import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXResponse;
 import org.davincischools.leo.server.controllers.ReactResourceController;
 import org.davincischools.leo.server.test_helpers.WebSession;
-import org.davincischools.leo.server.utils.ProtoDaoConverter;
+import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -174,7 +174,7 @@ public class ServerApplicationTest {
     Interest interest =
         db.getInterestRepository().findById(userX.getInterest().getId()).orElseThrow();
 
-    assertThat(ProtoDaoConverter.toUserXProto(userX, null).build())
+    assertThat(ProtoDaoUtils.toUserXProto(userX, null).build())
         .ignoringFields(UserX.USER_X_ID_FIELD_NUMBER)
         .isEqualTo(
             UserX.newBuilder()
@@ -185,7 +185,7 @@ public class ServerApplicationTest {
                 .setIsAuthenticated(true)
                 .build());
 
-    assertThat(ProtoDaoConverter.toRegisterUserXRequestProto(interest, null).build())
+    assertThat(ProtoDaoUtils.toRegisterUserXRequestProto(interest, null).build())
         .ignoringFields(
             RegisterUserXRequest.PASSWORD_FIELD_NUMBER,
             RegisterUserXRequest.VERIFY_PASSWORD_FIELD_NUMBER)

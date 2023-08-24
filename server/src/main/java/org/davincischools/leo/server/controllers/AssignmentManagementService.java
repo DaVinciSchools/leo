@@ -17,7 +17,7 @@ import org.davincischools.leo.protos.assignment_management.GetAssignmentsRequest
 import org.davincischools.leo.protos.assignment_management.GetAssignmentsResponse;
 import org.davincischools.leo.protos.assignment_management.SaveAssignmentRequest;
 import org.davincischools.leo.protos.assignment_management.SaveAssignmentResponse;
-import org.davincischools.leo.server.utils.ProtoDaoConverter;
+import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.Authenticated;
@@ -83,10 +83,10 @@ public class AssignmentManagementService {
                         .forEach(
                             assignment -> {
                               assignment.assignment().setClassX(classXAssignment.classX());
-                              ProtoDaoConverter.toAssignmentProto(
+                              ProtoDaoUtils.toAssignmentProto(
                                   assignment.assignment(), response.addAssignmentsBuilder());
                             });
-                    ProtoDaoConverter.toClassXProto(
+                    ProtoDaoUtils.toClassXProto(
                         classXAssignment.classX(), response.addClassXsBuilder());
                   });
 
@@ -126,7 +126,7 @@ public class AssignmentManagementService {
                   db.getClassXRepository().findById(request.getClassXId()).orElseThrow();
 
               response.setAssignment(
-                  ProtoDaoConverter.toAssignmentProto(
+                  ProtoDaoUtils.toAssignmentProto(
                       db.getAssignmentRepository()
                           .save(
                               new Assignment()

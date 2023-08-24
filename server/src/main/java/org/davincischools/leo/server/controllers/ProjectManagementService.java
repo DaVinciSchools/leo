@@ -66,7 +66,7 @@ import org.davincischools.leo.protos.project_management.UpsertProjectPostRequest
 import org.davincischools.leo.protos.project_management.UpsertProjectPostResponse;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V2ProjectGenerator;
 import org.davincischools.leo.server.utils.OpenAiUtils;
-import org.davincischools.leo.server.utils.ProtoDaoConverter;
+import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.Anonymous;
@@ -119,7 +119,7 @@ public class ProjectManagementService {
                       userX.isAdminX() ? null : userX.userXId())
                   .forEach(
                       e ->
-                          ProtoDaoConverter.toKnowledgeAndSkillProto(
+                          ProtoDaoUtils.toKnowledgeAndSkillProto(
                               e, response.addKnowledgeAndSkillsBuilder()));
 
               return response.build();
@@ -156,12 +156,12 @@ public class ProjectManagementService {
 
               db.getKnowledgeAndSkillRepository()
                   .guardedUpsert(
-                      ProtoDaoConverter.toKnowledgeAndSkillDao(request.getKnowledgeAndSkill())
+                      ProtoDaoUtils.toKnowledgeAndSkillDao(request.getKnowledgeAndSkill())
                           .setUserX(userX.get().orElseThrow()),
                       userX.isAdminX() ? null : userX.userXId())
                   .ifPresent(
                       ks -> {
-                        ProtoDaoConverter.toKnowledgeAndSkillProto(
+                        ProtoDaoUtils.toKnowledgeAndSkillProto(
                             ks, response.getKnowledgeAndSkillBuilder());
                       });
 
@@ -364,7 +364,7 @@ public class ProjectManagementService {
               }
 
               return GetProjectDetailsResponse.newBuilder()
-                  .setProject(ProtoDaoConverter.toProjectProto(project, null))
+                  .setProject(ProtoDaoUtils.toProjectProto(project, null))
                   .build();
             })
         .finish();
@@ -403,7 +403,7 @@ public class ProjectManagementService {
                       .getProjectRepository()
                       .findProjectsByUserXId(userXId, request.getActiveOnly())
                       .stream()
-                      .map(e -> ProtoDaoConverter.toProjectProto(e, null).build())
+                      .map(e -> ProtoDaoUtils.toProjectProto(e, null).build())
                       .toList());
 
               if (request.getIncludeUnsuccessful()) {
@@ -412,7 +412,7 @@ public class ProjectManagementService {
                         .getProjectInputRepository()
                         .findFullProjectInputByUserXAndUnsuccessful(userXId)
                         .stream()
-                        .map(ProtoDaoConverter::toProjectDefinition)
+                        .map(ProtoDaoUtils::toProjectDefinition)
                         .toList());
               }
 
@@ -558,7 +558,7 @@ public class ProjectManagementService {
 
               for (FullProjectDefinition fullDefinition : fullDefinitions) {
                 response.addDefinitions(
-                    ProtoDaoConverter.toProjectDefinition(fullDefinition).toBuilder()
+                    ProtoDaoUtils.toProjectDefinition(fullDefinition).toBuilder()
                         .setSelected(fullDefinition == selectedFullDefinition));
               }
 
@@ -633,7 +633,7 @@ public class ProjectManagementService {
               db.getProjectRepository().save(project);
 
               return UpdateProjectResponse.newBuilder()
-                  .setProject(ProtoDaoConverter.toProjectProto(project, null))
+                  .setProject(ProtoDaoUtils.toProjectProto(project, null))
                   .build();
             })
         .finish();
@@ -657,7 +657,7 @@ public class ProjectManagementService {
               var response = GetProjectPostsResponse.newBuilder();
               response.addAllProjectPosts(
                   db.getProjectPostRepository().findAllByProjectId(request.getProjectId()).stream()
-                      .map(e -> ProtoDaoConverter.toProjectPostProto(e, null).build())
+                      .map(e -> ProtoDaoUtils.toProjectPostProto(e, null).build())
                       .toList());
               return response.build();
             })
