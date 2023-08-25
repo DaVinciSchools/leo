@@ -1,4 +1,4 @@
-import '../../global.scss';
+import '../global.scss';
 
 import {AssignmentAutocomplete} from '../common_fields/AssignmentsAutocomplete';
 import {TextField} from '@mui/material';

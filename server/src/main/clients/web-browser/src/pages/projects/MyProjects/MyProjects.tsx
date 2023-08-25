@@ -1,5 +1,5 @@
 import './MyProjects.scss';
-import '../../../global.scss';
+import '../../../libs/global.scss';
 
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {GlobalStateContext} from '../../../libs/GlobalState';
