@@ -140,7 +140,10 @@ export function TeacherEditClassXs() {
       .then(response => setSortedSchools(response.schools.sort(SCHOOL_SORTER)))
       .catch(global.setError);
     createService(ClassXManagementService, 'ClassXManagementService')
-      .getClassXs({teacherId: global.userX.teacherId})
+      .getClassXs({
+        teacherId: global.userX.teacherId,
+        includeKnowledgeAndSkills: true,
+      })
       .then(response => {
         setSortedClasses(response.classXs.sort(CLASS_X_SORTER));
         setHaveMultipleSchools(false);

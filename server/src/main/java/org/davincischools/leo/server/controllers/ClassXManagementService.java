@@ -2,12 +2,12 @@ package org.davincischools.leo.server.controllers;
 
 import java.util.Objects;
 import java.util.Optional;
+import org.davincischools.leo.database.daos.Student;
 import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.exceptions.UnauthorizedUserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.ClassXRepository.FullClassX;
 import org.davincischools.leo.protos.class_x_management_service.GetClassXsRequest;
-import org.davincischools.leo.protos.class_x_management_service.GetClassXsRequest.IdCase;
 import org.davincischools.leo.protos.class_x_management_service.GetClassXsResponse;
 import org.davincischools.leo.protos.class_x_management_service.UpsertClassXRequest;
 import org.davincischools.leo.protos.class_x_management_service.UpsertClassXResponse;
@@ -40,21 +40,27 @@ public class ClassXManagementService {
         .start(optionalRequest.orElse(GetClassXsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              if (!switch (request.getIdCase()) {
-                case TEACHER_ID -> userX.isAdminX()
-                    || Objects.equals(userX.teacherId(), request.getTeacherId());
-                case STUDENT_ID -> userX.isAdminX()
-                    || Objects.equals(userX.studentId(), request.getStudentId());
-                case ID_NOT_SET -> false;
-              }) {
-                return userX.returnForbidden(response.build());
+              if (!userX.isAdminX()) {
+                if (request.hasTeacherId()
+                    && !Objects.equals(userX.teacherId(), request.getTeacherId())) {
+                  return userX.returnForbidden(response.build());
+                }
+                if (request.hasStudentId()
+                    && !Objects.equals(userX.studentId(), request.getStudentId())) {
+                  return userX.returnForbidden(response.build());
+                }
               }
 
               db.getClassXRepository()
-                  .findFullClassXsByUserXId(
-                      request.getIdCase() == IdCase.TEACHER_ID ? request.getTeacherId() : null,
-                      request.getIdCase() == IdCase.STUDENT_ID ? request.getStudentId() : null)
-                  .forEach(e -> ProtoDaoUtils.toFullClassXProto(e, response.addClassXsBuilder()));
+                  .findFullClassXs(
+                      request.hasTeacherId() ? new Teacher().setId(request.getTeacherId()) : null,
+                      request.hasStudentId() ? new Student().setId(request.getStudentId()) : null,
+                      request.getIncludeAllAvailable(),
+                      request.getIncludeKnowledgeAndSkills())
+                  .forEach(
+                      fullClassX -> {
+                        ProtoDaoUtils.toFullClassXProto(fullClassX, response.addClassXsBuilder());
+                      });
 
               return response.build();
             })

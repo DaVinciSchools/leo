@@ -13,10 +13,11 @@ service ClassXManagementService {
 }
 
 message GetClassXsRequest {
-  oneof id {
-    int32 student_id = 1;
-    int32 teacher_id = 2;
-  }
+  optional int32 student_id = 1;
+  optional int32 teacher_id = 2;
+
+  optional bool include_all_available = 3;
+  optional bool include_knowledge_and_skills = 4;
 }
 
 message GetClassXsResponse {

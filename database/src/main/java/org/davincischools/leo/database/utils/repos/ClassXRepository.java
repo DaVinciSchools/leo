@@ -16,6 +16,8 @@ import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.School;
+import org.davincischools.leo.database.daos.Student;
+import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.exceptions.UnauthorizedUserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
@@ -56,24 +58,63 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
           FROM ClassX c
           LEFT JOIN FETCH c.school
           LEFT JOIN FETCH c.school.district
-          LEFT JOIN TeacherClassX tcx
-          ON (:teacherId) IS NOT NULL AND c.id = tcx.classX.id
-          LEFT JOIN StudentClassX scx
-          ON (:studentId) IS NOT NULL AND c.id = scx.classX.id
-          LEFT JOIN ClassXKnowledgeAndSkill cxks
-          ON (c.id = cxks.classX.id)
-          LEFT JOIN FETCH cxks.knowledgeAndSkill
-          WHERE ((:teacherId) IS NULL OR tcx.teacher.id = (:teacherId))
-          AND ((:studentId) IS NULL OR scx.student.id = (:studentId))
-          ORDER BY c.id""")
-  List<FullClassXRow> findFullClassXRowsByUserXId(
-      @Nullable @Param("teacherId") Integer teacherId,
-      @Nullable @Param("studentId") Integer studentId);
 
-  default List<FullClassX> findFullClassXsByUserXId(
+          LEFT JOIN ClassXKnowledgeAndSkill cxks
+          ON
+              (:includeKnowledgeAndSkills = TRUE
+              AND c.id = cxks.classX.id)
+          LEFT JOIN FETCH cxks.knowledgeAndSkill
+
+          WHERE c.id IN (
+              SELECT c.id
+              FROM ClassX c
+
+              LEFT JOIN TeacherClassX tcx
+              ON
+                  (:teacherId) IS NOT NULL
+                  AND c.id = tcx.classX.id
+              LEFT JOIN StudentClassX scx
+              ON
+                  (:studentId) IS NOT NULL
+                  AND c.id = scx.classX.id
+
+              LEFT JOIN TeacherSchool ts
+              ON
+                  (:includeAvailableClassXs) = TRUE
+                  AND (:teacherId) IS NOT NULL
+                  AND c.school.id = ts.school.id
+              LEFT JOIN StudentSchool ss
+              ON
+                  (:includeAvailableClassXs) = TRUE
+                  AND (:studentId) IS NOT NULL
+                  AND c.school.id = ss.school.id
+
+              WHERE (
+                  (:teacherId) IS NULL
+                  OR tcx.teacher.id = (:teacherId)
+                  OR ts.teacher.id = (:teacherId))
+              AND (
+                  (:studentId) IS NULL
+                  OR scx.student.id = (:studentId)
+                  OR ss.student.id = (:studentId)))
+          ORDER BY c.id""")
+  List<FullClassXRow> findFullClassXsRows(
       @Nullable @Param("teacherId") Integer teacherId,
-      @Nullable @Param("studentId") Integer studentId) {
-    return toFullClassX(findFullClassXRowsByUserXId(teacherId, studentId));
+      @Nullable @Param("studentId") Integer studentId,
+      @Param("includeAvailableClassXs") boolean includeAvailableClassXs,
+      @Param("includeKnowledgeAndSkills") boolean includeKnowledgeAndSkills);
+
+  default List<FullClassX> findFullClassXs(
+      @Nullable Teacher teacher,
+      @Nullable Student student,
+      boolean includeAvailableClassXs,
+      boolean includeKnowledgeAndSkills) {
+    return toFullClassX(
+        findFullClassXsRows(
+            teacher != null ? teacher.getId() : null,
+            student != null ? student.getId() : null,
+            includeAvailableClassXs,
+            includeKnowledgeAndSkills));
   }
 
   private List<FullClassX> toFullClassX(Iterable<FullClassXRow> rows) {
