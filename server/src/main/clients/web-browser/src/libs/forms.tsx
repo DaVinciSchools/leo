@@ -445,7 +445,8 @@ export function useFormFields(
         setError(error);
       } else if (
         fieldMetadata?.isPassword &&
-        verifyPasswordsMatch(finalCheck).length > 0
+        fieldMetadata?.isPassword?.skipPasswordCheck !== true &&
+        getUnmatchedPasswords(finalCheck).length > 0
       ) {
         setError(PASSWORDS_DONT_MATCH);
       }
@@ -586,7 +587,7 @@ export function useFormFields(
     fields.forEach(f => f.reset());
   }
 
-  function verifyPasswordsMatch(finalCheck: boolean) {
+  function getUnmatchedPasswords(finalCheck: boolean) {
     const passwordFields: InternalFormField<string>[] = [];
     const passwordInputs: (
       | HTMLInputElement
@@ -623,7 +624,7 @@ export function useFormFields(
 
     let errorField: InternalFormField<any> | undefined;
 
-    const passwordFields = verifyPasswordsMatch(finalCheck);
+    const passwordFields = getUnmatchedPasswords(finalCheck);
     if (passwordFields.length > 0) {
       errorField = passwordFields[0];
       passwordFields.forEach(f => f.setError(PASSWORDS_DONT_MATCH));
