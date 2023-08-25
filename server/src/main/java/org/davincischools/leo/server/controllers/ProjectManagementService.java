@@ -116,7 +116,7 @@ public class ProjectManagementService {
               db.getKnowledgeAndSkillRepository()
                   .findAllByTypes(
                       request.getTypesList().stream().map(Enum::name).toList(),
-                      userX.isAdminX() ? null : userX.userXId())
+                      userX.isAdminX() ? null : userX.getUserXIdOrNull())
                   .forEach(
                       e ->
                           ProtoDaoUtils.toKnowledgeAndSkillProto(
@@ -158,7 +158,7 @@ public class ProjectManagementService {
                   .guardedUpsert(
                       ProtoDaoUtils.toKnowledgeAndSkillDao(request.getKnowledgeAndSkill())
                           .setUserX(userX.get().orElseThrow()),
-                      userX.isAdminX() ? null : userX.userXId())
+                      userX.isAdminX() ? null : userX.getUserXIdOrNull())
                   .ifPresent(
                       ks -> {
                         ProtoDaoUtils.toKnowledgeAndSkillProto(

@@ -8,6 +8,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import org.davincischools.leo.database.daos.AdminX;
+import org.davincischools.leo.database.daos.Student;
+import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.springframework.security.core.Authentication;
@@ -66,8 +69,13 @@ public class HttpUserX {
   }
 
   @Nullable
-  public Integer adminXId() {
+  public Integer getAdminXIdOrNull() {
     return isAdminX() ? userX.orElseThrow().getAdminX().getId() : null;
+  }
+
+  @Nullable
+  public AdminX getAdminXOrNull() {
+    return isAdminX() ? userX.map(UserX::getAdminX).orElse(null) : null;
   }
 
   public boolean isTeacher() {
@@ -75,8 +83,13 @@ public class HttpUserX {
   }
 
   @Nullable
-  public Integer teacherId() {
+  public Integer getTeacherIdOrNull() {
     return isTeacher() ? userX.orElseThrow().getTeacher().getId() : null;
+  }
+
+  @Nullable
+  public Teacher getTeacherOrNull() {
+    return isTeacher() ? userX.map(UserX::getTeacher).orElse(null) : null;
   }
 
   public boolean isStudent() {
@@ -84,8 +97,13 @@ public class HttpUserX {
   }
 
   @Nullable
-  public Integer studentId() {
+  public Integer getStudentIdOrNull() {
     return isStudent() ? userX.orElseThrow().getStudent().getId() : null;
+  }
+
+  @Nullable
+  public Student getStudentOrNull() {
+    return isStudent() ? userX.map(UserX::getStudent).orElse(null) : null;
   }
 
   public boolean isAuthenticated() {
@@ -93,8 +111,13 @@ public class HttpUserX {
   }
 
   @Nullable
-  public Integer userXId() {
+  public Integer getUserXIdOrNull() {
     return isAuthenticated() ? userX.orElseThrow().getId() : null;
+  }
+
+  @Nullable
+  public UserX getUserXOrNull() {
+    return isAuthenticated() ? userX.orElse(null) : null;
   }
 
   public boolean isDemo() {

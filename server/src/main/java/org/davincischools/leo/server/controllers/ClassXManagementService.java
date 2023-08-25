@@ -42,11 +42,11 @@ public class ClassXManagementService {
             (request, log) -> {
               if (!userX.isAdminX()) {
                 if (request.hasTeacherId()
-                    && !Objects.equals(userX.teacherId(), request.getTeacherId())) {
+                    && !Objects.equals(userX.getTeacherIdOrNull(), request.getTeacherId())) {
                   return userX.returnForbidden(response.build());
                 }
                 if (request.hasStudentId()
-                    && !Objects.equals(userX.studentId(), request.getStudentId())) {
+                    && !Objects.equals(userX.getStudentIdOrNull(), request.getStudentId())) {
                   return userX.returnForbidden(response.build());
                 }
               }
@@ -86,12 +86,13 @@ public class ClassXManagementService {
 
               FullClassX fullClassX = ProtoDaoUtils.toFullClassXRecord(request.getClassX());
               db.getClassXRepository()
-                  .guardedUpsert(db, fullClassX, userX.isAdminX() ? null : userX.teacherId());
+                  .guardedUpsert(
+                      db, fullClassX, userX.isAdminX() ? null : userX.getTeacherIdOrNull());
               ProtoDaoUtils.toFullClassXProto(fullClassX, response.getClassXBuilder());
 
-              if (userX.teacherId() != null) {
+              if (userX.getTeacherOrNull() != null) {
                 db.getTeacherClassXRepository()
-                    .upsert(new Teacher().setId(userX.teacherId()), fullClassX.classX());
+                    .upsert(userX.getTeacherOrNull(), fullClassX.classX());
               }
 
               return response.build();
