@@ -55,7 +55,7 @@ public class ClassXManagementService {
                   .findFullClassXs(
                       request.hasTeacherId() ? new Teacher().setId(request.getTeacherId()) : null,
                       request.hasStudentId() ? new Student().setId(request.getStudentId()) : null,
-                      request.getIncludeAllAvailable(),
+                      request.getIncludeAllAvailableClassXs(),
                       request.getIncludeKnowledgeAndSkills())
                   .forEach(
                       fullClassX -> {

@@ -23,6 +23,7 @@ message ClassX {
   optional string grade = 8;
   optional string short_descr = 3;
   optional string long_descr_html = 4;
+  optional bool enrolled = 10;
 
   repeated KnowledgeAndSkill knowledge_and_skills = 5;
 }

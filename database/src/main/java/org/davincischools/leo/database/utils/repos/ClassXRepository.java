@@ -17,7 +17,9 @@ import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Student;
+import org.davincischools.leo.database.daos.StudentClassX;
 import org.davincischools.leo.database.daos.Teacher;
+import org.davincischools.leo.database.daos.TeacherClassX;
 import org.davincischools.leo.database.exceptions.UnauthorizedUserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
@@ -29,9 +31,13 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
 
-  record FullClassX(ClassX classX, List<KnowledgeAndSkill> knowledgeAndSkills) {}
+  record FullClassX(ClassX classX, boolean enrolled, List<KnowledgeAndSkill> knowledgeAndSkills) {}
 
-  record FullClassXRow(ClassX classX, ClassXKnowledgeAndSkill classKnowledgeAndSkill) {}
+  record FullClassXRow(
+      ClassX classX,
+      TeacherClassX teacherClassX,
+      StudentClassX studentClassX,
+      ClassXKnowledgeAndSkill classKnowledgeAndSkill) {}
 
   default ClassX upsert(School school, String name, Consumer<ClassX> modifier) {
     checkNotNull(school);
@@ -54,10 +60,21 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
 
   @Query(
       """
-          SELECT c, cxks
+          SELECT c, tcx, scx, cxks
           FROM ClassX c
           LEFT JOIN FETCH c.school
           LEFT JOIN FETCH c.school.district
+
+          LEFT JOIN TeacherClassX tcx
+          ON
+              (:includeAllAvailableClassXs) = TRUE
+              AND (:teacherId) IS NOT NULL
+              AND c.id = tcx.classX.id
+          LEFT JOIN StudentClassX scx
+          ON
+              (:includeAllAvailableClassXs) = TRUE
+              AND (:studentId) IS NOT NULL
+              AND c.id = scx.classX.id
 
           LEFT JOIN ClassXKnowledgeAndSkill cxks
           ON
@@ -80,12 +97,12 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
 
               LEFT JOIN TeacherSchool ts
               ON
-                  (:includeAvailableClassXs) = TRUE
+                  (:includeAllAvailableClassXs) = TRUE
                   AND (:teacherId) IS NOT NULL
                   AND c.school.id = ts.school.id
               LEFT JOIN StudentSchool ss
               ON
-                  (:includeAvailableClassXs) = TRUE
+                  (:includeAllAvailableClassXs) = TRUE
                   AND (:studentId) IS NOT NULL
                   AND c.school.id = ss.school.id
 
@@ -97,33 +114,45 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
                   (:studentId) IS NULL
                   OR scx.student.id = (:studentId)
                   OR ss.student.id = (:studentId)))
+          AND (
+              (:teacherId) IS NOT NULL
+              OR (:studentId) IS NOT NULL)
           ORDER BY c.id""")
   List<FullClassXRow> findFullClassXsRows(
       @Nullable @Param("teacherId") Integer teacherId,
       @Nullable @Param("studentId") Integer studentId,
-      @Param("includeAvailableClassXs") boolean includeAvailableClassXs,
+      @Param("includeAllAvailableClassXs") boolean includeAllAvailableClassXs,
       @Param("includeKnowledgeAndSkills") boolean includeKnowledgeAndSkills);
 
   default List<FullClassX> findFullClassXs(
       @Nullable Teacher teacher,
       @Nullable Student student,
-      boolean includeAvailableClassXs,
+      boolean includeAllAvailableClassXs,
       boolean includeKnowledgeAndSkills) {
     return toFullClassX(
         findFullClassXsRows(
             teacher != null ? teacher.getId() : null,
             student != null ? student.getId() : null,
-            includeAvailableClassXs,
-            includeKnowledgeAndSkills));
+            includeAllAvailableClassXs,
+            includeKnowledgeAndSkills),
+        includeAllAvailableClassXs);
   }
 
-  private List<FullClassX> toFullClassX(Iterable<FullClassXRow> rows) {
+  private List<FullClassX> toFullClassX(
+      Iterable<FullClassXRow> rows, boolean includeAllAvailableClassXs) {
     List<FullClassX> fullClassXs = new ArrayList<>();
     FullClassX classX = null;
 
     for (FullClassXRow row : rows) {
       if (classX == null || !Objects.equals(row.classX.getId(), classX.classX.getId())) {
-        fullClassXs.add(classX = new FullClassX(row.classX, new ArrayList<>()));
+        fullClassXs.add(
+            classX =
+                new FullClassX(
+                    row.classX,
+                    !includeAllAvailableClassXs
+                        || row.teacherClassX() != null
+                        || row.studentClassX() != null,
+                    new ArrayList<>()));
       }
       if (row.classKnowledgeAndSkill() != null) {
         classX.knowledgeAndSkills.add(row.classKnowledgeAndSkill().getKnowledgeAndSkill());

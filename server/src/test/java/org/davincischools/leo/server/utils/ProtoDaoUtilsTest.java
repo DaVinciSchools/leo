@@ -5,7 +5,7 @@ import static com.google.common.truth.extensions.proto.ProtoTruth.assertThat;
 import com.google.protobuf.TextFormat;
 import com.google.protobuf.TextFormat.ParseException;
 import jakarta.persistence.EntityManager;
-import org.davincischools.leo.database.test.TestData;
+import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.pl_types.Assignment;
 import org.davincischools.leo.protos.pl_types.ClassX;
@@ -16,20 +16,25 @@ import org.davincischools.leo.protos.pl_types.ProjectPost;
 import org.davincischools.leo.protos.pl_types.School;
 import org.davincischools.leo.protos.pl_types.UserX;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
-import org.davincischools.leo.server.ServerApplication;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.support.DefaultConversionService;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
 
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    classes = {ServerApplication.class, TestData.class})
-@RunWith(SpringJUnit4ClassRunner.class)
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = ProtoDaoUtilsTest.TestApplicationConfiguration.class)
 public class ProtoDaoUtilsTest {
+
+  @Configuration
+  @ComponentScan(basePackageClasses = {TestDatabase.class, Database.class})
+  @EnableAutoConfiguration
+  public static class TestApplicationConfiguration {}
 
   @BeforeClass
   public static void initialSetup() {
@@ -186,6 +191,7 @@ public class ProtoDaoUtilsTest {
                 grade: "grade"
                 short_descr: "short"
                 long_descr_html: "long"
+                enrolled: true
                 school: {
                   id: 2
                   name: "school 2 name"

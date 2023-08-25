@@ -416,6 +416,7 @@ public class ProtoDaoUtils {
             classX,
             new ClassX().setCreationTime(Instant.now()),
             org.davincischools.leo.protos.pl_types.ClassX.SCHOOL_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.ClassX.ENROLLED_FIELD_NUMBER,
             org.davincischools.leo.protos.pl_types.ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
     if (classX.hasSchool()) {
       dao.setSchool(toSchoolDao(classX.getSchool()));
@@ -432,6 +433,7 @@ public class ProtoDaoUtils {
           classX,
           builder,
           org.davincischools.leo.protos.pl_types.ClassX.SCHOOL_FIELD_NUMBER,
+          org.davincischools.leo.protos.pl_types.ClassX.ENROLLED_FIELD_NUMBER,
           org.davincischools.leo.protos.pl_types.ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
       if (classX.getSchool() != null) {
         toSchoolProto(classX.getSchool(), builder.getSchoolBuilder());
@@ -444,6 +446,7 @@ public class ProtoDaoUtils {
       org.davincischools.leo.protos.pl_types.ClassXOrBuilder classX) {
     return new FullClassX(
         toClassXDao(classX),
+        classX.getEnrolled(),
         classX.getKnowledgeAndSkillsOrBuilderList().stream()
             .map(ProtoDaoUtils::toKnowledgeAndSkillDao)
             .toList());
@@ -456,6 +459,7 @@ public class ProtoDaoUtils {
     for (var knowledgeAndSkill : fullClassX.knowledgeAndSkills()) {
       toKnowledgeAndSkillProto(knowledgeAndSkill, builder.addKnowledgeAndSkillsBuilder());
     }
+    builder.setEnrolled(fullClassX.enrolled());
     return builder;
   }
 

@@ -16,7 +16,7 @@ message GetClassXsRequest {
   optional int32 student_id = 1;
   optional int32 teacher_id = 2;
 
-  optional bool include_all_available = 3;
+  optional bool include_all_available_class_xs = 3;
   optional bool include_knowledge_and_skills = 4;
 }
 
