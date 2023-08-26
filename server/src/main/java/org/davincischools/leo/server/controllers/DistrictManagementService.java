@@ -14,6 +14,7 @@ import org.davincischools.leo.protos.district_management.UpdateDistrictRequest;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.AdminX;
+import org.davincischools.leo.server.utils.http_user_x.Authenticated;
 import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -29,7 +30,7 @@ public class DistrictManagementService {
   @PostMapping(value = "/api/protos/DistrictManagementService/GetDistricts")
   @ResponseBody
   public DistrictInformationResponse getDistricts(
-      @AdminX HttpUserX userX,
+      @Authenticated HttpUserX userX,
       @RequestBody Optional<GetDistrictsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {

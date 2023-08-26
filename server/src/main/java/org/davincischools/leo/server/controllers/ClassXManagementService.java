@@ -2,6 +2,7 @@ package org.davincischools.leo.server.controllers;
 
 import java.util.Objects;
 import java.util.Optional;
+import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Student;
 import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.exceptions.UnauthorizedUserX;
@@ -55,6 +56,7 @@ public class ClassXManagementService {
                   .findFullClassXs(
                       request.hasTeacherId() ? new Teacher().setId(request.getTeacherId()) : null,
                       request.hasStudentId() ? new Student().setId(request.getStudentId()) : null,
+                      request.getSchoolIdsList().stream().map(e -> new School().setId(e)).toList(),
                       request.getIncludeAllAvailableClassXs(),
                       request.getIncludeKnowledgeAndSkills())
                   .forEach(

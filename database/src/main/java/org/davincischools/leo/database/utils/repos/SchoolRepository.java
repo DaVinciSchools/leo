@@ -11,6 +11,8 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.School;
+import org.davincischools.leo.database.daos.Student;
+import org.davincischools.leo.database.daos.Teacher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -73,4 +75,31 @@ public interface SchoolRepository extends JpaRepository<School, Integer> {
           + " ON ts.school.id = s.id"
           + " WHERE ts.teacher.id = (:teacherId)")
   List<School> findAllByTeacherId(@Param("teacherId") int teacherId);
+
+  @Query(
+      """
+          SELECT s
+          FROM School s
+          LEFT JOIN FETCH s.district
+
+          LEFT JOIN TeacherSchool ts
+          ON
+              (:teacher) IS NOT NULL
+              AND s = ts.school
+          LEFT JOIN StudentSchool ss
+          ON
+              (:student) IS NOT NULL
+              AND s = ss.school
+
+          WHERE (
+              (:teacher) IS NULL
+              OR ts.teacher = (:teacher))
+          AND (
+              (:student) IS NULL
+              OR ss.student = (:student))
+          AND (
+              (:teacher) IS NOT NULL
+              OR (:student) IS NOT NULL)
+          """)
+  List<School> findSchools(@Param("teacher") Teacher teacher, @Param("student") Student student);
 }

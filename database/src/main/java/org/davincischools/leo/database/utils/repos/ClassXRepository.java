@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -61,78 +62,64 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
   @Query(
       """
           SELECT c, tcx, scx, cxks
+
           FROM ClassX c
           LEFT JOIN FETCH c.school
           LEFT JOIN FETCH c.school.district
 
           LEFT JOIN TeacherClassX tcx
           ON
-              (:includeAllAvailableClassXs) = TRUE
-              AND (:teacherId) IS NOT NULL
-              AND c.id = tcx.classX.id
+            tcx.teacher = (:teacher)
+            AND tcx.classX = c
+
           LEFT JOIN StudentClassX scx
           ON
-              (:includeAllAvailableClassXs) = TRUE
-              AND (:studentId) IS NOT NULL
-              AND c.id = scx.classX.id
+            scx.student = (:student)
+            AND scx.classX = c
+
+          LEFT JOIN TeacherSchool ts
+          ON
+            (:includeAllAvailableClassXs) = TRUE
+            AND ts.teacher = (:teacher)
+            AND ts.school = c.school
+
+          LEFT JOIN StudentSchool ss
+          ON
+            (:includeAllAvailableClassXs) = TRUE
+            AND ss.student = (:student)
+            AND ss.school = c.school
 
           LEFT JOIN ClassXKnowledgeAndSkill cxks
           ON
-              (:includeKnowledgeAndSkills = TRUE
-              AND c.id = cxks.classX.id)
+            (:includeKnowledgeAndSkills) = TRUE
+            AND c = cxks.classX
           LEFT JOIN FETCH cxks.knowledgeAndSkill
 
-          WHERE c.id IN (
-              SELECT c.id
-              FROM ClassX c
-
-              LEFT JOIN TeacherClassX tcx
-              ON
-                  (:teacherId) IS NOT NULL
-                  AND c.id = tcx.classX.id
-              LEFT JOIN StudentClassX scx
-              ON
-                  (:studentId) IS NOT NULL
-                  AND c.id = scx.classX.id
-
-              LEFT JOIN TeacherSchool ts
-              ON
-                  (:includeAllAvailableClassXs) = TRUE
-                  AND (:teacherId) IS NOT NULL
-                  AND c.school.id = ts.school.id
-              LEFT JOIN StudentSchool ss
-              ON
-                  (:includeAllAvailableClassXs) = TRUE
-                  AND (:studentId) IS NOT NULL
-                  AND c.school.id = ss.school.id
-
-              WHERE (
-                  (:teacherId) IS NULL
-                  OR tcx.teacher.id = (:teacherId)
-                  OR ts.teacher.id = (:teacherId))
-              AND (
-                  (:studentId) IS NULL
-                  OR scx.student.id = (:studentId)
-                  OR ss.student.id = (:studentId)))
-          AND (
-              (:teacherId) IS NOT NULL
-              OR (:studentId) IS NOT NULL)
+          WHERE
+              c.school IN (:schools)
+              OR (
+                  ((:teacher) IS NULL OR tcx IS NOT NULL OR ts IS NOT NULL)
+                  AND ((:student) IS NULL OR scx IS NOT NULL OR ss IS NOT NULL)
+                  AND ((:teacher) IS NOT NULL OR (:student) IS NOT NULL))
           ORDER BY c.id""")
   List<FullClassXRow> findFullClassXsRows(
-      @Nullable @Param("teacherId") Integer teacherId,
-      @Nullable @Param("studentId") Integer studentId,
+      @Nullable @Param("teacher") Teacher teacher,
+      @Nullable @Param("student") Student student,
+      @Param("schools") Iterable<School> schools,
       @Param("includeAllAvailableClassXs") boolean includeAllAvailableClassXs,
       @Param("includeKnowledgeAndSkills") boolean includeKnowledgeAndSkills);
 
   default List<FullClassX> findFullClassXs(
       @Nullable Teacher teacher,
       @Nullable Student student,
+      Iterable<School> schools,
       boolean includeAllAvailableClassXs,
       boolean includeKnowledgeAndSkills) {
     return toFullClassX(
         findFullClassXsRows(
-            teacher != null ? teacher.getId() : null,
-            student != null ? student.getId() : null,
+            teacher,
+            student,
+            ImmutableList.<School>builder().addAll(schools).add(new School().setId(0)).build(),
             includeAllAvailableClassXs,
             includeKnowledgeAndSkills),
         includeAllAvailableClassXs);
