@@ -18,7 +18,9 @@ service UserXManagementService {
 message FullUserXDetails {
   optional pl_types.UserX user_x = 1;
 
-  repeated int32 school_ids = 2;
+  optional pl_types.District district = 6;
+  repeated pl_types.School schools = 2;
+  repeated pl_types.ClassX class_xs = 5;
 
   optional int32 district_student_id = 3;
   optional int32 student_grade = 4;
@@ -47,32 +49,25 @@ message GetPagedUserXsDetailsResponse {
 message GetUserXDetailsRequest {
   // If unset, returns details about the current user_x.
   optional int32 user_x_id = 1;
+
+  optional bool include_schools = 2;
+  optional bool include_class_xs = 3;
+
+  optional bool include_all_available_class_xs = 4;
+  optional bool include_knowledge_and_skills = 5;
 }
 
 message GetUserXDetailsResponse {
   optional FullUserXDetails user_x = 1;
 }
 
-// Field names in this message and that of the pl_types.UserX message must be
-// unique or mean the same thing. The Accounts.tsx form merges them together.
 message UpsertUserXRequest {
-  optional pl_types.UserX user_x = 1;
+  optional FullUserXDetails user_x = 1;
 
-  // Only used when a user_x changes their password.
+  // Only used when a user changes their password.
   optional string current_password = 2;
   optional string new_password = 3;
   optional string verify_password = 4;
-
-  // Repeated fields don't have a has_field method. So, it's not possible
-  // to differentiate between "clear all schools" and "don't modify schools."
-  // Here we use the has_field method on the outer message.
-  message SchoolIds {
-    repeated int32 school_ids = 1;
-  }
-  optional SchoolIds school_ids = 5;
-
-  optional int32 district_student_id = 6;
-  optional int32 student_grade = 7;
 }
 
 message UpsertUserXResponse {

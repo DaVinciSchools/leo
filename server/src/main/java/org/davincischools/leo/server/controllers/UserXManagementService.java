@@ -1,6 +1,7 @@
 package org.davincischools.leo.server.controllers;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -8,15 +9,17 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.Student;
 import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.daos.UserX;
+import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserXUtils;
 import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
@@ -41,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -105,27 +109,76 @@ public class UserXManagementService {
             (request, log) -> {
               GetUserXDetailsResponse.Builder response = GetUserXDetailsResponse.newBuilder();
 
-              // No user id is the equivalent to a whoami request.
-              if (!request.hasUserXId()) {
-                if (userX.isAuthenticated()) {
-                  getFullUserXDetails(userX.get().get().getId(), response.getUserXBuilder());
-                }
-                return response.build();
-              }
-
-              // If not an admin, make sure the user is getting their own profile.
-              int userXId = request.getUserXId();
-              if (!userX.isAdminX()) {
-                if (userXId != userX.get().orElseThrow().getId()) {
+              int userXId;
+              if (request.hasUserXId()) {
+                if (!(userX.isAdminX()
+                    || Objects.equals(request.getUserXId(), userX.getUserXIdOrNull()))) {
                   return userX.returnForbidden(GetUserXDetailsResponse.getDefaultInstance());
                 }
+                userXId = request.getUserXId();
+              } else if (userX.isAuthenticated()) {
+                userXId = checkNotNull(userX.getUserXIdOrNull());
+              } else {
+                return userX.returnForbidden(GetUserXDetailsResponse.getDefaultInstance());
               }
 
-              getFullUserXDetails(userXId, response.getUserXBuilder());
+              FullUserXDetails.Builder details =
+                  getUserXDetails(
+                          userXId,
+                          request.getIncludeSchools(),
+                          request.getIncludeClassXs(),
+                          request.getIncludeAllAvailableClassXs(),
+                          request.getIncludeKnowledgeAndSkills(),
+                          null)
+                      .orElse(null);
+              if (details == null) {
+                return userX.returnNotFound(GetUserXDetailsResponse.getDefaultInstance());
+              }
 
-              return response.build();
+              return response.setUserX(details).build();
             })
         .finish();
+  }
+
+  public Optional<FullUserXDetails.Builder> getUserXDetails(
+      int userXId,
+      boolean includeSchools,
+      boolean includeClassXs,
+      boolean includeAllAvailableClassXs,
+      boolean includeKnowledgeAndSkills,
+      @Nullable FullUserXDetails.Builder details) {
+
+    var finalDetails = details != null ? details : FullUserXDetails.newBuilder();
+
+    UserX dbUserX = db.getUserXRepository().findById(userXId).orElse(null);
+    if (dbUserX == null) {
+      return Optional.empty();
+    }
+    ProtoDaoUtils.toUserXProto(dbUserX, finalDetails.getUserXBuilder());
+
+    if (dbUserX.getDistrict() != null && dbUserX.getDistrict().getId() != null) {
+      ProtoDaoUtils.toDistrictProto(dbUserX.getDistrict(), finalDetails.getDistrictBuilder());
+    }
+
+    if (includeSchools) {
+      db.getSchoolRepository()
+          .findSchools(dbUserX.getTeacher(), dbUserX.getStudent())
+          .forEach(school -> ProtoDaoUtils.toSchoolProto(school, finalDetails.addSchoolsBuilder()));
+    }
+
+    if (includeClassXs || includeAllAvailableClassXs) {
+      db.getClassXRepository()
+          .findFullClassXs(
+              dbUserX.getTeacher(),
+              dbUserX.getStudent(),
+              /* schools= */ ImmutableList.of(),
+              includeAllAvailableClassXs,
+              includeKnowledgeAndSkills)
+          .forEach(
+              classX -> ProtoDaoUtils.toFullClassXProto(classX, finalDetails.addClassXsBuilder()));
+    }
+
+    return Optional.of(finalDetails);
   }
 
   @PostMapping(value = "/api/protos/UserXManagementService/UpsertUserX")
@@ -144,44 +197,58 @@ public class UserXManagementService {
         .start(optionalRequest.orElse(UpsertUserXRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
+              UpsertUserXResponse.Builder response = UpsertUserXResponse.newBuilder();
 
-              // Make sure a user is only updating their own profile.
-              if (!userX.isAdminX()) {
-                if (!request.getUserX().hasUserXId()
-                    || request.getUserX().getUserXId() != userX.get().orElseThrow().getId()) {
+              // Verify permissions.
+              Integer userXId = null;
+              if (request.getUserX().getUserX().hasUserXId()) {
+                if (!(userX.isAdminX()
+                    || Objects.equals(
+                        request.getUserX().getUserX().getUserXId(), userX.getUserXIdOrNull()))) {
                   return userX.returnForbidden(UpsertUserXResponse.getDefaultInstance());
                 }
+                userXId = request.getUserX().getUserX().getUserXId();
+              } else if (!userX.isAdminX()) {
+                return userX.returnForbidden(UpsertUserXResponse.getDefaultInstance());
               }
 
-              // Lookup existing data and detach.
-              Optional<UserX> existingEmailUserX =
-                  db.getUserXRepository().findByEmailAddress(request.getUserX().getEmailAddress());
-              existingEmailUserX.ifPresent(entityManager::detach);
+              UserX oldUserX =
+                  userXId != null ? db.getUserXRepository().findById(userXId).orElse(null) : null;
+              if (oldUserX != null) {
+                entityManager.detach(oldUserX);
+              }
+              // TODO: Make a copy rather than reread.
+              UserX newUserX =
+                  userXId != null ? db.getUserXRepository().findById(userXId).orElse(null) : null;
+              newUserX =
+                  newUserX != null
+                      ? newUserX
+                      : new UserX().setCreationTime(Instant.now()).setId(userXId);
+              boolean isNewUserX = oldUserX == null;
 
-              // Prepare for modifications.
-              var response = UpsertUserXResponse.newBuilder();
+              // Set first and last names.
+              String newFirstName = request.getUserX().getUserX().getFirstName().trim();
+              String newLastName = request.getUserX().getUserX().getLastName().trim();
+              if (newFirstName.isEmpty() || newLastName.isEmpty()) {
+                return response.setError("Error: Both first and last names are required.").build();
+              }
+              newUserX.setFirstName(newFirstName);
+              newUserX.setLastName(newLastName);
 
-              // Possibly load the existing user.
-              UserX existingUserX =
-                  request.getUserX().hasUserXId()
-                      ? db.getUserXRepository()
-                          .findById(request.getUserX().getUserXId())
-                          .orElse(null)
-                      : null;
-
-              // Only an admin can create a user.
-              if (existingUserX == null) {
-                if (!userX.isAdminX()) {
-                  return userX.returnForbidden(UpsertUserXResponse.getDefaultInstance());
+              // Set the e-mail address.
+              if (isNewUserX || userX.isAdminX()) {
+                String newEmailAddress = request.getUserX().getUserX().getEmailAddress().trim();
+                if (!EMAIL_REQS.matcher(newEmailAddress).matches()) {
+                  return response.setError("Error: Email address is invalid.").build();
                 }
-                existingUserX = new UserX().setCreationTime(Instant.now());
+                newUserX.setEmailAddress(newEmailAddress);
               }
 
               // Change / set the password.
-              if (request.hasNewPassword()) {
+              if (isNewUserX || !request.getNewPassword().isEmpty()) {
                 // Check the existing password.
-                if (!userX.isAdminX()) {
-                  if (!UserXUtils.checkPassword(existingUserX, request.getCurrentPassword())) {
+                if (oldUserX != null && !userX.isAdminX()) {
+                  if (!UserXUtils.checkPassword(oldUserX, request.getCurrentPassword())) {
                     return response
                         .setError("Access Denied: The current password is incorrect.")
                         .build();
@@ -192,131 +259,132 @@ public class UserXManagementService {
                 if (!request.getNewPassword().equals(request.getVerifyPassword())) {
                   return response.setError("Error: The passwords do not match.").build();
                 }
-                if (!request.getNewPassword().isEmpty()) {
-                  if (!PASSWORD_REQS.matcher(request.getNewPassword()).matches()) {
-                    return response.setError("Error: The password is invalid.").build();
-                  }
-                  UserXUtils.setPassword(existingUserX, request.getNewPassword());
+                if (!PASSWORD_REQS.matcher(request.getNewPassword()).matches()) {
+                  return response.setError("Error: The password is invalid.").build();
                 }
-              }
-              if (Strings.isNullOrEmpty(existingUserX.getEncodedPassword())) {
-                return response.setError("Error: New accounts must have a password.").build();
-              }
 
-              // Set first and last names.
-              String firstName = request.getUserX().getFirstName().trim();
-              String lastName = request.getUserX().getLastName().trim();
-              if (firstName.isEmpty() || lastName.isEmpty()) {
-                return response.setError("Error: Both first and last names are required.").build();
+                UserXUtils.setPassword(newUserX, request.getNewPassword());
               }
-              existingUserX.setFirstName(firstName).setLastName(lastName);
+              if (Strings.isNullOrEmpty(newUserX.getEncodedPassword())) {
+                return response.setError("Error: A password is required.").build();
+              }
 
               // Only admins can change the following properties.
               if (userX.isAdminX()) {
-                // Set the e-mail address.
-                String emailAddress = request.getUserX().getEmailAddress().trim();
-                if (!EMAIL_REQS.matcher(emailAddress).matches()) {
-                  return response.setError("Error: The e-mail address is invalid.").build();
-                }
-                if (existingEmailUserX.isPresent()) {
-                  if (!existingEmailUserX.get().getId().equals(existingUserX.getId())) {
-                    return response
-                        .setError("Error: That e-mail address is already in use.")
-                        .build();
-                  }
-                }
-                existingUserX.setEmailAddress(emailAddress);
-
                 // Update admin privileges.
-                if ((existingUserX.getAdminX() != null) ^ request.getUserX().getIsAdminX()) {
-                  if (request.getUserX().getIsAdminX()) {
-                    existingUserX.setAdminX(
-                        db.getAdminXRepository()
-                            .save(
-                                new org.davincischools.leo.database.daos.AdminX()
-                                    .setCreationTime(Instant.now())));
-                  } else {
-                    existingUserX.setAdminX(null);
+                if (request.getUserX().getUserX().getIsAdminX()) {
+                  if (oldUserX.getAdminX() == null) {
+                    newUserX.setAdminX(
+                        new org.davincischools.leo.database.daos.AdminX()
+                            .setCreationTime(Instant.now()));
+                    DaoUtils.removeTransientValues(
+                        newUserX.getAdminX(), db.getAdminXRepository()::save);
                   }
+                } else {
+                  newUserX.setAdminX(null);
                 }
 
-                //// Update teacher privileges.
-                // if ((existingUserX.getTeacher() != null) ^ request.getUserX().getIsTeacher()) {
-                // if (request.getUserX().getIsTeacher()) {
-                // saveTeacher =
-                // Optional.of(
-                // Optional.ofNullable(existingUserX.getTeacher())
-                //    .orElse(new Teacher().setCreationTime(Instant.now())));
-                // existingUserX.setTeacher(saveTeacher.get());
-                // } else {
-                //// Remove all existing schools.
-                // if (existingUserX.getTeacher() != null && existingUserX.getTeacher().getId() !=
-                // null) {
-                // db.getTeacherSchoolRepository()
-                // .keepSchoolsForTeacher(existingUserX.getTeacher().getId(), ImmutableList.of());
-                // }
-                // removeTeacher = Optional.ofNullable(existingUserX.getTeacher());
-                // existingUserX.setTeacher(null);
-                // }
-                // }
-                //// Remove any extraneous schools.
-                // if (existingUserX.getTeacher() != null && request.hasSchoolIds()) {
-                // db.getTeacherSchoolRepository()
-                // .keepSchoolsForTeacher(
-                // existingUserX.getTeacher().getId(), request.getSchoolIds().getSchoolIdsList());
-                // }
+                // Update teacher privileges.
+                if (request.getUserX().getUserX().getIsTeacher()) {
+                  if (oldUserX.getTeacher() == null) {
+                    newUserX.setTeacher(
+                        new org.davincischools.leo.database.daos.Teacher()
+                            .setCreationTime(Instant.now()));
+                    DaoUtils.removeTransientValues(
+                        newUserX.getTeacher(), db.getTeacherRepository()::save);
+                  }
+                } else {
+                  newUserX.setTeacher(null);
+                }
 
                 // Update student privileges.
-                if ((existingUserX.getStudent() != null) ^ request.getUserX().getIsStudent()) {
-                  if (request.getUserX().getIsStudent()) {
-                    existingUserX.setStudent(
-                        db.getStudentRepository()
-                            .save(new Student().setCreationTime(Instant.now())));
-                  } else {
-                    existingUserX.setStudent(null);
+                if (request.getUserX().getUserX().getIsStudent()) {
+                  if (oldUserX.getStudent() == null) {
+                    newUserX.setStudent(
+                        new org.davincischools.leo.database.daos.Student()
+                            .setCreationTime(Instant.now()));
+                    DaoUtils.removeTransientValues(
+                        newUserX.getStudent(), db.getStudentRepository()::save);
                   }
-                }
-                if (request.getUserX().getIsStudent()) {
-                  existingUserX
-                      .getStudent()
-                      .setDistrictStudentId(
-                          request.hasDistrictStudentId() ? request.getDistrictStudentId() : null)
-                      .setGrade(request.hasStudentGrade() ? request.getStudentGrade() : null);
+                } else {
+                  newUserX.setStudent(null);
                 }
               }
 
-              //// Add any missing schools.
-              // if (userX.getTeacher() != null) {
-              // for (int schoolId : request.getSchoolIds().getSchoolIdsList()) {
-              // db.getTeacherSchoolRepository()
-              // .saveTeacherSchool(
-              // userX.getTeacher(),
-              // new School().setCreationTime(Instant.now()).setId(schoolId));
-              // }
-              // }
+              // Update district.
+              // TODO: move this under admin requirements.
+              Integer requestDistrictId =
+                  request.getUserX().getDistrict().hasId()
+                      ? request.getUserX().getDistrict().getId()
+                      : null;
+              Integer oldDistrictId =
+                  newUserX.getDistrict() != null ? newUserX.getDistrict().getId() : null;
+              if (!Objects.equals(requestDistrictId, oldDistrictId)) {
+                if (requestDistrictId != null) {
+                  newUserX.setDistrict(
+                      new District().setCreationTime(Instant.now()).setId(requestDistrictId));
+                } else {
+                  newUserX.setDistrict(null);
+                }
+              }
 
-              if (existingUserX.getAdminX() != null) {
-                db.getAdminXRepository().save(existingUserX.getAdminX());
-              }
-              if (existingUserX.getTeacher() != null) {
-                db.getTeacherRepository().save(existingUserX.getTeacher());
-              }
-              if (existingUserX.getStudent() != null) {
-                db.getStudentRepository().save(existingUserX.getStudent());
-              }
-              db.getUserXRepository().save(existingUserX);
+              // Update schools.
+              // TODO: move this under admin requirements.
+              db.getSchoolRepository()
+                  .updateSchools(
+                      db,
+                      newUserX.getTeacher(),
+                      newUserX.getStudent(),
+                      Lists.transform(
+                          request.getUserX().getSchoolsList(), ProtoDaoUtils::toSchoolDao));
 
-              if (!response.hasError()) {
-                response.setUserX(ProtoDaoUtils.toFullUserXDetailsProto(existingUserX, null));
+              // Update classes.
+              // TODO: move this under admin requirements.
+              db.getClassXRepository()
+                  .updateClassXs(
+                      db,
+                      newUserX.getTeacher(),
+                      newUserX.getStudent(),
+                      Lists.transform(
+                          request.getUserX().getClassXsList(), ProtoDaoUtils::toClassXDao));
+
+              // Save the updated user.
+              DaoUtils.removeTransientValues(newUserX, db.getUserXRepository()::save);
+
+              // Remove dropped permissions.
+              if (oldUserX != null) {
+                if (newUserX.getAdminX() == null && oldUserX.getAdminX() != null) {
+                  DaoUtils.removeTransientValues(
+                      oldUserX.getAdminX().setDeleted(Instant.now()),
+                      db.getAdminXRepository()::save);
+                }
+                if (newUserX.getTeacher() == null && oldUserX.getTeacher() != null) {
+                  DaoUtils.removeTransientValues(
+                      oldUserX.getTeacher().setDeleted(Instant.now()),
+                      db.getTeacherRepository()::save);
+                }
+                if (newUserX.getStudent() == null && oldUserX.getStudent() != null) {
+                  DaoUtils.removeTransientValues(
+                      oldUserX.getStudent().setDeleted(Instant.now()),
+                      db.getStudentRepository()::save);
+                }
               }
+
+              final Integer finalUserXId = newUserX.getId();
+              getUserXDetails(
+                      finalUserXId,
+                      /* includeHighSchools= */ true,
+                      /* includeClassXs= */ true,
+                      /* includeAllAvailableClassXs= */ true,
+                      /* includeKnowledgeAndSkills= */ false,
+                      response.getUserXBuilder())
+                  .orElseThrow(
+                      () ->
+                          new IllegalStateException(
+                              "The user just saved should exist: " + finalUserXId));
+
               return response.build();
             })
-        .onError(
-            (error, log) ->
-                Optional.of(
-                    UpsertUserXResponse.newBuilder()
-                        .setError(error.throwables().get(0).getMessage())
-                        .build()))
         .finish();
   }
 
@@ -485,30 +553,5 @@ public class UserXManagementService {
       return (T) request.getField(descriptor);
     }
     return null;
-  }
-
-  private void getFullUserXDetails(int userXId, FullUserXDetails.Builder details) {
-    // If the user doesn't exist, return an empty result.
-    UserX userX = db.getUserXRepository().findById(userXId).orElse(null);
-    if (userX == null) {
-      return;
-    }
-
-    // Set user details.
-    details.setUserX(ProtoDaoUtils.toUserXProto(userX, null));
-
-    // Set teacher details.
-    Optional.ofNullable(userX.getTeacher())
-        .map(db.getTeacherSchoolRepository()::findAllByTeacher)
-        .map(tss -> Lists.transform(tss, ts -> ts.getSchool().getId()))
-        .ifPresent(details::addAllSchoolIds);
-
-    // Set student details.
-    Optional.ofNullable(userX.getStudent())
-        .map(Student::getDistrictStudentId)
-        .ifPresent(details::setDistrictStudentId);
-    Optional.ofNullable(userX.getStudent())
-        .map(Student::getGrade)
-        .ifPresent(details::setStudentGrade);
   }
 }

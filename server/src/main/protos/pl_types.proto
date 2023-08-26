@@ -94,9 +94,6 @@ message School {
   reserved "district_id";
 }
 
-// Field names in this message and that of the
-// user_x_management.UpsertUserXRequest message must be unique or mean the same
-// thing. The Accounts.tsx form merges them together.
 message UserX {
   optional int32 user_x_id = 1;
   optional int32 district_id = 2;
