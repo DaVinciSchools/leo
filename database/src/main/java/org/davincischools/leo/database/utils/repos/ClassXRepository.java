@@ -173,7 +173,7 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
     if (fullClassX.classX().getId() != null
         && requiredTeacherId != null
         && !db.getTeacherClassXRepository()
-            .canTeacherUpdateClassX(requiredTeacherId, fullClassX.classX().getId())) {
+            .canTeacherUpdateClassX(new Teacher().setId(requiredTeacherId), fullClassX.classX())) {
       throw new UnauthorizedUserX("Teacher does not have write access to this class.");
     }
 

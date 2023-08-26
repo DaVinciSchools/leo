@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Streams;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -19,36 +20,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Callable;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 public class DaoUtils {
 
   private static final Map<Class<?>, Optional<DaoShallowCopyMethods>> daoShallowCopyMethods =
       Collections.synchronizedMap(new HashMap<>());
-
-  @SafeVarargs
-  @SuppressWarnings("unchecked")
-  private static <T> T coalesce(Callable<T>... values) throws NullPointerException {
-    return Stream.of(values)
-        .map(
-            value -> {
-              try {
-                return value.call();
-              } catch (Exception e) {
-                return null;
-              }
-            })
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElseThrow(NullPointerException::new);
-  }
 
   private static Optional<DaoShallowCopyMethods> getDaoShallowCopyMethods(Class<?> daoClass) {
     checkNotNull(daoClass);
@@ -209,6 +192,19 @@ public class DaoUtils {
                         "No shallow copy methods found: " + to.getClass()));
 
     daoMethods.setId().accept(to, daoMethods.getId().apply(from));
+  }
+
+  public static <T, ID> void updateCollection(
+      Iterable<T> oldValues,
+      Iterable<T> newValues,
+      Function<T, ID> toId,
+      Consumer<Iterable<T>> saveAll,
+      Consumer<Iterable<T>> deleteAll) {
+    Set<ID> oldIds = Streams.stream(oldValues).map(toId).collect(Collectors.toSet());
+    Set<ID> newIds = Streams.stream(newValues).map(toId).collect(Collectors.toSet());
+    deleteAll.accept(
+        Streams.stream(oldValues).filter(e -> !newIds.contains(toId.apply(e))).toList());
+    saveAll.accept(Streams.stream(newValues).filter(e -> !oldIds.contains(toId.apply(e))).toList());
   }
 
   private record DaoShallowCopyMethods(

@@ -14,7 +14,6 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
-import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Student;
 import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.daos.UserX;
@@ -349,16 +348,21 @@ public class UserXManagementService {
 
                 if (existingUserX.getTeacher() != null) {
                   db.getTeacherSchoolRepository()
-                      .keepSchoolsForTeacher(
-                          existingUserX.getTeacher().getId(), ImmutableList.of());
-                  db.getTeacherRepository().deleteById(existingUserX.getTeacher().getId());
+                      .setTeacherSchools(existingUserX.getTeacher(), ImmutableList.of());
+                  db.getTeacherClassXRepository()
+                      .setTeacherClassXs(existingUserX.getTeacher(), ImmutableList.of());
+                  db.getTeacherRepository().delete(existingUserX.getTeacher());
                 }
 
                 if (existingUserX.getStudent() != null) {
-                  db.getStudentRepository().deleteById(existingUserX.getStudent().getId());
+                  db.getStudentSchoolRepository()
+                      .setStudentSchools(existingUserX.getStudent(), ImmutableList.of());
+                  db.getStudentClassXRepository()
+                      .setStudentClassXs(existingUserX.getStudent(), ImmutableList.of());
+                  db.getStudentRepository().delete(existingUserX.getStudent());
                 }
 
-                db.getUserXRepository().deleteById(existingUserX.getId());
+                db.getUserXRepository().delete(existingUserX);
               }
 
               return RemoveUserXResponse.getDefaultInstance();
@@ -495,9 +499,8 @@ public class UserXManagementService {
 
     // Set teacher details.
     Optional.ofNullable(userX.getTeacher())
-        .map(Teacher::getId)
-        .map(db.getTeacherSchoolRepository()::findSchoolsByTeacherId)
-        .map(schools -> Lists.transform(schools, School::getId))
+        .map(db.getTeacherSchoolRepository()::findAllByTeacher)
+        .map(tss -> Lists.transform(tss, ts -> ts.getSchool().getId()))
         .ifPresent(details::addAllSchoolIds);
 
     // Set student details.
