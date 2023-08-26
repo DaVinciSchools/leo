@@ -49,6 +49,7 @@ export interface FormFieldMetadata {
     isMultiple?: boolean;
   };
   onChange?: (formFields: FormFields, formField: FormField<any>) => void;
+  disabled?: boolean;
 }
 
 export interface IFormAutocompleteParams<T> {
@@ -344,7 +345,9 @@ export function useFormFields(
           min: fieldMetadata?.isInteger?.min,
           max: fieldMetadata?.isInteger?.max,
         },
-        disabled: formFieldsMetadata?.disabled === true,
+        disabled:
+          formFieldsMetadata?.disabled === true ||
+          fieldMetadata?.disabled === true,
       } as OutlinedTextFieldProps;
     }
 
@@ -357,7 +360,9 @@ export function useFormFields(
         onChange: e => {
           setStringValue(e.target.checked ? 'on' : 'off');
         },
-        disabled: formFieldsMetadata?.disabled === true,
+        disabled:
+          formFieldsMetadata?.disabled === true ||
+          fieldMetadata?.disabled === true,
       };
     }
 
@@ -371,7 +376,9 @@ export function useFormFields(
             setStringValue(value != null ? String(value ?? '') : '');
           }
         },
-        disabled: formFieldsMetadata?.disabled === true,
+        disabled:
+          formFieldsMetadata?.disabled === true ||
+          fieldMetadata?.disabled === true,
       };
     }
 
@@ -382,7 +389,9 @@ export function useFormFields(
           setStringValue(value);
         },
         preserveWhitespace: true,
-        readOnly: formFieldsMetadata?.disabled === true,
+        readOnly:
+          formFieldsMetadata?.disabled === true ||
+          fieldMetadata?.disabled === true,
       };
     }
 

@@ -66,6 +66,7 @@ export function ProfileEditor(props: {
       maxLength: 254,
       isEmail: true,
       startIcon: <Email />,
+      disabled: global?.userX?.isAdminX !== true,
     }
   );
 
@@ -111,6 +112,7 @@ export function ProfileEditor(props: {
     props.profileForm.useAutocompleteFormField<IDistrict | null>('district', {
       isAutocomplete: {},
       onChange: refreshClassXs,
+      disabled: global?.userX?.isAdminX !== true,
     });
   const profileSchools = props.profileForm.useAutocompleteFormField<ISchool[]>(
     'schools',
@@ -230,7 +232,11 @@ export function ProfileEditor(props: {
           <Grid item xs={12} className="global-section-heading">
             <div className="global-section-title">Password</div>
           </Grid>
-          <Grid item xs={12}>
+          <Grid
+            item
+            xs={12}
+            display={global?.userX?.isAdminX ? 'none' : undefined}
+          >
             <TextField
               autoComplete="current-password"
               label="Current Password"
@@ -263,7 +269,7 @@ export function ProfileEditor(props: {
               formField={profileDistrict}
               InputLabelProps={{shrink: true}}
               placeholder={hasOptions =>
-                hasOptions ? 'Select District' : 'Districts Loading...'
+                hasOptions ? 'Select a district' : 'Districts are loading...'
               }
             />
           </Grid>
@@ -272,8 +278,10 @@ export function ProfileEditor(props: {
               sortedSchools={sortedSchools}
               formField={profileSchools}
               InputLabelProps={{shrink: true}}
-              placeholder={hasOptions =>
-                hasOptions ? 'Select Schools' : 'Select a District First'
+              placeholder={() =>
+                global?.userX?.isAdminX === true
+                  ? 'Select a district to select from its available schools'
+                  : 'Select schools from the district'
               }
             />
           </Grid>
@@ -282,12 +290,17 @@ export function ProfileEditor(props: {
               sortedClassXs={sortedClassXs}
               formField={profileClassXs}
               InputLabelProps={{shrink: true}}
-              placeholder={hasOptions =>
-                hasOptions ? 'Select Classes' : 'Select Schools First'
+              placeholder={() =>
+                'Select schools to select from their available classes'
               }
             />
           </Grid>
-          <Grid item xs={12} className="global-section-heading">
+          <Grid
+            item
+            xs={12}
+            className="global-section-heading"
+            display={global?.userX?.isAdminX ? undefined : 'none'}
+          >
             <div className="global-section-title">Roles</div>
           </Grid>
           <Grid
@@ -298,11 +311,19 @@ export function ProfileEditor(props: {
             <Checkbox {...profileIsAdminX.checkboxParams()} />
             Is Administrator
           </Grid>
-          <Grid item xs={12}>
+          <Grid
+            item
+            xs={12}
+            display={global?.userX?.isAdminX ? undefined : 'none'}
+          >
             <Checkbox {...profileIsTeacher.checkboxParams()} />
             Is Teacher
           </Grid>
-          <Grid item xs={12}>
+          <Grid
+            item
+            xs={12}
+            display={global?.userX?.isAdminX ? undefined : 'none'}
+          >
             <Checkbox {...profileIsStudent.checkboxParams()} />
             Is Student
           </Grid>

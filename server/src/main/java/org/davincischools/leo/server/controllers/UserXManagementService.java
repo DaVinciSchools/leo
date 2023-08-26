@@ -309,22 +309,20 @@ public class UserXManagementService {
                 } else {
                   newUserX.setStudent(null);
                 }
-              }
 
-              // Update district.
-              // TODO: move this under admin requirements.
-              Integer requestDistrictId =
-                  request.getUserX().getDistrict().hasId()
-                      ? request.getUserX().getDistrict().getId()
-                      : null;
-              Integer oldDistrictId =
-                  newUserX.getDistrict() != null ? newUserX.getDistrict().getId() : null;
-              if (!Objects.equals(requestDistrictId, oldDistrictId)) {
-                if (requestDistrictId != null) {
-                  newUserX.setDistrict(
-                      new District().setCreationTime(Instant.now()).setId(requestDistrictId));
-                } else {
-                  newUserX.setDistrict(null);
+                // Update district.
+                Integer requestDistrictId =
+                    request.getUserX().getDistrict().hasId()
+                        ? request.getUserX().getDistrict().getId()
+                        : null;
+                Integer oldDistrictId =
+                    newUserX.getDistrict() != null ? newUserX.getDistrict().getId() : null;
+                if (!Objects.equals(requestDistrictId, oldDistrictId)) {
+                  if (requestDistrictId != null) {
+                    newUserX.setDistrict(new District().setId(requestDistrictId));
+                  } else {
+                    newUserX.setDistrict(null);
+                  }
                 }
               }
 
