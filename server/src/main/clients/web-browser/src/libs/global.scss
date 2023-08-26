@@ -1,6 +1,9 @@
+@use 'color';
+
 .global-flex-column {
   display: flex;
   flex-flow: column nowrap;
+  width: 100%;
 }
 
 .global-flex-row {
@@ -26,3 +29,43 @@
   }
 }
 
+.global-section-heading {
+  padding-bottom: 3px;
+  border-bottom: color.$primary-800 solid 2px;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  white-space: nowrap;
+  padding-top: 1.5em;
+
+  .global-section-title {
+    font-weight: bold;
+    white-space: nowrap;
+  }
+
+  .global-section-links {
+    white-space: nowrap;
+    display: flex;
+    gap: 1em;
+    flex-flow: row nowrap;
+
+    .clickable {
+      color: color.$primary-800;
+    }
+  }
+
+  :first-child {
+    padding-top: 0;
+  }
+}
+
+.global-tags {
+  margin: 3px;
+  border-radius: 0;
+  background-color: rgba(255, 255, 255);
+  white-space: nowrap;
+}
+
+.global-space-filler {
+  height: 15%;
+}
