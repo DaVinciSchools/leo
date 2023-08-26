@@ -48,6 +48,7 @@ export interface FormFieldMetadata {
     isFreeSolo?: boolean;
     isMultiple?: boolean;
   };
+  onChange?: (formFields: FormFields, formField: FormField<any>) => void;
 }
 
 export interface IFormAutocompleteParams<T> {
@@ -229,6 +230,11 @@ export function useFormFields(
     const [error, setError] = useState('');
     const [evaluateField, setEvaluateField] = useState(false);
     const fieldRef = useRef<HTMLDivElement | HTMLButtonElement>(null);
+
+    useEffect(() => {
+      fieldMetadata?.onChange?.(formFields, formField);
+      formFieldsMetadata?.onChange?.(formFields, formField);
+    }, [stringValue, autocompleteValue]);
 
     useEffect(() => {
       fields.forEach(f => f.optionallyEvaluateField());
@@ -565,14 +571,6 @@ export function useFormFields(
 
     fields.set(name, formField);
 
-    useEffect(() => {
-      formChanged(formField);
-    }, [stringValue]);
-
-    useEffect(() => {
-      formChanged(formField);
-    }, [autocompleteValue]);
-
     return formField;
   }
 
@@ -700,13 +698,6 @@ export function useFormFields(
     getValuesObject,
     getValuesURLSearchParams,
   };
-
-  function formChanged(formField: FormField<any>) {
-    if (formFieldsMetadata && formFieldsMetadata.onChange) {
-      formFieldsMetadata.onChange(formFields, formField);
-    }
-  }
-
   return formFields;
 }
 
