@@ -3,6 +3,7 @@ package org.davincischools.leo.database.utils.repos;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.Streams;
+import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.List;
 import org.davincischools.leo.database.daos.ClassX;
@@ -44,6 +45,7 @@ public interface StudentClassXRepository extends JpaRepository<StudentClassX, St
 
   List<StudentClassX> findAllByStudent(Student student);
 
+  @Transactional
   default void setStudentClassXs(Student student, Iterable<ClassX> classXs) {
     DaoUtils.updateCollection(
         findAllByStudent(student),

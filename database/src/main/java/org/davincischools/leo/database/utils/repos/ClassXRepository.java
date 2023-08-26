@@ -168,4 +168,18 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
     db.getClassXKnowledgeAndSkillRepository()
         .setClassXKnoweldgeAndSkills(fullClassX.classX(), fullClassX.knowledgeAndSkills());
   }
+
+  @Transactional
+  default void updateClassXs(
+      Database db, @Nullable Teacher teacher, @Nullable Student student, List<ClassX> classXs) {
+    checkNotNull(db);
+    checkNotNull(classXs);
+
+    if (teacher != null) {
+      db.getTeacherClassXRepository().setTeacherClassXs(teacher, classXs);
+    }
+    if (student != null) {
+      db.getStudentClassXRepository().setStudentClassXs(student, classXs);
+    }
+  }
 }

@@ -3,6 +3,7 @@ package org.davincischools.leo.database.utils.repos;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.Streams;
+import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.List;
 import org.davincischools.leo.database.daos.School;
@@ -44,6 +45,7 @@ public interface TeacherSchoolRepository extends JpaRepository<TeacherSchool, Te
 
   List<TeacherSchool> findAllByTeacher(Teacher teacher);
 
+  @Transactional
   default void setTeacherSchools(Teacher teacher, Iterable<School> schools) {
     DaoUtils.updateCollection(
         findAllByTeacher(teacher),

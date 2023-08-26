@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
+import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +14,7 @@ import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Student;
 import org.davincischools.leo.database.daos.Teacher;
+import org.davincischools.leo.database.utils.Database;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -102,4 +104,18 @@ public interface SchoolRepository extends JpaRepository<School, Integer> {
               OR (:student) IS NOT NULL)
           """)
   List<School> findSchools(@Param("teacher") Teacher teacher, @Param("student") Student student);
+
+  @Transactional
+  default void updateSchools(
+      Database db, @Nullable Teacher teacher, @Nullable Student student, Iterable<School> schools) {
+    checkNotNull(db);
+    checkNotNull(schools);
+
+    if (teacher != null) {
+      db.getTeacherSchoolRepository().setTeacherSchools(teacher, schools);
+    }
+    if (student != null) {
+      db.getStudentSchoolRepository().setStudentSchools(student, schools);
+    }
+  }
 }
