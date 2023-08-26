@@ -1,6 +1,6 @@
 import '../global.scss';
 
-import {AssignmentAutocomplete} from '../common_fields/AssignmentsAutocomplete';
+import {AssignmentAutocomplete} from '../common_fields/AssignmentAutocomplete';
 import {TextField} from '@mui/material';
 import {FormFields} from '../forms';
 import {pl_types} from '../../generated/protobuf-js';
