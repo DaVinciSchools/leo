@@ -532,7 +532,7 @@ public class ProtoDaoUtils {
 
     Class<? extends MessageOrBuilder> protoClass = fromMessage.getClass();
     Descriptor protoDescriptor = fromMessage.getDescriptorForType();
-    Class<?> daoClass = toDao.getClass();
+    Class<?> daoClass = Hibernate.getClass(toDao);
 
     Set<Integer> ignoredFieldNumbers =
         Arrays.stream(ignoreFieldNumbers).boxed().collect(Collectors.toSet());
@@ -605,8 +605,7 @@ public class ProtoDaoUtils {
                             try {
                               if (message.hasField(field)) {
                                 Object innerDao = constructors[0].newInstance();
-                                innerDao
-                                    .getClass()
+                                Hibernate.getClass(innerDao)
                                     .getMethod("setId", Integer.class)
                                     .invoke(innerDao, (Integer) message.getField(field));
                                 setDaoMethod.get().invoke(dao, innerDao);
@@ -729,7 +728,7 @@ public class ProtoDaoUtils {
 
     Class<? extends Message.Builder> protoClass = toMessage.getClass();
     Descriptor protoDescriptor = toMessage.getDescriptorForType();
-    Class<?> daoClass = fromDao.getClass();
+    Class<?> daoClass = Hibernate.getClass(fromDao);
 
     Set<Integer> ignoredFieldNumbers =
         Arrays.stream(ignoreFieldNumbers).boxed().collect(Collectors.toSet());

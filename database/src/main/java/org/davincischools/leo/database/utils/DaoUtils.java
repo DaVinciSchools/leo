@@ -27,17 +27,18 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.hibernate.Hibernate;
 
 public class DaoUtils {
 
   private static final Map<Class<?>, Optional<DaoShallowCopyMethods>> daoShallowCopyMethods =
       Collections.synchronizedMap(new HashMap<>());
 
-  private static Optional<DaoShallowCopyMethods> getDaoShallowCopyMethods(Class<?> daoClass) {
-    checkNotNull(daoClass);
+  private static Optional<DaoShallowCopyMethods> getDaoShallowCopyMethods(Object dao) {
+    checkNotNull(dao);
 
     return daoShallowCopyMethods.computeIfAbsent(
-        daoClass,
+        Hibernate.getClass(dao),
         clazz -> {
           if (clazz.getAnnotation(Entity.class) == null) {
             return Optional.empty();
@@ -73,14 +74,15 @@ public class DaoUtils {
                     (Object from, Object to) -> {
                       try {
                         // You're not allowed to create other mappings while computing one.
-                        var innerDaoShallowCopyMethods =
-                            DaoUtils.getDaoShallowCopyMethods(get.getReturnType())
-                                .orElseThrow(
-                                    () ->
-                                        new IllegalArgumentException(
-                                            "No inner dao shallow copy methods for: " + get));
                         Object innerDao = get.invoke(from);
                         if (innerDao != null) {
+                          var innerDaoShallowCopyMethods =
+                              DaoUtils.getDaoShallowCopyMethods(innerDao)
+                                  .orElseThrow(
+                                      () ->
+                                          new IllegalArgumentException(
+                                              "No inner dao shallow copy methods for: " + get));
+
                           Object id = innerDaoShallowCopyMethods.getId.apply(innerDao);
                           if (id != null) {
                             Object newInnerDao = innerDaoShallowCopyMethods.newInstance().get();
@@ -107,17 +109,17 @@ public class DaoUtils {
               if (get.getAnnotation(Id.class) != null
                   || get.getAnnotation(EmbeddedId.class) != null) {
                 getId =
-                    (Object dao) -> {
+                    (Object dao2) -> {
                       try {
-                        return get.invoke(dao);
+                        return get.invoke(dao2);
                       } catch (Exception e) {
                         throw new RuntimeException(e);
                       }
                     };
                 setId =
-                    (Object dao, Object id) -> {
+                    (Object dao2, Object id) -> {
                       try {
-                        set.invoke(dao, id);
+                        set.invoke(dao2, id);
                       } catch (Exception e) {
                         throw new RuntimeException(e);
                       }
@@ -153,16 +155,11 @@ public class DaoUtils {
     }
 
     DaoShallowCopyMethods daoMethods =
-        DaoUtils.getDaoShallowCopyMethods(dao.getClass())
+        DaoUtils.getDaoShallowCopyMethods(dao)
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
                         "No shallow copy methods found: " + dao.getClass()));
-
-    Object id = daoMethods.getId.apply(dao);
-    if (id != null) {
-      daoMethods.setId.accept(dao, id);
-    }
 
     Object newDao = daoMethods.newInstance().get();
     for (var copyField : daoMethods.copyFields()) {
@@ -182,10 +179,10 @@ public class DaoUtils {
   public static void copyId(Object from, Object to) {
     checkNotNull(from);
     checkNotNull(to);
-    checkArgument(from.getClass() == to.getClass());
+    checkArgument(Hibernate.getClass(from) == Hibernate.getClass(to));
 
     DaoShallowCopyMethods daoMethods =
-        DaoUtils.getDaoShallowCopyMethods(to.getClass())
+        DaoUtils.getDaoShallowCopyMethods(to)
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
