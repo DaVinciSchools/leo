@@ -172,12 +172,19 @@ message ProjectInputCategory {
   repeated Option options = 9;
 }
 
+message Tag {
+  optional string text = 1;
+  optional int32 user_x_id = 2;
+}
+
 message ProjectPost {
   optional int32 id = 1;
   optional UserX user_x = 2;
+  optional int32 project_id = 10;
   optional string name = 3;
   optional string long_descr_html = 4;
   optional string desired_feedback = 6;
-  repeated string tags = 7;
+  repeated Tag tags = 7;
   optional int64 post_time_ms = 8;
+  optional bool being_edited = 9;
 }

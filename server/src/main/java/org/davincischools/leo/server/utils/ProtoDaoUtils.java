@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,10 +39,12 @@ import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.School;
+import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.repos.ClassXRepository.FullClassX;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.FullProjectInput;
+import org.davincischools.leo.database.utils.repos.ProjectPostRepository.FullProjectPost;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.MilestoneWithSteps;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
@@ -276,6 +279,13 @@ public class ProtoDaoUtils {
     return dao;
   }
 
+  public static FullProjectPost toFullProjectPostRecord(
+      org.davincischools.leo.protos.pl_types.ProjectPostOrBuilder projectPost) {
+    return new FullProjectPost(
+        toProjectPostDao(projectPost),
+        new ArrayList<>(projectPost.getTagsList().stream().map(ProtoDaoUtils::toTagDao).toList()));
+  }
+
   public static org.davincischools.leo.protos.pl_types.ProjectPost.Builder toProjectPostProto(
       ProjectPost projectPost,
       @Nullable org.davincischools.leo.protos.pl_types.ProjectPost.Builder builder) {
@@ -290,6 +300,19 @@ public class ProtoDaoUtils {
       if (projectPost.getUserX() != null) {
         toUserXProto(projectPost.getUserX(), builder.getUserXBuilder());
       }
+    }
+    return builder;
+  }
+
+  public static org.davincischools.leo.protos.pl_types.ProjectPost.Builder toProjectPostProto(
+      FullProjectPost projectPost,
+      @Nullable org.davincischools.leo.protos.pl_types.ProjectPost.Builder builder) {
+    builder =
+        builder != null ? builder : org.davincischools.leo.protos.pl_types.ProjectPost.newBuilder();
+    if (projectPost != null && Hibernate.isInitialized(projectPost)) {
+      var finalBuilder = builder;
+      toProjectPostProto(projectPost.projectPost(), builder);
+      projectPost.tags().forEach(tag -> toTagProto(tag, finalBuilder.addTagsBuilder()));
     }
     return builder;
   }
@@ -521,6 +544,20 @@ public class ProtoDaoUtils {
       if (school.getDistrict() != null) {
         toDistrictProto(school.getDistrict(), builder.getDistrictBuilder());
       }
+    }
+    return builder;
+  }
+
+  public static Tag toTagDao(org.davincischools.leo.protos.pl_types.TagOrBuilder tag) {
+    Tag dao = translateToDao(tag, new Tag().setCreationTime(Instant.now()));
+    return dao;
+  }
+
+  public static org.davincischools.leo.protos.pl_types.Tag.Builder toTagProto(
+      Tag tag, @Nullable org.davincischools.leo.protos.pl_types.Tag.Builder builder) {
+    builder = builder != null ? builder : org.davincischools.leo.protos.pl_types.Tag.newBuilder();
+    if (tag != null && Hibernate.isInitialized(tag)) {
+      translateToProto(tag, builder);
     }
     return builder;
   }

@@ -14,6 +14,7 @@ import org.davincischools.leo.protos.pl_types.KnowledgeAndSkill;
 import org.davincischools.leo.protos.pl_types.Project;
 import org.davincischools.leo.protos.pl_types.ProjectPost;
 import org.davincischools.leo.protos.pl_types.School;
+import org.davincischools.leo.protos.pl_types.Tag;
 import org.davincischools.leo.protos.pl_types.UserX;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
 import org.junit.BeforeClass;
@@ -398,7 +399,10 @@ public class ProtoDaoUtilsTest {
 
   @Test
   public void toProjectPostConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toProjectPostProto(null, null).build())
+    assertThat(
+            ProtoDaoUtils.toProjectPostProto(
+                    (org.davincischools.leo.database.daos.ProjectPost) null, null)
+                .build())
         .isEqualTo(ProjectPost.getDefaultInstance());
   }
 
@@ -431,19 +435,68 @@ public class ProtoDaoUtilsTest {
                   is_demo: true
                   is_authenticated: true
                 }
+                project_id: 3
                 name: "name"
                 long_descr_html: "long_descr_html"
                 desired_feedback: "desired_feedback"
-                tags: "tag1"
-                tags: "tag2"
-                tags: "tag3"
-                post_time_ms: 3
+                tags {
+                  user_x_id: 4
+                  text: "tag1"
+                }
+                tags {
+                  user_x_id: 5
+                  text: "tag2"
+                }
+                tags {
+                  user_x_id: 6
+                  text: "tag3"
+                }
+                post_time_ms: 7
+                being_edited: true
                 """,
             ProjectPost.class);
 
     assertThat(
             ProtoDaoUtils.toProjectPostProto(ProtoDaoUtils.toProjectPostDao(proto), null).build())
         .ignoringFields(ProjectPost.TAGS_FIELD_NUMBER)
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toFullProjectPostConverter() throws ParseException {
+    ProjectPost proto =
+        TextFormat.parse(
+            """
+                id: 1
+                user_x {
+                  user_x_id: 2
+                  is_demo: true
+                  is_authenticated: true
+                }
+                project_id: 3
+                name: "name"
+                long_descr_html: "long_descr_html"
+                desired_feedback: "desired_feedback"
+                tags {
+                  user_x_id: 4
+                  text: "tag1"
+                }
+                tags {
+                  user_x_id: 5
+                  text: "tag2"
+                }
+                tags {
+                  user_x_id: 6
+                  text: "tag3"
+                }
+                post_time_ms: 7
+                being_edited: true
+                """,
+            ProjectPost.class);
+
+    assertThat(
+            ProtoDaoUtils.toProjectPostProto(ProtoDaoUtils.toFullProjectPostRecord(proto), null)
+                .build())
         .isEqualTo(proto);
   }
 
@@ -748,6 +801,42 @@ public class ProtoDaoUtilsTest {
     assertThat(
             ProtoDaoUtils.toProjectProto(ProtoDaoUtils.toProjectWithMilestonesRecord(proto), null)
                 .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toTagConvertersNull() throws ParseException {
+    assertThat(ProtoDaoUtils.toTagProto(null, null).build()).isEqualTo(Tag.getDefaultInstance());
+  }
+
+  @Test
+  public void toTagConvertersUninitialized() throws ParseException {
+    assertThat(
+            ProtoDaoUtils.toTagProto(
+                    newUninitialized(org.davincischools.leo.database.daos.Tag.class), null)
+                .build())
+        .isEqualTo(Tag.getDefaultInstance());
+  }
+
+  @Test
+  public void toTagConvertersEmpty() throws ParseException {
+    Tag proto = Tag.getDefaultInstance();
+
+    assertThat(ProtoDaoUtils.toTagProto(ProtoDaoUtils.toTagDao(proto), null).build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toTagConvertersAll() throws ParseException {
+    Tag proto =
+        TextFormat.parse(
+            """
+                text: "text"
+                user_x_id: 2
+                """,
+            Tag.class);
+
+    assertThat(ProtoDaoUtils.toTagProto(ProtoDaoUtils.toTagDao(proto), null).build())
         .isEqualTo(proto);
   }
 
