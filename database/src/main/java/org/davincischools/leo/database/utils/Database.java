@@ -30,6 +30,7 @@ import org.davincischools.leo.database.utils.repos.SchoolRepository;
 import org.davincischools.leo.database.utils.repos.StudentClassXRepository;
 import org.davincischools.leo.database.utils.repos.StudentRepository;
 import org.davincischools.leo.database.utils.repos.StudentSchoolRepository;
+import org.davincischools.leo.database.utils.repos.TagRepository;
 import org.davincischools.leo.database.utils.repos.TeacherClassXRepository;
 import org.davincischools.leo.database.utils.repos.TeacherRepository;
 import org.davincischools.leo.database.utils.repos.TeacherSchoolRepository;
@@ -76,6 +77,7 @@ public class Database {
   @Autowired private StudentClassXRepository studentClassXRepository;
   @Autowired private StudentRepository studentRepository;
   @Autowired private StudentSchoolRepository studentSchoolRepository;
+  @Autowired private TagRepository tagRepository;
   @Autowired private TeacherClassXRepository teacherClassXRepository;
   @Autowired private TeacherRepository teacherRepository;
   @Autowired private TeacherSchoolRepository teacherSchoolRepository;
@@ -195,6 +197,10 @@ public class Database {
 
   public StudentSchoolRepository getStudentSchoolRepository() {
     return studentSchoolRepository;
+  }
+
+  public TagRepository getTagRepository() {
+    return tagRepository;
   }
 
   public TeacherClassXRepository getTeacherClassXRepository() {
