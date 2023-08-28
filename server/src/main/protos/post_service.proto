@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+import "pl_types.proto";
+
+option java_multiple_files = true;
+option java_package = "org.davincischools.leo.protos.post_service";
+
+package post_service;
+
+service PostService {
+  rpc GetProjectPosts(GetProjectPostsRequest) returns (GetProjectPostsResponse) {};
+  rpc UpsertProjectPost(UpsertProjectPostRequest) returns (UpsertProjectPostResponse) {};
+}
+
+message GetProjectPostsRequest {
+  optional int32 project_id = 1;
+  optional bool being_edited = 2;
+}
+
+message GetProjectPostsResponse {
+  repeated pl_types.ProjectPost project_posts = 1;
+}
+
+
+message UpsertProjectPostRequest {
+  optional pl_types.ProjectPost project_post = 1;
+}
+
+message UpsertProjectPostResponse {
+  optional int32 project_post_id = 1;
+}

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+import "pl_types.proto";
+
+option java_multiple_files = true;
+option java_package = "org.davincischools.leo.protos.tag_service";
+
+package tag_service;
+
+service TagService {
+  rpc GetAllPreviousTags(GetAllPreviousTagsRequest) returns (GetAllPreviousTagsResponse);
+}
+
+message GetAllPreviousTagsRequest {
+  optional int32 user_x_id = 1;
+}
+
+message GetAllPreviousTagsResponse {
+  repeated pl_types.Tag tags = 1;
+}
