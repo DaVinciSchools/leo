@@ -370,11 +370,11 @@ export function useFormFields(
       return {
         value: autocompleteValue,
         onChange: (e: React.SyntheticEvent, value: T) => {
-          if (!fieldMetadata?.isAutocomplete?.isFreeSolo) {
-            setAutocompleteValue(value as T);
-          } else {
-            setStringValue(value != null ? String(value ?? '') : '');
-          }
+          // if (!fieldMetadata?.isAutocomplete?.isFreeSolo) {
+          setAutocompleteValue(value as T);
+          // } else {
+          //   setStringValue(value != null ? String(value ?? '') : '');
+          // }
         },
         disabled:
           formFieldsMetadata?.disabled === true ||

@@ -9,6 +9,7 @@ import IProject = pl_types.IProject;
 import State = pl_types.ProjectDefinition.State;
 import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
 import Type = pl_types.KnowledgeAndSkill.Type;
+import ITag = pl_types.ITag;
 
 export const TEXT_SORTER = (a: string, b: string) => a.localeCompare(b);
 
@@ -60,3 +61,7 @@ export const PROJECT_DEFINITION_SORTER = (
     (b.state === State.PROCESSING ? -1 : 1) ||
   (b.template === true ? 1 : -1) - (a.template === true ? 1 : -1) ||
   (a.name ?? '').localeCompare(b.name ?? '');
+
+export const TAG_SORTER = (a: ITag, b: ITag) =>
+  (a.userXId ?? 0) - (b.userXId ?? 0) ||
+  (a.text ?? '').localeCompare(b.text ?? '');

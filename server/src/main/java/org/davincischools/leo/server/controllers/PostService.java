@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.Project;
+import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.ProjectPostRepository.FullProjectPost;
@@ -72,28 +73,34 @@ public class PostService {
         .start(optionalRequest.orElse(UpsertProjectPostRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              if (!userX.isAdminX()) {
-                if (!Objects.equals(
-                    request.getProjectPost().getUserX().getUserXId(), userX.getUserXIdOrNull())) {
-                  return userX.returnForbidden(response.build());
+              UserX postUserX =
+                  request.getProjectPost().getUserX().hasUserXId()
+                      ? ProtoDaoUtils.toUserXDao(request.getProjectPost().getUserX())
+                      : userX.getUserXOrNull();
+
+              if (!userX.isAdminX() && request.getProjectPost().getUserX().hasUserXId()) {
+                Optional<ProjectPost> existingPost =
+                    db.getProjectPostRepository().findById(request.getProjectPost().getId());
+                if (existingPost.isPresent()) {
+                  if (!Objects.equals(existingPost.get().getUserX().getId(), postUserX.getId())) {
+                    return userX.returnForbidden(response.build());
+                  }
                 }
               }
 
               var fullProjectPost = ProtoDaoUtils.toFullProjectPostRecord(request.getProjectPost());
+              fullProjectPost.projectPost().setUserX(postUserX);
               fullProjectPost.projectPost().setPostTime(Instant.now());
 
-              if (!userX.isAdminX() || fullProjectPost.projectPost().getUserX() == null) {
-                fullProjectPost.projectPost().setUserX(userX.getUserXOrNull());
-              }
               fullProjectPost
                   .tags()
                   .forEach(
                       tag -> {
-                        UserX tagUserX = tag.getUserX();
-                        if (!userX.isAdminX() || tagUserX == null) {
-                          tagUserX = userX.getUserXOrNull();
+                        if (!userX.isAdminX()
+                            || tag.getUserX() == null
+                            || tag.getUserX().getId() == null) {
+                          tag.setUserX(postUserX);
                         }
-                        tag.setUserX(tagUserX);
                       });
 
               db.getProjectPostRepository().upsert(db, userX.getUserXOrNull(), fullProjectPost);

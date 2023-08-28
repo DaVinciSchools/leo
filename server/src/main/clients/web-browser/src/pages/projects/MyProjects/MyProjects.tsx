@@ -7,9 +7,11 @@ import {createService} from '../../../libs/protos';
 import {
   assignment_management,
   pl_types,
+  post_service,
   project_management,
+  tag_service,
 } from '../../../generated/protobuf-js';
-import {useContext, useEffect, useState} from 'react';
+import {useContext, useEffect, useRef, useState} from 'react';
 
 import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
@@ -22,35 +24,36 @@ import IAssignment = pl_types.IAssignment;
 import AssignmentManagementService = assignment_management.AssignmentManagementService;
 import {TabbedSwiper} from '../../../libs/TabbedSwiper/TabbedSwiper';
 import {ProjectEditor} from '../../../libs/ProjectEditor/ProjectEditor';
+import {PostEditor} from '../../../libs/PostEditor/PostEditor';
+import TagService = tag_service.TagService;
+import PostService = post_service.PostService;
+import IProjectPost = pl_types.IProjectPost;
+import {Button} from '@mui/material';
+import {Add, Clear} from '@mui/icons-material';
+import ITag = pl_types.ITag;
 
 enum TabValue {
   OVERVIEW,
   EDIT_PROJECT,
+  CREATE_POST,
 }
 
 export function MyProjects() {
   const global = useContext(GlobalStateContext);
 
+  const [activeTab, setActiveTab] = useState<TabValue>(TabValue.OVERVIEW);
+
+  // Project editor variables.
+
   const [sortedProjects, setSortedProjects] = useState<IProject[]>([]);
   const [selectedProject, setSelectedProject] = useState<IProject | null>(null);
   const [sortedAssignments, setSortedAssignments] = useState<IAssignment[]>([]);
-
   const projectForm = useFormFields({
-    onChange: () => autoSave.trigger(),
+    onChange: () => projectAutoSaveProject.trigger(),
     disabled: selectedProject == null,
   });
   const [projectSaveStatus, setProjectSaveStatus] = useState<string>('');
-
-  const hiddenForm = useFormFields({
-    onChange: () => {
-      setSelectedProject(hiddenProject.getValue() ?? null);
-    },
-  });
-  const hiddenProject = hiddenForm.useAutocompleteFormField<IProject | null>(
-    'project'
-  );
-
-  const autoSave = useDelayedAction(
+  const projectAutoSaveProject = useDelayedAction(
     () => {
       setProjectSaveStatus('Modified');
       if (selectedProject != null) {
@@ -84,7 +87,66 @@ export function MyProjects() {
     1500
   );
 
+  // Post editor variables.
+
+  const [sortedTags, setSortedTags] = useState<string[]>([]);
+  const postForm = useFormFields({
+    onChange: () => postAutoSavePost.trigger(),
+    disabled: selectedProject == null,
+  });
+  const postId = useRef<number | undefined>(undefined);
+  const postBeingEdited = useRef<boolean>(true);
+  const [postSaveStatus, setPostSaveStatus] = useState<string>('');
+  const postAutoSavePost = useDelayedAction(
+    () => {
+      setPostSaveStatus('Modified');
+    },
+    () => {
+      setPostSaveStatus('Saving...');
+      if (selectedProject != null && postForm.verifyOk(true)) {
+        const projectPost: IProjectPost = postForm.getValuesObject(true);
+        projectPost.id = postId.current;
+        projectPost.beingEdited = postBeingEdited.current;
+        projectPost.projectId = selectedProject.id;
+        projectPost.tags = (projectPost.tags as string[])?.map(e => {
+          return {
+            text: e,
+            userXId: global.userX?.userXId,
+          } as ITag;
+        });
+        projectPost.name = projectPost.name ?? '';
+        return createService(PostService, 'PostService')
+          .upsertProjectPost({
+            projectPost: projectPost,
+          })
+          .then(response => {
+            postId.current = response.projectPostId ?? undefined;
+            setPostSaveStatus('Saved');
+          })
+          .catch(global.setError);
+      } else {
+        setPostSaveStatus('Invalid values, Not saved');
+      }
+      return;
+    },
+    1500
+  );
+
+  // Hidden form to track project selection.
+
+  const hiddenForm = useFormFields({
+    onChange: () => {
+      setSelectedProject(hiddenProject.getValue() ?? null);
+    },
+  });
+  const hiddenProject = hiddenForm.useAutocompleteFormField<IProject | null>(
+    'project'
+  );
+
+  // Initialize the data.
+
   useEffect(() => {
+    // Projects
     createService(ProjectManagementService, 'ProjectManagementService')
       .getProjects({userXId: global.userX?.userXId, activeOnly: true})
       .then(response => {
@@ -92,6 +154,8 @@ export function MyProjects() {
         setSelectedProject(null);
       })
       .catch(global.setError);
+
+    // Assignments
     createService(AssignmentManagementService, 'AssignmentManagementService')
       .getAssignments({
         teacherId: global.userX?.teacherId,
@@ -100,10 +164,49 @@ export function MyProjects() {
       .then(response => {
         setSortedAssignments(response.assignments.sort(ASSIGNMENT_SORTER));
       });
+
+    // Previously used tags.
+    createService(TagService, 'TagService')
+      .getAllPreviousTags({userXId: global.userX?.userXId})
+      .then(response => {
+        setSortedTags(
+          [...new Set(response.tags.map(e => e.text ?? ''))].sort()
+        );
+      })
+      .catch(global.setError);
   }, [global.userX]);
 
   useEffect(() => {
-    projectForm.setValuesObject(selectedProject ?? {});
+    if (selectedProject == null) {
+      projectForm.setValuesObject({});
+      postForm.setValuesObject({});
+      postId.current = undefined;
+      postBeingEdited.current = true;
+    } else {
+      projectForm.setValuesObject(selectedProject);
+      postForm.setValuesObject({});
+      postId.current = undefined;
+      postBeingEdited.current = true;
+      createService(PostService, 'PostService')
+        .getProjectPosts({
+          projectId: selectedProject.id,
+          beingEdited: true,
+        })
+        .then(response => {
+          postId.current = response.projectPosts[0]?.id ?? undefined;
+          postBeingEdited.current =
+            response.projectPosts[0]?.beingEdited ?? true;
+
+          postForm.setValuesObject(
+            Object.assign({}, response.projectPosts[0] ?? {}, {
+              tags: (response.projectPosts[0]?.tags ?? [])
+                .map(tag => tag.text ?? '')
+                .filter(e => e.length > 0),
+            })
+          );
+        })
+        .catch(global.setError);
+    }
   }, [selectedProject]);
 
   if (!global.requireUserX(userX => userX?.isAuthenticated)) {
@@ -125,7 +228,13 @@ export function MyProjects() {
             formField={hiddenProject}
             style={{width: '100%'}}
           />
-          <span style={{whiteSpace: 'nowrap'}}>{projectSaveStatus}</span>
+          <span style={{whiteSpace: 'nowrap'}}>
+            {{
+              [TabValue.OVERVIEW]: <></>,
+              [TabValue.EDIT_PROJECT]: <>{projectSaveStatus}</>,
+              [TabValue.CREATE_POST]: <>{postSaveStatus}</>,
+            }[activeTab] || <></>}
+          </span>
         </div>
         <div style={{height: '100%'}}>
           <TabbedSwiper
@@ -153,7 +262,49 @@ export function MyProjects() {
                   </>
                 ),
               },
+              {
+                key: TabValue.CREATE_POST,
+                label: 'Create Post',
+                content: (
+                  <>
+                    <div className="global-flex-column">
+                      <PostEditor sortedTags={sortedTags} postForm={postForm} />
+                      <div className="global-form-buttons">
+                        <Button
+                          variant="contained"
+                          disabled={selectedProject == null}
+                          startIcon={<Add />}
+                          onClick={() => {
+                            postAutoSavePost.forceDelayedAction(
+                              () => {
+                                postId.current = undefined;
+                                postBeingEdited.current = true;
+                                postForm.setValuesObject({});
+                              },
+                              () => {
+                                postBeingEdited.current = false;
+                              }
+                            );
+                          }}
+                        >
+                          Post Message
+                        </Button>
+                        <Button
+                          variant="contained"
+                          disabled={selectedProject == null}
+                          color="warning"
+                          startIcon={<Clear />}
+                          onClick={() => postForm.setValuesObject({})}
+                        >
+                          Reset Form
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                ),
+              },
             ]}
+            onTabChange={setActiveTab}
           />
         </div>
       </DefaultPage>

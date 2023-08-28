@@ -69,3 +69,11 @@
 .global-space-filler {
   height: 15%;
 }
+
+.global-form-buttons {
+  @extend .global-flex-row;
+
+  padding-top: 1.5em;
+  justify-content: flex-end;
+  gap: 1em;
+}

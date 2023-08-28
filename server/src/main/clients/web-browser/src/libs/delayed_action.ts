@@ -10,7 +10,10 @@ enum DelayedState {
 
 export interface DelayedAction {
   trigger: () => void;
-  forceDelayedAction: (onFinished: () => Promise<any> | void) => void;
+  forceDelayedAction: (
+    onFinish?: () => Promise<any> | void,
+    onStart?: () => void
+  ) => void;
 }
 
 export function useDelayedAction(
@@ -27,11 +30,17 @@ export function useDelayedAction(
     doTrigger();
   }
 
-  function forceDelayedAction(onFinish: () => void) {
-    doTrigger(onFinish);
+  function forceDelayedAction(
+    onFinish?: () => Promise<any> | void,
+    onStart?: () => void
+  ) {
+    doTrigger(onStart, onFinish);
   }
 
-  function doTrigger(onFinish?: () => Promise<any> | void) {
+  function doTrigger(
+    onStart?: () => Promise<any> | void,
+    onFinish?: () => Promise<any> | void
+  ) {
     try {
       onAction();
     } catch (err) {
@@ -51,7 +60,12 @@ export function useDelayedAction(
         .then(() => {
           state.current = DelayedState.EXECUTING_DELAYED_ACTION;
           actionTriggered.current = false;
-          onDelayed();
+          try {
+            onStart && onStart();
+          } catch (err) {
+            // Ignore any errors.
+          }
+          return onDelayed();
         })
         .finally(async () => {
           if (onFinish) {
