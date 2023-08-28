@@ -23,7 +23,8 @@ public class ProjectPostComment implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_COMMENTHTML_NAME = "comment_html";
-  private static final long serialVersionUID = 5927806603324710803L;
+  public static final String COLUMN_BEINGEDITED_NAME = "being_edited";
+  private static final long serialVersionUID = -7217176243278200988L;
 
   private Integer id;
 
@@ -32,6 +33,8 @@ public class ProjectPostComment implements Serializable {
   private Instant deleted;
 
   private String commentHtml;
+
+  private Boolean beingEdited;
 
   private UserX userX;
 
@@ -77,6 +80,16 @@ public class ProjectPostComment implements Serializable {
 
   public ProjectPostComment setCommentHtml(String commentHtml) {
     this.commentHtml = commentHtml;
+    return this;
+  }
+
+  @Column(name = COLUMN_BEINGEDITED_NAME)
+  public Boolean getBeingEdited() {
+    return beingEdited;
+  }
+
+  public ProjectPostComment setBeingEdited(Boolean beingEdited) {
+    this.beingEdited = beingEdited;
     return this;
   }
 

@@ -27,7 +27,8 @@ public class ProjectPost implements Serializable {
   public static final String COLUMN_POSTTIME_NAME = "post_time";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_DESIREDFEEDBACK_NAME = "desired_feedback";
-  private static final long serialVersionUID = -4869881400292095361L;
+  public static final String COLUMN_BEINGEDITED_NAME = "being_edited";
+  private static final long serialVersionUID = -2135549845777133556L;
 
   private Integer id;
 
@@ -44,6 +45,8 @@ public class ProjectPost implements Serializable {
   private String longDescrHtml;
 
   private String desiredFeedback;
+
+  private Boolean beingEdited;
 
   private UserX userX;
 
@@ -131,6 +134,16 @@ public class ProjectPost implements Serializable {
 
   public ProjectPost setDesiredFeedback(String desiredFeedback) {
     this.desiredFeedback = desiredFeedback;
+    return this;
+  }
+
+  @Column(name = COLUMN_BEINGEDITED_NAME)
+  public Boolean getBeingEdited() {
+    return beingEdited;
+  }
+
+  public ProjectPost setBeingEdited(Boolean beingEdited) {
+    this.beingEdited = beingEdited;
     return this;
   }
 

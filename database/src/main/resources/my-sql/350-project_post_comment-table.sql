@@ -5,6 +5,7 @@ CREATE TABLE project_post_comment
     deleted         DATETIME,
 
     comment_html    TEXT,
+    being_edited    BOOLEAN,
 
     user_x_id       INT      NOT NULL,
     CONSTRAINT project_post_comment__user_x_id
