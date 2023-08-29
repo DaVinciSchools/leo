@@ -238,6 +238,13 @@ public class UserXManagementService {
               // Set the e-mail address.
               if (isNewUserX || userX.isAdminX()) {
                 String newEmailAddress = request.getUserX().getUserX().getEmailAddress().trim();
+                Optional<UserX> oldEmailAccount =
+                    db.getUserXRepository().findByEmailAddress(newEmailAddress);
+                if (oldEmailAccount.isPresent()
+                    && !isNewUserX
+                    && !Objects.equals(oldEmailAccount.get().getId(), oldUserX.getId())) {
+                  return response.setError("Error: Email address is already in use.").build();
+                }
                 if (!EMAIL_REQS.matcher(newEmailAddress).matches()) {
                   return response.setError("Error: Email address is invalid.").build();
                 }

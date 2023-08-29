@@ -77,3 +77,15 @@
   justify-content: flex-end;
   gap: 1em;
 }
+
+.global-error-notice {
+  @include color.error;
+
+  border: 1px solid;
+  align-self: center;
+  text-align: center;
+  padding: 0.25em 0.5em;
+  border-radius: 6px;
+  width: fit-content;
+  margin: auto;
+}

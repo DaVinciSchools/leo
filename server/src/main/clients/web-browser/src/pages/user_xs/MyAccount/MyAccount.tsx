@@ -1,4 +1,6 @@
 import './MyAccount.scss';
+import '../../../libs/global.scss';
+
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {useContext, useEffect, useState} from 'react';
 import {GlobalStateContext} from '../../../libs/GlobalState';
@@ -21,6 +23,20 @@ export function MyAccount() {
   const [profileSaveStatus, setProfileSaveStatus] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
+  const clearError = useDelayedAction(
+    () => {},
+    () => {
+      setErrorMessage('');
+    },
+    5000
+  );
+
+  useEffect(() => {
+    if (errorMessage !== '') {
+      clearError.trigger();
+    }
+  }, [errorMessage]);
+
   const autoSave = useDelayedAction(
     () => {
       setProfileSaveStatus('Modified');
@@ -38,9 +54,11 @@ export function MyAccount() {
           },
         })
         .then(response => {
-          setProfileSaveStatus('Saved');
           if (response.error != null) {
             setErrorMessage(response.error);
+            setProfileSaveStatus('Save Error');
+          } else {
+            setProfileSaveStatus('Saved');
           }
         })
         .catch(global.setError);
@@ -48,22 +66,14 @@ export function MyAccount() {
     1500
   );
 
-  useEffect(() => {
-    if (errorMessage !== '') {
-      setTimeout(() => {
-        setErrorMessage('');
-      }, 5000);
-    }
-  }, [errorMessage]);
-
   return (
     <>
       <div className="global-flex-column">
         <DefaultPage title="My Account">
           <div className="global-space-filler">
             <div
-              className="error-notice"
-              style={{display: errorMessage !== '' ? undefined : 'none'}}
+              className="global-error-notice"
+              style={{display: errorMessage ? undefined : 'none'}}
             >
               {errorMessage}
             </div>

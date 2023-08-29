@@ -491,6 +491,7 @@ export function useFormFields(
       if (
         (input.type === 'password' || fieldMetadata?.isPassword) &&
         fieldMetadata?.isPassword?.skipPasswordCheck !== true &&
+        stringValue !== '' &&
         !PASSWORD_PATTERN.exec(stringValue)
       ) {
         return PASSWORD_ERROR_MESSAGE;
@@ -500,10 +501,18 @@ export function useFormFields(
         if (input.required && stringValue.trim() === '') {
           return 'This field is required.';
         }
-        if (input.minLength > 0 && stringValue.length < input.minLength) {
+        if (
+          input.minLength > 0 &&
+          stringValue.length < input.minLength &&
+          stringValue !== ''
+        ) {
           return `This field must have at least ${input.minLength} character(s).`;
         }
-        if (input.maxLength >= 0 && stringValue.length > input.maxLength) {
+        if (
+          input.maxLength >= 0 &&
+          stringValue.length > input.maxLength &&
+          stringValue !== ''
+        ) {
           return `This field must have less than ${input.maxLength} character(s).`;
         }
       }
