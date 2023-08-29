@@ -16,15 +16,17 @@ import java.time.Instant;
 @Entity(name = Assignment.ENTITY_NAME)
 @Table(name = Assignment.TABLE_NAME, schema = "leo_temp")
 public class Assignment implements Serializable {
+
   public static final String ENTITY_NAME = "Assignment";
   public static final String TABLE_NAME = "assignment";
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
+  public static final String COLUMN_NICKNAME_NAME = "nickname";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = 298709429381368969L;
+  private static final long serialVersionUID = 985740840592816059L;
 
   private Integer id;
 
@@ -33,6 +35,8 @@ public class Assignment implements Serializable {
   private Instant deleted;
 
   private String name;
+
+  private String nickname;
 
   private String shortDescr;
 
@@ -79,6 +83,16 @@ public class Assignment implements Serializable {
 
   public Assignment setName(String name) {
     this.name = name;
+    return this;
+  }
+
+  @Column(name = COLUMN_NICKNAME_NAME)
+  public String getNickname() {
+    return nickname;
+  }
+
+  public Assignment setNickname(String nickname) {
+    this.nickname = nickname;
     return this;
   }
 

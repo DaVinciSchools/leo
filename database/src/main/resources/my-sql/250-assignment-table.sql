@@ -5,6 +5,7 @@ CREATE TABLE assignment
     deleted         DATETIME,
 
     name            VARCHAR(255) NOT NULL,
+    nickname        VARCHAR(255),
     short_descr     TEXT,
     long_descr_html TEXT,
 

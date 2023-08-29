@@ -8,6 +8,7 @@ package pl_types;
 message Assignment {
   optional int32 id = 1;
   optional string name = 3;
+  optional string nickname = 6;
   optional string short_descr = 4;
   optional string long_descr_html = 5;
 

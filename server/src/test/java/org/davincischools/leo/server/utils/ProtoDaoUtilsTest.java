@@ -75,6 +75,7 @@ public class ProtoDaoUtilsTest {
             """
             id: 1
             name: "name"
+            nickname: "nickname"
             short_descr: "short"
             long_descr_html: "long"
             class_x {
