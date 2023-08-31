@@ -22,7 +22,7 @@ import {MultiClassXAutocomplete} from '../../../libs/common_fields/MultiClassXAu
 import ClassXManagementService = class_x_management_service.ClassXManagementService;
 import PostService = post_service.PostService;
 import IProjectPost = pl_types.IProjectPost;
-import {PostPaper} from '../../../libs/PostPaper/PostPaper';
+import {PostInFeed} from '../../../libs/PostInFeed/PostInFeed';
 import {FilterAltTwoTone, ForumTwoTone} from '@mui/icons-material';
 
 export function OverviewTab() {
@@ -162,7 +162,7 @@ export function OverviewTab() {
               >
                 {projectPosts.map(post => (
                   <div key={post.id}>
-                    <PostPaper post={post} />
+                    <PostInFeed post={post} />
                   </div>
                 ))}
               </TitledPaper>

@@ -1,4 +1,4 @@
-import './PostPaper.scss';
+import './PostInFeed.scss';
 
 import {pl_types} from '../../generated/protobuf-js';
 import IProjectPost = pl_types.IProjectPost;
@@ -6,10 +6,10 @@ import {toLong} from '../misc';
 import ReactQuill from 'react-quill';
 import {AccountCircle} from '@mui/icons-material';
 
-export function PostPaper(props: {post: IProjectPost}) {
+export function PostInFeed(props: {post: IProjectPost}) {
   return (
     <>
-      <div className="global-flex-column post-paper-post">
+      <div className="global-flex-column post-in-feed-post">
         <div
           className="global-flex-row"
           style={{justifyContent: 'space-between'}}
@@ -22,12 +22,12 @@ export function PostPaper(props: {post: IProjectPost}) {
               <AccountCircle />
             </div>
             <div>
-              <span className="post-paper-name">
+              <span className="post-in-feed-name">
                 {props.post?.userX?.firstName ?? ''}&nbsp;
                 {props.post?.userX?.lastName ?? ''}
               </span>
               <br />
-              <span className="post-paper-title">
+              <span className="post-in-feed-title">
                 {(props.post?.name?.trim()?.length ?? 0) > 0
                   ? props.post?.name ?? ''
                   : 'Untitled'}
@@ -35,13 +35,13 @@ export function PostPaper(props: {post: IProjectPost}) {
               </span>
             </div>
           </div>
-          <div className="post-paper-date">
+          <div className="post-in-feed-date">
             {new Date(
               toLong(props.post?.postTimeMs ?? 0).toNumber()
             ).toLocaleDateString()}
           </div>
         </div>
-        <div className="post-paper-content">
+        <div className="post-in-feed-content">
           <ReactQuill
             theme="snow"
             className="global-react-quill"
