@@ -36,6 +36,7 @@ import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -52,8 +53,8 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
 
     private ProjectPost projectPost;
 
-    private SortedMap<Long, ProjectPostComment> projectPostComments =
-        new TreeMap<>(Comparator.<Long>naturalOrder().reversed());
+    private SortedMap<Instant, FullProjectPostComment> projectPostComments =
+        new TreeMap<>(Comparator.<Instant>naturalOrder().reversed());
 
     private Set<Tag> tags = new HashSet<>();
   }
@@ -226,7 +227,9 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
       if (projectPostComment != null && row.get(projectPostComment) != null) {
         fullProjectPost
             .getProjectPostComments()
-            .put((long) row.get(projectPostComment).getId(), row.get(projectPostComment));
+            .put(
+                row.get(projectPostComment).getPostTime(),
+                new FullProjectPostComment().setProjectPostComment(row.get(projectPostComment)));
       }
     }
 

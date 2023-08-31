@@ -13,6 +13,7 @@ import org.davincischools.leo.protos.pl_types.District;
 import org.davincischools.leo.protos.pl_types.KnowledgeAndSkill;
 import org.davincischools.leo.protos.pl_types.Project;
 import org.davincischools.leo.protos.pl_types.ProjectPost;
+import org.davincischools.leo.protos.pl_types.ProjectPostComment;
 import org.davincischools.leo.protos.pl_types.School;
 import org.davincischools.leo.protos.pl_types.Tag;
 import org.davincischools.leo.protos.pl_types.UserX;
@@ -456,7 +457,31 @@ public class ProtoDaoUtilsTest {
                   user_x_id: 6
                   text: "tag3"
                 }
-                post_time_ms: 7
+                comments {
+                  id: 11
+                  user_x {
+                    user_x_id: 12
+                    is_demo: true
+                    is_authenticated: true
+                  }
+                  project_post_id: 13
+                  long_descr_html: "long_descr_html"
+                  post_time_ms: 14
+                  being_edited: true
+                }
+                comments {
+                  id: 7
+                  user_x {
+                    user_x_id: 8
+                    is_demo: true
+                    is_authenticated: true
+                  }
+                  project_post_id: 9
+                  long_descr_html: "long_descr_html"
+                  post_time_ms: 10
+                  being_edited: true
+                }
+                post_time_ms: 15
                 being_edited: true
                 """,
             ProjectPost.class);
@@ -464,6 +489,7 @@ public class ProtoDaoUtilsTest {
     assertThat(
             ProtoDaoUtils.toProjectPostProto(ProtoDaoUtils.toProjectPostDao(proto), null).build())
         .ignoringFields(ProjectPost.TAGS_FIELD_NUMBER)
+        .ignoringFields(ProjectPost.COMMENTS_FIELD_NUMBER)
         .isEqualTo(proto);
   }
 
@@ -493,6 +519,30 @@ public class ProtoDaoUtilsTest {
                 tags {
                   user_x_id: 6
                   text: "tag3"
+                }
+                comments {
+                  id: 11
+                  user_x {
+                    user_x_id: 12
+                    is_demo: true
+                    is_authenticated: true
+                  }
+                  project_post_id: 13
+                  long_descr_html: "long_descr_html"
+                  post_time_ms: 14
+                  being_edited: true
+                }
+                comments {
+                  id: 7
+                  user_x {
+                    user_x_id: 8
+                    is_demo: true
+                    is_authenticated: true
+                  }
+                  project_post_id: 9
+                  long_descr_html: "long_descr_html"
+                  post_time_ms: 10
+                  being_edited: true
                 }
                 post_time_ms: 7
                 being_edited: true
@@ -843,6 +893,86 @@ public class ProtoDaoUtilsTest {
             Tag.class);
 
     assertThat(ProtoDaoUtils.toTagProto(ProtoDaoUtils.toTagDao(proto), null).build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectPostCommentConvertersNull() throws ParseException {
+    assertThat(
+            ProtoDaoUtils.toProjectPostCommentProto(
+                    (org.davincischools.leo.database.daos.ProjectPostComment) null, null)
+                .build())
+        .isEqualTo(ProjectPostComment.getDefaultInstance());
+  }
+
+  @Test
+  public void toProjectPostCommentConvertersUninitialized() throws ParseException {
+    assertThat(
+            ProtoDaoUtils.toProjectPostCommentProto(
+                    newUninitialized(org.davincischools.leo.database.daos.ProjectPostComment.class),
+                    null)
+                .build())
+        .isEqualTo(ProjectPostComment.getDefaultInstance());
+  }
+
+  @Test
+  public void toProjectPostCommentConvertersEmpty() throws ParseException {
+    ProjectPostComment proto = ProjectPostComment.getDefaultInstance();
+
+    assertThat(
+            ProtoDaoUtils.toProjectPostCommentProto(
+                    ProtoDaoUtils.toProjectPostCommentDao(proto), null)
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectPostCommentConvertersAll() throws ParseException {
+    ProjectPostComment proto =
+        TextFormat.parse(
+            """
+                id: 1
+                user_x {
+                  user_x_id: 2
+                  is_demo: true
+                  is_authenticated: true
+                }
+                project_post_id: 3
+                long_descr_html: "long_descr_html"
+                post_time_ms: 4
+                being_edited: true
+                """,
+            ProjectPostComment.class);
+
+    assertThat(
+            ProtoDaoUtils.toProjectPostCommentProto(
+                    ProtoDaoUtils.toProjectPostCommentDao(proto), null)
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toFullProjectPostCommentConverter() throws ParseException {
+    ProjectPostComment proto =
+        TextFormat.parse(
+            """
+                id: 1
+                user_x {
+                  user_x_id: 2
+                  is_demo: true
+                  is_authenticated: true
+                }
+                project_post_id: 3
+                long_descr_html: "long_descr_html"
+                post_time_ms: 4
+                being_edited: true
+                """,
+            ProjectPostComment.class);
+
+    assertThat(
+            ProtoDaoUtils.toProjectPostCommentProto(
+                    ProtoDaoUtils.toFullProjectPostComment(proto), null)
+                .build())
         .isEqualTo(proto);
   }
 

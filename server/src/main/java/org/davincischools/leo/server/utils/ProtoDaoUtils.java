@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,7 +24,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -40,12 +38,14 @@ import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.daos.ProjectPost;
+import org.davincischools.leo.database.daos.ProjectPostComment;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.repos.ClassXRepository.FullClassX;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.FullProjectInput;
+import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
 import org.davincischools.leo.database.utils.repos.ProjectPostRepository.FullProjectPost;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.MilestoneWithSteps;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
@@ -274,7 +274,8 @@ public class ProtoDaoUtils {
             projectPost,
             new ProjectPost().setCreationTime(Instant.now()),
             org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
-            org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER);
+            org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER);
     if (projectPost.hasUserX()) {
       dao.setUserX(toUserXDao(projectPost.getUserX()));
     }
@@ -283,11 +284,16 @@ public class ProtoDaoUtils {
 
   public static FullProjectPost toFullProjectPostRecord(
       org.davincischools.leo.protos.pl_types.ProjectPostOrBuilder projectPost) {
-    return new FullProjectPost(
-        toProjectPostDao(projectPost),
-        // TODO: Add comments.
-        new TreeMap<>(),
-        new HashSet<>(projectPost.getTagsList().stream().map(ProtoDaoUtils::toTagDao).toList()));
+    FullProjectPost fullProjectPost =
+        new FullProjectPost().setProjectPost(toProjectPostDao(projectPost));
+    fullProjectPost
+        .getProjectPostComments()
+        .putAll(
+            projectPost.getCommentsList().stream()
+                .map(ProtoDaoUtils::toFullProjectPostComment)
+                .collect(Collectors.toMap(e -> e.getProjectPostComment().getPostTime(), e -> e)));
+    new HashSet<>(projectPost.getTagsList().stream().map(ProtoDaoUtils::toTagDao).toList());
+    return fullProjectPost;
   }
 
   public static org.davincischools.leo.protos.pl_types.ProjectPost.Builder toProjectPostProto(
@@ -300,7 +306,8 @@ public class ProtoDaoUtils {
           projectPost,
           builder,
           org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER);
+          org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER,
+          org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER);
       if (projectPost.getUserX() != null) {
         toUserXProto(projectPost.getUserX(), builder.getUserXBuilder());
       }
@@ -316,7 +323,64 @@ public class ProtoDaoUtils {
     if (projectPost != null && Hibernate.isInitialized(projectPost)) {
       var finalBuilder = builder;
       toProjectPostProto(projectPost.getProjectPost(), builder);
+      projectPost
+          .getProjectPostComments()
+          .values()
+          .forEach(
+              comment -> toProjectPostCommentProto(comment, finalBuilder.addCommentsBuilder()));
       projectPost.getTags().forEach(tag -> toTagProto(tag, finalBuilder.addTagsBuilder()));
+    }
+    return builder;
+  }
+
+  public static ProjectPostComment toProjectPostCommentDao(
+      org.davincischools.leo.protos.pl_types.ProjectPostCommentOrBuilder projectPostComment) {
+    ProjectPostComment dao =
+        translateToDao(
+            projectPostComment,
+            new ProjectPostComment().setCreationTime(Instant.now()),
+            org.davincischools.leo.protos.pl_types.ProjectPostComment.USER_X_FIELD_NUMBER);
+    if (projectPostComment.hasUserX()) {
+      dao.setUserX(toUserXDao(projectPostComment.getUserX()));
+    }
+    return dao;
+  }
+
+  public static FullProjectPostComment toFullProjectPostComment(
+      org.davincischools.leo.protos.pl_types.ProjectPostCommentOrBuilder projectPostComment) {
+    return new FullProjectPostComment(toProjectPostCommentDao(projectPostComment));
+  }
+
+  public static org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder
+      toProjectPostCommentProto(
+          ProjectPostComment projectPostComment,
+          @Nullable org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder builder) {
+    builder =
+        builder != null
+            ? builder
+            : org.davincischools.leo.protos.pl_types.ProjectPostComment.newBuilder();
+    if (projectPostComment != null && Hibernate.isInitialized(projectPostComment)) {
+      translateToProto(
+          projectPostComment,
+          builder,
+          org.davincischools.leo.protos.pl_types.ProjectPostComment.USER_X_FIELD_NUMBER);
+      if (projectPostComment.getUserX() != null) {
+        toUserXProto(projectPostComment.getUserX(), builder.getUserXBuilder());
+      }
+    }
+    return builder;
+  }
+
+  public static org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder
+      toProjectPostCommentProto(
+          FullProjectPostComment projectPostComment,
+          @Nullable org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder builder) {
+    builder =
+        builder != null
+            ? builder
+            : org.davincischools.leo.protos.pl_types.ProjectPostComment.newBuilder();
+    if (projectPostComment != null && Hibernate.isInitialized(projectPostComment)) {
+      toProjectPostCommentProto(projectPostComment.getProjectPostComment(), builder);
     }
     return builder;
   }

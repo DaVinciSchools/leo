@@ -12,7 +12,19 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = ProjectPostComment.ENTITY_NAME)
 @Table(name = ProjectPostComment.TABLE_NAME, schema = "leo_temp")
 public class ProjectPostComment implements Serializable {
@@ -22,9 +34,11 @@ public class ProjectPostComment implements Serializable {
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
+  public static final String COLUMN_POSTTIME_NAME = "post_time";
   public static final String COLUMN_COMMENTHTML_NAME = "comment_html";
+  public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_BEINGEDITED_NAME = "being_edited";
-  private static final long serialVersionUID = -7217176243278200988L;
+  private static final long serialVersionUID = 7485059800927715403L;
 
   private Integer id;
 
@@ -32,7 +46,11 @@ public class ProjectPostComment implements Serializable {
 
   private Instant deleted;
 
+  private Instant postTime;
+
   private String commentHtml;
+
+  private String longDescrHtml;
 
   private Boolean beingEdited;
 
@@ -47,19 +65,9 @@ public class ProjectPostComment implements Serializable {
     return id;
   }
 
-  public ProjectPostComment setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public ProjectPostComment setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -67,9 +75,9 @@ public class ProjectPostComment implements Serializable {
     return deleted;
   }
 
-  public ProjectPostComment setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
+  @Column(name = COLUMN_POSTTIME_NAME, nullable = false)
+  public Instant getPostTime() {
+    return postTime;
   }
 
   @Lob
@@ -78,19 +86,15 @@ public class ProjectPostComment implements Serializable {
     return commentHtml;
   }
 
-  public ProjectPostComment setCommentHtml(String commentHtml) {
-    this.commentHtml = commentHtml;
-    return this;
+  @Lob
+  @Column(name = COLUMN_LONGDESCRHTML_NAME)
+  public String getLongDescrHtml() {
+    return longDescrHtml;
   }
 
   @Column(name = COLUMN_BEINGEDITED_NAME)
   public Boolean getBeingEdited() {
     return beingEdited;
-  }
-
-  public ProjectPostComment setBeingEdited(Boolean beingEdited) {
-    this.beingEdited = beingEdited;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -99,19 +103,9 @@ public class ProjectPostComment implements Serializable {
     return userX;
   }
 
-  public ProjectPostComment setUserX(UserX userX) {
-    this.userX = userX;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_post_id", nullable = false)
   public ProjectPost getProjectPost() {
     return projectPost;
-  }
-
-  public ProjectPostComment setProjectPost(ProjectPost projectPost) {
-    this.projectPost = projectPost;
-    return this;
   }
 }

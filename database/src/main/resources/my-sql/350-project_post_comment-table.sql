@@ -4,7 +4,10 @@ CREATE TABLE project_post_comment
     creation_time   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted         DATETIME,
 
+    post_time       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- Deprecated. Use long_descr_html instead.
     comment_html    TEXT,
+    long_descr_html MEDIUMTEXT,
     being_edited    BOOLEAN,
 
     user_x_id       INT      NOT NULL,
