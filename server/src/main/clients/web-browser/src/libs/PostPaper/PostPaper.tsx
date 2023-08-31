@@ -28,7 +28,10 @@ export function PostPaper(props: {post: IProjectPost}) {
               </span>
               <br />
               <span className="post-paper-title">
-                {props.post?.name ?? 'Untitled'}&nbsp;
+                {(props.post?.name?.trim()?.length ?? 0) > 0
+                  ? props.post?.name ?? ''
+                  : 'Untitled'}
+                &nbsp;
               </span>
             </div>
           </div>
@@ -42,10 +45,16 @@ export function PostPaper(props: {post: IProjectPost}) {
           <ReactQuill
             theme="snow"
             className="global-react-quill"
-            value={props.post?.longDescrHtml ?? ''}
+            value={
+              (props.post?.longDescrHtml?.trim()?.length ?? 0) > 0 &&
+              props.post?.longDescrHtml !== '<p><br></p>'
+                ? props.post?.longDescrHtml ?? ''
+                : 'No Content'
+            }
             preserveWhitespace={true}
             modules={{toolbar: false}}
             style={{padding: 0}}
+            readOnly={true}
           />
         </div>
       </div>

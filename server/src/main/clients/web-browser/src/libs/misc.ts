@@ -3,7 +3,7 @@
 import {Long as PbLong} from 'protobufjs';
 import Long from 'long';
 
-export function toLong(value: PbLong | number): Long {
+export function toLong(value: PbLong | number) {
   if (typeof value === 'number') {
     return Long.fromNumber(value);
   } else {

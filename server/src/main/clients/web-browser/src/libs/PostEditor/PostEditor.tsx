@@ -16,6 +16,7 @@ export function PostEditor(props: {
   });
   const postLongDescrHtml = props.postForm.useStringFormField('longDescrHtml', {
     maxLength: 65535,
+    // TODO: isHtml: {isRequired: true}.
   });
   const postDesiredFeedback = props.postForm.useStringFormField(
     'desiredFeedback',
@@ -30,6 +31,7 @@ export function PostEditor(props: {
         <div className="global-form-label">Title</div>
         <TextField
           placeholder="Enter a name for this post."
+          // TODO: required - Right now it pulls the focus all the time.
           {...postName.textFieldParams()}
         />
         <div className="global-form-label">Tags</div>
