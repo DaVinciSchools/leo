@@ -20,10 +20,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -283,7 +285,9 @@ public class ProtoDaoUtils {
       org.davincischools.leo.protos.pl_types.ProjectPostOrBuilder projectPost) {
     return new FullProjectPost(
         toProjectPostDao(projectPost),
-        new ArrayList<>(projectPost.getTagsList().stream().map(ProtoDaoUtils::toTagDao).toList()));
+        // TODO: Add comments.
+        new TreeMap<>(),
+        new HashSet<>(projectPost.getTagsList().stream().map(ProtoDaoUtils::toTagDao).toList()));
   }
 
   public static org.davincischools.leo.protos.pl_types.ProjectPost.Builder toProjectPostProto(

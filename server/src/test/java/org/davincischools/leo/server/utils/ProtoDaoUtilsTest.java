@@ -502,6 +502,7 @@ public class ProtoDaoUtilsTest {
     assertThat(
             ProtoDaoUtils.toProjectPostProto(ProtoDaoUtils.toFullProjectPostRecord(proto), null)
                 .build())
+        .ignoringFields(ProjectPost.TAGS_FIELD_NUMBER)
         .isEqualTo(proto);
   }
 

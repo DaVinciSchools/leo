@@ -49,6 +49,10 @@ public class PostService {
                   .getProjectPosts(
                       entityManager,
                       new GetProjectPostsParams()
+                          .setIncludeTags(
+                              request.hasIncludeTags() ? request.getIncludeTags() : null)
+                          .setIncludeComments(
+                              request.hasIncludeComments() ? request.getIncludeComments() : null)
                           .setProjectIds(
                               request.getProjectIdsList().isEmpty()
                                   ? null

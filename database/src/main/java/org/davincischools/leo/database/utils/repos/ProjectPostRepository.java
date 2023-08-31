@@ -13,9 +13,14 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -26,6 +31,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.davincischools.leo.database.daos.ProjectPost;
+import org.davincischools.leo.database.daos.ProjectPostComment;
 import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
@@ -46,7 +52,10 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
 
     private ProjectPost projectPost;
 
-    private List<Tag> tags;
+    private SortedMap<Long, ProjectPostComment> projectPostComments =
+        new TreeMap<>(Comparator.<Long>naturalOrder().reversed());
+
+    private Set<Tag> tags = new HashSet<>();
   }
 
   @Setter
@@ -56,6 +65,7 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
   class GetProjectPostsParams {
 
     @Nullable private Boolean includeTags;
+    @Nullable private Boolean includeComments;
 
     @Nullable private List<Integer> projectIds;
     @Nullable private List<Integer> assignmentIds;
@@ -66,6 +76,10 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
 
     Optional<Boolean> getIncludeTags() {
       return Optional.ofNullable(includeTags);
+    }
+
+    Optional<Boolean> getIncludeComments() {
+      return Optional.ofNullable(includeComments);
     }
 
     Optional<List<Integer>> getProjectIds() {
@@ -105,6 +119,13 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     // FROM ProjectPost.
     Root<ProjectPost> projectPost = query.from(ProjectPost.class);
     projectPost.fetch("userX", JoinType.LEFT);
+
+    // JOIN includeComments.
+    Join<ProjectPost, ProjectPostComment> projectPostComment = null;
+    if (params.getIncludeComments().orElse(false)) {
+      projectPostComment = projectPost.join(ProjectPostComment.TABLE_NAME, JoinType.LEFT);
+      projectPostComment.fetch("userX", JoinType.LEFT);
+    }
 
     // WHERE projectIds.
     if (params.getProjectIds().isPresent()) {
@@ -175,14 +196,19 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
 
     // ORDER BY.
     query.orderBy(
-        Stream.of(builder.desc(projectPost.get("postTime")), builder.desc(projectPost.get("id")))
+        Stream.of(
+                builder.desc(projectPost.get("postTime")),
+                builder.desc(projectPost.get("id")),
+                projectPostComment != null ? builder.desc(projectPostComment.get("id")) : null)
             .filter(Objects::nonNull)
             .toList());
 
     // SELECT.
     query.select(
         builder.tuple(
-            Stream.of(projectPost).filter(Objects::nonNull).toArray(Selection<?>[]::new)));
+            Stream.of(projectPost, projectPostComment)
+                .filter(Objects::nonNull)
+                .toArray(Selection<?>[]::new)));
 
     // Parse results.
     List<FullProjectPost> fullProjectPosts = new ArrayList<>();
@@ -192,7 +218,12 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
           || !Objects.equals(
               fullProjectPost.getProjectPost().getId(), row.get(projectPost).getId())) {
         fullProjectPosts.add(
-            fullProjectPost = new FullProjectPost(row.get(projectPost), new ArrayList<>()));
+            fullProjectPost = new FullProjectPost().setProjectPost(row.get(projectPost)));
+      }
+      if (projectPostComment != null && row.get(projectPostComment) != null) {
+        fullProjectPost
+            .getProjectPostComments()
+            .put((long) row.get(projectPostComment).getId(), row.get(projectPostComment));
       }
     }
 

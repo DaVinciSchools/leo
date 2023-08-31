@@ -14,6 +14,7 @@ service PostService {
 
 message GetProjectPostsRequest {
   optional bool include_tags = 8;
+  optional bool include_comments = 9;
 
   repeated int32 project_ids = 7;
   repeated int32 assignment_ids = 6;

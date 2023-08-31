@@ -1,0 +1,33 @@
+.post-paper-icon {
+  font-size: x-large;
+}
+
+.post-paper-title {
+  font-size: 1.5rem;
+  font-weight: lighter;
+}
+
+.post-paper-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.post-paper-date {
+}
+
+.post-paper-post {
+  box-sizing: border-box;
+  border: 1px solid lightgrey;
+  margin: 0.5em 0;
+  padding: 0.5em;
+  width: 100%;
+  gap: 0.5em;
+
+  .ql-container {
+    border: none !important;
+
+    .ql-editor {
+      padding: 0;
+    }
+  }
+}
