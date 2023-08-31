@@ -45,8 +45,7 @@ public class DaoUtils {
           }
 
           try {
-            Constructor<?> constructor =
-                Iterables.getOnlyElement(Arrays.asList(clazz.getConstructors()));
+            Constructor<?> constructor = clazz.getConstructor();
             List<BiConsumer<Object, Object>> copyFields = new ArrayList<>();
             Function<Object, Object> getId = null;
             BiConsumer<Object, Object> setId = null;
