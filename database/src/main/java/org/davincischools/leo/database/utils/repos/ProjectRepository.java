@@ -5,6 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.SortedMap;
+import javax.annotation.Nullable;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
@@ -15,6 +24,77 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Integer> {
+
+  @Setter
+  @Getter
+  @Builder
+  @Accessors(chain = true)
+  @NoArgsConstructor
+  @AllArgsConstructor
+  class FullProjectMilestone {
+    private ProjectMilestone milestone;
+    private SortedMap<Integer, ProjectMilestoneStep> steps;
+  }
+
+  @Setter
+  @Getter
+  @Accessors(chain = true)
+  @NoArgsConstructor
+  @AllArgsConstructor
+  class FullProject {
+    private Project project;
+    private Set<String> tags;
+    private SortedMap<Integer, FullProjectMilestone> fullMilestones;
+  }
+
+  @Setter
+  @Getter
+  @Accessors(chain = true)
+  @NoArgsConstructor
+  class FindProjectsParams {
+
+    @Nullable private Integer userXId;
+
+    @Nullable private Integer projectId;
+
+    @Nullable private Boolean includeInactive;
+
+    @Nullable private Boolean includeUnsuccessful;
+
+    @Nullable private Boolean includeTags;
+
+    @Nullable private Boolean includeAssignment;
+
+    @Nullable private Boolean includeMilestones;
+
+    public Optional<Integer> getUserXId() {
+      return Optional.ofNullable(userXId);
+    }
+
+    public Optional<Integer> getProjectId() {
+      return Optional.ofNullable(projectId);
+    }
+
+    public Optional<Boolean> getIncludeInactive() {
+      return Optional.ofNullable(includeInactive);
+    }
+
+    public Optional<Boolean> getIncludeUnsuccessful() {
+      return Optional.ofNullable(includeUnsuccessful);
+    }
+
+    public Optional<Boolean> getIncludeTags() {
+      return Optional.ofNullable(includeTags);
+    }
+
+    public Optional<Boolean> getIncludeAssignment() {
+      return Optional.ofNullable(includeAssignment);
+    }
+
+    public Optional<Boolean> getIncludeMilestones() {
+      return Optional.ofNullable(includeMilestones);
+    }
+  }
 
   record MilestoneWithSteps(ProjectMilestone milestone, List<ProjectMilestoneStep> steps) {}
 
