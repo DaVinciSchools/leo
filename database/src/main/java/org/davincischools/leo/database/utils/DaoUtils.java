@@ -72,7 +72,7 @@ public class DaoUtils {
                       try {
                         // You're not allowed to create other mappings while computing one.
                         Object innerDao = get.invoke(from);
-                        if (innerDao != null) {
+                        if (innerDao != null && Hibernate.isInitialized(innerDao)) {
                           var innerDaoShallowCopyMethods =
                               DaoUtils.getDaoShallowCopyMethods(innerDao)
                                   .orElseThrow(
