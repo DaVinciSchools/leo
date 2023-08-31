@@ -1,14 +1,13 @@
 package org.davincischools.leo.server.controllers;
 
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.repos.ProjectPostRepository.FullProjectPost;
+import org.davincischools.leo.database.utils.repos.ProjectPostRepository.GetProjectPostsParams;
 import org.davincischools.leo.protos.post_service.GetProjectPostsRequest;
 import org.davincischools.leo.protos.post_service.GetProjectPostsResponse;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostRequest;
@@ -28,6 +27,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class PostService {
 
+  @Autowired EntityManager entityManager;
   @Autowired Database db;
 
   @PostMapping(value = "/api/protos/PostService/GetProjectPosts")
@@ -37,23 +37,45 @@ public class PostService {
       @RequestBody Optional<GetProjectPostsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    var response = GetProjectPostsResponse.newBuilder();
     return httpExecutors
         .start(optionalRequest.orElse(GetProjectPostsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
               // TODO: Determine what sort of security to have on project posts.
 
-              List<FullProjectPost> fullProjectPosts =
-                  db.getProjectPostRepository()
-                      .findProjectPostsByProject(
-                          new Project().setId(request.getProjectId()),
-                          request.hasBeingEdited() ? request.getBeingEdited() : null);
+              var response = GetProjectPostsResponse.newBuilder();
 
-              for (var fullProjectPost : fullProjectPosts) {
-                ProtoDaoUtils.toProjectPostProto(
-                    fullProjectPost, response.addProjectPostsBuilder());
-              }
+              db.getProjectPostRepository()
+                  .getProjectPosts(
+                      entityManager,
+                      new GetProjectPostsParams()
+                          .setProjectIds(
+                              request.getProjectIdsList().isEmpty()
+                                  ? null
+                                  : request.getProjectIdsList())
+                          .setAssignmentIds(
+                              request.getAssignmentIdsList().isEmpty()
+                                  ? null
+                                  : request.getAssignmentIdsList())
+                          .setClassXIds(
+                              request.getClassXIdsList().isEmpty()
+                                  ? null
+                                  : request.getClassXIdsList())
+                          .setSchoolIds(
+                              request.getSchoolIdsList().isEmpty()
+                                  ? null
+                                  : request.getSchoolIdsList())
+                          .setUserXIds(
+                              request.getUserXIdsList().isEmpty()
+                                  ? null
+                                  : request.getUserXIdsList())
+                          .setBeingEdited(
+                              !request.hasBeingEdited() ? null : request.getBeingEdited()))
+                  .forEach(
+                      fullProjectPost -> {
+                        ProtoDaoUtils.toProjectPostProto(
+                            fullProjectPost, response.addProjectPostsBuilder());
+                      });
 
               return response.build();
             })
@@ -89,11 +111,11 @@ public class PostService {
               }
 
               var fullProjectPost = ProtoDaoUtils.toFullProjectPostRecord(request.getProjectPost());
-              fullProjectPost.projectPost().setUserX(postUserX);
-              fullProjectPost.projectPost().setPostTime(Instant.now());
+              fullProjectPost.getProjectPost().setUserX(postUserX);
+              fullProjectPost.getProjectPost().setPostTime(Instant.now());
 
               fullProjectPost
-                  .tags()
+                  .getTags()
                   .forEach(
                       tag -> {
                         if (!userX.isAdminX()
@@ -104,7 +126,7 @@ public class PostService {
                       });
 
               db.getProjectPostRepository().upsert(db, userX.getUserXOrNull(), fullProjectPost);
-              response.setProjectPostId(fullProjectPost.projectPost().getId());
+              response.setProjectPostId(fullProjectPost.getProjectPost().getId());
 
               return response.build();
             })

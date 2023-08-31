@@ -13,8 +13,16 @@ service PostService {
 }
 
 message GetProjectPostsRequest {
-  optional int32 project_id = 1;
+  optional bool include_tags = 8;
+
+  repeated int32 project_ids = 7;
+  repeated int32 assignment_ids = 6;
+  repeated int32 class_x_ids = 3;
+  repeated int32 school_ids = 5;
+  repeated int32 user_x_ids = 4;
   optional bool being_edited = 2;
+
+  reserved 1;
 }
 
 message GetProjectPostsResponse {

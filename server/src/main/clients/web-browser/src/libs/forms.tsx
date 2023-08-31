@@ -750,3 +750,14 @@ export function getInputField(
 
   return input;
 }
+
+export function filterAutocompleteFormField<T, ID>(
+  formField: FormField<T[]>,
+  toId: (idFunction: T) => ID,
+  options: T[]
+) {
+  const idOptions = new Set(options.map(toId));
+  const filteredOptions =
+    formField.getValue()?.filter?.(t => idOptions.has(toId(t))) ?? ([] as T[]);
+  formField.setValue(filteredOptions);
+}

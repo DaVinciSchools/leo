@@ -23,10 +23,6 @@ service ProjectManagementService {
   rpc GetProjectDefinition (GetProjectDefinitionRequest) returns (GetProjectDefinitionResponse) {}
   rpc GetAssignmentProjectDefinitions (GetAssignmentProjectDefinitionsRequest) returns (GetAssignmentProjectDefinitionsResponse) {}
   rpc GetAssignmentProjectDefinition (GetAssignmentProjectDefinitionRequest) returns (GetAssignmentProjectDefinitionResponse) {}
-
-  rpc GetProjectPosts (GetProjectPostsRequest) returns (GetProjectPostsResponse) {}
-  rpc UpsertProjectPost (UpsertProjectPostRequest) returns (UpsertProjectPostResponse) {}
-  rpc DeleteProjectPost (DeleteProjectPostRequest) returns (DeleteProjectPostResponse) {}
 }
 
 message GetMotivationsRequest {
@@ -96,30 +92,6 @@ message GetAssignmentProjectDefinitionRequest {
 
 message GetAssignmentProjectDefinitionResponse {
   optional pl_types.ProjectDefinition definition = 1;
-}
-
-message GetProjectPostsRequest {
-  optional int32 project_id = 1;
-}
-
-message GetProjectPostsResponse {
-  repeated pl_types.ProjectPost project_posts = 1;
-}
-
-message UpsertProjectPostRequest {
-  optional int32 project_id = 1;
-  optional pl_types.ProjectPost project_post = 2;
-}
-
-message UpsertProjectPostResponse {
-  optional int32 project_post_id = 1;
-}
-
-message DeleteProjectPostRequest {
-  optional int32 id = 1;
-}
-
-message DeleteProjectPostResponse {
 }
 
 message GetProjectDefinitionCategoryTypesRequest {

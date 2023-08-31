@@ -311,8 +311,8 @@ public class ProtoDaoUtils {
         builder != null ? builder : org.davincischools.leo.protos.pl_types.ProjectPost.newBuilder();
     if (projectPost != null && Hibernate.isInitialized(projectPost)) {
       var finalBuilder = builder;
-      toProjectPostProto(projectPost.projectPost(), builder);
-      projectPost.tags().forEach(tag -> toTagProto(tag, finalBuilder.addTagsBuilder()));
+      toProjectPostProto(projectPost.getProjectPost(), builder);
+      projectPost.getTags().forEach(tag -> toTagProto(tag, finalBuilder.addTagsBuilder()));
     }
     return builder;
   }

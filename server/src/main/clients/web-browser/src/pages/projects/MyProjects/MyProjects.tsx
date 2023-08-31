@@ -189,7 +189,7 @@ export function MyProjects() {
       postBeingEdited.current = true;
       createService(PostService, 'PostService')
         .getProjectPosts({
-          projectId: selectedProject.id,
+          projectIds: [selectedProject?.id ?? 0],
           beingEdited: true,
         })
         .then(response => {
