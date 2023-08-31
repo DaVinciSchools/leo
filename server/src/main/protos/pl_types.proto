@@ -48,7 +48,9 @@ message KnowledgeAndSkill {
   optional string short_descr = 4;
   optional string long_descr_html = 5;
   optional bool global = 7;
-  optional int32 user_x_id = 8;
+  optional UserX user_x = 9;
+
+  reserved 8;
 }
 
 message Project {

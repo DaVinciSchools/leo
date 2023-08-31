@@ -252,7 +252,11 @@ public class ProtoDaoUtilsTest {
                 short_descr: "short"
                 long_descr_html: "long"
                 global: true
-                user_x_id: 9
+                user_x {
+                  user_x_id: 9
+                  is_demo: true
+                  is_authenticated: true
+                }
                 """,
             KnowledgeAndSkill.class);
 

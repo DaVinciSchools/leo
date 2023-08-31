@@ -504,8 +504,15 @@ public class ProtoDaoUtils {
 
   public static KnowledgeAndSkill toKnowledgeAndSkillDao(
       org.davincischools.leo.protos.pl_types.KnowledgeAndSkillOrBuilder knowledgeAndSkill) {
-    return translateToDao(
-        knowledgeAndSkill, new KnowledgeAndSkill().setCreationTime(Instant.now()));
+    KnowledgeAndSkill dao =
+        translateToDao(
+            knowledgeAndSkill,
+            new KnowledgeAndSkill().setCreationTime(Instant.now()),
+            org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.USER_X_FIELD_NUMBER);
+    if (knowledgeAndSkill.hasUserX()) {
+      dao.setUserX(toUserXDao(knowledgeAndSkill.getUserX()));
+    }
+    return dao;
   }
 
   public static org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Builder
@@ -517,7 +524,13 @@ public class ProtoDaoUtils {
             ? builder
             : org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.newBuilder();
     if (knowledgeAndSkill != null && Hibernate.isInitialized(knowledgeAndSkill)) {
-      translateToProto(knowledgeAndSkill, builder);
+      translateToProto(
+          knowledgeAndSkill,
+          builder,
+          org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.USER_X_FIELD_NUMBER);
+      if (knowledgeAndSkill.getUserX() != null) {
+        toUserXProto(knowledgeAndSkill.getUserX(), builder.getUserXBuilder());
+      }
     }
     return builder;
   }
