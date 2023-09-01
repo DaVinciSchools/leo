@@ -9,10 +9,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = Assignment.ENTITY_NAME)
 @Table(name = Assignment.TABLE_NAME, schema = "leo_temp")
 public class Assignment implements Serializable {
@@ -26,7 +41,7 @@ public class Assignment implements Serializable {
   public static final String COLUMN_NICKNAME_NAME = "nickname";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = 985740840592816059L;
+  private static final long serialVersionUID = 5360829905417544151L;
 
   private Integer id;
 
@@ -44,6 +59,14 @@ public class Assignment implements Serializable {
 
   private ClassX classX;
 
+  private Set<AssignmentKnowledgeAndSkill> assignmentKnowledgeAndSkills = new LinkedHashSet<>();
+
+  private Set<AssignmentProjectDefinition> assignmentProjectDefinitions = new LinkedHashSet<>();
+
+  private Set<Project> projects = new LinkedHashSet<>();
+
+  private Set<ProjectInput> projectInputs = new LinkedHashSet<>();
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -51,19 +74,9 @@ public class Assignment implements Serializable {
     return id;
   }
 
-  public Assignment setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public Assignment setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -71,29 +84,14 @@ public class Assignment implements Serializable {
     return deleted;
   }
 
-  public Assignment setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
   }
 
-  public Assignment setName(String name) {
-    this.name = name;
-    return this;
-  }
-
   @Column(name = COLUMN_NICKNAME_NAME)
   public String getNickname() {
     return nickname;
-  }
-
-  public Assignment setNickname(String nickname) {
-    this.nickname = nickname;
-    return this;
   }
 
   @Lob
@@ -102,20 +100,10 @@ public class Assignment implements Serializable {
     return shortDescr;
   }
 
-  public Assignment setShortDescr(String shortDescr) {
-    this.shortDescr = shortDescr;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_LONGDESCRHTML_NAME)
   public String getLongDescrHtml() {
     return longDescrHtml;
-  }
-
-  public Assignment setLongDescrHtml(String longDescrHtml) {
-    this.longDescrHtml = longDescrHtml;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -124,8 +112,23 @@ public class Assignment implements Serializable {
     return classX;
   }
 
-  public Assignment setClassX(ClassX classX) {
-    this.classX = classX;
-    return this;
+  @OneToMany(mappedBy = "assignment")
+  public Set<AssignmentKnowledgeAndSkill> getAssignmentKnowledgeAndSkills() {
+    return assignmentKnowledgeAndSkills;
+  }
+
+  @OneToMany(mappedBy = "assignment")
+  public Set<AssignmentProjectDefinition> getAssignmentProjectDefinitions() {
+    return assignmentProjectDefinitions;
+  }
+
+  @OneToMany(mappedBy = "assignment")
+  public Set<Project> getProjects() {
+    return projects;
+  }
+
+  @OneToMany(mappedBy = "assignment")
+  public Set<ProjectInput> getProjectInputs() {
+    return projectInputs;
   }
 }

@@ -9,10 +9,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = Log.ENTITY_NAME)
 @Table(name = Log.TABLE_NAME, schema = "leo_temp")
 public class Log implements Serializable {
@@ -39,7 +54,7 @@ public class Log implements Serializable {
   public static final String COLUMN_LASTINPUT_NAME = "last_input";
   public static final String COLUMN_LASTINPUTTYPE_NAME = "last_input_type";
   public static final String COLUMN_LASTINPUTTIME_NAME = "last_input_time";
-  private static final long serialVersionUID = 3142108779852199719L;
+  private static final long serialVersionUID = -4278213263385758265L;
 
   private Integer id;
 
@@ -83,6 +98,8 @@ public class Log implements Serializable {
 
   private Instant lastInputTime;
 
+  private Set<LogReference> logReferences = new LinkedHashSet<>();
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -90,29 +107,14 @@ public class Log implements Serializable {
     return id;
   }
 
-  public Log setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
   }
 
-  public Log setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
-  }
-
   @Column(name = COLUMN_DELETED_NAME)
   public Instant getDeleted() {
     return deleted;
-  }
-
-  public Log setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -121,20 +123,10 @@ public class Log implements Serializable {
     return userX;
   }
 
-  public Log setUserX(UserX userX) {
-    this.userX = userX;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_STATUS_NAME, nullable = false)
   public String getStatus() {
     return status;
-  }
-
-  public Log setStatus(String status) {
-    this.status = status;
-    return this;
   }
 
   @Lob
@@ -143,19 +135,9 @@ public class Log implements Serializable {
     return notes;
   }
 
-  public Log setNotes(String notes) {
-    this.notes = notes;
-    return this;
-  }
-
   @Column(name = COLUMN_ISSUELINK_NAME)
   public String getIssueLink() {
     return issueLink;
-  }
-
-  public Log setIssueLink(String issueLink) {
-    this.issueLink = issueLink;
-    return this;
   }
 
   @Lob
@@ -164,20 +146,10 @@ public class Log implements Serializable {
     return caller;
   }
 
-  public Log setCaller(String caller) {
-    this.caller = caller;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_REQUEST_NAME, nullable = false)
   public String getRequest() {
     return request;
-  }
-
-  public Log setRequest(String request) {
-    this.request = request;
-    return this;
   }
 
   @Lob
@@ -186,19 +158,9 @@ public class Log implements Serializable {
     return requestType;
   }
 
-  public Log setRequestType(String requestType) {
-    this.requestType = requestType;
-    return this;
-  }
-
   @Column(name = COLUMN_REQUESTTIME_NAME, nullable = false)
   public Instant getRequestTime() {
     return requestTime;
-  }
-
-  public Log setRequestTime(Instant requestTime) {
-    this.requestTime = requestTime;
-    return this;
   }
 
   @Lob
@@ -207,30 +169,15 @@ public class Log implements Serializable {
     return initialResponse;
   }
 
-  public Log setInitialResponse(String initialResponse) {
-    this.initialResponse = initialResponse;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_INITIALRESPONSETYPE_NAME)
   public String getInitialResponseType() {
     return initialResponseType;
   }
 
-  public Log setInitialResponseType(String initialResponseType) {
-    this.initialResponseType = initialResponseType;
-    return this;
-  }
-
   @Column(name = COLUMN_INITIALRESPONSETIME_NAME)
   public Instant getInitialResponseTime() {
     return initialResponseTime;
-  }
-
-  public Log setInitialResponseTime(Instant initialResponseTime) {
-    this.initialResponseTime = initialResponseTime;
-    return this;
   }
 
   @Lob
@@ -239,30 +186,15 @@ public class Log implements Serializable {
     return finalResponse;
   }
 
-  public Log setFinalResponse(String finalResponse) {
-    this.finalResponse = finalResponse;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_FINALRESPONSETYPE_NAME)
   public String getFinalResponseType() {
     return finalResponseType;
   }
 
-  public Log setFinalResponseType(String finalResponseType) {
-    this.finalResponseType = finalResponseType;
-    return this;
-  }
-
   @Column(name = COLUMN_FINALRESPONSETIME_NAME, nullable = false)
   public Instant getFinalResponseTime() {
     return finalResponseTime;
-  }
-
-  public Log setFinalResponseTime(Instant finalResponseTime) {
-    this.finalResponseTime = finalResponseTime;
-    return this;
   }
 
   @Lob
@@ -271,20 +203,10 @@ public class Log implements Serializable {
     return stackTrace;
   }
 
-  public Log setStackTrace(String stackTrace) {
-    this.stackTrace = stackTrace;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_LASTINPUT_NAME)
   public String getLastInput() {
     return lastInput;
-  }
-
-  public Log setLastInput(String lastInput) {
-    this.lastInput = lastInput;
-    return this;
   }
 
   @Lob
@@ -293,18 +215,13 @@ public class Log implements Serializable {
     return lastInputType;
   }
 
-  public Log setLastInputType(String lastInputType) {
-    this.lastInputType = lastInputType;
-    return this;
-  }
-
   @Column(name = COLUMN_LASTINPUTTIME_NAME)
   public Instant getLastInputTime() {
     return lastInputTime;
   }
 
-  public Log setLastInputTime(Instant lastInputTime) {
-    this.lastInputTime = lastInputTime;
-    return this;
+  @OneToMany(mappedBy = "log")
+  public Set<LogReference> getLogReferences() {
+    return logReferences;
   }
 }

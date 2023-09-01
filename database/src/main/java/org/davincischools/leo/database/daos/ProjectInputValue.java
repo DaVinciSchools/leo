@@ -12,7 +12,19 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = ProjectInputValue.ENTITY_NAME)
 @Table(name = ProjectInputValue.TABLE_NAME, schema = "leo_temp")
 public class ProjectInputValue implements Serializable {
@@ -24,7 +36,7 @@ public class ProjectInputValue implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_FREETEXTVALUE_NAME = "free_text_value";
-  private static final long serialVersionUID = 3742236058601084502L;
+  private static final long serialVersionUID = -6786715408885853606L;
 
   private Integer id;
 
@@ -51,19 +63,9 @@ public class ProjectInputValue implements Serializable {
     return id;
   }
 
-  public ProjectInputValue setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public ProjectInputValue setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -71,19 +73,9 @@ public class ProjectInputValue implements Serializable {
     return deleted;
   }
 
-  public ProjectInputValue setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_POSITION_NAME, nullable = false)
   public Float getPosition() {
     return position;
-  }
-
-  public ProjectInputValue setPosition(Float position) {
-    this.position = position;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -92,21 +84,10 @@ public class ProjectInputValue implements Serializable {
     return projectInput;
   }
 
-  public ProjectInputValue setProjectInput(ProjectInput projectInput) {
-    this.projectInput = projectInput;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_definition_category_id", nullable = false)
   public ProjectDefinitionCategory getProjectDefinitionCategory() {
     return projectDefinitionCategory;
-  }
-
-  public ProjectInputValue setProjectDefinitionCategory(
-      ProjectDefinitionCategory projectDefinitionCategory) {
-    this.projectDefinitionCategory = projectDefinitionCategory;
-    return this;
   }
 
   @Lob
@@ -115,30 +96,15 @@ public class ProjectInputValue implements Serializable {
     return freeTextValue;
   }
 
-  public ProjectInputValue setFreeTextValue(String freeTextValue) {
-    this.freeTextValue = freeTextValue;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "knowledge_and_skill_value_id")
   public KnowledgeAndSkill getKnowledgeAndSkillValue() {
     return knowledgeAndSkillValue;
   }
 
-  public ProjectInputValue setKnowledgeAndSkillValue(KnowledgeAndSkill knowledgeAndSkillValue) {
-    this.knowledgeAndSkillValue = knowledgeAndSkillValue;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "motivation_value_id")
   public Motivation getMotivationValue() {
     return motivationValue;
-  }
-
-  public ProjectInputValue setMotivationValue(Motivation motivationValue) {
-    this.motivationValue = motivationValue;
-    return this;
   }
 }

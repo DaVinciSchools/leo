@@ -9,10 +9,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = ClassX.ENTITY_NAME)
 @Table(name = ClassX.TABLE_NAME, schema = "leo_temp")
 public class ClassX implements Serializable {
@@ -28,7 +43,7 @@ public class ClassX implements Serializable {
   public static final String COLUMN_GRADE_NAME = "grade";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = -1516051238272452857L;
+  private static final long serialVersionUID = 358475533243808600L;
 
   private Integer id;
 
@@ -50,6 +65,14 @@ public class ClassX implements Serializable {
 
   private School school;
 
+  private Set<Assignment> assignments = new LinkedHashSet<>();
+
+  private Set<ClassXKnowledgeAndSkill> classXKnowledgeAndSkills = new LinkedHashSet<>();
+
+  private Set<StudentClassX> studentClassXES = new LinkedHashSet<>();
+
+  private Set<TeacherClassX> teacherClassXES = new LinkedHashSet<>();
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -57,19 +80,9 @@ public class ClassX implements Serializable {
     return id;
   }
 
-  public ClassX setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public ClassX setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -77,29 +90,14 @@ public class ClassX implements Serializable {
     return deleted;
   }
 
-  public ClassX setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
   }
 
-  public ClassX setName(String name) {
-    this.name = name;
-    return this;
-  }
-
-  @Column(name = COLUMN_NUMBER_NAME, nullable = false, length = 16)
+  @Column(name = COLUMN_NUMBER_NAME, nullable = false)
   public String getNumber() {
     return number;
-  }
-
-  public ClassX setNumber(String number) {
-    this.number = number;
-    return this;
   }
 
   @Column(name = COLUMN_PERIOD_NAME, length = 16)
@@ -107,19 +105,9 @@ public class ClassX implements Serializable {
     return period;
   }
 
-  public ClassX setPeriod(String period) {
-    this.period = period;
-    return this;
-  }
-
   @Column(name = COLUMN_GRADE_NAME, length = 16)
   public String getGrade() {
     return grade;
-  }
-
-  public ClassX setGrade(String grade) {
-    this.grade = grade;
-    return this;
   }
 
   @Lob
@@ -128,20 +116,10 @@ public class ClassX implements Serializable {
     return shortDescr;
   }
 
-  public ClassX setShortDescr(String shortDescr) {
-    this.shortDescr = shortDescr;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_LONGDESCRHTML_NAME)
   public String getLongDescrHtml() {
     return longDescrHtml;
-  }
-
-  public ClassX setLongDescrHtml(String longDescrHtml) {
-    this.longDescrHtml = longDescrHtml;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -150,8 +128,23 @@ public class ClassX implements Serializable {
     return school;
   }
 
-  public ClassX setSchool(School school) {
-    this.school = school;
-    return this;
+  @OneToMany(mappedBy = "classX")
+  public Set<Assignment> getAssignments() {
+    return assignments;
+  }
+
+  @OneToMany(mappedBy = "classX")
+  public Set<ClassXKnowledgeAndSkill> getClassXKnowledgeAndSkills() {
+    return classXKnowledgeAndSkills;
+  }
+
+  @OneToMany(mappedBy = "classX")
+  public Set<StudentClassX> getStudentClassXES() {
+    return studentClassXES;
+  }
+
+  @OneToMany(mappedBy = "classX")
+  public Set<TeacherClassX> getTeacherClassXES() {
+    return teacherClassXES;
   }
 }

@@ -4,14 +4,26 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 import org.hibernate.Hibernate;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Embeddable
 public class TeacherClassXId implements Serializable {
 
   public static final String COLUMN_TEACHERID_NAME = "teacher_id";
   public static final String COLUMN_CLASSXID_NAME = "class_x_id";
-  private static final long serialVersionUID = -6064304844250562408L;
+  private static final long serialVersionUID = 100674376668351303L;
 
   private Integer teacherId;
 
@@ -22,19 +34,9 @@ public class TeacherClassXId implements Serializable {
     return teacherId;
   }
 
-  public TeacherClassXId setTeacherId(Integer teacherId) {
-    this.teacherId = teacherId;
-    return this;
-  }
-
   @Column(name = COLUMN_CLASSXID_NAME, nullable = false)
   public Integer getClassXId() {
     return classXId;
-  }
-
-  public TeacherClassXId setClassXId(Integer classXId) {
-    this.classXId = classXId;
-    return this;
   }
 
   @Override

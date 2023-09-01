@@ -9,9 +9,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,7 +41,7 @@ public class ProjectPostComment implements Serializable {
   public static final String COLUMN_COMMENTHTML_NAME = "comment_html";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_BEINGEDITED_NAME = "being_edited";
-  private static final long serialVersionUID = 7485059800927715403L;
+  private static final long serialVersionUID = 6374941674193246369L;
 
   private Integer id;
 
@@ -57,6 +60,8 @@ public class ProjectPostComment implements Serializable {
   private UserX userX;
 
   private ProjectPost projectPost;
+
+  private Set<Tag> tags = new LinkedHashSet<>();
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -107,5 +112,10 @@ public class ProjectPostComment implements Serializable {
   @JoinColumn(name = "project_post_id", nullable = false)
   public ProjectPost getProjectPost() {
     return projectPost;
+  }
+
+  @OneToMany(mappedBy = "projectPostComment")
+  public Set<Tag> getTags() {
+    return tags;
   }
 }

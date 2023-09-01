@@ -5,10 +5,26 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = Student.ENTITY_NAME)
 @Table(name = Student.TABLE_NAME, schema = "leo_temp")
 public class Student implements Serializable {
@@ -20,7 +36,7 @@ public class Student implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_DISTRICTSTUDENTID_NAME = "district_student_id";
   public static final String COLUMN_GRADE_NAME = "grade";
-  private static final long serialVersionUID = 2778942217721170971L;
+  private static final long serialVersionUID = -8061619706580471625L;
 
   private Integer id;
 
@@ -32,6 +48,12 @@ public class Student implements Serializable {
 
   private Integer grade;
 
+  private Set<StudentClassX> studentClassXES = new LinkedHashSet<>();
+
+  private Set<StudentSchool> studentSchools = new LinkedHashSet<>();
+
+  private UserX userX;
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -39,19 +61,9 @@ public class Student implements Serializable {
     return id;
   }
 
-  public Student setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public Student setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -59,19 +71,9 @@ public class Student implements Serializable {
     return deleted;
   }
 
-  public Student setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_DISTRICTSTUDENTID_NAME)
   public Integer getDistrictStudentId() {
     return districtStudentId;
-  }
-
-  public Student setDistrictStudentId(Integer districtStudentId) {
-    this.districtStudentId = districtStudentId;
-    return this;
   }
 
   @Column(name = COLUMN_GRADE_NAME)
@@ -79,8 +81,18 @@ public class Student implements Serializable {
     return grade;
   }
 
-  public Student setGrade(Integer grade) {
-    this.grade = grade;
-    return this;
+  @OneToMany(mappedBy = "student")
+  public Set<StudentClassX> getStudentClassXES() {
+    return studentClassXES;
+  }
+
+  @OneToMany(mappedBy = "student")
+  public Set<StudentSchool> getStudentSchools() {
+    return studentSchools;
+  }
+
+  @OneToOne(mappedBy = "student")
+  public UserX getUserX() {
+    return userX;
   }
 }

@@ -12,7 +12,19 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = ProjectMilestoneStep.ENTITY_NAME)
 @Table(name = ProjectMilestoneStep.TABLE_NAME, schema = "leo_temp")
 public class ProjectMilestoneStep implements Serializable {
@@ -26,7 +38,7 @@ public class ProjectMilestoneStep implements Serializable {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = 1694696130484181251L;
+  private static final long serialVersionUID = -28844873347505601L;
 
   private Integer id;
 
@@ -51,19 +63,9 @@ public class ProjectMilestoneStep implements Serializable {
     return id;
   }
 
-  public ProjectMilestoneStep setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public ProjectMilestoneStep setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -71,29 +73,14 @@ public class ProjectMilestoneStep implements Serializable {
     return deleted;
   }
 
-  public ProjectMilestoneStep setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_POSITION_NAME, nullable = false)
   public Float getPosition() {
     return position;
   }
 
-  public ProjectMilestoneStep setPosition(Float position) {
-    this.position = position;
-    return this;
-  }
-
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
-  }
-
-  public ProjectMilestoneStep setName(String name) {
-    this.name = name;
-    return this;
   }
 
   @Lob
@@ -102,30 +89,15 @@ public class ProjectMilestoneStep implements Serializable {
     return shortDescr;
   }
 
-  public ProjectMilestoneStep setShortDescr(String shortDescr) {
-    this.shortDescr = shortDescr;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_LONGDESCRHTML_NAME)
   public String getLongDescrHtml() {
     return longDescrHtml;
   }
 
-  public ProjectMilestoneStep setLongDescrHtml(String longDescrHtml) {
-    this.longDescrHtml = longDescrHtml;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_milestone_id", nullable = false)
   public ProjectMilestone getProjectMilestone() {
     return projectMilestone;
-  }
-
-  public ProjectMilestoneStep setProjectMilestone(ProjectMilestone projectMilestone) {
-    this.projectMilestone = projectMilestone;
-    return this;
   }
 }

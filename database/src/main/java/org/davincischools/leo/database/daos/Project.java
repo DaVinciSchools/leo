@@ -9,10 +9,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = Project.ENTITY_NAME)
 @Table(name = Project.TABLE_NAME, schema = "leo_temp")
 public class Project implements Serializable {
@@ -31,7 +46,7 @@ public class Project implements Serializable {
   public static final String COLUMN_THUMBSSTATEREASON_NAME = "thumbs_state_reason";
   public static final String COLUMN_ARCHIVED_NAME = "archived";
   public static final String COLUMN_ACTIVE_NAME = "active";
-  private static final long serialVersionUID = -8655332155801355703L;
+  private static final long serialVersionUID = -7223523477430368322L;
 
   private Integer id;
 
@@ -61,6 +76,16 @@ public class Project implements Serializable {
 
   private ProjectInput projectInput;
 
+  private Set<LogReference> logReferences = new LinkedHashSet<>();
+
+  private Set<ProjectImage> projectImages = new LinkedHashSet<>();
+
+  private Set<ProjectMilestone> projectMilestones = new LinkedHashSet<>();
+
+  private Set<ProjectPost> projectPosts = new LinkedHashSet<>();
+
+  private Set<Tag> tags = new LinkedHashSet<>();
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -68,19 +93,9 @@ public class Project implements Serializable {
     return id;
   }
 
-  public Project setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public Project setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -88,19 +103,9 @@ public class Project implements Serializable {
     return deleted;
   }
 
-  public Project setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
-  }
-
-  public Project setName(String name) {
-    this.name = name;
-    return this;
   }
 
   @Lob
@@ -109,20 +114,10 @@ public class Project implements Serializable {
     return shortDescr;
   }
 
-  public Project setShortDescr(String shortDescr) {
-    this.shortDescr = shortDescr;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_LONGDESCRHTML_NAME)
   public String getLongDescrHtml() {
     return longDescrHtml;
-  }
-
-  public Project setLongDescrHtml(String longDescrHtml) {
-    this.longDescrHtml = longDescrHtml;
-    return this;
   }
 
   @Lob
@@ -131,19 +126,9 @@ public class Project implements Serializable {
     return generator;
   }
 
-  public Project setGenerator(String generator) {
-    this.generator = generator;
-    return this;
-  }
-
   @Column(name = COLUMN_FAVORITE_NAME)
   public Boolean getFavorite() {
     return favorite;
-  }
-
-  public Project setFavorite(Boolean favorite) {
-    this.favorite = favorite;
-    return this;
   }
 
   @Lob
@@ -152,20 +137,10 @@ public class Project implements Serializable {
     return thumbsState;
   }
 
-  public Project setThumbsState(String thumbsState) {
-    this.thumbsState = thumbsState;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_THUMBSSTATEREASON_NAME)
   public String getThumbsStateReason() {
     return thumbsStateReason;
-  }
-
-  public Project setThumbsStateReason(String thumbsStateReason) {
-    this.thumbsStateReason = thumbsStateReason;
-    return this;
   }
 
   @Column(name = COLUMN_ARCHIVED_NAME)
@@ -173,19 +148,9 @@ public class Project implements Serializable {
     return archived;
   }
 
-  public Project setArchived(Boolean archived) {
-    this.archived = archived;
-    return this;
-  }
-
   @Column(name = COLUMN_ACTIVE_NAME)
   public Boolean getActive() {
     return active;
-  }
-
-  public Project setActive(Boolean active) {
-    this.active = active;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -194,19 +159,34 @@ public class Project implements Serializable {
     return assignment;
   }
 
-  public Project setAssignment(Assignment assignment) {
-    this.assignment = assignment;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "project_input_id")
   public ProjectInput getProjectInput() {
     return projectInput;
   }
 
-  public Project setProjectInput(ProjectInput projectInput) {
-    this.projectInput = projectInput;
-    return this;
+  @OneToMany(mappedBy = "project")
+  public Set<LogReference> getLogReferences() {
+    return logReferences;
+  }
+
+  @OneToMany(mappedBy = "project")
+  public Set<ProjectImage> getProjectImages() {
+    return projectImages;
+  }
+
+  @OneToMany(mappedBy = "project")
+  public Set<ProjectMilestone> getProjectMilestones() {
+    return projectMilestones;
+  }
+
+  @OneToMany(mappedBy = "project")
+  public Set<ProjectPost> getProjectPosts() {
+    return projectPosts;
+  }
+
+  @OneToMany(mappedBy = "project")
+  public Set<Tag> getTags() {
+    return tags;
   }
 }

@@ -124,7 +124,7 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     // JOIN includeComments.
     Join<ProjectPost, ProjectPostComment> projectPostComment = null;
     if (params.getIncludeComments().orElse(false)) {
-      projectPostComment = projectPost.join(ProjectPostComment.TABLE_NAME, JoinType.LEFT);
+      projectPostComment = projectPost.join("projectPostComments", JoinType.LEFT);
       projectPostComment.fetch("userX", JoinType.LEFT);
     }
 

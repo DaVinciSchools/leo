@@ -10,7 +10,19 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = StudentSchool.ENTITY_NAME)
 @Table(name = StudentSchool.TABLE_NAME, schema = "leo_temp")
 public class StudentSchool implements Serializable {
@@ -19,7 +31,7 @@ public class StudentSchool implements Serializable {
   public static final String TABLE_NAME = "student__school";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = -7824471443756136770L;
+  private static final long serialVersionUID = -7555174095124472855L;
 
   private StudentSchoolId id;
 
@@ -36,21 +48,11 @@ public class StudentSchool implements Serializable {
     return id;
   }
 
-  public StudentSchool setId(StudentSchoolId id) {
-    this.id = id;
-    return this;
-  }
-
   @MapsId("studentId")
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "student_id", nullable = false)
   public Student getStudent() {
     return student;
-  }
-
-  public StudentSchool setStudent(Student student) {
-    this.student = student;
-    return this;
   }
 
   @MapsId("schoolId")
@@ -60,28 +62,13 @@ public class StudentSchool implements Serializable {
     return school;
   }
 
-  public StudentSchool setSchool(School school) {
-    this.school = school;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
   }
 
-  public StudentSchool setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
-  }
-
   @Column(name = COLUMN_DELETED_NAME)
   public Instant getDeleted() {
     return deleted;
-  }
-
-  public StudentSchool setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
   }
 }

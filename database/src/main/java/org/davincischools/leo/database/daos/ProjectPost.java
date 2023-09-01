@@ -9,10 +9,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = ProjectPost.ENTITY_NAME)
 @Table(name = ProjectPost.TABLE_NAME, schema = "leo_temp")
 public class ProjectPost implements Serializable {
@@ -28,7 +43,7 @@ public class ProjectPost implements Serializable {
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_DESIREDFEEDBACK_NAME = "desired_feedback";
   public static final String COLUMN_BEINGEDITED_NAME = "being_edited";
-  private static final long serialVersionUID = -2135549845777133556L;
+  private static final long serialVersionUID = -456167024947580716L;
 
   private Integer id;
 
@@ -52,6 +67,10 @@ public class ProjectPost implements Serializable {
 
   private Project project;
 
+  private Set<ProjectPostComment> projectPostComments = new LinkedHashSet<>();
+
+  private Set<Tag> tags = new LinkedHashSet<>();
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -59,19 +78,9 @@ public class ProjectPost implements Serializable {
     return id;
   }
 
-  public ProjectPost setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public ProjectPost setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -79,19 +88,9 @@ public class ProjectPost implements Serializable {
     return deleted;
   }
 
-  public ProjectPost setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
-  }
-
-  public ProjectPost setName(String name) {
-    this.name = name;
-    return this;
   }
 
   @Lob
@@ -100,19 +99,9 @@ public class ProjectPost implements Serializable {
     return messageHtml;
   }
 
-  public ProjectPost setMessageHtml(String messageHtml) {
-    this.messageHtml = messageHtml;
-    return this;
-  }
-
   @Column(name = COLUMN_POSTTIME_NAME, nullable = false)
   public Instant getPostTime() {
     return postTime;
-  }
-
-  public ProjectPost setPostTime(Instant postTime) {
-    this.postTime = postTime;
-    return this;
   }
 
   @Lob
@@ -121,30 +110,15 @@ public class ProjectPost implements Serializable {
     return longDescrHtml;
   }
 
-  public ProjectPost setLongDescrHtml(String longDescrHtml) {
-    this.longDescrHtml = longDescrHtml;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_DESIREDFEEDBACK_NAME)
   public String getDesiredFeedback() {
     return desiredFeedback;
   }
 
-  public ProjectPost setDesiredFeedback(String desiredFeedback) {
-    this.desiredFeedback = desiredFeedback;
-    return this;
-  }
-
   @Column(name = COLUMN_BEINGEDITED_NAME)
   public Boolean getBeingEdited() {
     return beingEdited;
-  }
-
-  public ProjectPost setBeingEdited(Boolean beingEdited) {
-    this.beingEdited = beingEdited;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -153,19 +127,19 @@ public class ProjectPost implements Serializable {
     return userX;
   }
 
-  public ProjectPost setUserX(UserX userX) {
-    this.userX = userX;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_id", nullable = false)
   public Project getProject() {
     return project;
   }
 
-  public ProjectPost setProject(Project project) {
-    this.project = project;
-    return this;
+  @OneToMany(mappedBy = "projectPost")
+  public Set<ProjectPostComment> getProjectPostComments() {
+    return projectPostComments;
+  }
+
+  @OneToMany(mappedBy = "projectPost")
+  public Set<Tag> getTags() {
+    return tags;
   }
 }

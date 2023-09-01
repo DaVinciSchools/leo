@@ -708,13 +708,17 @@ public class ProtoDaoUtils {
 
                       // Get supposed dao type.
                       Class<?> innerDaoType = setDaoMethod.get().getParameterTypes()[0];
-                      Constructor<?>[] constructors = innerDaoType.getConstructors();
-                      if (constructors.length != 1) {
-                        continue;
+                      Constructor<?> constructor = null;
+                      for (Constructor<?> candidate : innerDaoType.getConstructors()) {
+                        if (candidate.getParameterCount() == 0) {
+                          constructor = candidate;
+                          break;
+                        }
                       }
-                      if (constructors[0].getParameterTypes().length != 0) {
+                      if (constructor == null) {
                         throw new IOException("Cannot create inner dao: " + field.getFullName());
                       }
+                      Constructor<?> finalConstructor = constructor;
 
                       // Add translator to set the inner dao object.
                       setters.put(
@@ -722,7 +726,7 @@ public class ProtoDaoUtils {
                           (message, dao) -> {
                             try {
                               if (message.hasField(field)) {
-                                Object innerDao = constructors[0].newInstance();
+                                Object innerDao = finalConstructor.newInstance();
                                 Hibernate.getClass(innerDao)
                                     .getMethod("setId", Integer.class)
                                     .invoke(innerDao, (Integer) message.getField(field));

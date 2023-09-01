@@ -9,10 +9,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = ProjectMilestone.ENTITY_NAME)
 @Table(name = ProjectMilestone.TABLE_NAME, schema = "leo_temp")
 public class ProjectMilestone implements Serializable {
@@ -26,7 +41,7 @@ public class ProjectMilestone implements Serializable {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = 4131526586927004252L;
+  private static final long serialVersionUID = -6353858186622734095L;
 
   private Integer id;
 
@@ -44,6 +59,8 @@ public class ProjectMilestone implements Serializable {
 
   private Project project;
 
+  private Set<ProjectMilestoneStep> projectMilestoneSteps = new LinkedHashSet<>();
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -51,19 +68,9 @@ public class ProjectMilestone implements Serializable {
     return id;
   }
 
-  public ProjectMilestone setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public ProjectMilestone setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -71,29 +78,14 @@ public class ProjectMilestone implements Serializable {
     return deleted;
   }
 
-  public ProjectMilestone setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_POSITION_NAME, nullable = false)
   public Float getPosition() {
     return position;
   }
 
-  public ProjectMilestone setPosition(Float position) {
-    this.position = position;
-    return this;
-  }
-
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
-  }
-
-  public ProjectMilestone setName(String name) {
-    this.name = name;
-    return this;
   }
 
   @Lob
@@ -102,20 +94,10 @@ public class ProjectMilestone implements Serializable {
     return shortDescr;
   }
 
-  public ProjectMilestone setShortDescr(String shortDescr) {
-    this.shortDescr = shortDescr;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_LONGDESCRHTML_NAME)
   public String getLongDescrHtml() {
     return longDescrHtml;
-  }
-
-  public ProjectMilestone setLongDescrHtml(String longDescrHtml) {
-    this.longDescrHtml = longDescrHtml;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -124,8 +106,8 @@ public class ProjectMilestone implements Serializable {
     return project;
   }
 
-  public ProjectMilestone setProject(Project project) {
-    this.project = project;
-    return this;
+  @OneToMany(mappedBy = "projectMilestone")
+  public Set<ProjectMilestoneStep> getProjectMilestoneSteps() {
+    return projectMilestoneSteps;
   }
 }

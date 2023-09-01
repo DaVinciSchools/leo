@@ -9,10 +9,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = ProjectInput.ENTITY_NAME)
 @Table(name = ProjectInput.TABLE_NAME, schema = "leo_temp")
 public class ProjectInput implements Serializable {
@@ -24,7 +39,7 @@ public class ProjectInput implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_TIMEOUT_NAME = "timeout";
   public static final String COLUMN_STATE_NAME = "state";
-  private static final long serialVersionUID = -485174057239849268L;
+  private static final long serialVersionUID = 5495351023374530153L;
 
   private Integer id;
 
@@ -42,6 +57,12 @@ public class ProjectInput implements Serializable {
 
   private UserX userX;
 
+  private Set<LogReference> logReferences = new LinkedHashSet<>();
+
+  private Set<Project> projects = new LinkedHashSet<>();
+
+  private Set<ProjectInputValue> projectInputValues = new LinkedHashSet<>();
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -49,19 +70,9 @@ public class ProjectInput implements Serializable {
     return id;
   }
 
-  public ProjectInput setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public ProjectInput setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -69,19 +80,9 @@ public class ProjectInput implements Serializable {
     return deleted;
   }
 
-  public ProjectInput setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_TIMEOUT_NAME)
   public Instant getTimeout() {
     return timeout;
-  }
-
-  public ProjectInput setTimeout(Instant timeout) {
-    this.timeout = timeout;
-    return this;
   }
 
   @Lob
@@ -90,20 +91,10 @@ public class ProjectInput implements Serializable {
     return state;
   }
 
-  public ProjectInput setState(String state) {
-    this.state = state;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_definition_id", nullable = false)
   public ProjectDefinition getProjectDefinition() {
     return projectDefinition;
-  }
-
-  public ProjectInput setProjectDefinition(ProjectDefinition projectDefinition) {
-    this.projectDefinition = projectDefinition;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -112,19 +103,24 @@ public class ProjectInput implements Serializable {
     return assignment;
   }
 
-  public ProjectInput setAssignment(Assignment assignment) {
-    this.assignment = assignment;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_x_id")
   public UserX getUserX() {
     return userX;
   }
 
-  public ProjectInput setUserX(UserX userX) {
-    this.userX = userX;
-    return this;
+  @OneToMany(mappedBy = "projectInput")
+  public Set<LogReference> getLogReferences() {
+    return logReferences;
+  }
+
+  @OneToMany(mappedBy = "projectInput")
+  public Set<Project> getProjects() {
+    return projects;
+  }
+
+  @OneToMany(mappedBy = "projectInput")
+  public Set<ProjectInputValue> getProjectInputValues() {
+    return projectInputValues;
   }
 }

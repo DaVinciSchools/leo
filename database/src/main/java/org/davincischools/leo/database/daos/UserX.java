@@ -10,11 +10,26 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = UserX.ENTITY_NAME)
 @Table(
     name = UserX.TABLE_NAME,
@@ -28,6 +43,7 @@ import java.time.Instant;
       @Index(name = "user_x__email_address", columnList = "email_address")
     })
 public class UserX implements Serializable {
+
   public static final String ENTITY_NAME = "UserX";
   public static final String TABLE_NAME = "user_x";
   public static final String COLUMN_ID_NAME = "id";
@@ -40,7 +56,7 @@ public class UserX implements Serializable {
   public static final String COLUMN_TEMPORARYPASSWORDGOODUNTIL_NAME =
       "temporary_password_good_until";
   public static final String COLUMN_TEMPORARYENCODEDPASSWORD_NAME = "temporary_encoded_password";
-  private static final long serialVersionUID = 2120918976503868544L;
+  private static final long serialVersionUID = -6596857466582756977L;
 
   private Integer id;
 
@@ -70,6 +86,22 @@ public class UserX implements Serializable {
 
   private Interest interest;
 
+  private Set<FileX> fileXES = new LinkedHashSet<>();
+
+  private Set<KnowledgeAndSkill> knowledgeAndSkills = new LinkedHashSet<>();
+
+  private Set<Log> logs = new LinkedHashSet<>();
+
+  private Set<ProjectDefinition> projectDefinitions = new LinkedHashSet<>();
+
+  private Set<ProjectInput> projectInputs = new LinkedHashSet<>();
+
+  private Set<ProjectPost> projectPosts = new LinkedHashSet<>();
+
+  private Set<ProjectPostComment> projectPostComments = new LinkedHashSet<>();
+
+  private Set<Tag> tags = new LinkedHashSet<>();
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -77,19 +109,9 @@ public class UserX implements Serializable {
     return id;
   }
 
-  public UserX setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public UserX setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -97,19 +119,9 @@ public class UserX implements Serializable {
     return deleted;
   }
 
-  public UserX setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_FIRSTNAME_NAME, nullable = false)
   public String getFirstName() {
     return firstName;
-  }
-
-  public UserX setFirstName(String firstName) {
-    this.firstName = firstName;
-    return this;
   }
 
   @Column(name = COLUMN_LASTNAME_NAME, nullable = false)
@@ -117,19 +129,9 @@ public class UserX implements Serializable {
     return lastName;
   }
 
-  public UserX setLastName(String lastName) {
-    this.lastName = lastName;
-    return this;
-  }
-
   @Column(name = COLUMN_EMAILADDRESS_NAME, nullable = false, length = 254)
   public String getEmailAddress() {
     return emailAddress;
-  }
-
-  public UserX setEmailAddress(String emailAddress) {
-    this.emailAddress = emailAddress;
-    return this;
   }
 
   @Lob
@@ -138,19 +140,9 @@ public class UserX implements Serializable {
     return encodedPassword;
   }
 
-  public UserX setEncodedPassword(String encodedPassword) {
-    this.encodedPassword = encodedPassword;
-    return this;
-  }
-
   @Column(name = COLUMN_TEMPORARYPASSWORDGOODUNTIL_NAME)
   public Instant getTemporaryPasswordGoodUntil() {
     return temporaryPasswordGoodUntil;
-  }
-
-  public UserX setTemporaryPasswordGoodUntil(Instant temporaryPasswordGoodUntil) {
-    this.temporaryPasswordGoodUntil = temporaryPasswordGoodUntil;
-    return this;
   }
 
   @Lob
@@ -159,20 +151,10 @@ public class UserX implements Serializable {
     return temporaryEncodedPassword;
   }
 
-  public UserX setTemporaryEncodedPassword(String temporaryEncodedPassword) {
-    this.temporaryEncodedPassword = temporaryEncodedPassword;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "district_id")
   public District getDistrict() {
     return district;
-  }
-
-  public UserX setDistrict(District district) {
-    this.district = district;
-    return this;
   }
 
   @OneToOne(fetch = FetchType.LAZY)
@@ -181,20 +163,10 @@ public class UserX implements Serializable {
     return adminX;
   }
 
-  public UserX setAdminX(AdminX adminX) {
-    this.adminX = adminX;
-    return this;
-  }
-
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "teacher_id")
   public Teacher getTeacher() {
     return teacher;
-  }
-
-  public UserX setTeacher(Teacher teacher) {
-    this.teacher = teacher;
-    return this;
   }
 
   @OneToOne(fetch = FetchType.LAZY)
@@ -203,19 +175,49 @@ public class UserX implements Serializable {
     return student;
   }
 
-  public UserX setStudent(Student student) {
-    this.student = student;
-    return this;
-  }
-
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "interest_id")
   public Interest getInterest() {
     return interest;
   }
 
-  public UserX setInterest(Interest interest) {
-    this.interest = interest;
-    return this;
+  @OneToMany(mappedBy = "userX")
+  public Set<FileX> getFileXES() {
+    return fileXES;
+  }
+
+  @OneToMany(mappedBy = "userX")
+  public Set<KnowledgeAndSkill> getKnowledgeAndSkills() {
+    return knowledgeAndSkills;
+  }
+
+  @OneToMany(mappedBy = "userX")
+  public Set<Log> getLogs() {
+    return logs;
+  }
+
+  @OneToMany(mappedBy = "userX")
+  public Set<ProjectDefinition> getProjectDefinitions() {
+    return projectDefinitions;
+  }
+
+  @OneToMany(mappedBy = "userX")
+  public Set<ProjectInput> getProjectInputs() {
+    return projectInputs;
+  }
+
+  @OneToMany(mappedBy = "userX")
+  public Set<ProjectPost> getProjectPosts() {
+    return projectPosts;
+  }
+
+  @OneToMany(mappedBy = "userX")
+  public Set<ProjectPostComment> getProjectPostComments() {
+    return projectPostComments;
+  }
+
+  @OneToMany(mappedBy = "userX")
+  public Set<Tag> getTags() {
+    return tags;
   }
 }

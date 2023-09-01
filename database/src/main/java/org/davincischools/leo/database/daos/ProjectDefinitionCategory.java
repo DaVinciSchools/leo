@@ -8,10 +8,25 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = ProjectDefinitionCategory.ENTITY_NAME)
 @Table(name = ProjectDefinitionCategory.TABLE_NAME, schema = "leo_temp")
 public class ProjectDefinitionCategory implements Serializable {
@@ -23,7 +38,7 @@ public class ProjectDefinitionCategory implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_MAXNUMVALUES_NAME = "max_num_values";
-  private static final long serialVersionUID = -3957907474676954712L;
+  private static final long serialVersionUID = -6556779184012953516L;
 
   private Integer id;
 
@@ -39,6 +54,8 @@ public class ProjectDefinitionCategory implements Serializable {
 
   private ProjectDefinition projectDefinition;
 
+  private Set<ProjectInputValue> projectInputValues = new LinkedHashSet<>();
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -46,19 +63,9 @@ public class ProjectDefinitionCategory implements Serializable {
     return id;
   }
 
-  public ProjectDefinitionCategory setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public ProjectDefinitionCategory setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -66,29 +73,14 @@ public class ProjectDefinitionCategory implements Serializable {
     return deleted;
   }
 
-  public ProjectDefinitionCategory setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_POSITION_NAME, nullable = false)
   public Float getPosition() {
     return position;
   }
 
-  public ProjectDefinitionCategory setPosition(Float position) {
-    this.position = position;
-    return this;
-  }
-
   @Column(name = COLUMN_MAXNUMVALUES_NAME, nullable = false)
   public Integer getMaxNumValues() {
     return maxNumValues;
-  }
-
-  public ProjectDefinitionCategory setMaxNumValues(Integer maxNumValues) {
-    this.maxNumValues = maxNumValues;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -97,20 +89,14 @@ public class ProjectDefinitionCategory implements Serializable {
     return projectDefinitionCategoryType;
   }
 
-  public ProjectDefinitionCategory setProjectDefinitionCategoryType(
-      ProjectDefinitionCategoryType projectDefinitionCategoryType) {
-    this.projectDefinitionCategoryType = projectDefinitionCategoryType;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_definition_id", nullable = false)
   public ProjectDefinition getProjectDefinition() {
     return projectDefinition;
   }
 
-  public ProjectDefinitionCategory setProjectDefinition(ProjectDefinition projectDefinition) {
-    this.projectDefinition = projectDefinition;
-    return this;
+  @OneToMany(mappedBy = "projectDefinitionCategory")
+  public Set<ProjectInputValue> getProjectInputValues() {
+    return projectInputValues;
   }
 }

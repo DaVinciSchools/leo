@@ -5,10 +5,26 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = Teacher.ENTITY_NAME)
 @Table(name = Teacher.TABLE_NAME, schema = "leo_temp")
 public class Teacher implements Serializable {
@@ -18,13 +34,19 @@ public class Teacher implements Serializable {
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = 6081633027720596551L;
+  private static final long serialVersionUID = 3114376328390543421L;
 
   private Integer id;
 
   private Instant creationTime;
 
   private Instant deleted;
+
+  private Set<TeacherClassX> teacherClassXES = new LinkedHashSet<>();
+
+  private Set<TeacherSchool> teacherSchools = new LinkedHashSet<>();
+
+  private UserX userX;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,19 +55,9 @@ public class Teacher implements Serializable {
     return id;
   }
 
-  public Teacher setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public Teacher setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -53,8 +65,18 @@ public class Teacher implements Serializable {
     return deleted;
   }
 
-  public Teacher setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
+  @OneToMany(mappedBy = "teacher")
+  public Set<TeacherClassX> getTeacherClassXES() {
+    return teacherClassXES;
+  }
+
+  @OneToMany(mappedBy = "teacher")
+  public Set<TeacherSchool> getTeacherSchools() {
+    return teacherSchools;
+  }
+
+  @OneToOne(mappedBy = "teacher")
+  public UserX getUserX() {
+    return userX;
   }
 }

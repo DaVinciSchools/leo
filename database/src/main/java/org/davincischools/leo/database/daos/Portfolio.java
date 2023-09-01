@@ -9,7 +9,19 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = Portfolio.ENTITY_NAME)
 @Table(name = Portfolio.TABLE_NAME, schema = "leo_temp")
 public class Portfolio implements Serializable {
@@ -22,7 +34,7 @@ public class Portfolio implements Serializable {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = -5341948339336834760L;
+  private static final long serialVersionUID = 5399406607955775717L;
 
   private Integer id;
 
@@ -43,19 +55,9 @@ public class Portfolio implements Serializable {
     return id;
   }
 
-  public Portfolio setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public Portfolio setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -63,19 +65,9 @@ public class Portfolio implements Serializable {
     return deleted;
   }
 
-  public Portfolio setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
-  }
-
-  public Portfolio setName(String name) {
-    this.name = name;
-    return this;
   }
 
   @Lob
@@ -84,19 +76,9 @@ public class Portfolio implements Serializable {
     return shortDescr;
   }
 
-  public Portfolio setShortDescr(String shortDescr) {
-    this.shortDescr = shortDescr;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_LONGDESCRHTML_NAME)
   public String getLongDescrHtml() {
     return longDescrHtml;
-  }
-
-  public Portfolio setLongDescrHtml(String longDescrHtml) {
-    this.longDescrHtml = longDescrHtml;
-    return this;
   }
 }

@@ -10,7 +10,19 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = AssignmentKnowledgeAndSkill.ENTITY_NAME)
 @Table(name = AssignmentKnowledgeAndSkill.TABLE_NAME, schema = "leo_temp")
 public class AssignmentKnowledgeAndSkill implements Serializable {
@@ -19,7 +31,7 @@ public class AssignmentKnowledgeAndSkill implements Serializable {
   public static final String TABLE_NAME = "assignment__knowledge_and_skill";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = -1342008478808447218L;
+  private static final long serialVersionUID = -5507269156356802536L;
 
   private AssignmentKnowledgeAndSkillId id;
 
@@ -36,21 +48,11 @@ public class AssignmentKnowledgeAndSkill implements Serializable {
     return id;
   }
 
-  public AssignmentKnowledgeAndSkill setId(AssignmentKnowledgeAndSkillId id) {
-    this.id = id;
-    return this;
-  }
-
   @MapsId("assignmentId")
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "assignment_id", nullable = false)
   public Assignment getAssignment() {
     return assignment;
-  }
-
-  public AssignmentKnowledgeAndSkill setAssignment(Assignment assignment) {
-    this.assignment = assignment;
-    return this;
   }
 
   @MapsId("knowledgeAndSkillId")
@@ -60,28 +62,13 @@ public class AssignmentKnowledgeAndSkill implements Serializable {
     return knowledgeAndSkill;
   }
 
-  public AssignmentKnowledgeAndSkill setKnowledgeAndSkill(KnowledgeAndSkill knowledgeAndSkill) {
-    this.knowledgeAndSkill = knowledgeAndSkill;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
   }
 
-  public AssignmentKnowledgeAndSkill setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
-  }
-
   @Column(name = COLUMN_DELETED_NAME)
   public Instant getDeleted() {
     return deleted;
-  }
-
-  public AssignmentKnowledgeAndSkill setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
   }
 }

@@ -6,10 +6,25 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = ProjectDefinitionCategoryType.ENTITY_NAME)
 @Table(name = ProjectDefinitionCategoryType.TABLE_NAME, schema = "leo_temp")
 public class ProjectDefinitionCategoryType implements Serializable {
@@ -27,7 +42,7 @@ public class ProjectDefinitionCategoryType implements Serializable {
   public static final String COLUMN_INPUTPLACEHOLDER_NAME = "input_placeholder";
   public static final String COLUMN_QUERYPREFIX_NAME = "query_prefix";
   public static final String COLUMN_VALUETYPE_NAME = "value_type";
-  private static final long serialVersionUID = -435361062134755130L;
+  private static final long serialVersionUID = -3808291522036685427L;
 
   private Integer id;
 
@@ -51,6 +66,8 @@ public class ProjectDefinitionCategoryType implements Serializable {
 
   private String valueType;
 
+  private Set<ProjectDefinitionCategory> projectDefinitionCategories = new LinkedHashSet<>();
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -58,19 +75,9 @@ public class ProjectDefinitionCategoryType implements Serializable {
     return id;
   }
 
-  public ProjectDefinitionCategoryType setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public ProjectDefinitionCategoryType setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -78,19 +85,9 @@ public class ProjectDefinitionCategoryType implements Serializable {
     return deleted;
   }
 
-  public ProjectDefinitionCategoryType setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_SHORTDESCR_NAME, nullable = false, length = 1024)
   public String getShortDescr() {
     return shortDescr;
-  }
-
-  public ProjectDefinitionCategoryType setShortDescr(String shortDescr) {
-    this.shortDescr = shortDescr;
-    return this;
   }
 
   @Column(name = COLUMN_INCLUDEINDEMO_NAME)
@@ -98,19 +95,9 @@ public class ProjectDefinitionCategoryType implements Serializable {
     return includeInDemo;
   }
 
-  public ProjectDefinitionCategoryType setIncludeInDemo(Boolean includeInDemo) {
-    this.includeInDemo = includeInDemo;
-    return this;
-  }
-
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
-  }
-
-  public ProjectDefinitionCategoryType setName(String name) {
-    this.name = name;
-    return this;
   }
 
   @Column(name = COLUMN_HINT_NAME, nullable = false)
@@ -118,19 +105,9 @@ public class ProjectDefinitionCategoryType implements Serializable {
     return hint;
   }
 
-  public ProjectDefinitionCategoryType setHint(String hint) {
-    this.hint = hint;
-    return this;
-  }
-
   @Column(name = COLUMN_INPUTDESCR_NAME, nullable = false, length = 1024)
   public String getInputDescr() {
     return inputDescr;
-  }
-
-  public ProjectDefinitionCategoryType setInputDescr(String inputDescr) {
-    this.inputDescr = inputDescr;
-    return this;
   }
 
   @Column(name = COLUMN_INPUTPLACEHOLDER_NAME, nullable = false)
@@ -138,19 +115,9 @@ public class ProjectDefinitionCategoryType implements Serializable {
     return inputPlaceholder;
   }
 
-  public ProjectDefinitionCategoryType setInputPlaceholder(String inputPlaceholder) {
-    this.inputPlaceholder = inputPlaceholder;
-    return this;
-  }
-
   @Column(name = COLUMN_QUERYPREFIX_NAME, nullable = false)
   public String getQueryPrefix() {
     return queryPrefix;
-  }
-
-  public ProjectDefinitionCategoryType setQueryPrefix(String queryPrefix) {
-    this.queryPrefix = queryPrefix;
-    return this;
   }
 
   @Lob
@@ -159,8 +126,8 @@ public class ProjectDefinitionCategoryType implements Serializable {
     return valueType;
   }
 
-  public ProjectDefinitionCategoryType setValueType(String valueType) {
-    this.valueType = valueType;
-    return this;
+  @OneToMany(mappedBy = "projectDefinitionCategoryType")
+  public Set<ProjectDefinitionCategory> getProjectDefinitionCategories() {
+    return projectDefinitionCategories;
   }
 }

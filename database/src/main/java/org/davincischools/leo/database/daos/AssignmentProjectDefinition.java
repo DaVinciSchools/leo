@@ -10,7 +10,19 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = AssignmentProjectDefinition.ENTITY_NAME)
 @Table(name = AssignmentProjectDefinition.TABLE_NAME, schema = "leo_temp")
 public class AssignmentProjectDefinition implements Serializable {
@@ -20,7 +32,7 @@ public class AssignmentProjectDefinition implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_SELECTED_NAME = "selected";
-  private static final long serialVersionUID = -9070081268016012169L;
+  private static final long serialVersionUID = 2125745232494094485L;
 
   private AssignmentProjectDefinitionId id;
 
@@ -39,21 +51,11 @@ public class AssignmentProjectDefinition implements Serializable {
     return id;
   }
 
-  public AssignmentProjectDefinition setId(AssignmentProjectDefinitionId id) {
-    this.id = id;
-    return this;
-  }
-
   @MapsId("assignmentId")
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "assignment_id", nullable = false)
   public Assignment getAssignment() {
     return assignment;
-  }
-
-  public AssignmentProjectDefinition setAssignment(Assignment assignment) {
-    this.assignment = assignment;
-    return this;
   }
 
   @MapsId("projectDefinitionId")
@@ -63,19 +65,9 @@ public class AssignmentProjectDefinition implements Serializable {
     return projectDefinition;
   }
 
-  public AssignmentProjectDefinition setProjectDefinition(ProjectDefinition projectDefinition) {
-    this.projectDefinition = projectDefinition;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public AssignmentProjectDefinition setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -83,18 +75,8 @@ public class AssignmentProjectDefinition implements Serializable {
     return deleted;
   }
 
-  public AssignmentProjectDefinition setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_SELECTED_NAME)
   public Instant getSelected() {
     return selected;
-  }
-
-  public AssignmentProjectDefinition setSelected(Instant selected) {
-    this.selected = selected;
-    return this;
   }
 }

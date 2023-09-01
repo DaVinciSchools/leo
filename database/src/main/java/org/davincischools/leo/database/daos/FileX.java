@@ -11,7 +11,19 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = FileX.ENTITY_NAME)
 @Table(name = FileX.TABLE_NAME, schema = "leo_temp")
 public class FileX implements Serializable {
@@ -23,7 +35,7 @@ public class FileX implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_FILECONTENT_NAME = "file_content";
   public static final String COLUMN_MIMETYPE_NAME = "mime_type";
-  private static final long serialVersionUID = 6776854485777926787L;
+  private static final long serialVersionUID = -2571688387510419161L;
 
   private Integer id;
 
@@ -44,19 +56,9 @@ public class FileX implements Serializable {
     return id;
   }
 
-  public FileX setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public FileX setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -64,19 +66,9 @@ public class FileX implements Serializable {
     return deleted;
   }
 
-  public FileX setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_FILECONTENT_NAME, nullable = false)
   public byte[] getFileContent() {
     return fileContent;
-  }
-
-  public FileX setFileContent(byte[] fileContent) {
-    this.fileContent = fileContent;
-    return this;
   }
 
   @Column(name = COLUMN_MIMETYPE_NAME, nullable = false)
@@ -84,19 +76,9 @@ public class FileX implements Serializable {
     return mimeType;
   }
 
-  public FileX setMimeType(String mimeType) {
-    this.mimeType = mimeType;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "user_x_id", nullable = false)
   public UserX getUserX() {
     return userX;
-  }
-
-  public FileX setUserX(UserX userX) {
-    this.userX = userX;
-    return this;
   }
 }

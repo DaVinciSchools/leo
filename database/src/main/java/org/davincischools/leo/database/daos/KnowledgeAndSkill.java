@@ -9,10 +9,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = KnowledgeAndSkill.ENTITY_NAME)
 @Table(name = KnowledgeAndSkill.TABLE_NAME, schema = "leo_temp")
 public class KnowledgeAndSkill implements Serializable {
@@ -28,7 +43,7 @@ public class KnowledgeAndSkill implements Serializable {
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_GLOBAL_NAME = "global";
-  private static final long serialVersionUID = -4620261343456466499L;
+  private static final long serialVersionUID = 7619675116267868981L;
 
   private Integer id;
 
@@ -50,6 +65,12 @@ public class KnowledgeAndSkill implements Serializable {
 
   private UserX userX;
 
+  private Set<AssignmentKnowledgeAndSkill> assignmentKnowledgeAndSkills = new LinkedHashSet<>();
+
+  private Set<ClassXKnowledgeAndSkill> classXKnowledgeAndSkills = new LinkedHashSet<>();
+
+  private Set<ProjectInputValue> projectInputValues = new LinkedHashSet<>();
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -57,19 +78,9 @@ public class KnowledgeAndSkill implements Serializable {
     return id;
   }
 
-  public KnowledgeAndSkill setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public KnowledgeAndSkill setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -77,19 +88,9 @@ public class KnowledgeAndSkill implements Serializable {
     return deleted;
   }
 
-  public KnowledgeAndSkill setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
-  }
-
-  public KnowledgeAndSkill setName(String name) {
-    this.name = name;
-    return this;
   }
 
   @Lob
@@ -98,19 +99,9 @@ public class KnowledgeAndSkill implements Serializable {
     return type;
   }
 
-  public KnowledgeAndSkill setType(String type) {
-    this.type = type;
-    return this;
-  }
-
   @Column(name = COLUMN_CATEGORY_NAME)
   public String getCategory() {
     return category;
-  }
-
-  public KnowledgeAndSkill setCategory(String category) {
-    this.category = category;
-    return this;
   }
 
   @Lob
@@ -119,30 +110,15 @@ public class KnowledgeAndSkill implements Serializable {
     return shortDescr;
   }
 
-  public KnowledgeAndSkill setShortDescr(String shortDescr) {
-    this.shortDescr = shortDescr;
-    return this;
-  }
-
   @Lob
   @Column(name = COLUMN_LONGDESCRHTML_NAME)
   public String getLongDescrHtml() {
     return longDescrHtml;
   }
 
-  public KnowledgeAndSkill setLongDescrHtml(String longDescrHtml) {
-    this.longDescrHtml = longDescrHtml;
-    return this;
-  }
-
   @Column(name = COLUMN_GLOBAL_NAME)
   public Boolean getGlobal() {
     return global;
-  }
-
-  public KnowledgeAndSkill setGlobal(Boolean global) {
-    this.global = global;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -151,8 +127,18 @@ public class KnowledgeAndSkill implements Serializable {
     return userX;
   }
 
-  public KnowledgeAndSkill setUserX(UserX userX) {
-    this.userX = userX;
-    return this;
+  @OneToMany(mappedBy = "knowledgeAndSkill")
+  public Set<AssignmentKnowledgeAndSkill> getAssignmentKnowledgeAndSkills() {
+    return assignmentKnowledgeAndSkills;
+  }
+
+  @OneToMany(mappedBy = "knowledgeAndSkill")
+  public Set<ClassXKnowledgeAndSkill> getClassXKnowledgeAndSkills() {
+    return classXKnowledgeAndSkills;
+  }
+
+  @OneToMany(mappedBy = "knowledgeAndSkillValue")
+  public Set<ProjectInputValue> getProjectInputValues() {
+    return projectInputValues;
   }
 }

@@ -4,14 +4,26 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 import org.hibernate.Hibernate;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Embeddable
 public class ProjectImageId implements Serializable {
 
   public static final String COLUMN_PROJECTID_NAME = "project_id";
   public static final String COLUMN_IMAGEID_NAME = "image_id";
-  private static final long serialVersionUID = -2494415493626965214L;
+  private static final long serialVersionUID = 5644425560298181751L;
 
   private Integer projectId;
 
@@ -22,19 +34,9 @@ public class ProjectImageId implements Serializable {
     return projectId;
   }
 
-  public ProjectImageId setProjectId(Integer projectId) {
-    this.projectId = projectId;
-    return this;
-  }
-
   @Column(name = COLUMN_IMAGEID_NAME, nullable = false)
   public Integer getImageId() {
     return imageId;
-  }
-
-  public ProjectImageId setImageId(Integer imageId) {
-    this.imageId = imageId;
-    return this;
   }
 
   @Override

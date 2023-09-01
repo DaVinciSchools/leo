@@ -11,7 +11,19 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = LogReference.ENTITY_NAME)
 @Table(name = LogReference.TABLE_NAME, schema = "leo_temp")
 public class LogReference implements Serializable {
@@ -21,7 +33,7 @@ public class LogReference implements Serializable {
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = -4550416910066224224L;
+  private static final long serialVersionUID = 5276160687383179399L;
 
   private Integer id;
 
@@ -42,29 +54,14 @@ public class LogReference implements Serializable {
     return id;
   }
 
-  public LogReference setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
   }
 
-  public LogReference setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
-  }
-
   @Column(name = COLUMN_DELETED_NAME)
   public Instant getDeleted() {
     return deleted;
-  }
-
-  public LogReference setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -73,30 +70,15 @@ public class LogReference implements Serializable {
     return log;
   }
 
-  public LogReference setLog(Log log) {
-    this.log = log;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "project_input_id")
   public ProjectInput getProjectInput() {
     return projectInput;
   }
 
-  public LogReference setProjectInput(ProjectInput projectInput) {
-    this.projectInput = projectInput;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "project_id")
   public Project getProject() {
     return project;
-  }
-
-  public LogReference setProject(Project project) {
-    this.project = project;
-    return this;
   }
 }

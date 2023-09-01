@@ -5,10 +5,23 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = AdminX.ENTITY_NAME)
 @Table(name = AdminX.TABLE_NAME, schema = "leo_temp")
 public class AdminX implements Serializable {
@@ -18,13 +31,15 @@ public class AdminX implements Serializable {
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = -5537376562698055615L;
+  private static final long serialVersionUID = 4957758195900096749L;
 
   private Integer id;
 
   private Instant creationTime;
 
   private Instant deleted;
+
+  private UserX userX;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,19 +48,9 @@ public class AdminX implements Serializable {
     return id;
   }
 
-  public AdminX setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public AdminX setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -53,8 +58,8 @@ public class AdminX implements Serializable {
     return deleted;
   }
 
-  public AdminX setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
+  @OneToOne(mappedBy = "adminX")
+  public UserX getUserX() {
+    return userX;
   }
 }

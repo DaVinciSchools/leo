@@ -10,7 +10,19 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = TeacherClassX.ENTITY_NAME)
 @Table(name = TeacherClassX.TABLE_NAME, schema = "leo_temp")
 public class TeacherClassX implements Serializable {
@@ -19,7 +31,7 @@ public class TeacherClassX implements Serializable {
   public static final String TABLE_NAME = "teacher__class_x";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = 1930700140889705192L;
+  private static final long serialVersionUID = 6839916553769448981L;
 
   private TeacherClassXId id;
 
@@ -36,21 +48,11 @@ public class TeacherClassX implements Serializable {
     return id;
   }
 
-  public TeacherClassX setId(TeacherClassXId id) {
-    this.id = id;
-    return this;
-  }
-
   @MapsId("teacherId")
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "teacher_id", nullable = false)
   public Teacher getTeacher() {
     return teacher;
-  }
-
-  public TeacherClassX setTeacher(Teacher teacher) {
-    this.teacher = teacher;
-    return this;
   }
 
   @MapsId("classXId")
@@ -60,28 +62,13 @@ public class TeacherClassX implements Serializable {
     return classX;
   }
 
-  public TeacherClassX setClassX(ClassX classX) {
-    this.classX = classX;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
   }
 
-  public TeacherClassX setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
-  }
-
   @Column(name = COLUMN_DELETED_NAME)
   public Instant getDeleted() {
     return deleted;
-  }
-
-  public TeacherClassX setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
   }
 }

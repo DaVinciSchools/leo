@@ -4,14 +4,26 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 import org.hibernate.Hibernate;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Embeddable
 public class AssignmentKnowledgeAndSkillId implements Serializable {
 
   public static final String COLUMN_ASSIGNMENTID_NAME = "assignment_id";
   public static final String COLUMN_KNOWLEDGEANDSKILLID_NAME = "knowledge_and_skill_id";
-  private static final long serialVersionUID = 5010769700601342204L;
+  private static final long serialVersionUID = 6745215174674869664L;
 
   private Integer assignmentId;
 
@@ -22,19 +34,9 @@ public class AssignmentKnowledgeAndSkillId implements Serializable {
     return assignmentId;
   }
 
-  public AssignmentKnowledgeAndSkillId setAssignmentId(Integer assignmentId) {
-    this.assignmentId = assignmentId;
-    return this;
-  }
-
   @Column(name = COLUMN_KNOWLEDGEANDSKILLID_NAME, nullable = false)
   public Integer getKnowledgeAndSkillId() {
     return knowledgeAndSkillId;
-  }
-
-  public AssignmentKnowledgeAndSkillId setKnowledgeAndSkillId(Integer knowledgeAndSkillId) {
-    this.knowledgeAndSkillId = knowledgeAndSkillId;
-    return this;
   }
 
   @Override

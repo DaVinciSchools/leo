@@ -9,10 +9,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = School.ENTITY_NAME)
 @Table(
     name = School.TABLE_NAME,
@@ -37,7 +52,7 @@ public class School implements Serializable {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_NICKNAME_NAME = "nickname";
   public static final String COLUMN_ADDRESS_NAME = "address";
-  private static final long serialVersionUID = 8311791280009427307L;
+  private static final long serialVersionUID = -6726246873093964L;
 
   private Integer id;
 
@@ -53,6 +68,12 @@ public class School implements Serializable {
 
   private District district;
 
+  private Set<ClassX> classXES = new LinkedHashSet<>();
+
+  private Set<StudentSchool> studentSchools = new LinkedHashSet<>();
+
+  private Set<TeacherSchool> teacherSchools = new LinkedHashSet<>();
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = COLUMN_ID_NAME, nullable = false)
@@ -60,19 +81,9 @@ public class School implements Serializable {
     return id;
   }
 
-  public School setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public School setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -80,19 +91,9 @@ public class School implements Serializable {
     return deleted;
   }
 
-  public School setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
-  }
-
-  public School setName(String name) {
-    this.name = name;
-    return this;
   }
 
   @Column(name = COLUMN_NICKNAME_NAME)
@@ -100,19 +101,9 @@ public class School implements Serializable {
     return nickname;
   }
 
-  public School setNickname(String nickname) {
-    this.nickname = nickname;
-    return this;
-  }
-
   @Column(name = COLUMN_ADDRESS_NAME)
   public String getAddress() {
     return address;
-  }
-
-  public School setAddress(String address) {
-    this.address = address;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -121,8 +112,18 @@ public class School implements Serializable {
     return district;
   }
 
-  public School setDistrict(District district) {
-    this.district = district;
-    return this;
+  @OneToMany(mappedBy = "school")
+  public Set<ClassX> getClassXES() {
+    return classXES;
+  }
+
+  @OneToMany(mappedBy = "school")
+  public Set<StudentSchool> getStudentSchools() {
+    return studentSchools;
+  }
+
+  @OneToMany(mappedBy = "school")
+  public Set<TeacherSchool> getTeacherSchools() {
+    return teacherSchools;
   }
 }

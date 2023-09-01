@@ -11,7 +11,19 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Entity(name = Tag.ENTITY_NAME)
 @Table(name = Tag.TABLE_NAME, schema = "leo_temp")
 public class Tag implements Serializable {
@@ -22,7 +34,7 @@ public class Tag implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_TEXT_NAME = "text";
-  private static final long serialVersionUID = 3128921904451530598L;
+  private static final long serialVersionUID = -1126156217329298145L;
 
   private Integer id;
 
@@ -47,19 +59,9 @@ public class Tag implements Serializable {
     return id;
   }
 
-  public Tag setId(Integer id) {
-    this.id = id;
-    return this;
-  }
-
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)
   public Instant getCreationTime() {
     return creationTime;
-  }
-
-  public Tag setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
-    return this;
   }
 
   @Column(name = COLUMN_DELETED_NAME)
@@ -67,30 +69,15 @@ public class Tag implements Serializable {
     return deleted;
   }
 
-  public Tag setDeleted(Instant deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
   @Column(name = COLUMN_TEXT_NAME, nullable = false, length = 32)
   public String getText() {
     return text;
   }
 
-  public Tag setText(String text) {
-    this.text = text;
-    return this;
-  }
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_x_id")
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_x_id", nullable = false)
   public UserX getUserX() {
     return userX;
-  }
-
-  public Tag setUserX(UserX userX) {
-    this.userX = userX;
-    return this;
   }
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -99,30 +86,15 @@ public class Tag implements Serializable {
     return project;
   }
 
-  public Tag setProject(Project project) {
-    this.project = project;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "project_post_id")
   public ProjectPost getProjectPost() {
     return projectPost;
   }
 
-  public Tag setProjectPost(ProjectPost projectPost) {
-    this.projectPost = projectPost;
-    return this;
-  }
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "project_post_comment_id")
   public ProjectPostComment getProjectPostComment() {
     return projectPostComment;
-  }
-
-  public Tag setProjectPostComment(ProjectPostComment projectPostComment) {
-    this.projectPostComment = projectPostComment;
-    return this;
   }
 }

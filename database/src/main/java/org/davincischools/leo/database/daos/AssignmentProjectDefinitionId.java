@@ -4,14 +4,26 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 import org.hibernate.Hibernate;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ToString
+@Accessors(chain = true)
 @Embeddable
 public class AssignmentProjectDefinitionId implements Serializable {
 
   public static final String COLUMN_ASSIGNMENTID_NAME = "assignment_id";
   public static final String COLUMN_PROJECTDEFINITIONID_NAME = "project_definition_id";
-  private static final long serialVersionUID = -474924656082250321L;
+  private static final long serialVersionUID = -4000282302441721923L;
 
   private Integer assignmentId;
 
@@ -22,19 +34,9 @@ public class AssignmentProjectDefinitionId implements Serializable {
     return assignmentId;
   }
 
-  public AssignmentProjectDefinitionId setAssignmentId(Integer assignmentId) {
-    this.assignmentId = assignmentId;
-    return this;
-  }
-
   @Column(name = COLUMN_PROJECTDEFINITIONID_NAME, nullable = false)
   public Integer getProjectDefinitionId() {
     return projectDefinitionId;
-  }
-
-  public AssignmentProjectDefinitionId setProjectDefinitionId(Integer projectDefinitionId) {
-    this.projectDefinitionId = projectDefinitionId;
-    return this;
   }
 
   @Override
