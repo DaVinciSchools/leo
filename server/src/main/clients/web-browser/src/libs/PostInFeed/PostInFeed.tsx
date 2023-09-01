@@ -4,9 +4,14 @@ import {pl_types} from '../../generated/protobuf-js';
 import IProjectPost = pl_types.IProjectPost;
 import {toLong} from '../misc';
 import ReactQuill from 'react-quill';
-import {AccountCircle} from '@mui/icons-material';
+import {AccountCircle, ChatOutlined} from '@mui/icons-material';
+import {PostCommentInFeed} from '../PostCommentInFeed/PostCommentInFeed';
 
-export function PostInFeed(props: {post: IProjectPost}) {
+export function PostInFeed(props: {
+  post: IProjectPost;
+  showComments?: boolean;
+  chatIconClicked: () => void;
+}) {
   return (
     <>
       <div className="global-flex-column post-in-feed-post">
@@ -56,6 +61,18 @@ export function PostInFeed(props: {post: IProjectPost}) {
             style={{padding: 0}}
             readOnly={true}
           />
+        </div>
+        <div className="global-flex-row" style={{gap: '0.5em'}}>
+          <ChatOutlined
+            onClick={props.chatIconClicked}
+            style={{cursor: 'pointer'}}
+          />
+          {props.post?.comments?.length ?? 0}
+        </div>
+        <div style={{display: props.showComments ? undefined : 'none'}}>
+          {props.post?.comments?.map(comment => (
+            <PostCommentInFeed key={comment.id} comment={comment} />
+          ))}
         </div>
       </div>
     </>

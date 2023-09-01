@@ -22,8 +22,8 @@ import {MultiClassXAutocomplete} from '../../../libs/common_fields/MultiClassXAu
 import ClassXManagementService = class_x_management_service.ClassXManagementService;
 import PostService = post_service.PostService;
 import IProjectPost = pl_types.IProjectPost;
-import {PostInFeed} from '../../../libs/PostInFeed/PostInFeed';
-import {FilterAltTwoTone, ForumTwoTone} from '@mui/icons-material';
+import {FilterAltTwoTone} from '@mui/icons-material';
+import {PostsFeed} from '../../../libs/PostsFeed/PostsFeed';
 
 export function OverviewTab() {
   const global = useContext(GlobalStateContext);
@@ -99,6 +99,7 @@ export function OverviewTab() {
       .getProjectPosts({
         schoolIds: schoolFilter.getValue()?.map?.(e => e.id ?? 0),
         classXIds: classXFilter.getValue()?.map?.(e => e.id ?? 0),
+        includeComments: true,
       })
       .then(response => {
         setProjectPosts(response.projectPosts);
@@ -153,20 +154,7 @@ export function OverviewTab() {
           },
           {
             id: 'posts',
-            panel: (
-              <TitledPaper
-                title="Posts"
-                icon={<ForumTwoTone />}
-                highlightColor="purple"
-                draggableCursorType="move"
-              >
-                {projectPosts.map(post => (
-                  <div key={post.id}>
-                    <PostInFeed post={post} />
-                  </div>
-                ))}
-              </TitledPaper>
-            ),
+            panel: <PostsFeed posts={projectPosts} />,
             layout: {x: 0, y: 0, w: 8, h: 12},
           },
           {
