@@ -18,6 +18,7 @@ message GetProjectPostsRequest {
   optional bool include_projects = 10;
 
   repeated int32 project_ids = 7;
+  repeated int32 project_post_ids = 11;
   repeated int32 assignment_ids = 6;
   repeated int32 class_x_ids = 3;
   repeated int32 school_ids = 5;

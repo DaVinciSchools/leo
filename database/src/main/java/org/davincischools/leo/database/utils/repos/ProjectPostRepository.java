@@ -77,6 +77,7 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     @Nullable private Boolean includeProjects;
 
     @Nullable private List<Integer> projectIds;
+    @Nullable private List<Integer> projectPostIds;
     @Nullable private List<Integer> assignmentIds;
     @Nullable private List<Integer> classXIds;
     @Nullable private List<Integer> schoolIds;
@@ -97,6 +98,10 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
 
     Optional<List<Integer>> getProjectIds() {
       return Optional.ofNullable(projectIds);
+    }
+
+    Optional<List<Integer>> getProjectPostIds() {
+      return Optional.ofNullable(projectPostIds);
     }
 
     Optional<List<Integer>> getAssignmentIds() {
@@ -156,6 +161,13 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
               DaoUtils.toJoin(projectPost.fetch(ProjectPost_.project, JoinType.LEFT))
                   .get(Project_.id));
       params.getProjectIds().get().forEach(inPredicate::value);
+      whereConjunctions.add(inPredicate);
+    }
+
+    // WHERE projectIds.
+    if (params.getProjectPostIds().isPresent()) {
+      var inPredicate = builder.in(projectPost.get(ProjectPost_.id));
+      params.getProjectPostIds().get().forEach(inPredicate::value);
       whereConjunctions.add(inPredicate);
     }
 

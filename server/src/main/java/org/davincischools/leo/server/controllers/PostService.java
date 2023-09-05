@@ -59,6 +59,10 @@ public class PostService {
                               request.getProjectIdsList().isEmpty()
                                   ? null
                                   : request.getProjectIdsList())
+                          .setProjectPostIds(
+                              request.getProjectPostIdsList().isEmpty()
+                                  ? null
+                                  : request.getProjectPostIdsList())
                           .setAssignmentIds(
                               request.getAssignmentIdsList().isEmpty()
                                   ? null
