@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -196,7 +197,8 @@ public class DaoUtils {
       Function<T, ID> toId,
       Consumer<Iterable<T>> saveAll,
       Consumer<Iterable<T>> deleteAll) {
-    Set<ID> oldIds = Streams.stream(oldValues).map(toId).collect(Collectors.toSet());
+    Set<ID> oldIds =
+        Streams.stream(oldValues).map(toId).filter(Objects::nonNull).collect(Collectors.toSet());
     Set<ID> newIds = Streams.stream(newValues).map(toId).collect(Collectors.toSet());
     deleteAll.accept(
         Streams.stream(oldValues).filter(e -> !newIds.contains(toId.apply(e))).toList());
