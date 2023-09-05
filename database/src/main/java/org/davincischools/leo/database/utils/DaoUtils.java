@@ -75,7 +75,8 @@ public class DaoUtils {
                       try {
                         // You're not allowed to create other mappings while computing one.
                         Object innerDao = get.invoke(from);
-                        if (innerDao != null && Hibernate.isInitialized(innerDao)) {
+                        // It's okay if this is not initialized since we just want the id.
+                        if (innerDao != null) {
                           var innerDaoShallowCopyMethods =
                               DaoUtils.getDaoShallowCopyMethods(innerDao)
                                   .orElseThrow(
@@ -128,7 +129,7 @@ public class DaoUtils {
             }
 
             // There should be an ID field.
-            checkState(getId != null && setId != null, "No ID field found in %s.", clazz);
+            checkState(getId != null, "No ID field found in %s.", clazz);
 
             return Optional.of(
                 new DaoShallowCopyMethods(
