@@ -1,13 +1,6 @@
-.post-comment-in-feed-header {
-  .post-comment-in-feed-avatar {
-  }
-
-  .post-comment-in-feed-name {
-    font-size: 0.7rem;
-    font-weight: bold;
-  }
-}
+@import '../global';
 
 .post-comment-in-feed-content {
-  
+  @extend .global-react-quill-read-only;
+  margin-left: 3em;
 }

@@ -1,39 +1,16 @@
-.post-in-feed-icon {
-  font-size: x-large;
-}
+@import '../global';
 
-.post-in-feed-title {
-  font-size: 1.5rem;
-  font-weight: lighter;
-}
-
-.post-in-feed-name {
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-.post-in-feed-project-ref {
-  font-size: 0.9rem;
-  font-weight: lighter;
-  font-style: italic;
-}
-
-.post-in-feed-date {
+.post-in-feed-content {
+  margin-left: 3em;
 }
 
 .post-in-feed-post {
+  @extend .global-react-quill-read-only;
+
   box-sizing: border-box;
   border: 1px solid lightgrey;
   margin: 0.5em 0;
   padding: 0.5em;
   width: 100%;
   gap: 0.5em;
-
-  .ql-container {
-    border: none !important;
-
-    .ql-editor {
-      padding: 0;
-    }
-  }
 }
