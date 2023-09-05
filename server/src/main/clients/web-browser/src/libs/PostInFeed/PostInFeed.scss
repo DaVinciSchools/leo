@@ -5,8 +5,6 @@
 }
 
 .post-in-feed-post {
-  @extend .global-react-quill-read-only;
-
   box-sizing: border-box;
   border: 1px solid lightgrey;
   margin: 0.5em 0;

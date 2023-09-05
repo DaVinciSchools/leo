@@ -10,6 +10,7 @@ package post_service;
 service PostService {
   rpc GetProjectPosts(GetProjectPostsRequest) returns (GetProjectPostsResponse) {};
   rpc UpsertProjectPost(UpsertProjectPostRequest) returns (UpsertProjectPostResponse) {};
+  rpc UpsertProjectPostComment(UpsertProjectPostCommentRequest) returns (UpsertProjectPostCommentResponse) {};
 }
 
 message GetProjectPostsRequest {
@@ -32,11 +33,20 @@ message GetProjectPostsResponse {
   repeated pl_types.ProjectPost project_posts = 1;
 }
 
-
 message UpsertProjectPostRequest {
   optional pl_types.ProjectPost project_post = 1;
 }
 
 message UpsertProjectPostResponse {
   optional int32 project_post_id = 1;
+}
+
+message UpsertProjectPostCommentRequest {
+  optional pl_types.ProjectPostComment project_post_comment = 1;
+}
+
+message UpsertProjectPostCommentResponse {
+  optional pl_types.ProjectPostComment project_post_comment = 2;
+
+  reserved 1;
 }

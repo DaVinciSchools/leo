@@ -6,6 +6,7 @@ import IUserX = pl_types.IUserX;
 import IProject = pl_types.IProject;
 import {toLong} from '../misc';
 import Long from 'long';
+import {EditOutlined} from '@mui/icons-material';
 
 export function PostHeader(props: {
   userX: IUserX;
@@ -13,6 +14,8 @@ export function PostHeader(props: {
   postTitle?: string;
   postTimeMs?: Long | null;
   isComment?: boolean;
+  editIconClicked?: () => void;
+  saveStatus?: string;
 }) {
   return (
     <>
@@ -36,6 +39,16 @@ export function PostHeader(props: {
               <div className="post-header-project-name">
                 {props.project?.name ?? ''}
               </div>
+              {props.saveStatus && (
+                <span className="post-header-save-status">
+                  {props.isComment ? props.saveStatus : ''}
+                </span>
+              )}
+              {props.editIconClicked && (
+                <div>
+                  <EditOutlined onClick={props.editIconClicked} />
+                </div>
+              )}
               <div
                 className="post-header-date"
                 style={{display: props.postTimeMs != null ? undefined : 'none'}}
@@ -47,9 +60,15 @@ export function PostHeader(props: {
             </div>
           </div>
           {!props.isComment && (
-            <div className="post-header-title">
-              {props.postTitle ?? 'Untitled'}
-              &nbsp;
+            <div className="global-flex-row">
+              <span className="post-header-title" style={{flexGrow: 1}}>
+                {props.postTitle ?? 'Untitled'}&nbsp;
+              </span>
+              <span className="post-header-save-status">
+                {props.isComment
+                  ? ''
+                  : props.saveStatus && <>{props.saveStatus}</>}
+              </span>
             </div>
           )}
         </div>

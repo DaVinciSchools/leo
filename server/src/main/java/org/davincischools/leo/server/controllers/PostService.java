@@ -1,15 +1,21 @@
 package org.davincischools.leo.server.controllers;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.ProjectPost;
+import org.davincischools.leo.database.daos.ProjectPostComment;
 import org.davincischools.leo.database.daos.UserX;
+import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.ProjectPostRepository.GetProjectPostsParams;
 import org.davincischools.leo.protos.post_service.GetProjectPostsRequest;
 import org.davincischools.leo.protos.post_service.GetProjectPostsResponse;
+import org.davincischools.leo.protos.post_service.UpsertProjectPostCommentRequest;
+import org.davincischools.leo.protos.post_service.UpsertProjectPostCommentResponse;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostRequest;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostResponse;
 import org.davincischools.leo.server.utils.ProtoDaoUtils;
@@ -137,6 +143,59 @@ public class PostService {
 
               db.getProjectPostRepository().upsert(db, userX.getUserXOrNull(), fullProjectPost);
               response.setProjectPostId(fullProjectPost.getProjectPost().getId());
+
+              return response.build();
+            })
+        .finish();
+  }
+
+  @Transactional
+  @PostMapping(value = "/api/protos/PostService/UpsertProjectPostComment")
+  @ResponseBody
+  public UpsertProjectPostCommentResponse upsertProjectPostComment(
+      @Authenticated HttpUserX userX,
+      @RequestBody Optional<UpsertProjectPostCommentRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    var response = UpsertProjectPostCommentResponse.newBuilder();
+    return httpExecutors
+        .start(optionalRequest.orElse(UpsertProjectPostCommentRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              UserX postUserX =
+                  request.getProjectPostComment().getUserX().hasUserXId()
+                      ? ProtoDaoUtils.toUserXDao(request.getProjectPostComment().getUserX())
+                      : checkNotNull(userX.getUserXOrNull());
+
+              Optional<ProjectPostComment> existingComment =
+                  db.getProjectPostCommentRepository()
+                      .findById(request.getProjectPostComment().getId());
+
+              if (existingComment.isPresent()
+                  && !userX.isAdminX()
+                  && !userX.isTeacher()
+                  && !Objects.equals(
+                      existingComment.get().getUserX().getId(), userX.getUserXIdOrNull())) {
+                return userX.returnForbidden(response.build());
+              }
+
+              ProjectPostComment comment =
+                  ProtoDaoUtils.toProjectPostCommentDao(request.getProjectPostComment())
+                      .setCreationTime(Instant.now())
+                      .setUserX(postUserX)
+                      .setPostTime(Instant.now());
+              existingComment.ifPresent(
+                  existing -> {
+                    comment
+                        .setUserX(existing.getUserX())
+                        .setCreationTime(existing.getCreationTime())
+                        .setPostTime(existing.getPostTime());
+                  });
+
+              DaoUtils.removeTransientValues(comment, db.getProjectPostCommentRepository()::save);
+
+              ProtoDaoUtils.toProjectPostCommentProto(
+                  comment, response.getProjectPostCommentBuilder());
 
               return response.build();
             })

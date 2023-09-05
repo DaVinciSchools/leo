@@ -1,10 +1,14 @@
+@import '../global';
+
 .post-header {
   align-items: center;
+  padding-bottom: 0.5em;
 
   .post-header-avatar {
   }
 
   .post-header-name {
+    font-weight: bold;
   }
 
   .post-header-project-name {
@@ -21,7 +25,15 @@
 
   .post-header-title {
     font-size: 1.2rem;
+    flex-grow: 1;
     font-weight: lighter;
     font-style: italic;
+  }
+
+  .post-header-save-status {
+    color: red;
+    font-size: 0.9rem;
+    text-align: center;
+    white-space: nowrap;
   }
 }

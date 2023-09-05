@@ -1,6 +1,3 @@
-@import '../global';
-
 .post-comment-in-feed-content {
-  @extend .global-react-quill-read-only;
   margin-left: 3em;
 }
