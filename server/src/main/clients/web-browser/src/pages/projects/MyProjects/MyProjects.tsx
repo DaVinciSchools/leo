@@ -31,11 +31,13 @@ import IProjectPost = pl_types.IProjectPost;
 import {Button} from '@mui/material';
 import {Add, Clear} from '@mui/icons-material';
 import ITag = pl_types.ITag;
+import {PostsFeed} from '../../../libs/PostsFeed/PostsFeed';
 
 enum TabValue {
   OVERVIEW,
   EDIT_PROJECT,
   CREATE_POST,
+  VIEW_POSTS,
 }
 
 export function MyProjects() {
@@ -43,7 +45,7 @@ export function MyProjects() {
 
   const [activeTab, setActiveTab] = useState<TabValue>(TabValue.OVERVIEW);
 
-  // Project editor variables.
+  // Project editor tab.
 
   const [sortedProjects, setSortedProjects] = useState<IProject[]>([]);
   const [selectedProject, setSelectedProject] = useState<IProject | null>(null);
@@ -87,7 +89,7 @@ export function MyProjects() {
     1500
   );
 
-  // Post editor variables.
+  // Post editor tab.
 
   const [sortedTags, setSortedTags] = useState<string[]>([]);
   const postForm = useFormFields({
@@ -107,7 +109,7 @@ export function MyProjects() {
         const projectPost: IProjectPost = postForm.getValuesObject(true);
         projectPost.id = postId.current;
         projectPost.beingEdited = postBeingEdited.current;
-        projectPost.project = {id: selectedProject.id};
+        projectPost.project = selectedProject;
         projectPost.tags = (projectPost.tags as string[])?.map(e => {
           return {
             text: e,
@@ -131,6 +133,10 @@ export function MyProjects() {
     },
     1500
   );
+
+  // View posts tab.
+
+  const [projectPosts, setProjectPosts] = useState<IProjectPost[]>([]);
 
   // Hidden form to track project selection.
 
@@ -182,6 +188,7 @@ export function MyProjects() {
       postForm.setValuesObject({});
       postId.current = undefined;
       postBeingEdited.current = true;
+      setProjectPosts([]);
     } else {
       projectForm.setValuesObject(selectedProject);
       postForm.setValuesObject({});
@@ -204,6 +211,18 @@ export function MyProjects() {
                 .filter(e => e.length > 0),
             })
           );
+        })
+        .catch(global.setError);
+      createService(PostService, 'PostService')
+        .getProjectPosts({
+          projectIds: selectedProject ? [selectedProject.id ?? 0] : [],
+          includeComments: true,
+          includeTags: true,
+          beingEdited: false,
+        })
+        .then(response => {
+          console.log(response.projectPosts);
+          setProjectPosts(response.projectPosts);
         })
         .catch(global.setError);
     }
@@ -233,6 +252,7 @@ export function MyProjects() {
               [TabValue.OVERVIEW]: <></>,
               [TabValue.EDIT_PROJECT]: <>{projectSaveStatus}</>,
               [TabValue.CREATE_POST]: <>{postSaveStatus}</>,
+              [TabValue.VIEW_POSTS]: <></>,
             }[activeTab] || <></>}
           </span>
         </div>
@@ -300,6 +320,15 @@ export function MyProjects() {
                         </Button>
                       </div>
                     </div>
+                  </>
+                ),
+              },
+              {
+                key: TabValue.VIEW_POSTS,
+                label: 'View Posts',
+                content: (
+                  <>
+                    <PostsFeed posts={projectPosts} />
                   </>
                 ),
               },
