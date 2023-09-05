@@ -275,9 +275,13 @@ public class ProtoDaoUtils {
             new ProjectPost().setCreationTime(Instant.now()),
             org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
             org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER,
-            org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER);
+            org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.ProjectPost.PROJECT_FIELD_NUMBER);
     if (projectPost.hasUserX()) {
       dao.setUserX(toUserXDao(projectPost.getUserX()));
+    }
+    if (projectPost.hasProject()) {
+      dao.setProject(toProjectDao(projectPost.getProject()));
     }
     return dao;
   }
@@ -307,9 +311,13 @@ public class ProtoDaoUtils {
           builder,
           org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
           org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER);
+          org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER,
+          org.davincischools.leo.protos.pl_types.ProjectPost.PROJECT_FIELD_NUMBER);
       if (projectPost.getUserX() != null) {
         toUserXProto(projectPost.getUserX(), builder.getUserXBuilder());
+      }
+      if (projectPost.getProject() != null) {
+        toProjectProto(projectPost.getProject(), builder.getProjectBuilder());
       }
     }
     return builder;
@@ -339,9 +347,13 @@ public class ProtoDaoUtils {
         translateToDao(
             projectPostComment,
             new ProjectPostComment().setCreationTime(Instant.now()),
-            org.davincischools.leo.protos.pl_types.ProjectPostComment.USER_X_FIELD_NUMBER);
+            org.davincischools.leo.protos.pl_types.ProjectPostComment.USER_X_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.ProjectPostComment.PROJECT_POST_FIELD_NUMBER);
     if (projectPostComment.hasUserX()) {
       dao.setUserX(toUserXDao(projectPostComment.getUserX()));
+    }
+    if (projectPostComment.hasProjectPost()) {
+      dao.setProjectPost(toProjectPostDao(projectPostComment.getProjectPost()));
     }
     return dao;
   }
@@ -363,9 +375,13 @@ public class ProtoDaoUtils {
       translateToProto(
           projectPostComment,
           builder,
-          org.davincischools.leo.protos.pl_types.ProjectPostComment.USER_X_FIELD_NUMBER);
+          org.davincischools.leo.protos.pl_types.ProjectPostComment.USER_X_FIELD_NUMBER,
+          org.davincischools.leo.protos.pl_types.ProjectPostComment.PROJECT_POST_FIELD_NUMBER);
       if (projectPostComment.getUserX() != null) {
         toUserXProto(projectPostComment.getUserX(), builder.getUserXBuilder());
+      }
+      if (projectPostComment.getProjectPost() != null) {
+        toProjectPostProto(projectPostComment.getProjectPost(), builder.getProjectPostBuilder());
       }
     }
     return builder;

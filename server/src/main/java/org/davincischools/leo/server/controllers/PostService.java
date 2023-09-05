@@ -53,6 +53,8 @@ public class PostService {
                               request.hasIncludeTags() ? request.getIncludeTags() : null)
                           .setIncludeComments(
                               request.hasIncludeComments() ? request.getIncludeComments() : null)
+                          .setIncludeProjects(
+                              request.hasIncludeProjects() ? request.getIncludeProjects() : null)
                           .setProjectIds(
                               request.getProjectIdsList().isEmpty()
                                   ? null

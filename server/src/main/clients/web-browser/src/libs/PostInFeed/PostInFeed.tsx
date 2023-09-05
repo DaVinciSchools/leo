@@ -31,6 +31,10 @@ export function PostInFeed(props: {
                 {props.post?.userX?.firstName ?? ''}&nbsp;
                 {props.post?.userX?.lastName ?? ''}
               </span>
+              &nbsp;&nbsp;
+              <span className="post-in-feed-project-ref">
+                {props.post?.project?.name ?? 'Unknown Project'}
+              </span>
               <br />
               <span className="post-in-feed-title">
                 {(props.post?.name?.trim()?.length ?? 0) > 0

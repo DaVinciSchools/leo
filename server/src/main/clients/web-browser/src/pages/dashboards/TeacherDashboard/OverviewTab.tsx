@@ -72,7 +72,6 @@ export function OverviewTab() {
       isAutocomplete: {
         isMultiple: true,
       },
-      disabled: (schoolFilter.getValue()?.length ?? 0) === 0,
     }
   );
 
@@ -99,7 +98,9 @@ export function OverviewTab() {
       .getProjectPosts({
         schoolIds: schoolFilter.getValue()?.map?.(e => e.id ?? 0),
         classXIds: classXFilter.getValue()?.map?.(e => e.id ?? 0),
+        includeProjects: true,
         includeComments: true,
+        beingEdited: false,
       })
       .then(response => {
         setProjectPosts(response.projectPosts);

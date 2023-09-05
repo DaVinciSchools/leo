@@ -11,6 +11,8 @@ import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.criteria.Fetch;
+import jakarta.persistence.criteria.Join;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -199,6 +201,11 @@ public class DaoUtils {
     deleteAll.accept(
         Streams.stream(oldValues).filter(e -> !newIds.contains(toId.apply(e))).toList());
     saveAll.accept(Streams.stream(newValues).filter(e -> !oldIds.contains(toId.apply(e))).toList());
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <X, Y> Join<X, Y> toJoin(Fetch<X, Y> fetch) {
+    return ((Join<X, Y>) fetch);
   }
 
   private record DaoShallowCopyMethods(

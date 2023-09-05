@@ -183,16 +183,19 @@ message Tag {
 message ProjectPostComment {
   optional int32 id = 1;
   optional UserX user_x = 2;
-  optional int32 project_post_id = 10;
+  optional ProjectPost project_post = 11;
   optional string long_descr_html = 4;
   optional int64 post_time_ms = 8;
   optional bool being_edited = 9;
+
+  reserved 10;
+  reserved 'project_post_id';
 }
 
 message ProjectPost {
   optional int32 id = 1;
   optional UserX user_x = 2;
-  optional int32 project_id = 10;
+  optional Project project = 12;
   optional string name = 3;
   optional string long_descr_html = 4;
   optional string desired_feedback = 6;
@@ -200,4 +203,7 @@ message ProjectPost {
   repeated ProjectPostComment comments = 11;
   optional int64 post_time_ms = 8;
   optional bool being_edited = 9;
+
+  reserved 10;
+  reserved 'project_id';
 }

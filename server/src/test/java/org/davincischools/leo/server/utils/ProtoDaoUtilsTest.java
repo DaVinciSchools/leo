@@ -441,7 +441,9 @@ public class ProtoDaoUtilsTest {
                   is_demo: true
                   is_authenticated: true
                 }
-                project_id: 3
+                project {
+                  id: 3
+                }
                 name: "name"
                 long_descr_html: "long_descr_html"
                 desired_feedback: "desired_feedback"
@@ -464,7 +466,9 @@ public class ProtoDaoUtilsTest {
                     is_demo: true
                     is_authenticated: true
                   }
-                  project_post_id: 13
+                  project_post {
+                    id: 13
+                  }
                   long_descr_html: "long_descr_html"
                   post_time_ms: 14
                   being_edited: true
@@ -476,7 +480,9 @@ public class ProtoDaoUtilsTest {
                     is_demo: true
                     is_authenticated: true
                   }
-                  project_post_id: 9
+                  project_post {
+                    id: 9
+                  }
                   long_descr_html: "long_descr_html"
                   post_time_ms: 10
                   being_edited: true
@@ -504,7 +510,9 @@ public class ProtoDaoUtilsTest {
                   is_demo: true
                   is_authenticated: true
                 }
-                project_id: 3
+                project {
+                  id: 3
+                }
                 name: "name"
                 long_descr_html: "long_descr_html"
                 desired_feedback: "desired_feedback"
@@ -527,7 +535,9 @@ public class ProtoDaoUtilsTest {
                     is_demo: true
                     is_authenticated: true
                   }
-                  project_post_id: 13
+                  project_post {
+                    id: 13
+                  }
                   long_descr_html: "long_descr_html"
                   post_time_ms: 14
                   being_edited: true
@@ -539,7 +549,9 @@ public class ProtoDaoUtilsTest {
                     is_demo: true
                     is_authenticated: true
                   }
-                  project_post_id: 9
+                  project_post {
+                    id: 9
+                  }
                   long_descr_html: "long_descr_html"
                   post_time_ms: 10
                   being_edited: true
@@ -937,7 +949,9 @@ public class ProtoDaoUtilsTest {
                   is_demo: true
                   is_authenticated: true
                 }
-                project_post_id: 3
+                project_post {
+                  id: 3
+                }
                 long_descr_html: "long_descr_html"
                 post_time_ms: 4
                 being_edited: true
@@ -962,7 +976,14 @@ public class ProtoDaoUtilsTest {
                   is_demo: true
                   is_authenticated: true
                 }
-                project_post_id: 3
+                project_post: {
+                  id: 3
+                  user_x {
+                    user_x_id: 4
+                    is_demo: true
+                    is_authenticated: true
+                  }
+                }
                 long_descr_html: "long_descr_html"
                 post_time_ms: 4
                 being_edited: true

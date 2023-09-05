@@ -30,10 +30,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.davincischools.leo.database.daos.Assignment_;
+import org.davincischools.leo.database.daos.ClassX_;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.ProjectPostComment;
+import org.davincischools.leo.database.daos.ProjectPostComment_;
+import org.davincischools.leo.database.daos.ProjectPost_;
+import org.davincischools.leo.database.daos.Project_;
+import org.davincischools.leo.database.daos.School_;
 import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.daos.UserX;
+import org.davincischools.leo.database.daos.UserX_;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
@@ -67,6 +74,7 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
 
     @Nullable private Boolean includeTags;
     @Nullable private Boolean includeComments;
+    @Nullable private Boolean includeProjects;
 
     @Nullable private List<Integer> projectIds;
     @Nullable private List<Integer> assignmentIds;
@@ -81,6 +89,10 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
 
     Optional<Boolean> getIncludeComments() {
       return Optional.ofNullable(includeComments);
+    }
+
+    Optional<Boolean> getIncludeProjects() {
+      return Optional.ofNullable(includeProjects);
     }
 
     Optional<List<Integer>> getProjectIds() {
@@ -108,6 +120,7 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     }
   }
 
+  @SuppressWarnings("unchecked")
   default List<FullProjectPost> getProjectPosts(
       EntityManager entityManager, GetProjectPostsParams params) {
 
@@ -119,22 +132,29 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
 
     // FROM ProjectPost.
     Root<ProjectPost> projectPost = query.from(ProjectPost.class);
-    projectPost.fetch("userX", JoinType.LEFT);
+    projectPost.fetch(ProjectPost_.userX, JoinType.LEFT);
+
+    // Fetch includeProjects
+    if (params.getIncludeProjects().orElse(false)) {
+      projectPost.fetch(ProjectPost_.project, JoinType.LEFT);
+    }
 
     // JOIN includeComments.
     Join<ProjectPost, ProjectPostComment> projectPostComment = null;
     if (params.getIncludeComments().orElse(false)) {
-      projectPostComment = projectPost.join("projectPostComments", JoinType.LEFT);
-      projectPostComment.fetch("userX", JoinType.LEFT);
+      projectPostComment = projectPost.join(ProjectPost_.projectPostComments, JoinType.LEFT);
+      projectPostComment.fetch(ProjectPostComment_.userX, JoinType.LEFT);
     }
 
     // WHERE - General
-    whereConjunctions.add(builder.isNull(projectPost.get("deleted")));
+    whereConjunctions.add(builder.isNull(projectPost.get(ProjectPost_.deleted)));
 
     // WHERE projectIds.
     if (params.getProjectIds().isPresent()) {
       var inPredicate =
-          builder.in(((Join<?, ?>) projectPost.fetch("project", JoinType.LEFT)).get("id"));
+          builder.in(
+              DaoUtils.toJoin(projectPost.fetch(ProjectPost_.project, JoinType.LEFT))
+                  .get(Project_.id));
       params.getProjectIds().get().forEach(inPredicate::value);
       whereConjunctions.add(inPredicate);
     }
@@ -143,11 +163,11 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     if (params.getAssignmentIds().isPresent()) {
       var inPredicate =
           builder.in(
-              ((Join<?, ?>)
+              DaoUtils.toJoin(
                       projectPost
-                          .fetch("project", JoinType.LEFT)
-                          .fetch("assignment", JoinType.LEFT))
-                  .get("id"));
+                          .fetch(ProjectPost_.project, JoinType.LEFT)
+                          .fetch(Project_.assignment, JoinType.LEFT))
+                  .get(Assignment_.id));
       params.getAssignmentIds().get().forEach(inPredicate::value);
       whereConjunctions.add(inPredicate);
     }
@@ -156,12 +176,12 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     if (params.getClassXIds().isPresent()) {
       var inPredicate =
           builder.in(
-              ((Join<?, ?>)
+              DaoUtils.toJoin(
                       projectPost
-                          .fetch("project", JoinType.LEFT)
-                          .fetch("assignment", JoinType.LEFT)
-                          .fetch("classX", JoinType.LEFT))
-                  .get("id"));
+                          .fetch(ProjectPost_.project, JoinType.LEFT)
+                          .fetch(Project_.assignment, JoinType.LEFT)
+                          .fetch(Assignment_.classX, JoinType.LEFT))
+                  .get(ClassX_.id));
       params.getClassXIds().get().forEach(inPredicate::value);
       whereConjunctions.add(inPredicate);
     }
@@ -170,13 +190,13 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     if (params.getSchoolIds().isPresent()) {
       var inPredicate =
           builder.in(
-              ((Join<?, ?>)
+              DaoUtils.toJoin(
                       projectPost
-                          .fetch("project", JoinType.LEFT)
-                          .fetch("assignment", JoinType.LEFT)
-                          .fetch("classX", JoinType.LEFT)
-                          .fetch("school", JoinType.LEFT))
-                  .get("id"));
+                          .fetch(ProjectPost_.project, JoinType.LEFT)
+                          .fetch(Project_.assignment, JoinType.LEFT)
+                          .fetch(Assignment_.classX, JoinType.LEFT)
+                          .fetch(ClassX_.school, JoinType.LEFT))
+                  .get(School_.id));
       params.getSchoolIds().get().forEach(inPredicate::value);
       whereConjunctions.add(inPredicate);
     }
@@ -184,7 +204,8 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     // WHERE userXIds.
     if (params.getUserXIds().isPresent()) {
       var inPredicate =
-          builder.in(((Join<?, ?>) projectPost.fetch("userX", JoinType.LEFT)).get("id"));
+          builder.in(
+              DaoUtils.toJoin(projectPost.fetch(ProjectPost_.userX, JoinType.LEFT)).get(UserX_.id));
       params.getUserXIds().get().forEach(inPredicate::value);
       whereConjunctions.add(inPredicate);
     }
@@ -192,7 +213,7 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     // WHERE beingEdited.
     if (params.getBeingEdited().isPresent()) {
       whereConjunctions.add(
-          builder.equal(projectPost.get("beingEdited"), params.getBeingEdited().get()));
+          builder.equal(projectPost.get(ProjectPost_.beingEdited), params.getBeingEdited().get()));
     }
 
     // Register WHERE conjunctions.
@@ -201,9 +222,11 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     // ORDER BY.
     query.orderBy(
         Stream.of(
-                builder.desc(projectPost.get("postTime")),
-                builder.desc(projectPost.get("id")),
-                projectPostComment != null ? builder.desc(projectPostComment.get("id")) : null)
+                builder.desc(projectPost.get(ProjectPost_.postTime)),
+                builder.desc(projectPost.get(ProjectPost_.id)),
+                projectPostComment != null
+                    ? builder.desc(projectPostComment.get(ProjectPostComment_.id))
+                    : null)
             .filter(Objects::nonNull)
             .toList());
 
@@ -216,8 +239,8 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
 
     // Parse results.
     List<FullProjectPost> fullProjectPosts = new ArrayList<>();
+    FullProjectPost fullProjectPost = null;
     for (Tuple row : entityManager.createQuery(query).getResultList()) {
-      FullProjectPost fullProjectPost = null;
       if (fullProjectPost == null
           || !Objects.equals(
               fullProjectPost.getProjectPost().getId(), row.get(projectPost).getId())) {

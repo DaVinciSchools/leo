@@ -107,7 +107,7 @@ export function MyProjects() {
         const projectPost: IProjectPost = postForm.getValuesObject(true);
         projectPost.id = postId.current;
         projectPost.beingEdited = postBeingEdited.current;
-        projectPost.projectId = selectedProject.id;
+        projectPost.project = {id: selectedProject.id};
         projectPost.tags = (projectPost.tags as string[])?.map(e => {
           return {
             text: e,
