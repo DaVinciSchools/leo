@@ -11,7 +11,7 @@ import {
 import {Tab, TabProps, Tabs, TabsProps} from '@mui/material';
 
 export function TabbedSwiper<K>(props: {
-  tabs: {key: K; label: ReactNode; content: ReactNode}[];
+  tabs: readonly {key: K; label: ReactNode; content: ReactNode}[];
   onTabChange?: (key: K) => void;
   containerStyle?: React.CSSProperties;
   swiperProps?: SwiperProps;

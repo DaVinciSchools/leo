@@ -6,7 +6,7 @@ import {CSSProperties, useEffect, useState} from 'react';
 import IProject = pl_types.IProject;
 
 export function ProjectsAutocomplete(props: {
-  sortedProjects: IProject[];
+  sortedProjects: readonly IProject[];
   formField: FormField<IProject | null>;
   style?: CSSProperties;
 }) {

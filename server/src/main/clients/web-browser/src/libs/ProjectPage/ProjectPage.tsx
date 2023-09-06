@@ -15,8 +15,8 @@ export function ProjectPage(props: {
   name: string;
   shortDescr: string;
   longDescrHtml: string;
-  milestones: pl_types.Project.IMilestone[];
-  posts: IProjectPost[] | undefined;
+  milestones: readonly pl_types.Project.IMilestone[];
+  posts: readonly IProjectPost[] | undefined;
   updateProject: (update: IProject) => void;
   onSubmitPost: (name: string, message: string) => void;
   onDeletePost: (post: IProjectPost) => void;

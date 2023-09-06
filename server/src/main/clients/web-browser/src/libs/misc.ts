@@ -42,3 +42,5 @@ export function replaceInPlace<T>(
   }
   return values;
 }
+
+export type Writable<T> = {-readonly [P in keyof T]: T[P]};

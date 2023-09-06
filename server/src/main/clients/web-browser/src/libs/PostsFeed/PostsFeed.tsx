@@ -12,10 +12,10 @@ interface PostMetadata {
   post: IProjectPost;
 }
 
-export function PostsFeed(props: {posts: IProjectPost[]}) {
+export function PostsFeed(props: {posts: readonly IProjectPost[]}) {
   const global = useContext(GlobalStateContext);
 
-  const [posts, setPosts] = useState<PostMetadata[]>([]);
+  const [posts, setPosts] = useState<readonly PostMetadata[]>([]);
 
   const [saveStatus, setSaveStatus] = useState<string>('');
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
@@ -73,7 +73,7 @@ export function PostsFeed(props: {posts: IProjectPost[]}) {
                   .then(response => {
                     post.post.comments = [
                       response.projectPostComment!,
-                      ...(post.post.comments ?? []),
+                      ...(post.post.comments ?? []).slice(),
                     ];
                     setPosts([...posts]);
                     setEditingCommentId(response.projectPostComment?.id ?? 0);

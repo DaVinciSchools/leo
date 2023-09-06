@@ -41,13 +41,13 @@ import SchoolManagementService = school_management.SchoolManagementService;
 export function TeacherEditClassXs() {
   const global = useContext(GlobalStateContext);
 
-  const [sortedClasses, setSortedClasses] = useState<IClassX[]>([]);
+  const [sortedClasses, setSortedClasses] = useState<readonly IClassX[]>([]);
   const [haveMultipleSchools, setHaveMultipleSchools] = useState(false);
   const [selectedClass, setSelectedClass] = useState<IClassX | null>(null);
   const [sortedKnowledgeAndSkills, setSortedKnowledgeAndSkills] = useState<
-    IKnowledgeAndSkill[]
+    readonly IKnowledgeAndSkill[]
   >([]);
-  const [sortedSchools, setSortedSchools] = useState<ISchool[]>([]);
+  const [sortedSchools, setSortedSchools] = useState<readonly ISchool[]>([]);
   const [classSaveStatus, setClassSaveStatus] = useState<string>('');
 
   // --- AutoSave ---
@@ -57,7 +57,7 @@ export function TeacherEditClassXs() {
       if (selectedClass?.id != null) {
         const newClass = classFormFields.getValuesObject(true, selectedClass);
         setSortedClasses(
-          replaceInPlace([...sortedClasses], newClass, e => e?.id).sort(
+          replaceInPlace(sortedClasses.slice(), newClass, e => e?.id).sort(
             CLASS_X_SORTER
           )
         );
@@ -101,7 +101,7 @@ export function TeacherEditClassXs() {
     maxLength: 255,
   });
   const classEks = classFormFields.useAutocompleteFormField<
-    IKnowledgeAndSkill[]
+    readonly IKnowledgeAndSkill[]
   >('knowledgeAndSkills', {isAutocomplete: {isMultiple: true}});
   const classPeriod = classFormFields.useStringFormField('period', {
     maxLength: 16,
@@ -408,7 +408,7 @@ export function TeacherEditClassXs() {
               .then(response => {
                 setSortedKnowledgeAndSkills(
                   replaceOrAddInPlace(
-                    [...sortedKnowledgeAndSkills],
+                    sortedKnowledgeAndSkills.slice(),
                     response.knowledgeAndSkill!,
                     e => e.id
                   ).sort(KNOWLEDGE_AND_SKILL_SORTER)
@@ -417,7 +417,7 @@ export function TeacherEditClassXs() {
                   // Add the knowledge and skill to the class.
                   classEks.setValue(
                     replaceOrAddInPlace(
-                      [...classEks.getValue()!],
+                      classEks.getValue()?.slice() ?? [],
                       response.knowledgeAndSkill!,
                       e => e.id
                     ).sort(KNOWLEDGE_AND_SKILL_SORTER)
@@ -425,7 +425,7 @@ export function TeacherEditClassXs() {
                 } else {
                   classEks.setValue(
                     replaceInPlace(
-                      [...classEks.getValue()!],
+                      classEks.getValue()?.slice() ?? [],
                       response.knowledgeAndSkill!,
                       e => e.id
                     ).sort(KNOWLEDGE_AND_SKILL_SORTER)

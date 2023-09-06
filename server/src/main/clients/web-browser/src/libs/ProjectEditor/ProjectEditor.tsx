@@ -9,7 +9,7 @@ import ReactQuill from 'react-quill';
 
 export function ProjectEditor(props: {
   projectForm: FormFields;
-  sortedAssignments: IAssignment[];
+  sortedAssignments: readonly IAssignment[];
 }) {
   const projectName = props.projectForm.useStringFormField('name', {
     maxLength: 255,

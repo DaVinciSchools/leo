@@ -41,7 +41,7 @@ export function Ikigai(
     processing?: boolean;
     showSpinButton: boolean;
     onSpinClick: () => void;
-    categoryElementIds: string[];
+    categoryElementIds: readonly string[];
     style?: Partial<CSSProperties>;
   }>
 ) {

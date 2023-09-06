@@ -13,8 +13,8 @@ import ISchool = pl_types.ISchool;
 import {addClassName} from '../tags';
 
 export function MultiSchoolAutocomplete(props: {
-  sortedSchools: ISchool[];
-  formField: FormField<ISchool[]>;
+  sortedSchools: readonly ISchool[];
+  formField: FormField<readonly ISchool[]>;
   InputLabelProps?: Partial<InputLabelProps>;
   placeholder?: (hasOptions: boolean) => string;
 }) {
@@ -61,7 +61,7 @@ export function MultiSchoolAutocomplete(props: {
           }
         />
       )}
-      renderTags={(schools, getTagProps) =>
+      renderTags={(schools: readonly ISchool[], getTagProps) =>
         schools.map((option, index) => (
           <Chip
             {...addClassName(getTagProps({index}), 'global-tags')}

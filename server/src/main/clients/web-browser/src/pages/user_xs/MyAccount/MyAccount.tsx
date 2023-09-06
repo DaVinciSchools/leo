@@ -13,6 +13,7 @@ import {
 import {createService} from '../../../libs/protos';
 import {user_x_management} from '../../../generated/protobuf-js';
 import UserXManagementService = user_x_management.UserXManagementService;
+import IFullUserXDetails = user_x_management.IFullUserXDetails;
 
 export function MyAccount() {
   const global = useContext(GlobalStateContext);
@@ -45,14 +46,12 @@ export function MyAccount() {
       setProfileSaveStatus('Saving...');
       const fullProfile: EditorProfile = profileForm.getValuesObject(true);
       createService(UserXManagementService, 'UserXManagementService')
-        .upsertUserX({
+        .upsertUserX(
           // TODO: Get rid of this hack.
-          ...fullProfile,
-          userX: {
-            ...fullProfile,
-            userX: fullProfile,
-          },
-        })
+          Object.assign({}, fullProfile, {
+            userX: fullProfile as unknown as IFullUserXDetails,
+          })
+        )
         .then(response => {
           if (response.error != null) {
             setErrorMessage(response.error);

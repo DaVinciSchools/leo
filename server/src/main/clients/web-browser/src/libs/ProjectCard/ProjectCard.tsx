@@ -28,7 +28,7 @@ export function ProjectCard(props: {
   showDetails: () => void;
 }) {
   const thumbsQueryRef = useRef<InputRef>(null);
-  const actions: ReactNode[] = [
+  const actions: readonly ReactNode[] = [
     <>
       {props.thumbsState === ThumbsState.THUMBS_UP ? (
         <LikeTwoTone
@@ -105,7 +105,7 @@ export function ProjectCard(props: {
             Details
           </span>
         }
-        actions={actions}
+        actions={actions.slice()}
         className={
           props.active
             ? 'active'

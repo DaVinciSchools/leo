@@ -11,7 +11,7 @@ import GetSuggestionsResponse = partial_text_openai_prompt.GetSuggestionsRespons
 
 export function PartialTextOpenAiPrompt(props: {
   id: string;
-  initialSuggestions: string[];
+  initialSuggestions: readonly string[];
   prompt: GetSuggestionsRequest.Prompt;
 }) {
   const global = useContext(GlobalStateContext);

@@ -6,7 +6,7 @@ import {useEffect, useState} from 'react';
 import IAssignment = pl_types.IAssignment;
 
 export function AssignmentAutocomplete(props: {
-  sortedAssignments: IAssignment[];
+  sortedAssignments: readonly IAssignment[];
   formField: FormField<IAssignment | null>;
 }) {
   const [hasMultipleClasses, setHasMultipleClasses] = useState(true);

@@ -9,7 +9,7 @@ function Card({
 }: {
   title: string;
   imageSrc: string;
-  description: string | string[];
+  description: string | readonly string[];
   path: string;
 }) {
   return (

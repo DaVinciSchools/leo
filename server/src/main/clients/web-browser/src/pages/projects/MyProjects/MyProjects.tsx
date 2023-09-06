@@ -47,9 +47,11 @@ export function MyProjects() {
 
   // Project editor tab.
 
-  const [sortedProjects, setSortedProjects] = useState<IProject[]>([]);
+  const [sortedProjects, setSortedProjects] = useState<readonly IProject[]>([]);
   const [selectedProject, setSelectedProject] = useState<IProject | null>(null);
-  const [sortedAssignments, setSortedAssignments] = useState<IAssignment[]>([]);
+  const [sortedAssignments, setSortedAssignments] = useState<
+    readonly IAssignment[]
+  >([]);
   const projectForm = useFormFields({
     onChange: () => projectAutoSaveProject.trigger(),
     disabled: selectedProject == null,
@@ -61,7 +63,7 @@ export function MyProjects() {
       if (selectedProject != null) {
         const newProject = projectForm.getValuesObject(true, selectedProject);
         setSortedProjects(
-          replaceInPlace([...sortedProjects], newProject, e => e?.id).sort(
+          replaceInPlace(sortedProjects.slice(), newProject, e => e?.id).sort(
             PROJECT_SORTER
           )
         );
@@ -91,7 +93,7 @@ export function MyProjects() {
 
   // Post editor tab.
 
-  const [sortedTags, setSortedTags] = useState<string[]>([]);
+  const [sortedTags, setSortedTags] = useState<readonly string[]>([]);
   const postForm = useFormFields({
     onChange: () => postAutoSavePost.trigger(),
     disabled: selectedProject == null,

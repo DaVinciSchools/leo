@@ -27,7 +27,7 @@ export function Accounts() {
   const [showSearchForAccount, setShowSearchForAccount] = useState(false);
   const [searchForm] = Form.useForm();
   const [searchText, setSearchText] = useState('');
-  const [userXs, setUserXs] = useState<IFullUserXDetails[]>([]);
+  const [userXs, setUserXs] = useState<readonly IFullUserXDetails[]>([]);
   const [totalUserXs, setTotalUserXs] = useState(0);
   const [page, setPage] = useState(1); // One, not zero, based.
   const [pageSize, setPageSize] = useState(5);
@@ -60,14 +60,12 @@ export function Accounts() {
       setProfileSaveStatus('Saving...');
       const fullProfile: EditorProfile = profileForm.getValuesObject(true);
       createService(UserXManagementService, 'UserXManagementService')
-        .upsertUserX({
+        .upsertUserX(
           // TODO: Get rid of this hack.
-          ...fullProfile,
-          userX: {
-            ...fullProfile,
-            userX: fullProfile,
-          },
-        })
+          Object.assign({}, fullProfile, {
+            userX: fullProfile as unknown as IFullUserXDetails,
+          })
+        )
         .then(response => {
           if (response.error != null) {
             setErrorMessage(response.error);

@@ -25,7 +25,6 @@ import {
 } from '../../../generated/protobuf-js';
 import {createService} from '../../../libs/protos';
 import {useContext, useEffect, useRef, useState} from 'react';
-
 import AssignmentManagementService = assignment_management.AssignmentManagementService;
 import IAssignment = pl_types.IAssignment;
 import IClassX = pl_types.IClassX;
@@ -42,8 +41,10 @@ import {
 export function AssignmentsTab(props: {userX: IUserX | undefined}) {
   const global = useContext(GlobalStateContext);
 
-  const [classXs, setClassXs] = useState<IClassX[]>([]);
-  const [assignments, setAssignments] = useState<IAssignment[] | null>(null);
+  const [classXs, setClassXs] = useState<readonly IClassX[]>([]);
+  const [assignments, setAssignments] = useState<readonly IAssignment[] | null>(
+    null
+  );
   const [saveStatus, setSaveStatus] = useState<'Saved' | 'Saving...'>('Saved');
   const [showDeleteAssignment, setShowDeleteAssignment] = useState(false);
   const [showCreateAssignment, setShowCreateAssignment] = useState(false);
@@ -59,11 +60,13 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
 
   // Used to track the project definition.
   const [projectDefinitions, setProjectDefinitions] = useState<
-    IProjectDefinition[] | null
+    readonly IProjectDefinition[] | null
   >(null);
   const [projectDefinition, setProjectDefinition] =
     useState<IProjectDefinition | null>(null);
-  const [categories, setCategories] = useState<IProjectInputValue[]>([]);
+  const [categories, setCategories] = useState<readonly IProjectInputValue[]>(
+    []
+  );
 
   useEffect(() => {
     createService(AssignmentManagementService, 'AssignmentManagementService')
@@ -195,7 +198,7 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
             id="assignment"
             value={assignment}
             autoHighlight
-            options={(assignments ?? []).sort(ASSIGNMENT_SORTER)}
+            options={(assignments?.slice() ?? []).sort(ASSIGNMENT_SORTER)}
             onChange={(e, value) => setAssignment(value)}
             getOptionLabel={assignment =>
               assignment?.name ?? '(Unnamed Assignment)'
@@ -248,7 +251,7 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
             id="class"
             value={classX}
             autoHighlight
-            options={classXs.sort(CLASS_X_SORTER)}
+            options={classXs.slice().sort(CLASS_X_SORTER)}
             onChange={(e, value) => setClassX(value)}
             getOptionLabel={classX => classX?.name ?? ''}
             isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -313,7 +316,9 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
             id="projectDefinition"
             value={projectDefinition}
             autoHighlight
-            options={(projectDefinitions ?? []).sort(PROJECT_DEFINITION_SORTER)}
+            options={(projectDefinitions?.slice() ?? []).sort(
+              PROJECT_DEFINITION_SORTER
+            )}
             onChange={(e, value) => setProjectDefinition(value ?? null)}
             getOptionLabel={projectDefinition =>
               projectDefinition?.name ?? '(Unnamed Ikigai Configuration)'

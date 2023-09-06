@@ -4,19 +4,21 @@ import ReactQuill from 'react-quill';
 import {MultiTagAutocomplete} from '../common_fields/MultiTagAutocomplete';
 
 export function PostEditor(props: {
-  sortedTags: string[];
+  sortedTags: readonly string[];
   postForm: FormFields;
 }) {
   const postName = props.postForm.useStringFormField('name', {
     maxLength: 255,
   });
-  const postTags = props.postForm.useAutocompleteFormField<string[]>('tags', {
-    maxLength: 32,
-    isAutocomplete: {isMultiple: true, isFreeSolo: true},
-  });
+  const postTags = props.postForm.useAutocompleteFormField<readonly string[]>(
+    'tags',
+    {
+      maxLength: 32,
+      isAutocomplete: {isMultiple: true, isFreeSolo: true},
+    }
+  );
   const postLongDescrHtml = props.postForm.useStringFormField('longDescrHtml', {
     maxLength: 65535,
-    // TODO: isHtml: {isRequired: true}.
   });
   const postDesiredFeedback = props.postForm.useStringFormField(
     'desiredFeedback',

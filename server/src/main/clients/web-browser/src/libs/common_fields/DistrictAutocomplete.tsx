@@ -5,7 +5,7 @@ import {pl_types} from '../../generated/protobuf-js';
 import IDistrict = pl_types.IDistrict;
 
 export function DistrictAutocomplete(props: {
-  sortedDistricts: IDistrict[];
+  sortedDistricts: readonly IDistrict[];
   formField: FormField<IDistrict | null>;
   InputLabelProps?: Partial<InputLabelProps>;
   placeholder?: (hasOptions: boolean) => string;

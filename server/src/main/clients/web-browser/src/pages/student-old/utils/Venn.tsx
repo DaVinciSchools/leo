@@ -10,7 +10,7 @@ function Dropdown({
   setValue,
   setFocused,
 }: {
-  options: string[];
+  options: readonly string[];
   value: string;
   setValue: (value: string) => void;
   setFocused: (focused: boolean) => void;

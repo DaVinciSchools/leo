@@ -14,6 +14,7 @@ import {
 import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
 import {ReactQuillProps} from 'react-quill';
+import {Writable} from './misc';
 
 const MAX_ZIP_CODE_LENGTH = 10;
 const MIN_PASSWORD_LENGTH = 8;
@@ -53,8 +54,8 @@ export interface FormFieldMetadata {
 }
 
 export interface IFormAutocompleteParams<T> {
-  value: T;
-  onChange: (event: React.SyntheticEvent, value: T) => void;
+  value: Writable<T>;
+  onChange: (event: React.SyntheticEvent, value: Readonly<T>) => void;
   disabled: boolean;
 }
 
@@ -368,13 +369,14 @@ export function useFormFields(
 
     function autocompleteParams() {
       return {
-        value: autocompleteValue,
-        onChange: (e: React.SyntheticEvent, value: T) => {
-          // if (!fieldMetadata?.isAutocomplete?.isFreeSolo) {
-          setAutocompleteValue(value as T);
-          // } else {
-          //   setStringValue(value != null ? String(value ?? '') : '');
-          // }
+        // The value must be modifiable, even though it doesn't modify anything.
+        value: autocompleteValue as Writable<T>,
+        onChange: (e: React.SyntheticEvent, value: Readonly<T>) => {
+          setAutocompleteValue(
+            Array.isArray(value)
+              ? (value.slice() as unknown as Readonly<T>)
+              : (value as T)
+          );
         },
         disabled:
           formFieldsMetadata?.disabled === true ||
@@ -752,12 +754,12 @@ export function getInputField(
 }
 
 export function filterAutocompleteFormField<T, ID>(
-  formField: FormField<T[]>,
+  formField: FormField<readonly T[]>,
   toId: (idFunction: T) => ID,
   options: T[]
 ) {
   const idOptions = new Set(options.map(toId));
   const filteredOptions =
-    formField.getValue()?.filter?.(t => idOptions.has(toId(t))) ?? ([] as T[]);
+    formField.getValue()?.filter?.(t => idOptions.has(toId(t))) ?? [];
   formField.setValue(filteredOptions);
 }

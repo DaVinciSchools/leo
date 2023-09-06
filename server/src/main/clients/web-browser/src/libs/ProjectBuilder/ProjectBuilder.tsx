@@ -42,11 +42,11 @@ export function ProjectBuilder(props: {
   const navigate = useNavigate();
 
   const [allInputValues, setAllInputValues] = useState<
-    pl_types.IProjectInputValue[]
+    readonly pl_types.IProjectInputValue[]
   >([]);
-  const [inputValues, setInputValues] = useState<pl_types.IProjectInputValue[]>(
-    []
-  );
+  const [inputValues, setInputValues] = useState<
+    readonly pl_types.IProjectInputValue[]
+  >([]);
   const [projectInputId, setProjectInputId] = useState<number | undefined>();
 
   const [loginUserXVisible, setLoginUserXVisible] = useState(false);
@@ -78,9 +78,11 @@ export function ProjectBuilder(props: {
     }
   }, []);
 
-  function startGeneratingProjects(values: pl_types.IProjectInputValue[]) {
+  function startGeneratingProjects(
+    values: readonly pl_types.IProjectInputValue[]
+  ) {
     createService(ProjectManagementService, 'ProjectManagementService')
-      .generateAnonymousProjects({inputValues: values})
+      .generateAnonymousProjects({inputValues: values.slice()})
       .then(response => {
         setProjectInputId(response.projectInputId ?? undefined);
         setActiveStep(activeStep + 1);
@@ -285,7 +287,7 @@ export function ProjectBuilder(props: {
               >
                 <IkigaiProjectBuilder
                   id="ikigai-builder"
-                  categories={inputValues}
+                  categories={inputValues.slice()}
                   noCategoriesText={props.noCategoriesText}
                   categoryDiameter={(width, height) =>
                     Math.min(width, height) / 2

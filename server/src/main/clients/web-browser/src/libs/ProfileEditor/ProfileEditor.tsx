@@ -28,8 +28,8 @@ import UserXManagementService = user_x_management.UserXManagementService;
 
 export interface EditorProfile extends IUserX {
   district: IDistrict | null;
-  schools: ISchool[];
-  classXs: IClassX[];
+  schools: readonly ISchool[];
+  classXs: readonly IClassX[];
 
   districtStudentId: number;
   studentGrade: number;
@@ -46,9 +46,11 @@ export function ProfileEditor(props: {
 }) {
   const global = useContext(GlobalStateContext);
 
-  const [sortedDistricts, setSortedDistricts] = useState<IDistrict[]>([]);
-  const [sortedSchools, setSortedSchools] = useState<ISchool[]>([]);
-  const [sortedClassXs, setSortedClassXs] = useState<IClassX[]>([]);
+  const [sortedDistricts, setSortedDistricts] = useState<readonly IDistrict[]>(
+    []
+  );
+  const [sortedSchools, setSortedSchools] = useState<readonly ISchool[]>([]);
+  const [sortedClassXs, setSortedClassXs] = useState<readonly IClassX[]>([]);
 
   props.profileForm.useNumberFormField('userXId');
 
@@ -114,23 +116,21 @@ export function ProfileEditor(props: {
       onChange: refreshClassXs,
       disabled: global?.userX?.isAdminX !== true,
     });
-  const profileSchools = props.profileForm.useAutocompleteFormField<ISchool[]>(
-    'schools',
-    {
-      isAutocomplete: {
-        isMultiple: true,
-      },
-      onChange: refreshClassXs,
-    }
-  );
-  const profileClassXs = props.profileForm.useAutocompleteFormField<IClassX[]>(
-    'classXs',
-    {
-      isAutocomplete: {
-        isMultiple: true,
-      },
-    }
-  );
+  const profileSchools = props.profileForm.useAutocompleteFormField<
+    readonly ISchool[]
+  >('schools', {
+    isAutocomplete: {
+      isMultiple: true,
+    },
+    onChange: refreshClassXs,
+  });
+  const profileClassXs = props.profileForm.useAutocompleteFormField<
+    readonly IClassX[]
+  >('classXs', {
+    isAutocomplete: {
+      isMultiple: true,
+    },
+  });
   const profileIsAdminX = props.profileForm.useBooleanFormField('isAdminX');
   const profileIsTeacher = props.profileForm.useBooleanFormField('isTeacher');
   const profileIsStudent = props.profileForm.useBooleanFormField('isStudent');

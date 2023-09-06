@@ -13,11 +13,13 @@ interface Category {
 }
 
 export function IkigaiProjectConfigurer(props: {
-  allCategories: pl_types.IProjectInputValue[];
-  setSelectedCategories: (categories: pl_types.IProjectInputValue[]) => void;
+  allCategories: readonly pl_types.IProjectInputValue[];
+  setSelectedCategories: (
+    categories: readonly pl_types.IProjectInputValue[]
+  ) => void;
   style?: Partial<CSSProperties>;
 }) {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<readonly Category[]>([]);
 
   useEffect(() => {
     let i = 0;

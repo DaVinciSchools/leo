@@ -21,11 +21,13 @@ export function SelectFromList<K, V>(props: {
   const emptyKey = props.getKey();
   const [sortedValues, setSortedValues] = useState(new Array<V>());
 
-  useEffect(() => {
-    const sortedValues = Array.from(props.values.values());
-    sortedValues.sort(props.compareValues);
-    setSortedValues(sortedValues);
-  }, [props.values]);
+  useEffect(
+    () =>
+      setSortedValues(
+        Array.from(props.values.values()).slice().sort(props.compareValues)
+      ),
+    [props.values]
+  );
 
   useEffect(() => {
     props.onSelect(props.selectedKey);

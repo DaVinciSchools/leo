@@ -19,11 +19,13 @@ export function SelectMultipleFromList<K, V>(props: {
 }): ReactElement {
   const [sortedValues, setSortedValues] = useState(new Array<V>());
 
-  useEffect(() => {
-    const sortedValues = Array.from(props.values.values());
-    sortedValues.sort(props.compareValues);
-    setSortedValues(sortedValues);
-  }, [props.values]);
+  useEffect(
+    () =>
+      setSortedValues(
+        Array.from(props.values.values()).slice().sort(props.compareValues)
+      ),
+    [props.values]
+  );
 
   useEffect(() => {
     props.onSelect(props.selectedKeys);

@@ -3,8 +3,8 @@ import {Autocomplete, Checkbox, Chip, TextField} from '@mui/material';
 import {addClassName} from '../tags';
 
 export function MultiTagAutocomplete(props: {
-  sortedTags: string[];
-  formField: FormField<string[]>;
+  sortedTags: readonly string[];
+  formField: FormField<readonly string[]>;
   placeholder?: (hasOptions: boolean) => string;
 }) {
   return (

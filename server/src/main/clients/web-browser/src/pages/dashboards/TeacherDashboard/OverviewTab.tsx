@@ -28,15 +28,15 @@ import {PostsFeed} from '../../../libs/PostsFeed/PostsFeed';
 export function OverviewTab() {
   const global = useContext(GlobalStateContext);
 
-  const [schoolOptions, setSchoolOptions] = useState<ISchool[]>([]);
-  const [classXOptions, setClassXOptions] = useState<IClassX[]>([]);
-  const [projectPosts, setProjectPosts] = useState<IProjectPost[]>([]);
+  const [schoolOptions, setSchoolOptions] = useState<readonly ISchool[]>([]);
+  const [classXOptions, setClassXOptions] = useState<readonly IClassX[]>([]);
+  const [projectPosts, setProjectPosts] = useState<readonly IProjectPost[]>([]);
 
   const filterForm = useFormFields();
 
   // Maintain school filters.
 
-  const schoolFilter = filterForm.useAutocompleteFormField<ISchool[]>(
+  const schoolFilter = filterForm.useAutocompleteFormField<readonly ISchool[]>(
     'schoolFilter',
     {
       isAutocomplete: {
@@ -66,7 +66,7 @@ export function OverviewTab() {
 
   // Maintain classX filters.
 
-  const classXFilter = filterForm.useAutocompleteFormField<IClassX[]>(
+  const classXFilter = filterForm.useAutocompleteFormField<readonly IClassX[]>(
     'classXFilter',
     {
       isAutocomplete: {

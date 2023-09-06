@@ -22,9 +22,9 @@ import State = pl_types.ProjectDefinition.State;
 export function AllProjects() {
   const global = useContext(GlobalStateContext);
 
-  const [projects, setProjects] = useState<IProject[]>([]);
+  const [projects, setProjects] = useState<readonly IProject[]>([]);
   const [unsuccessfulProjects, setUnsuccessfulProjects] = useState<
-    IProjectDefinition[]
+    readonly IProjectDefinition[]
   >([]);
 
   const [projectDetails, setProjectDetails] = useState<IProject | undefined>();

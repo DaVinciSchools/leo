@@ -38,8 +38,8 @@ interface CategoryElement {
   category: pl_types.IProjectInputValue;
   htmlId: string;
   hue: number;
-  stringValues: string[];
-  optionValues: IOption[];
+  stringValues: readonly string[];
+  optionValues: readonly IOption[];
 }
 
 function FreeTextInput(props: {
@@ -49,14 +49,14 @@ function FreeTextInput(props: {
   description: string;
   hint: string;
   placeholder: string;
-  options: IOption[];
-  values: string[];
-  onValuesUpdated: (values: string[]) => void;
+  options: readonly IOption[];
+  values: readonly string[];
+  onValuesUpdated: (values: readonly string[]) => void;
   maxNumberOfValues: number;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedValues, setSelectedValues] = useState<string[]>([]);
-  const [optionValues, setOptionValues] = useState<string[]>([]);
+  const [selectedValues, setSelectedValues] = useState<readonly string[]>([]);
+  const [optionValues, setOptionValues] = useState<readonly string[]>([]);
   const inputRef = useRef<HTMLInputElement>();
 
   useEffect(
@@ -68,7 +68,7 @@ function FreeTextInput(props: {
   );
 
   function onClick() {
-    setSelectedValues([...props.values.sort(TEXT_SORTER)]);
+    setSelectedValues(props.values.slice().sort(TEXT_SORTER));
     setModalOpen(true);
   }
 
@@ -79,11 +79,13 @@ function FreeTextInput(props: {
   function onSave() {
     setModalOpen(false);
     const unenteredValue = getInputField(inputRef.current)?.value;
-    if (unenteredValue != null) {
-      selectedValues.push(unenteredValue);
-    }
     props.onValuesUpdated([
-      ...new Set(selectedValues.map(e => e.trim()).filter(e => e !== '')),
+      ...new Set(
+        selectedValues
+          .concat(unenteredValue ? [unenteredValue] : [])
+          .map(e => e.trim())
+          .filter(e => e !== '')
+      ),
     ]);
   }
 
@@ -100,18 +102,23 @@ function FreeTextInput(props: {
         )}
         <div>
           {props.values.length > 0 &&
-            props.values.sort(TEXT_SORTER).map(value => (
-              <Chip
-                key={value}
-                label={value}
-                className="ikigai-project-builder-chip-values"
-                size="small"
-                variant="outlined"
-                onDelete={() => {
-                  props.onValuesUpdated(props.values.filter(e => e !== value));
-                }}
-              />
-            ))}
+            props.values
+              .slice()
+              .sort(TEXT_SORTER)
+              .map(value => (
+                <Chip
+                  key={value}
+                  label={value}
+                  className="ikigai-project-builder-chip-values"
+                  size="small"
+                  variant="outlined"
+                  onDelete={() => {
+                    props.onValuesUpdated(
+                      props.values.filter(e => e !== value)
+                    );
+                  }}
+                />
+              ))}
         </div>
       </div>
       <Modal
@@ -139,7 +146,7 @@ function FreeTextInput(props: {
                 multiple
                 freeSolo
                 autoFocus
-                value={selectedValues}
+                value={selectedValues.slice()}
                 renderInput={params => (
                   <TextField
                     {...params}
@@ -150,7 +157,7 @@ function FreeTextInput(props: {
                 options={optionValues}
                 renderOption={(props, option) => <li {...props}>{option}</li>}
                 onChange={(e, options) => {
-                  setSelectedValues(options.sort(TEXT_SORTER));
+                  setSelectedValues(options.slice().sort(TEXT_SORTER));
                 }}
                 renderTags={(tagValue, getTagProps) =>
                   tagValue.map((option, index) => (
@@ -220,20 +227,23 @@ function DropdownSelectInput(props: {
         )}
         <div>
           {props.values.length > 0 &&
-            props.values.sort(OPTION_SORTER).map(value => (
-              <Chip
-                key={value.name ?? 'undefined'}
-                label={value.name ?? 'undefined'}
-                className="ikigai-project-builder-chip-values"
-                size="small"
-                variant="outlined"
-                onDelete={() => {
-                  props.onValuesUpdated(
-                    props.values.filter(e => e.id !== value.id)
-                  );
-                }}
-              />
-            ))}
+            props.values
+              .slice()
+              .sort(OPTION_SORTER)
+              .map(value => (
+                <Chip
+                  key={value.name ?? 'undefined'}
+                  label={value.name ?? 'undefined'}
+                  className="ikigai-project-builder-chip-values"
+                  size="small"
+                  variant="outlined"
+                  onDelete={() => {
+                    props.onValuesUpdated(
+                      props.values.filter(e => e.id !== value.id)
+                    );
+                  }}
+                />
+              ))}
         </div>
       </div>
       <Modal
@@ -270,7 +280,7 @@ function DropdownSelectInput(props: {
                     variant="standard"
                   />
                 )}
-                options={props.options.sort(OPTION_SORTER)}
+                options={props.options.slice().sort(OPTION_SORTER)}
                 renderOption={(props, option, {selected}) => (
                   <li {...props}>
                     <Checkbox style={{marginRight: 8}} checked={selected} />
@@ -284,7 +294,7 @@ function DropdownSelectInput(props: {
                   (option?.shortDescr ?? 'undefined')
                 }
                 onChange={(e, options) => {
-                  setSelectedValues(options.sort(OPTION_SORTER));
+                  setSelectedValues(options.slice().sort(OPTION_SORTER));
                 }}
                 renderTags={(tagValue, getTagProps) =>
                   tagValue.map((option, index) => (
@@ -438,7 +448,7 @@ export function IkigaiProjectBuilder(props: {
                       maxNumberOfValues={
                         e.category?.category?.maxNumValues ?? 1
                       }
-                      values={e.optionValues}
+                      values={e.optionValues.slice()}
                       options={e.category?.category?.options ?? []}
                     />
                   );

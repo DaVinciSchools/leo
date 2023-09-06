@@ -13,8 +13,8 @@ import {FormField} from '../forms';
 import {addClassName} from '../tags';
 
 export function MultiClassXAutocomplete(props: {
-  sortedClassXs: IClassX[];
-  formField: FormField<IClassX[]>;
+  sortedClassXs: readonly IClassX[];
+  formField: FormField<readonly IClassX[]>;
   InputLabelProps?: Partial<InputLabelProps>;
   placeholder?: (hasOptions: boolean) => string;
 }) {
@@ -32,7 +32,7 @@ export function MultiClassXAutocomplete(props: {
       multiple
       autoHighlight
       disableCloseOnSelect
-      options={props.sortedClassXs}
+      options={props.sortedClassXs.slice()}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       groupBy={
         hasMultipleSchools
@@ -74,7 +74,7 @@ export function MultiClassXAutocomplete(props: {
           }
         />
       )}
-      renderTags={(classXs, getTagProps) =>
+      renderTags={(classXs: readonly IClassX[], getTagProps) =>
         classXs.map((option, index) => (
           <Chip
             {...addClassName(getTagProps({index}), 'global-tags')}
