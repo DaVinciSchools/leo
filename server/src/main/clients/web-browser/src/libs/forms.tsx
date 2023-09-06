@@ -370,12 +370,12 @@ export function useFormFields(
     function autocompleteParams() {
       return {
         // The value must be modifiable, even though it doesn't modify anything.
-        value: autocompleteValue as Writable<T>,
+        value: Array.isArray(autocompleteValue)
+          ? (autocompleteValue.slice() as unknown as Writable<T>)
+          : autocompleteValue,
         onChange: (e: React.SyntheticEvent, value: Readonly<T>) => {
           setAutocompleteValue(
-            Array.isArray(value)
-              ? (value.slice() as unknown as Readonly<T>)
-              : (value as T)
+            (Array.isArray(value) ? value.slice() : value) as T
           );
         },
         disabled:
