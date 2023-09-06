@@ -63,7 +63,13 @@ export function Accounts() {
         .upsertUserX(
           // TODO: Get rid of this hack.
           Object.assign({}, fullProfile, {
-            userX: fullProfile as unknown as IFullUserXDetails,
+            userX: Object.assign(
+              {},
+              fullProfile as unknown as IFullUserXDetails,
+              {
+                userX: fullProfile as unknown as IFullUserXDetails,
+              }
+            ),
           })
         )
         .then(response => {
