@@ -114,7 +114,7 @@ public class PostService {
               UserX postUserX =
                   request.getProjectPost().getUserX().hasUserXId()
                       ? ProtoDaoUtils.toUserXDao(request.getProjectPost().getUserX())
-                      : userX.getUserXOrNull();
+                      : checkNotNull(userX.getUserXOrNull());
 
               if (!userX.isAdminX() && request.getProjectPost().getUserX().hasUserXId()) {
                 Optional<ProjectPost> existingPost =
@@ -130,18 +130,7 @@ public class PostService {
               fullProjectPost.getProjectPost().setUserX(postUserX);
               fullProjectPost.getProjectPost().setPostTime(Instant.now());
 
-              fullProjectPost
-                  .getTags()
-                  .forEach(
-                      tag -> {
-                        if (!userX.isAdminX()
-                            || tag.getUserX() == null
-                            || tag.getUserX().getId() == null) {
-                          tag.setUserX(postUserX);
-                        }
-                      });
-
-              db.getProjectPostRepository().upsert(db, userX.getUserXOrNull(), fullProjectPost);
+              db.getProjectPostRepository().upsert(db, postUserX, fullProjectPost);
               response.setProjectPostId(fullProjectPost.getProjectPost().getId());
 
               return response.build();

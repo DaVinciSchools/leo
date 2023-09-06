@@ -199,6 +199,7 @@ export function MyProjects() {
       createService(PostService, 'PostService')
         .getProjectPosts({
           projectIds: [selectedProject?.id ?? 0],
+          includeTags: true,
           beingEdited: true,
         })
         .then(response => {

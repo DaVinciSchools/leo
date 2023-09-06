@@ -1,6 +1,8 @@
 package org.davincischools.leo.database.utils.repos;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Streams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Tuple;
@@ -14,11 +16,9 @@ import jakarta.persistence.criteria.Selection;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -60,10 +61,12 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
 
     private ProjectPost projectPost;
 
-    private SortedMap<Instant, FullProjectPostComment> projectPostComments =
+    @Default
+    private final SortedMap<Instant, FullProjectPostComment> projectPostComments =
         new TreeMap<>(Comparator.<Instant>naturalOrder().reversed());
 
-    private Set<Tag> tags = new HashSet<>();
+    @Default
+    private final SetMultimap</* UserX.id= */ Integer, String> tags = HashMultimap.create();
   }
 
   @Setter
@@ -125,7 +128,6 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     }
   }
 
-  @SuppressWarnings("unchecked")
   default List<FullProjectPost> getProjectPosts(
       EntityManager entityManager, GetProjectPostsParams params) {
 
@@ -142,6 +144,13 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     // Fetch includeProjects
     if (params.getIncludeProjects().orElse(false)) {
       projectPost.fetch(ProjectPost_.project, JoinType.LEFT);
+    }
+
+    // JOIN includeTags.
+    // TODO: This should be a separate query because it's going to cause a huge result.
+    Join<ProjectPost, Tag> tag = null;
+    if (params.getIncludeTags().orElse(false)) {
+      tag = projectPost.join(ProjectPost_.tags, JoinType.LEFT);
     }
 
     // JOIN includeComments.
@@ -245,7 +254,7 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     // SELECT.
     query.select(
         builder.tuple(
-            Stream.of(projectPost, projectPostComment)
+            Stream.of(projectPost, projectPostComment, tag)
                 .filter(Objects::nonNull)
                 .toArray(Selection<?>[]::new)));
 
@@ -258,6 +267,9 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
               fullProjectPost.getProjectPost().getId(), row.get(projectPost).getId())) {
         fullProjectPosts.add(
             fullProjectPost = new FullProjectPost().setProjectPost(row.get(projectPost)));
+      }
+      if (tag != null && row.get(tag) != null) {
+        fullProjectPost.getTags().put(row.get(tag).getUserX().getId(), row.get(tag).getText());
       }
       if (projectPostComment != null && row.get(projectPostComment) != null) {
         fullProjectPost
@@ -278,10 +290,7 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
             .filter(tag -> Objects.equals(tag.getUserX().getId(), tagUserX.getId()))
             .map(Tag::getText)
             .toList(),
-        fullProjectPost.tags.stream()
-            .filter(tag -> Objects.equals(tag.getUserX().getId(), tagUserX.getId()))
-            .map(Tag::getText)
-            .toList(),
+        fullProjectPost.tags.get(tagUserX.getId()),
         Function.identity(),
         (Iterable<String> saveTags) ->
             db.getTagRepository()

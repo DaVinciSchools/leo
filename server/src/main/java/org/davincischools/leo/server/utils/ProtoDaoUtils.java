@@ -19,7 +19,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -290,13 +289,15 @@ public class ProtoDaoUtils {
       org.davincischools.leo.protos.pl_types.ProjectPostOrBuilder projectPost) {
     FullProjectPost fullProjectPost =
         new FullProjectPost().setProjectPost(toProjectPostDao(projectPost));
+    projectPost
+        .getTagsList()
+        .forEach(tag -> fullProjectPost.getTags().put(tag.getUserXId(), tag.getText()));
     fullProjectPost
         .getProjectPostComments()
         .putAll(
             projectPost.getCommentsList().stream()
                 .map(ProtoDaoUtils::toFullProjectPostComment)
                 .collect(Collectors.toMap(e -> e.getProjectPostComment().getPostTime(), e -> e)));
-    new HashSet<>(projectPost.getTagsList().stream().map(ProtoDaoUtils::toTagDao).toList());
     return fullProjectPost;
   }
 
@@ -336,7 +337,14 @@ public class ProtoDaoUtils {
           .values()
           .forEach(
               comment -> toProjectPostCommentProto(comment, finalBuilder.addCommentsBuilder()));
-      projectPost.getTags().forEach(tag -> toTagProto(tag, finalBuilder.addTagsBuilder()));
+      projectPost
+          .getTags()
+          .entries()
+          .forEach(
+              tag ->
+                  toTagProto(
+                      new Tag().setUserX(new UserX().setId(tag.getKey())).setText(tag.getValue()),
+                      finalBuilder.addTagsBuilder()));
     }
     return builder;
   }
