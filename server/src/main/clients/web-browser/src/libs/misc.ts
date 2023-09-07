@@ -44,3 +44,29 @@ export function replaceInPlace<T>(
 }
 
 export type Writable<T> = {-readonly [P in keyof T]: T[P]};
+
+export function isTextEmpty(text: string | null | undefined) {
+  return text == null || text.trim() === '';
+}
+
+export function isHtmlEmpty(html: string | null | undefined) {
+  return isTextEmpty(html) || html?.trim() === '<p><br></p>';
+}
+
+export function textOrEmpty(
+  text: string | null | undefined,
+  emptyText: string
+) {
+  return isTextEmpty(text) ? emptyText : text!;
+}
+
+export function htmlOrEmpty(
+  html: string | null | undefined,
+  emptyHtml: string
+) {
+  return isHtmlEmpty(html) ? emptyHtml : html!;
+}
+
+export function formatAsTag(text: string | null | undefined) {
+  return '#' + (text ?? 'tag').replace(/^#/, '');
+}

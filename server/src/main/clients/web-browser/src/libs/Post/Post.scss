@@ -1,0 +1,102 @@
+@import '../global';
+
+.post-in-feed {
+  @extend .global-flex-column;
+  border: 1px solid lightgrey;
+  padding: 1rem;
+  margin: 1rem 0;
+  gap: 1rem;
+
+  .post-in-feed-header {
+    @extend .global-flex-row;
+    align-items: flex-start;
+  }
+
+  .post-in-feed-avatar {
+    @extend .global-avatar;
+    align-self: flex-start;
+  }
+
+  .post-in-feed-user-name {
+    font-weight: bold;
+  }
+
+  .post-in-feed-save-status {
+    font-weight: lighter;
+    color: red;
+    text-align: center;
+    flex-grow: 1;
+  }
+
+  .post-in-feed-date {
+    font-size: 0.9rem;
+    font-weight: lighter;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  .post-in-feed-title {
+    font-size: 1.5rem;
+    font-weight: lighter;
+    white-space: nowrap;
+    font-style: italic;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    flex-shrink: 1;
+  }
+
+  .post-in-feed-project-name {
+    font-size: 0.9rem;
+    font-weight: lighter;
+    font-style: italic;
+  }
+
+  .post-in-feed-tags {
+    font-weight: lighter;
+  }
+
+  .post-in-feed-feedback-label {
+    font-weight: bold;
+  }
+
+  .post-in-feed-empty-post {
+    font-weight: lighter;
+    font-style: italic;
+    font-size: 0.9rem;
+  }
+
+  .post-in-feed-footer {
+    @extend .global-flex-row;
+    border-top: 1px solid lightgrey;
+    padding-top: 1rem;
+    gap: 0;
+
+    .post-in-feed-footer-group {
+      @extend .global-flex-row;
+      align-items: flex-start;
+      border-right: 1px solid lightgrey;
+      padding: 0 1.5rem;
+      width: fit-content;
+    }
+
+    :first-child {
+      padding-left: 0;
+    }
+
+    :last-child {
+      border-right: none;
+      padding-right: 0;
+    }
+  }
+
+  .post-in-feed-comments {
+    @extend .global-flex-column;
+    border-top: 1px solid lightgrey;
+    padding-top: 1rem;
+    gap: 1rem;
+  }
+
+  .post-in-feed-comment {
+    @extend .global-flex-row;
+  }
+}

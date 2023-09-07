@@ -1,18 +1,5 @@
 @use 'color';
 
-.global-flex-column {
-  display: flex;
-  flex-flow: column nowrap;
-  width: 100%;
-}
-
-.global-flex-row {
-  display: flex;
-  flex-flow: row nowrap;
-  width: 100%;
-  gap: 0.5rem;
-}
-
 .global-form-label {
   padding-top: 1.5em;
   padding-bottom: 0.5em;
@@ -31,6 +18,8 @@
 }
 
 .global-react-quill-read-only {
+  @extend .global-react-quill;
+
   .ql-container {
     border: none !important;
 
@@ -99,4 +88,59 @@
   border-radius: 6px;
   width: fit-content;
   margin: auto;
+}
+
+// ------------------ Layout ------------------
+
+.global-flex-column {
+  display: flex;
+  flex-flow: column nowrap;
+  box-sizing: border-box;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.global-flex-row {
+  display: flex;
+  flex-flow: row nowrap;
+  box-sizing: border-box;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.global-react-quill {
+  p:first-child {
+    margin-top: 0;
+  }
+}
+
+.global-react-quill-read-only {
+  .ql-container {
+    border: none !important;
+
+    .ql-editor {
+      padding: 0;
+    }
+  }
+}
+
+// ------------------ Avatar ------------------
+
+.global-avatar {
+  width: 2em;
+  height: 2em;
+}
+
+// ------------------ Two Tone Colors ------------------
+
+.global-two-tone-pencil-color {
+  color: #ff7a08;
+}
+
+.global-two-tone-delete-color {
+  color: #f00000;
+}
+
+.global-two-tone-chat-color {
+  color: #0080ff;
 }

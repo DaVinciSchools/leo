@@ -1,4 +1,4 @@
-import {PostInFeed} from '../PostInFeed/PostInFeed';
+import {Post} from '../Post/Post';
 import {pl_types, post_service} from '../../generated/protobuf-js';
 import IProjectPost = pl_types.IProjectPost;
 import {useContext, useEffect, useState} from 'react';
@@ -18,7 +18,7 @@ export function PostsFeed(props: {posts: readonly IProjectPost[]}) {
   const [posts, setPosts] = useState<readonly PostMetadata[]>([]);
 
   const [saveStatus, setSaveStatus] = useState<string>('');
-  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<number>();
   const [commentToSave, setCommentToSave] =
     useState<IProjectPostComment | null>(null);
 
@@ -53,7 +53,7 @@ export function PostsFeed(props: {posts: readonly IProjectPost[]}) {
     <>
       <div className="post-feed-posts">
         {posts?.map(post => (
-          <PostInFeed
+          <Post
             key={post.post?.id ?? 0}
             post={post.post}
             saveStatus={saveStatus}
@@ -73,7 +73,7 @@ export function PostsFeed(props: {posts: readonly IProjectPost[]}) {
                   .then(response => {
                     post.post.comments = [
                       response.projectPostComment!,
-                      ...(post.post.comments ?? []).slice(),
+                      ...(post.post.comments ?? []),
                     ];
                     setPosts([...posts]);
                     setEditingCommentId(response.projectPostComment?.id ?? 0);

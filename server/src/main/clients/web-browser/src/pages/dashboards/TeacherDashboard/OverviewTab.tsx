@@ -100,6 +100,7 @@ export function OverviewTab() {
         classXIds: classXFilter.getValue()?.map?.(e => e.id ?? 0),
         includeProjects: true,
         includeComments: true,
+        includeTags: true,
         beingEdited: false,
       })
       .then(response => {
