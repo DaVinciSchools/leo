@@ -76,7 +76,9 @@ export function PostsFeed(props: {posts: readonly IProjectPost[]}) {
                       ...(post.post.comments ?? []),
                     ];
                     setPosts([...posts]);
-                    setEditingCommentId(response.projectPostComment?.id ?? 0);
+                    setEditingCommentId(
+                      response.projectPostComment?.id ?? undefined
+                    );
                   })
                   .catch(global.setError)
               );
@@ -84,6 +86,25 @@ export function PostsFeed(props: {posts: readonly IProjectPost[]}) {
             setCommentToSave={comment => {
               autoSave.trigger();
               setCommentToSave(comment);
+            }}
+            deleteCommentId={id => {
+              autoSave.forceDelayedAction(() => {
+                setEditingCommentId(undefined);
+                createService(PostService, 'PostService')
+                  .deleteProjectPostComment({
+                    projectPostCommentId: id,
+                  })
+                  .then(() => {
+                    const index = post.post?.comments?.findIndex(
+                      comment => comment.id === id
+                    );
+                    if (index != null && index >= 0) {
+                      post.post?.comments?.splice(index, 1);
+                      setPosts([...posts]);
+                    }
+                  })
+                  .catch(global.setError);
+              });
             }}
           />
         ))}

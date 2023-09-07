@@ -11,6 +11,7 @@ service PostService {
   rpc GetProjectPosts(GetProjectPostsRequest) returns (GetProjectPostsResponse) {};
   rpc UpsertProjectPost(UpsertProjectPostRequest) returns (UpsertProjectPostResponse) {};
   rpc UpsertProjectPostComment(UpsertProjectPostCommentRequest) returns (UpsertProjectPostCommentResponse) {};
+  rpc DeleteProjectPostComment(DeleteProjectPostCommentRequest) returns (DeleteProjectPostCommentResponse) {};
 }
 
 message GetProjectPostsRequest {
@@ -49,4 +50,11 @@ message UpsertProjectPostCommentResponse {
   optional pl_types.ProjectPostComment project_post_comment = 2;
 
   reserved 1;
+}
+
+message DeleteProjectPostCommentRequest {
+  optional int32 project_post_comment_id = 1;
+}
+
+message DeleteProjectPostCommentResponse {
 }

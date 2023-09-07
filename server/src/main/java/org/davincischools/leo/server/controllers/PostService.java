@@ -11,7 +11,10 @@ import org.davincischools.leo.database.daos.ProjectPostComment;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
 import org.davincischools.leo.database.utils.repos.ProjectPostRepository.GetProjectPostsParams;
+import org.davincischools.leo.protos.post_service.DeleteProjectPostCommentRequest;
+import org.davincischools.leo.protos.post_service.DeleteProjectPostCommentResponse;
 import org.davincischools.leo.protos.post_service.GetProjectPostsRequest;
 import org.davincischools.leo.protos.post_service.GetProjectPostsResponse;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostCommentRequest;
@@ -39,9 +42,7 @@ public class PostService {
   @PostMapping(value = "/api/protos/PostService/GetProjectPosts")
   @ResponseBody
   public GetProjectPostsResponse getProjectPosts(
-      @Authenticated HttpUserX userX,
-      @RequestBody Optional<GetProjectPostsRequest> optionalRequest,
-      HttpExecutors httpExecutors)
+      @RequestBody Optional<GetProjectPostsRequest> optionalRequest, HttpExecutors httpExecutors)
       throws HttpExecutorException {
     return httpExecutors
         .start(optionalRequest.orElse(GetProjectPostsRequest.getDefaultInstance()))
@@ -88,10 +89,9 @@ public class PostService {
                           .setBeingEdited(
                               !request.hasBeingEdited() ? null : request.getBeingEdited()))
                   .forEach(
-                      fullProjectPost -> {
-                        ProtoDaoUtils.toProjectPostProto(
-                            fullProjectPost, response.addProjectPostsBuilder());
-                      });
+                      fullProjectPost ->
+                          ProtoDaoUtils.toProjectPostProto(
+                              fullProjectPost, response.addProjectPostsBuilder()));
 
               return response.build();
             })
@@ -174,12 +174,11 @@ public class PostService {
                       .setUserX(postUserX)
                       .setPostTime(Instant.now());
               existingComment.ifPresent(
-                  existing -> {
-                    comment
-                        .setUserX(existing.getUserX())
-                        .setCreationTime(existing.getCreationTime())
-                        .setPostTime(existing.getPostTime());
-                  });
+                  existing ->
+                      comment
+                          .setUserX(existing.getUserX())
+                          .setCreationTime(existing.getCreationTime())
+                          .setPostTime(existing.getPostTime()));
 
               DaoUtils.removeTransientValues(comment, db.getProjectPostCommentRepository()::save);
 
@@ -187,6 +186,50 @@ public class PostService {
                   comment, response.getProjectPostCommentBuilder());
 
               return response.build();
+            })
+        .finish();
+  }
+
+  @Transactional
+  @PostMapping(value = "/api/protos/PostService/DeleteProjectPostComment")
+  @ResponseBody
+  public DeleteProjectPostCommentResponse deleteProjectPostComment(
+      @Authenticated HttpUserX userX,
+      @RequestBody Optional<DeleteProjectPostCommentRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    return httpExecutors
+        .start(optionalRequest.orElse(DeleteProjectPostCommentRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              if (userX.isNotAuthorized()) {
+                return userX.returnForbidden(DeleteProjectPostCommentResponse.getDefaultInstance());
+              }
+
+              FullProjectPostComment fullProjectPostComment =
+                  db.getProjectPostCommentRepository()
+                      .getFullProjectPostCommentById(request.getProjectPostCommentId())
+                      .orElse(null);
+              if (fullProjectPostComment == null) {
+                if (userX.isAdminX()) {
+                  return DeleteProjectPostCommentResponse.getDefaultInstance();
+                } else {
+                  return userX.returnForbidden(
+                      DeleteProjectPostCommentResponse.getDefaultInstance());
+                }
+              }
+
+              if (!userX.isAdminX()
+                  && !Objects.equals(
+                      fullProjectPostComment.getProjectPostComment().getUserX().getId(),
+                      userX.getUserXIdOrNull())) {
+                return userX.returnForbidden(DeleteProjectPostCommentResponse.getDefaultInstance());
+              }
+
+              fullProjectPostComment.getProjectPostComment().setDeleted(Instant.now());
+              db.getProjectPostCommentRepository().upsert(fullProjectPostComment);
+
+              return DeleteProjectPostCommentResponse.getDefaultInstance();
             })
         .finish();
   }

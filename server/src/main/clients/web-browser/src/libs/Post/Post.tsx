@@ -23,6 +23,7 @@ export function Post(props: {
   editingCommentId?: number;
   setEditingCommentId: (id?: number) => void;
   setCommentToSave: (comment: IProjectPostComment) => void;
+  deleteCommentId?: (id: number) => void;
 
   editingPostId?: number;
 }) {
@@ -74,7 +75,7 @@ export function Post(props: {
           {[...new Set(props.post?.tags?.map(tag => formatAsTag(tag.text)))]
             .sort()
             .map(tag => (
-              <>{tag}&nbsp;&nbsp;</>
+              <span key={tag}>{tag}&nbsp;&nbsp;</span>
             ))}
         </div>
         <div
@@ -135,6 +136,11 @@ export function Post(props: {
                         ? comment.id ?? undefined
                         : undefined
                     )
+                  }
+                  deleteIconClicked={
+                    props.deleteCommentId
+                      ? () => props.deleteCommentId?.(comment.id ?? 0)
+                      : undefined
                   }
                 />
                 <EditableReactQuill
