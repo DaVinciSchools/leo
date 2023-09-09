@@ -5,7 +5,7 @@ import {FormEvent, useContext, useEffect, useState} from 'react';
 import {GlobalStateContext} from '../GlobalState';
 import {Lock, Person} from '@mui/icons-material';
 import {login} from '../authentication';
-import {useFormFields} from '../forms';
+import {useFormFields} from '../form_utils/forms';
 
 const AUTHENTICATION_FAILURE =
   'Invalid username or password. Please try again.';

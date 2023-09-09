@@ -2,7 +2,7 @@ import {Checkbox, FormControlLabel, Grid, TextField} from '@mui/material';
 import {StandardModal} from '../StandardModal/StandardModal';
 import {pl_types} from '../../generated/protobuf-js';
 import {useEffect} from 'react';
-import {useFormFields} from '../forms';
+import {useFormFields} from '../form_utils/forms';
 
 import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
 

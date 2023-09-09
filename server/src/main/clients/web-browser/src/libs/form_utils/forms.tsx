@@ -14,7 +14,7 @@ import {
 import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
 import {ReactQuillProps} from 'react-quill';
-import {Writable} from './misc';
+import {Writable} from '../misc';
 
 const MAX_ZIP_CODE_LENGTH = 10;
 const MIN_PASSWORD_LENGTH = 8;
@@ -30,7 +30,7 @@ const ZIP_CODE_PATTERN = RegExp('^[0-9]{5}(-[0-9]{4})?$');
 
 const PASSWORD_ERROR_MESSAGE =
   'Passwords must have 8+ characters, a number, and a lower and upper case letter.';
-const PASSWORDS_DONT_MATCH = 'Passwords do not match.';
+const PASSWORDS_DO_NOT_MATCH = 'Passwords do not match.';
 
 export interface FormFieldMetadata {
   isPassword?: {
@@ -465,7 +465,7 @@ export function useFormFields(
         fieldMetadata?.isPassword?.skipPasswordCheck !== true &&
         getUnmatchedPasswords(finalCheck).length > 0
       ) {
-        setError(PASSWORDS_DONT_MATCH);
+        setError(PASSWORDS_DO_NOT_MATCH);
       }
       return !error;
     }
@@ -645,7 +645,7 @@ export function useFormFields(
     const passwordFields = getUnmatchedPasswords(finalCheck);
     if (passwordFields.length > 0) {
       errorField = passwordFields[0];
-      passwordFields.forEach(f => f.setError(PASSWORDS_DONT_MATCH));
+      passwordFields.forEach(f => f.setError(PASSWORDS_DO_NOT_MATCH));
     }
 
     fields.forEach(f => {

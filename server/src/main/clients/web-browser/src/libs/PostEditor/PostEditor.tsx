@@ -1,4 +1,4 @@
-import {FormFields} from '../forms';
+import {FormFields} from '../form_utils/forms';
 import {TextField} from '@mui/material';
 import ReactQuill from 'react-quill';
 import {MultiTagAutocomplete} from '../common_fields/MultiTagAutocomplete';

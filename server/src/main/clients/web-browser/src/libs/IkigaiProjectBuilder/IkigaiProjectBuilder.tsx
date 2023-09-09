@@ -18,7 +18,7 @@ import {pl_types} from '../../generated/protobuf-js';
 import IOption = pl_types.ProjectInputCategory.IOption;
 import ValueType = pl_types.ProjectInputCategory.ValueType;
 import {OPTION_SORTER, TEXT_SORTER} from '../sorters';
-import {getInputField} from '../forms';
+import {getInputField} from '../form_utils/forms';
 import {addClassName} from '../tags';
 
 const MODAL_STYLE: Partial<CSSProperties> = {

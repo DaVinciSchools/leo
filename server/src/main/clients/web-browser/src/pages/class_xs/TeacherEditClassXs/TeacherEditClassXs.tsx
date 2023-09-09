@@ -27,7 +27,7 @@ import {
 import {createService} from '../../../libs/protos';
 import {useContext, useEffect, useState} from 'react';
 import {useDelayedAction} from '../../../libs/delayed_action';
-import {useFormFields} from '../../../libs/forms';
+import {useFormFields} from '../../../libs/form_utils/forms';
 import {KnowledgeAndSkillModal} from '../../../libs/KnowledgeAndSkillModal/KnowledgeAndSkillModal';
 import {replaceInPlace, replaceOrAddInPlace} from '../../../libs/misc';
 import ClassXManagementService = class_x_management_service.ClassXManagementService;

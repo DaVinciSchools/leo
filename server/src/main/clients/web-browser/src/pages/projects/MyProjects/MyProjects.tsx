@@ -18,7 +18,7 @@ import ProjectManagementService = project_management.ProjectManagementService;
 import {useDelayedAction} from '../../../libs/delayed_action';
 import {replaceInPlace} from '../../../libs/misc';
 import {ASSIGNMENT_SORTER, PROJECT_SORTER} from '../../../libs/sorters';
-import {useFormFields} from '../../../libs/forms';
+import {useFormFields} from '../../../libs/form_utils/forms';
 import {ProjectsAutocomplete} from '../../../libs/common_fields/ProjectsAutocomplete';
 import IAssignment = pl_types.IAssignment;
 import AssignmentManagementService = assignment_management.AssignmentManagementService;

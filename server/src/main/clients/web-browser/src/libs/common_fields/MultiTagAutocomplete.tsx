@@ -1,4 +1,4 @@
-import {FormField} from '../forms';
+import {FormField} from '../form_utils/forms';
 import {Autocomplete, Checkbox, Chip, TextField} from '@mui/material';
 import {addClassName} from '../tags';
 

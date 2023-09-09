@@ -7,7 +7,7 @@ import {
   InputLabelProps,
   TextField,
 } from '@mui/material';
-import {FormField} from '../forms';
+import {FormField} from '../form_utils/forms';
 import {pl_types} from '../../generated/protobuf-js';
 import ISchool = pl_types.ISchool;
 import {addClassName} from '../tags';

@@ -12,7 +12,10 @@ import {
 } from '../../../generated/protobuf-js';
 import IClassX = pl_types.IClassX;
 import {GlobalStateContext} from '../../../libs/GlobalState';
-import {filterAutocompleteFormField, useFormFields} from '../../../libs/forms';
+import {
+  filterAutocompleteFormField,
+  useFormFields,
+} from '../../../libs/form_utils/forms';
 import SchoolManagementService = school_management.SchoolManagementService;
 import {createService} from '../../../libs/protos';
 import ISchool = pl_types.ISchool;

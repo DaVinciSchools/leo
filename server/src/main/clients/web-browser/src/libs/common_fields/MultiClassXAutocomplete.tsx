@@ -9,7 +9,7 @@ import {
   Chip,
 } from '@mui/material';
 import {useEffect, useState} from 'react';
-import {FormField} from '../forms';
+import {FormField} from '../form_utils/forms';
 import {addClassName} from '../tags';
 
 export function MultiClassXAutocomplete(props: {

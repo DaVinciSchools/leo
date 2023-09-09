@@ -1,4 +1,4 @@
-import {FormFields} from '../forms';
+import {FormFields} from '../form_utils/forms';
 import {Checkbox, Grid, TextField} from '@mui/material';
 import '../global.scss';
 import {

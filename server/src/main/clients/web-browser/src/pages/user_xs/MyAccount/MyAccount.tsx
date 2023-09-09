@@ -4,7 +4,7 @@ import '../../../libs/global.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {useContext, useEffect, useState} from 'react';
 import {GlobalStateContext} from '../../../libs/GlobalState';
-import {useFormFields} from '../../../libs/forms';
+import {useFormFields} from '../../../libs/form_utils/forms';
 import {useDelayedAction} from '../../../libs/delayed_action';
 import {
   EditorProfile,
