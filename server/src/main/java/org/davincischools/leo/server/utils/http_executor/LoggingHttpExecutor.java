@@ -136,7 +136,7 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
   public HttpExecutor<R, I> logInitialResponse() {
     if (lastSuccessfulInput != null) {
       log.setInitialResponseType(lastSuccessfulInput.getClass().getName());
-      log.setInitialResponse(ioToString(lastSuccessfulInput));
+      log.setInitialResponse(trimToLogLength(ioToString(lastSuccessfulInput)));
     } else {
       log.setInitialResponseType("null");
       log.setInitialResponse(null);
@@ -215,7 +215,7 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
         } else {
           log.setLastInputType("null");
         }
-        log.setLastInput(ioToString(lastSuccessfulInput));
+        log.setLastInput(trimToLogLength(ioToString(lastSuccessfulInput)));
         log.setLastInputTime(lastSuccessfulInputTime);
 
         log.setStackTrace(
@@ -256,7 +256,7 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
       } else {
         log.setFinalResponseType("null");
       }
-      log.setFinalResponse(ioToString(lastSuccessfulInput));
+      log.setFinalResponse(trimToLogLength(ioToString(lastSuccessfulInput)));
 
       if (Strings.isNullOrEmpty(log.getStatus())) {
         log.setStatus(LogRepository.Status.SUCCESS.name());
@@ -337,5 +337,9 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
     } else {
       return o.toString();
     }
+  }
+
+  private static String trimToLogLength(String input) {
+    return input.substring(0, Math.min(input.length(), LogRepository.LOG_RESPONSE_MAX_SIZE));
   }
 }
