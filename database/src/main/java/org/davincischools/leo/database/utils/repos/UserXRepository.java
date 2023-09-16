@@ -336,6 +336,15 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
     // Register WHERE conjunctions.
     query.where(builder.and(whereConjunctions.toArray(new Predicate[0])));
 
+    // ORDER BY.
+    query.orderBy(
+        Stream.of(
+                builder.desc(userX.get(UserX_.lastName)),
+                builder.desc(userX.get(UserX_.firstName)),
+                builder.desc(userX.get(UserX_.emailAddress)))
+            .filter(Objects::nonNull)
+            .toList());
+
     // SELECT.
     query.select(
         builder.tuple(Stream.of(userX).filter(Objects::nonNull).toArray(Selection<?>[]::new)));
