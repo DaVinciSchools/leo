@@ -9,6 +9,7 @@ import {
   pl_types,
   post_service,
   school_management,
+  user_x_management,
 } from '../../../generated/protobuf-js';
 import IClassX = pl_types.IClassX;
 import {GlobalStateContext} from '../../../libs/GlobalState';
@@ -27,18 +28,21 @@ import PostService = post_service.PostService;
 import IProjectPost = pl_types.IProjectPost;
 import {FilterAltTwoTone} from '@mui/icons-material';
 import {PostsFeed} from '../../../libs/PostsFeed/PostsFeed';
+import {DeepReadonly} from '../../../libs/misc';
+import IFullUserXDetails = user_x_management.IFullUserXDetails;
+import {Button} from '@mui/material';
+import {SearchForUserXModal} from '../../../libs/SearchForUserX/SearchForUserXModal';
 
 export function OverviewTab() {
   const global = useContext(GlobalStateContext);
 
-  const [schoolOptions, setSchoolOptions] = useState<readonly ISchool[]>([]);
-  const [classXOptions, setClassXOptions] = useState<readonly IClassX[]>([]);
   const [projectPosts, setProjectPosts] = useState<readonly IProjectPost[]>([]);
 
   const filterForm = useFormFields();
 
   // Maintain school filters.
 
+  const [schoolOptions, setSchoolOptions] = useState<readonly ISchool[]>([]);
   const schoolFilter = filterForm.useAutocompleteFormField<readonly ISchool[]>(
     'schoolFilter',
     {
@@ -69,6 +73,7 @@ export function OverviewTab() {
 
   // Maintain classX filters.
 
+  const [classXOptions, setClassXOptions] = useState<readonly IClassX[]>([]);
   const classXFilter = filterForm.useAutocompleteFormField<readonly IClassX[]>(
     'classXFilter',
     {
@@ -94,6 +99,14 @@ export function OverviewTab() {
       .catch(global.setError);
   }, [schoolFilter.getValue()]);
 
+  // Maintain userX filters.
+
+  const [userXFilter, setUserXFilter] = useState<
+    DeepReadonly<IFullUserXDetails>[]
+  >([]);
+  const [showSearchForStudent, setShowSearchForStudent] =
+    useState<boolean>(false);
+
   // Update project posts.
 
   useEffect(() => {
@@ -101,6 +114,7 @@ export function OverviewTab() {
       .getProjectPosts({
         schoolIds: schoolFilter.getValue()?.map?.(e => e.id ?? 0),
         classXIds: classXFilter.getValue()?.map?.(e => e.id ?? 0),
+        userXIds: userXFilter.map(e => e.userX?.userXId ?? 0),
         includeProjects: true,
         includeComments: true,
         includeTags: true,
@@ -110,7 +124,7 @@ export function OverviewTab() {
         setProjectPosts(response.projectPosts);
       })
       .catch(global.setError);
-  }, [schoolFilter.getValue(), classXFilter.getValue()]);
+  }, [schoolFilter.getValue(), classXFilter.getValue(), userXFilter]);
 
   if (!global.requireUserX(userX => userX?.isAdminX || userX?.isTeacher)) {
     return <></>;
@@ -152,10 +166,24 @@ export function OverviewTab() {
                     }
                     InputLabelProps={{shrink: true}}
                   />
+                  <Button
+                    className="global-button"
+                    onClick={() => {
+                      setShowSearchForStudent(true);
+                    }}
+                  >
+                    Select Student
+                    {userXFilter.map(userX => (
+                      <>
+                        <br />
+                        {userX.userX?.emailAddress ?? ''}
+                      </>
+                    ))}
+                  </Button>
                 </div>
               </TitledPaper>
             ),
-            layout: {x: 8, y: 0, w: 4, h: 5},
+            layout: {x: 8, y: 0, w: 4, h: 6},
           },
           {
             id: 'posts',
@@ -174,9 +202,22 @@ export function OverviewTab() {
                 TODO
               </TitledPaper>
             ),
-            layout: {x: 8, y: 5, w: 4, h: 7},
+            layout: {x: 8, y: 6, w: 4, h: 6},
           },
         ]}
+      />
+      <SearchForUserXModal
+        showSearchBox={showSearchForStudent}
+        title={'Search for Student'}
+        onSelect={userX => {
+          setShowSearchForStudent(false);
+          setUserXFilter(userX ? [userX] : []);
+        }}
+        baseRequest={{
+          includeStudents: true,
+          schoolIds: schoolOptions.map(e => e.id ?? 0),
+          classXIds: classXOptions.map(e => e.id ?? 0),
+        }}
       />
     </>
   );

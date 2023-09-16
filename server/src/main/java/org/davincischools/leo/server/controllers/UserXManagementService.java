@@ -22,11 +22,14 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserXUtils;
+import org.davincischools.leo.database.utils.repos.UserXRepository.GetUserXParams;
 import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
 import org.davincischools.leo.protos.user_x_management.GetPagedUserXsDetailsRequest;
 import org.davincischools.leo.protos.user_x_management.GetPagedUserXsDetailsResponse;
 import org.davincischools.leo.protos.user_x_management.GetUserXDetailsRequest;
 import org.davincischools.leo.protos.user_x_management.GetUserXDetailsResponse;
+import org.davincischools.leo.protos.user_x_management.GetUserXsRequest;
+import org.davincischools.leo.protos.user_x_management.GetUserXsResponse;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXResponse;
 import org.davincischools.leo.protos.user_x_management.RemoveUserXRequest;
@@ -545,6 +548,57 @@ public class UserXManagementService {
                                       request, RegisterUserXRequest.EMAIL_ADDRESS_FIELD_NUMBER))
                               .setInterest(interest),
                           request.getPassword()));
+
+              return response.build();
+            })
+        .finish();
+  }
+
+  @PostMapping(value = "/api/protos/UserXManagementService/GetUserXs")
+  @ResponseBody
+  public GetUserXsResponse registerUserX(
+      @Authenticated HttpUserX userX,
+      @RequestBody Optional<GetUserXsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(GetUserXsResponse.getDefaultInstance());
+    }
+
+    return httpExecutors
+        .start(optionalRequest.orElse(GetUserXsRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              if (!userX.isAdminX()) {
+                if (!userX.isTeacher()) {
+                  return userX.returnForbidden(GetUserXsResponse.getDefaultInstance());
+                }
+              }
+
+              var response = GetUserXsResponse.newBuilder();
+
+              db.getUserXRepository()
+                  .getUserXs(
+                      entityManager,
+                      new GetUserXParams()
+                          .setIncludeAdminXs(request.getIncludeAdminXs())
+                          .setIncludeTeachers(request.getIncludeAdminXs())
+                          .setIncludeTeachers(request.getIncludeTeachers())
+                          .setIncludeStudents(request.getIncludeStudents())
+                          .setSchoolIds(
+                              request.getSchoolIdsList().isEmpty()
+                                  ? null
+                                  : request.getSchoolIdsList())
+                          .setClassXIds(
+                              request.getClassXIdsList().isEmpty()
+                                  ? null
+                                  : request.getClassXIdsList())
+                          .setFirstLastEmailSearchText(
+                              request.hasFirstLastEmailSearchText()
+                                  ? request.getFirstLastEmailSearchText()
+                                  : null))
+                  .forEach(
+                      e -> ProtoDaoUtils.toFullUserXDetailsProto(e, response.addUserXsBuilder()));
 
               return response.build();
             })

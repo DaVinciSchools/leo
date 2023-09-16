@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import {AutocompleteRenderInputParams, InputAdornment} from '@mui/material';
+import {InputAdornment} from '@mui/material';
 import {CheckboxProps} from '@mui/material/Checkbox/Checkbox';
 import {
   DetailedHTMLProps,
@@ -65,13 +65,16 @@ export interface FormField<T> {
   getValue: () => T | undefined;
   setValue: (value: T | undefined) => void;
 
+  readonly stringValue: string;
+  setStringValue: (value: string) => void;
+
   readonly error: string;
   setError: (message: string) => void;
 
   autocompleteParams(): IFormAutocompleteParams<T>;
 
   textFieldParams: (
-    params?: AutocompleteRenderInputParams
+    params?: Partial<OutlinedTextFieldProps>
   ) => OutlinedTextFieldProps;
 
   checkboxParams: (params?: CheckboxProps) => CheckboxProps;
@@ -283,7 +286,7 @@ export function useFormFields(
     }
 
     function textFieldParams(
-      params?: AutocompleteRenderInputParams
+      params?: Partial<OutlinedTextFieldProps>
     ): OutlinedTextFieldProps {
       return {
         ...(params ?? {}),
@@ -298,6 +301,7 @@ export function useFormFields(
         error: !!error,
         onChange: e => {
           setStringValue(e.target.value);
+          params?.onChange?.(e);
         },
         onBlur: e => {
           setEvaluateField(true);
@@ -570,6 +574,9 @@ export function useFormFields(
 
       getValue,
       setValue,
+
+      stringValue,
+      setStringValue,
 
       error,
       setError,

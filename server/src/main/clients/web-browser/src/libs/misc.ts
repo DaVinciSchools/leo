@@ -70,3 +70,15 @@ export function htmlOrEmpty(
 export function formatAsTag(text: string | null | undefined) {
   return '#' + (text ?? 'tag').replace(/^#/, '');
 }
+
+export type DeepReadonly<T> = T extends void | undefined
+  ? undefined
+  : T extends undefined | null | boolean | string | number | Function
+  ? T
+  : T extends Array<infer E>
+  ? ReadonlyArray<DeepReadonly<E>>
+  : T extends Map<infer K, infer V>
+  ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
+  : T extends Set<infer E>
+  ? ReadonlySet<DeepReadonly<E>>
+  : {readonly [K in keyof T]: DeepReadonly<T[K]>};
