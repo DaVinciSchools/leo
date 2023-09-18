@@ -609,6 +609,9 @@ public class ProjectManagementService {
               Project reqProject = ProtoDaoUtils.toProjectDao(request.getProject());
               existingFullProject
                   .project()
+                  .setName(reqProject.getName())
+                  .setShortDescr(reqProject.getShortDescr())
+                  .setLongDescrHtml(reqProject.getLongDescrHtml())
                   .setFavorite(reqProject.getFavorite())
                   .setThumbsState(reqProject.getThumbsState())
                   .setThumbsStateReason(reqProject.getThumbsStateReason())
