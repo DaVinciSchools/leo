@@ -42,4 +42,7 @@
       <module name="project-leo-server" options="-Xlint:all" />
     </option>
   </component>
+  <component name="TypeScriptCompiler">
+    <option name="recompileOnChanges" value="true" />
+  </component>
 </project>
