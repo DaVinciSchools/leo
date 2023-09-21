@@ -43,7 +43,7 @@ public class ProjectPost implements Serializable {
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_DESIREDFEEDBACK_NAME = "desired_feedback";
   public static final String COLUMN_BEINGEDITED_NAME = "being_edited";
-  private static final long serialVersionUID = -456167024947580716L;
+  private static final long serialVersionUID = 5779984597306083002L;
 
   private Integer id;
 
@@ -68,6 +68,8 @@ public class ProjectPost implements Serializable {
   private Project project;
 
   private Set<ProjectPostComment> projectPostComments = new LinkedHashSet<>();
+
+  private Set<ProjectPostRating> projectPostRatings = new LinkedHashSet<>();
 
   private Set<Tag> tags = new LinkedHashSet<>();
 
@@ -136,6 +138,11 @@ public class ProjectPost implements Serializable {
   @OneToMany(mappedBy = "projectPost")
   public Set<ProjectPostComment> getProjectPostComments() {
     return projectPostComments;
+  }
+
+  @OneToMany(mappedBy = "projectPost")
+  public Set<ProjectPostRating> getProjectPostRatings() {
+    return projectPostRatings;
   }
 
   @OneToMany(mappedBy = "projectPost")

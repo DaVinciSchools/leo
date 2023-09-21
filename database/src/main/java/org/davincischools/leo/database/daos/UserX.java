@@ -23,6 +23,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -56,7 +58,7 @@ public class UserX implements Serializable {
   public static final String COLUMN_TEMPORARYPASSWORDGOODUNTIL_NAME =
       "temporary_password_good_until";
   public static final String COLUMN_TEMPORARYENCODEDPASSWORD_NAME = "temporary_encoded_password";
-  private static final long serialVersionUID = -6596857466582756977L;
+  private static final long serialVersionUID = 5380317292648741721L;
 
   private Integer id;
 
@@ -99,6 +101,8 @@ public class UserX implements Serializable {
   private Set<ProjectPost> projectPosts = new LinkedHashSet<>();
 
   private Set<ProjectPostComment> projectPostComments = new LinkedHashSet<>();
+
+  private Set<ProjectPostRating> projectPostRatings = new LinkedHashSet<>();
 
   private Set<Tag> tags = new LinkedHashSet<>();
 
@@ -176,6 +180,7 @@ public class UserX implements Serializable {
   }
 
   @OneToOne(fetch = FetchType.LAZY)
+  @OnDelete(action = OnDeleteAction.SET_NULL)
   @JoinColumn(name = "interest_id")
   public Interest getInterest() {
     return interest;
@@ -214,6 +219,11 @@ public class UserX implements Serializable {
   @OneToMany(mappedBy = "userX")
   public Set<ProjectPostComment> getProjectPostComments() {
     return projectPostComments;
+  }
+
+  @OneToMany(mappedBy = "userX")
+  public Set<ProjectPostRating> getProjectPostRatings() {
+    return projectPostRatings;
   }
 
   @OneToMany(mappedBy = "userX")

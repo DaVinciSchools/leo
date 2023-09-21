@@ -43,7 +43,7 @@ public class KnowledgeAndSkill implements Serializable {
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_GLOBAL_NAME = "global";
-  private static final long serialVersionUID = 7619675116267868981L;
+  private static final long serialVersionUID = 2792480636886308959L;
 
   private Integer id;
 
@@ -70,6 +70,8 @@ public class KnowledgeAndSkill implements Serializable {
   private Set<ClassXKnowledgeAndSkill> classXKnowledgeAndSkills = new LinkedHashSet<>();
 
   private Set<ProjectInputValue> projectInputValues = new LinkedHashSet<>();
+
+  private Set<ProjectPostRating> projectPostRatings = new LinkedHashSet<>();
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -140,5 +142,10 @@ public class KnowledgeAndSkill implements Serializable {
   @OneToMany(mappedBy = "knowledgeAndSkillValue")
   public Set<ProjectInputValue> getProjectInputValues() {
     return projectInputValues;
+  }
+
+  @OneToMany(mappedBy = "knowledgeAndSkill")
+  public Set<ProjectPostRating> getProjectPostRatings() {
+    return projectPostRatings;
   }
 }

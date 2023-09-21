@@ -24,6 +24,7 @@ import org.davincischools.leo.database.utils.repos.ProjectInputValueRepository;
 import org.davincischools.leo.database.utils.repos.ProjectMilestoneRepository;
 import org.davincischools.leo.database.utils.repos.ProjectMilestoneStepRepository;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository;
+import org.davincischools.leo.database.utils.repos.ProjectPostRatingRepository;
 import org.davincischools.leo.database.utils.repos.ProjectPostRepository;
 import org.davincischools.leo.database.utils.repos.ProjectRepository;
 import org.davincischools.leo.database.utils.repos.SchoolRepository;
@@ -71,6 +72,7 @@ public class Database {
   @Autowired private ProjectMilestoneRepository projectMilestoneRepository;
   @Autowired private ProjectMilestoneStepRepository projectMilestoneStepRepository;
   @Autowired private ProjectPostCommentRepository projectPostCommentRepository;
+  @Autowired private ProjectPostRatingRepository projectPostRatingRepository;
   @Autowired private ProjectPostRepository projectPostRepository;
   @Autowired private ProjectRepository projectRepository;
   @Autowired private SchoolRepository schoolRepository;
@@ -173,6 +175,10 @@ public class Database {
 
   public ProjectPostCommentRepository getProjectPostCommentRepository() {
     return projectPostCommentRepository;
+  }
+
+  public ProjectPostRatingRepository getProjectPostRatingRepository() {
+    return projectPostRatingRepository;
   }
 
   public ProjectPostRepository getProjectPostRepository() {
