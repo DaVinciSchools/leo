@@ -32,4 +32,5 @@
     "java.sources.organizeImports.starThreshold": 999999,
     "java.sources.organizeImports.staticStarThreshold": 999999,
     "maven.pomfile.autoUpdateEffectivePOM": true,
+    "files.eol": "\n",
 }
