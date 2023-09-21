@@ -1,6 +1,7 @@
 package org.davincischools.leo.server.utils.http_executor;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.davincischools.leo.database.utils.repos.LogRepository.trimToLogLength;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
@@ -78,13 +79,14 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
     log.setCaller(caller);
     log.setRequestTime(Instant.now());
     log.setRequestType(input.getClass().getName());
-    log.setRequest(ioToString(input));
+    log.setRequest(trimToLogLength(ioToString(input)));
   }
 
   @Override
   public HttpExecutorLog addNote(String pattern, Object... args) {
     log.setNotes(
-        Optional.ofNullable(log.getNotes()).orElse("") + String.format(pattern, args) + "\n");
+        trimToLogLength(
+            Optional.ofNullable(log.getNotes()).orElse("") + String.format(pattern, args) + "\n"));
     return this;
   }
 
@@ -337,9 +339,5 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
     } else {
       return o.toString();
     }
-  }
-
-  private static String trimToLogLength(String input) {
-    return input.substring(0, Math.min(input.length(), LogRepository.LOG_RESPONSE_MAX_SIZE));
   }
 }

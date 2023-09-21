@@ -6,11 +6,11 @@ CREATE TABLE log
 
     user_x_id             INT,
     status                ENUM('ERROR', 'SUCCESS') NOT NULL,
-    notes                 MEDIUMTEXT,
+    notes                 LONGTEXT,
     issue_link            VARCHAR(255),
 
     caller                MEDIUMTEXT,
-    request               MEDIUMTEXT NOT NULL,
+    request               LONGTEXT NOT NULL,
     request_type          MEDIUMTEXT NOT NULL,
     request_time          DATETIME   NOT NULL,
 
@@ -18,18 +18,18 @@ CREATE TABLE log
     --
     -- Base 64 mime-encoded if the type is binary. If it is a UTF-8 string
     -- in binary format, it will be converted to a string.
-    initial_response      MEDIUMTEXT,
+    initial_response      LONGTEXT,
     initial_response_type MEDIUMTEXT,
     initial_response_time DATETIME,
 
     -- The time of a fully processed response to send back to the client.
-    final_response        MEDIUMTEXT,
+    final_response        LONGTEXT,
     final_response_type   MEDIUMTEXT,
     final_response_time   DATETIME   NOT NULL,
 
     -- Error information.
-    stack_trace           MEDIUMTEXT,
-    last_input            MEDIUMTEXT,
+    stack_trace           LONGTEXT,
+    last_input            LONGTEXT,
     last_input_type       MEDIUMTEXT,
     last_input_time       DATETIME,
 
