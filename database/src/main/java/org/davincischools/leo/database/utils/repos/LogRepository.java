@@ -15,10 +15,8 @@ public interface LogRepository extends JpaRepository<Log, Integer> {
               Integer.MAX_VALUE,
               Math.min(
                   Math.round(
-                      Math.floor(
-                          LONGTEXT_MAX_BYTES
-                              / StandardCharsets.UTF_8.newEncoder().maxBytesPerChar())),
-                  LONGTEXT_MAX_BYTES / /* MySql max bytes per char */ 4));
+                      LONGTEXT_MAX_BYTES / StandardCharsets.UTF_8.newEncoder().maxBytesPerChar()),
+                  LONGTEXT_MAX_BYTES / /* MySql bytes per char using UTF8MB4 */ 4));
 
   enum Status {
     ERROR,
