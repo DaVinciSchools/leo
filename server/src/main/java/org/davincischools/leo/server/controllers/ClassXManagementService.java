@@ -1,13 +1,13 @@
 package org.davincischools.leo.server.controllers;
 
+import com.google.common.collect.Iterables;
+import jakarta.persistence.EntityManager;
 import java.util.Objects;
 import java.util.Optional;
-import org.davincischools.leo.database.daos.School;
-import org.davincischools.leo.database.daos.Student;
-import org.davincischools.leo.database.daos.Teacher;
+import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.exceptions.UnauthorizedUserX;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.repos.ClassXRepository.FullClassX;
+import org.davincischools.leo.database.utils.repos.GetClassXsParams;
 import org.davincischools.leo.protos.class_x_management_service.GetClassXsRequest;
 import org.davincischools.leo.protos.class_x_management_service.GetClassXsResponse;
 import org.davincischools.leo.protos.class_x_management_service.UpsertClassXRequest;
@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class ClassXManagementService {
 
   @Autowired Database db;
+  @Autowired EntityManager entityManager;
 
   @PostMapping(value = "/api/protos/ClassXManagementService/GetClassXs")
   @ResponseBody
@@ -42,27 +43,36 @@ public class ClassXManagementService {
         .andThen(
             (request, log) -> {
               if (!userX.isAdminX()) {
-                if (request.hasTeacherId()
-                    && !Objects.equals(userX.getTeacherIdOrNull(), request.getTeacherId())) {
+                if (request.getTeacherIdsCount() > 0
+                    && !Objects.equals(
+                        userX.getTeacherIdOrNull(),
+                        Iterables.getOnlyElement(request.getTeacherIdsList()))) {
                   return userX.returnForbidden(response.build());
                 }
-                if (request.hasStudentId()
-                    && !Objects.equals(userX.getStudentIdOrNull(), request.getStudentId())) {
+                if (request.getStudentIdsCount() > 0
+                    && !Objects.equals(
+                        userX.getStudentIdOrNull(),
+                        Iterables.getOnlyElement(request.getStudentIdsList()))) {
                   return userX.returnForbidden(response.build());
                 }
               }
 
               db.getClassXRepository()
-                  .findFullClassXs(
-                      request.hasTeacherId() ? new Teacher().setId(request.getTeacherId()) : null,
-                      request.hasStudentId() ? new Student().setId(request.getStudentId()) : null,
-                      request.getSchoolIdsList().stream().map(e -> new School().setId(e)).toList(),
-                      request.getIncludeAllAvailableClassXs(),
-                      request.getIncludeKnowledgeAndSkills())
+                  .getClassXs(
+                      entityManager,
+                      new GetClassXsParams()
+                          .setSchoolIds(
+                              request.getSchoolIdsCount() > 0 ? request.getSchoolIdsList() : null)
+                          .setClassXIds(
+                              request.getClassXIdsCount() > 0 ? request.getClassXIdsList() : null)
+                          .setTeacherIds(
+                              request.getTeacherIdsCount() > 0 ? request.getTeacherIdsList() : null)
+                          .setStudentIds(
+                              request.getStudentIdsCount() > 0 ? request.getStudentIdsList() : null)
+                          .setIncludeAssignments(request.getIncludeAssignments())
+                          .setIncludeKnowledgeAndSkills(request.getIncludeKnowledgeAndSkills()))
                   .forEach(
-                      fullClassX -> {
-                        ProtoDaoUtils.toFullClassXProto(fullClassX, response::addClassXsBuilder);
-                      });
+                      classX -> ProtoDaoUtils.toClassXProto(classX, response::addClassXsBuilder));
 
               return response.build();
             })
@@ -86,15 +96,13 @@ public class ClassXManagementService {
                 throw new UnauthorizedUserX();
               }
 
-              FullClassX fullClassX = ProtoDaoUtils.toFullClassXRecord(request.getClassX());
+              ClassX classX = ProtoDaoUtils.toClassXDao(request.getClassX());
               db.getClassXRepository()
-                  .guardedUpsert(
-                      db, fullClassX, userX.isAdminX() ? null : userX.getTeacherIdOrNull());
-              ProtoDaoUtils.toFullClassXProto(fullClassX, response::getClassXBuilder);
+                  .guardedUpsert(db, classX, userX.isAdminX() ? null : userX.getTeacherIdOrNull());
+              ProtoDaoUtils.toClassXProto(classX, response::getClassXBuilder);
 
               if (userX.getTeacherOrNull() != null) {
-                db.getTeacherClassXRepository()
-                    .upsert(userX.getTeacherOrNull(), fullClassX.classX());
+                db.getTeacherClassXRepository().upsert(userX.getTeacherOrNull(), classX);
               }
 
               return response.build();

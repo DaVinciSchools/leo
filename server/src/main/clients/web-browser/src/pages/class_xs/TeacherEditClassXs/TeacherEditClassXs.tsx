@@ -141,7 +141,7 @@ export function TeacherEditClassXs() {
       .catch(global.setError);
     createService(ClassXManagementService, 'ClassXManagementService')
       .getClassXs({
-        teacherId: global.userX.teacherId,
+        teacherIds: [global.userX.teacherId ?? 0],
         includeKnowledgeAndSkills: true,
       })
       .then(response => {

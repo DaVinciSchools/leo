@@ -2,27 +2,38 @@ package org.davincischools.leo.database.utils.repos;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.davincischools.leo.database.utils.DaoUtils.notDeleted;
+import static org.davincischools.leo.database.utils.DaoUtils.removeTransientValues;
+import static org.davincischools.leo.database.utils.DaoUtils.saveJoinTableAndTargets;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
-import javax.annotation.Nullable;
+import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill_;
+import org.davincischools.leo.database.daos.Assignment_;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
-import org.davincischools.leo.database.daos.KnowledgeAndSkill;
+import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill_;
+import org.davincischools.leo.database.daos.ClassX_;
 import org.davincischools.leo.database.daos.School;
-import org.davincischools.leo.database.daos.Student;
-import org.davincischools.leo.database.daos.StudentClassX;
+import org.davincischools.leo.database.daos.School_;
+import org.davincischools.leo.database.daos.StudentClassX_;
+import org.davincischools.leo.database.daos.Student_;
 import org.davincischools.leo.database.daos.Teacher;
-import org.davincischools.leo.database.daos.TeacherClassX;
+import org.davincischools.leo.database.daos.TeacherClassX_;
+import org.davincischools.leo.database.daos.Teacher_;
 import org.davincischools.leo.database.exceptions.UnauthorizedUserX;
-import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -31,14 +42,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
-
-  record FullClassX(ClassX classX, boolean enrolled, List<KnowledgeAndSkill> knowledgeAndSkills) {}
-
-  record FullClassXRow(
-      ClassX classX,
-      TeacherClassX teacherClassX,
-      StudentClassX studentClassX,
-      ClassXKnowledgeAndSkill classKnowledgeAndSkill) {}
 
   default ClassX upsert(School school, String name, Consumer<ClassX> modifier) {
     checkNotNull(school);
@@ -59,127 +62,99 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
   @Query("SELECT c FROM ClassX c WHERE c.school.id = (:schoolId) AND c.name = (:name)")
   Optional<ClassX> findByName(@Param("schoolId") int schoolId, @Param("name") String name);
 
-  @Query(
-      """
-          SELECT c, tcx, scx, cxks
-
-          FROM ClassX c
-          LEFT JOIN FETCH c.school
-          LEFT JOIN FETCH c.school.district
-
-          LEFT JOIN TeacherClassX tcx
-          ON
-            tcx.teacher = (:teacher)
-            AND tcx.classX = c
-
-          LEFT JOIN StudentClassX scx
-          ON
-            scx.student = (:student)
-            AND scx.classX = c
-
-          LEFT JOIN TeacherSchool ts
-          ON
-            (:includeAllAvailableClassXs) = TRUE
-            AND ts.teacher = (:teacher)
-            AND ts.school = c.school
-
-          LEFT JOIN StudentSchool ss
-          ON
-            (:includeAllAvailableClassXs) = TRUE
-            AND ss.student = (:student)
-            AND ss.school = c.school
-
-          LEFT JOIN ClassXKnowledgeAndSkill cxks
-          ON
-            (:includeKnowledgeAndSkills) = TRUE
-            AND c = cxks.classX
-          LEFT JOIN FETCH cxks.knowledgeAndSkill
-
-          WHERE
-              c.school IN (:schools)
-              OR (
-                  ((:teacher) IS NULL OR tcx IS NOT NULL OR ts IS NOT NULL)
-                  AND ((:student) IS NULL OR scx IS NOT NULL OR ss IS NOT NULL)
-                  AND ((:teacher) IS NOT NULL OR (:student) IS NOT NULL))
-          ORDER BY c.id""")
-  List<FullClassXRow> findFullClassXsRows(
-      @Nullable @Param("teacher") Teacher teacher,
-      @Nullable @Param("student") Student student,
-      @Param("schools") Iterable<School> schools,
-      @Param("includeAllAvailableClassXs") boolean includeAllAvailableClassXs,
-      @Param("includeKnowledgeAndSkills") boolean includeKnowledgeAndSkills);
-
-  default List<FullClassX> findFullClassXs(
-      @Nullable Teacher teacher,
-      @Nullable Student student,
-      Iterable<School> schools,
-      boolean includeAllAvailableClassXs,
-      boolean includeKnowledgeAndSkills) {
-    return toFullClassX(
-        findFullClassXsRows(
-            teacher,
-            student,
-            ImmutableList.<School>builder().addAll(schools).add(new School().setId(0)).build(),
-            includeAllAvailableClassXs,
-            includeKnowledgeAndSkills),
-        includeAllAvailableClassXs);
-  }
-
-  private List<FullClassX> toFullClassX(
-      Iterable<FullClassXRow> rows, boolean includeAllAvailableClassXs) {
-    List<FullClassX> fullClassXs = new ArrayList<>();
-    FullClassX classX = null;
-
-    for (FullClassXRow row : rows) {
-      if (classX == null || !Objects.equals(row.classX.getId(), classX.classX.getId())) {
-        fullClassXs.add(
-            classX =
-                new FullClassX(
-                    row.classX,
-                    !includeAllAvailableClassXs
-                        || row.teacherClassX() != null
-                        || row.studentClassX() != null,
-                    new ArrayList<>()));
-      }
-      if (row.classKnowledgeAndSkill() != null) {
-        classX.knowledgeAndSkills.add(row.classKnowledgeAndSkill().getKnowledgeAndSkill());
-      }
-    }
-
-    return fullClassXs;
-  }
-
-  List<ClassX> findAllBySchool(School school);
-
   @Transactional
-  default void guardedUpsert(Database db, FullClassX fullClassX, Integer requiredTeacherId)
+  default void guardedUpsert(Database db, ClassX classX, Integer requiredTeacherId)
       throws UnauthorizedUserX {
     checkNotNull(db);
-    checkNotNull(fullClassX);
+    checkNotNull(classX);
 
-    if (fullClassX.classX().getId() != null
+    if (classX.getId() != null
         && requiredTeacherId != null
         && !db.getTeacherClassXRepository()
-            .canTeacherUpdateClassX(new Teacher().setId(requiredTeacherId), fullClassX.classX())) {
+            .canTeacherUpdateClassX(new Teacher().setId(requiredTeacherId), classX)) {
       throw new UnauthorizedUserX("Teacher does not have write access to this class.");
     }
 
-    DaoUtils.removeTransientValues(fullClassX.classX(), this::save);
-    db.getClassXKnowledgeAndSkillRepository()
-        .setClassXKnoweldgeAndSkills(fullClassX.classX(), fullClassX.knowledgeAndSkills());
+    removeTransientValues(classX, this::save);
+    saveJoinTableAndTargets(
+        classX,
+        ClassX::getClassXKnowledgeAndSkills,
+        ClassXKnowledgeAndSkill::getKnowledgeAndSkill,
+        db.getKnowledgeAndSkillRepository()::save,
+        db.getClassXKnowledgeAndSkillRepository()::setClassXKnowledgeAndSkills);
   }
 
-  @Transactional
-  default void updateClassXs(
-      Database db, @Nullable Teacher teacher, @Nullable Student student, List<ClassX> classXs) {
-    checkNotNull(db);
-    checkNotNull(classXs);
+  default List<ClassX> getClassXs(EntityManager entityManager, GetClassXsParams params) {
 
-    if (teacher != null) {
-      db.getTeacherClassXRepository().setTeacherClassXs(teacher, classXs);
+    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+    List<Predicate> where = new ArrayList<>();
+
+    // From classX.
+    CriteriaQuery<ClassX> query = builder.createQuery(ClassX.class);
+    Root<ClassX> classX = query.from(ClassX.class);
+    where.add(builder.isNull(classX.get(ClassX_.deleted)));
+
+    // Fetch include school.
+    if (params.getIncludeSchool().orElse(false)) {
+      var school = notDeleted(classX.fetch(ClassX_.school, JoinType.LEFT));
+      notDeleted(school.fetch(School_.district, JoinType.LEFT));
     }
-    if (student != null) {
-      db.getStudentClassXRepository().setStudentClassXs(student, classXs);
+
+    // Fetch include assignments.
+    if (params.getIncludeAssignments().orElse(false)) {
+      var assignment = notDeleted(classX.fetch(ClassX_.assignments, JoinType.LEFT));
+
+      // Fetch include knowledge and skills.
+      if (params.getIncludeKnowledgeAndSkills().orElse(false)) {
+        var assignmentKnowledgeAndSkills =
+            notDeleted(assignment.fetch(Assignment_.assignmentKnowledgeAndSkills, JoinType.LEFT));
+        notDeleted(
+            assignmentKnowledgeAndSkills.fetch(
+                AssignmentKnowledgeAndSkill_.knowledgeAndSkill, JoinType.LEFT));
+      }
     }
+
+    // Fetch include knowledge and skills.
+    if (params.getIncludeKnowledgeAndSkills().orElse(false)) {
+      var classXKnowledgeAndSkills =
+          notDeleted(classX.fetch(ClassX_.classXKnowledgeAndSkills, JoinType.LEFT));
+      notDeleted(
+          classXKnowledgeAndSkills.fetch(
+              ClassXKnowledgeAndSkill_.knowledgeAndSkill, JoinType.LEFT));
+    }
+
+    // Where school ids.
+    if (params.getSchoolIds().isPresent()) {
+      where.add(
+          classX
+              .get(ClassX_.school)
+              .get(School_.id)
+              .in(ImmutableList.copyOf(params.getSchoolIds().get())));
+    }
+
+    // Where classX ids.
+    if (params.getClassXIds().isPresent()) {
+      where.add(classX.get(ClassX_.id).in(ImmutableList.copyOf(params.getClassXIds().get())));
+    }
+
+    // Where teacher ids.
+    if (params.getTeacherIds().isPresent()) {
+      var teacherClassXs = notDeleted(classX.fetch(ClassX_.teacherClassXES, JoinType.RIGHT));
+      notDeleted(teacherClassXs.get(TeacherClassX_.teacher))
+          .get(Teacher_.id)
+          .in(ImmutableList.copyOf(params.getTeacherIds().get()));
+    }
+
+    // Where student ids.
+    if (params.getStudentIds().isPresent()) {
+      var studentClassXs = notDeleted(classX.fetch(ClassX_.studentClassXES, JoinType.RIGHT));
+      notDeleted(studentClassXs.get(StudentClassX_.student))
+          .get(Student_.id)
+          .in(ImmutableList.copyOf(params.getStudentIds().get()));
+    }
+
+    // Select.
+    query.select(classX).where(where.toArray(new Predicate[0]));
+    return entityManager.createQuery(query).getResultList();
   }
 }

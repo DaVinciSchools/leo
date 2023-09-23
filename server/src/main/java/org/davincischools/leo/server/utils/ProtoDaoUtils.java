@@ -2,9 +2,12 @@ package org.davincischools.leo.server.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.davincischools.leo.database.utils.DaoUtils.createJoinTableRows;
+import static org.davincischools.leo.database.utils.DaoUtils.ifInitialized;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.protobuf.Descriptors.Descriptor;
@@ -42,7 +45,7 @@ import org.davincischools.leo.database.daos.ProjectPostComment;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.daos.UserX;
-import org.davincischools.leo.database.utils.repos.ClassXRepository.FullClassX;
+import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.FullProjectInput;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
@@ -488,6 +491,12 @@ public class ProtoDaoUtils {
     if (classX.hasSchool()) {
       dao.setSchool(toSchoolDao(classX.getSchool()));
     }
+    dao.setClassXKnowledgeAndSkills(
+        createJoinTableRows(
+            dao,
+            Lists.transform(
+                classX.getKnowledgeAndSkillsList(), ProtoDaoUtils::toKnowledgeAndSkillDao),
+            ClassXKnowledgeAndSkillRepository::create));
     return dao;
   }
 
@@ -498,34 +507,16 @@ public class ProtoDaoUtils {
         newBuilder,
         builder -> {
           toSchoolProto(classX.getSchool(), builder::getSchoolBuilder);
+          ifInitialized(
+              classX.getClassXKnowledgeAndSkills(),
+              classXKnowledgeAndSkill ->
+                  toKnowledgeAndSkillProto(
+                      classXKnowledgeAndSkill.getKnowledgeAndSkill(),
+                      builder::addKnowledgeAndSkillsBuilder));
         },
         org.davincischools.leo.protos.pl_types.ClassX.SCHOOL_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ClassX.ENROLLED_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
-  }
-
-  public static FullClassX toFullClassXRecord(
-      org.davincischools.leo.protos.pl_types.ClassXOrBuilder classX) {
-    return new FullClassX(
-        toClassXDao(classX),
-        classX.getEnrolled(),
-        classX.getKnowledgeAndSkillsOrBuilderList().stream()
-            .map(ProtoDaoUtils::toKnowledgeAndSkillDao)
-            .toList());
-  }
-
-  public static Optional<org.davincischools.leo.protos.pl_types.ClassX.Builder> toFullClassXProto(
-      FullClassX fullClassX,
-      Supplier<org.davincischools.leo.protos.pl_types.ClassX.Builder> newBuilder) {
-    var builder = toClassXProto(fullClassX.classX(), newBuilder);
-    builder.ifPresent(
-        b -> {
-          b.setEnrolled(fullClassX.enrolled());
-          fullClassX
-              .knowledgeAndSkills()
-              .forEach(k -> toKnowledgeAndSkillProto(k, b::addKnowledgeAndSkillsBuilder));
-        });
-    return builder;
   }
 
   public static District toDistrictDao(

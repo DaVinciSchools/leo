@@ -3,9 +3,11 @@ package org.davincischools.leo.database.admin_x;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import jakarta.persistence.EntityManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,6 +37,7 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.test.TestData;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserXUtils;
+import org.davincischools.leo.database.utils.repos.GetClassXsParams;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
@@ -374,6 +377,7 @@ public class AdminXUtils {
   }
 
   @Autowired private Database db;
+  @Autowired private EntityManager entityManager;
 
   @Value("${createDistrict:}")
   private String createDistrict;
@@ -639,7 +643,9 @@ public class AdminXUtils {
                     db.getStudentSchoolRepository().upsert(student.getStudent(), school);
 
                     db.getClassXRepository()
-                        .findAllBySchool(school)
+                        .getClassXs(
+                            entityManager,
+                            new GetClassXsParams().setSchoolIds(ImmutableList.of(school.getId())))
                         .forEach(
                             classX ->
                                 db.getStudentClassXRepository()

@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.criteria.Fetch;
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.lang.reflect.Constructor;
@@ -26,6 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -231,6 +233,13 @@ public class DaoUtils {
     return join;
   }
 
+  public static <T> Path<T> notDeleted(Path<T> entity) {
+    checkNotNull(entity);
+
+    entity.get("deleted").isNull();
+    return entity;
+  }
+
   public static <X, Y> Join<X, Y> addOn(Join<X, Y> join, Predicate predicate) {
     checkNotNull(join);
 
@@ -243,12 +252,61 @@ public class DaoUtils {
     return join;
   }
 
+  public static <T> List<T> singletonOrNull(@Nullable T entity) {
+    return entity == null ? null : Collections.singletonList(entity);
+  }
+
   public static <T> Optional<T> isInitialized(@Nullable T entity) {
     return Optional.ofNullable(entity).filter(Hibernate::isInitialized);
   }
 
   public static <T> void ifInitialized(Iterable<T> entities, Consumer<T> processFn) {
     isInitialized(entities).ifPresent(initialiedEntities -> initialiedEntities.forEach(processFn));
+  }
+
+  public static <T, R> List<T> getJoinTableDaos(
+      @Nullable Set<R> sourceTableRow, Function<R, T> getTargetFn) {
+    checkNotNull(getTargetFn);
+
+    return isInitialized(sourceTableRow)
+        .map(set -> set.stream().map(getTargetFn).filter(Objects::nonNull).toList())
+        .orElse(Collections.emptyList());
+  }
+
+  public static <F, T, R> Set<R> createJoinTableRows(
+      F from, @Nullable Iterable<T> targets, BiFunction<F, T, R> createFn) {
+    checkNotNull(from);
+    checkNotNull(createFn);
+
+    if (targets == null) {
+      return Collections.emptySet();
+    }
+    return Streams.stream(targets)
+        .filter(Objects::nonNull)
+        .map(target -> createFn.apply(from, target))
+        .collect(Collectors.toSet());
+  }
+
+  public static <E, R, T> void saveJoinTableAndTargets(
+      E entity,
+      Function<E, Iterable<R>> toRowsFn,
+      Function<R, T> getTargetFn,
+      Consumer<T> saveTargetFn,
+      BiConsumer<E, Iterable<T>> setTargetsFn) {
+    checkNotNull(entity);
+    checkNotNull(toRowsFn);
+    checkNotNull(getTargetFn);
+    checkNotNull(saveTargetFn);
+    checkNotNull(setTargetsFn);
+    checkArgument(isInitialized(entity).isPresent());
+
+    isInitialized(toRowsFn.apply(entity))
+        .ifPresent(
+            rows -> {
+              List<T> targets = Streams.stream(rows).map(getTargetFn).toList();
+              targets.forEach(target -> removeTransientValues(target, saveTargetFn));
+              setTargetsFn.accept(entity, targets);
+            });
   }
 
   private record DaoShallowCopyMethods(

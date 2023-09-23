@@ -10,10 +10,13 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.Student;
@@ -22,6 +25,7 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserXUtils;
+import org.davincischools.leo.database.utils.repos.GetClassXsParams;
 import org.davincischools.leo.database.utils.repos.UserXRepository.GetUserXParams;
 import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
 import org.davincischools.leo.protos.user_x_management.GetPagedUserXsDetailsRequest;
@@ -171,14 +175,22 @@ public class UserXManagementService {
 
     if (includeClassXs || includeAllAvailableClassXs) {
       db.getClassXRepository()
-          .findFullClassXs(
-              dbUserX.getTeacher(),
-              dbUserX.getStudent(),
-              /* schools= */ ImmutableList.of(),
-              includeAllAvailableClassXs,
-              includeKnowledgeAndSkills)
-          .forEach(
-              classX -> ProtoDaoUtils.toFullClassXProto(classX, finalDetails::addClassXsBuilder));
+          .getClassXs(
+              entityManager,
+              new GetClassXsParams()
+                  .setIncludeSchool(true)
+                  .setIncludeKnowledgeAndSkills(true)
+                  .setTeacherIds(
+                      Optional.ofNullable(dbUserX.getTeacher())
+                          .map(Teacher::getId)
+                          .map(Collections::singletonList)
+                          .orElse(null))
+                  .setStudentIds(
+                      Optional.ofNullable(dbUserX.getStudent())
+                          .map(Student::getId)
+                          .map(Collections::singletonList)
+                          .orElse(null)))
+          .forEach(classX -> ProtoDaoUtils.toClassXProto(classX, finalDetails::addClassXsBuilder));
     }
 
     return Optional.of(finalDetails);
@@ -347,14 +359,14 @@ public class UserXManagementService {
                           request.getUserX().getSchoolsList(), ProtoDaoUtils::toSchoolDao));
 
               // Update classes.
-              // TODO: move this under admin requirements.
-              db.getClassXRepository()
-                  .updateClassXs(
-                      db,
-                      newUserX.getTeacher(),
-                      newUserX.getStudent(),
-                      Lists.transform(
-                          request.getUserX().getClassXsList(), ProtoDaoUtils::toClassXDao));
+              List<ClassX> classXs =
+                  Lists.transform(request.getUserX().getClassXsList(), ProtoDaoUtils::toClassXDao);
+              if (newUserX.getTeacher() != null) {
+                db.getTeacherClassXRepository().setTeacherClassXs(newUserX.getTeacher(), classXs);
+              }
+              if (newUserX.getStudent() != null) {
+                db.getStudentClassXRepository().setStudentClassXs(newUserX.getStudent(), classXs);
+              }
 
               // Save the updated user.
               DaoUtils.removeTransientValues(newUserX, db.getUserXRepository()::save);

@@ -13,12 +13,15 @@ service ClassXManagementService {
 }
 
 message GetClassXsRequest {
-  optional int32 student_id = 1;
-  optional int32 teacher_id = 2;
   repeated int32 school_ids = 5;
+  repeated int32 class_x_ids = 7;
+  repeated int32 teacher_ids = 2;
+  repeated int32 student_ids = 1;
 
-  optional bool include_all_available_class_xs = 3;
+  optional bool include_assignments = 6;
   optional bool include_knowledge_and_skills = 4;
+
+  reserved 3;
 }
 
 message GetClassXsResponse {

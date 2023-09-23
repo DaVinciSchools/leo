@@ -197,44 +197,8 @@ public class ProtoDaoUtilsTest {
             ProtoDaoUtils.toClassXProto(ProtoDaoUtils.toClassXDao(proto), ClassX::newBuilder)
                 .orElseThrow()
                 .build())
-        .ignoringFieldDescriptors(
+        .ignoringRepeatedFieldOrderOfFieldDescriptors(
             ClassX.getDescriptor().findFieldByNumber(ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER))
-        .isEqualTo(proto);
-  }
-
-  @Test
-  public void toFullClassXConverters() throws ParseException {
-    ClassX proto =
-        TextFormat.parse(
-            """
-                id: 1
-                name: "name"
-                number: "number"
-                period: "period"
-                grade: "grade"
-                short_descr: "short"
-                long_descr_html: "long"
-                enrolled: true
-                school: {
-                  id: 2
-                  name: "school 2 name"
-                }
-                knowledge_and_skills {
-                  id: 3
-                  name: "knowledge and skill 3 name"
-                }
-                knowledge_and_skills {
-                  id: 4
-                  name: "knowledge and skill 4 name"
-                }
-                """,
-            ClassX.class);
-
-    assertThat(
-            ProtoDaoUtils.toFullClassXProto(
-                    ProtoDaoUtils.toFullClassXRecord(proto), ClassX::newBuilder)
-                .orElseThrow()
-                .build())
         .isEqualTo(proto);
   }
 
