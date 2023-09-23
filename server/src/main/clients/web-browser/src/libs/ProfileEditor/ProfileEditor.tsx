@@ -52,7 +52,7 @@ export function ProfileEditor(props: {
   const [sortedSchools, setSortedSchools] = useState<readonly ISchool[]>([]);
   const [sortedClassXs, setSortedClassXs] = useState<readonly IClassX[]>([]);
 
-  props.profileForm.useNumberFormField('userXId');
+  props.profileForm.useNumberFormField('id');
 
   const profileFirstName = props.profileForm.useStringFormField('firstName', {
     maxLength: 255,

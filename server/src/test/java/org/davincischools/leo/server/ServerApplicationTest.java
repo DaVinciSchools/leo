@@ -175,7 +175,7 @@ public class ServerApplicationTest {
         db.getInterestRepository().findById(userX.getInterest().getId()).orElseThrow();
 
     assertThat(ProtoDaoUtils.toUserXProto(userX, null).build())
-        .ignoringFields(UserX.USER_X_ID_FIELD_NUMBER)
+        .ignoringFields(UserX.ID_FIELD_NUMBER)
         .isEqualTo(
             UserX.newBuilder()
                 .setEmailAddress(request.getEmailAddress())

@@ -204,13 +204,13 @@ public class UserXManagementService {
 
               // Verify permissions.
               Integer userXId = null;
-              if (request.getUserX().getUserX().hasUserXId()) {
+              if (request.getUserX().getUserX().hasId()) {
                 if (!(userX.isAdminX()
                     || Objects.equals(
-                        request.getUserX().getUserX().getUserXId(), userX.getUserXIdOrNull()))) {
+                        request.getUserX().getUserX().getId(), userX.getUserXIdOrNull()))) {
                   return userX.returnForbidden(UpsertUserXResponse.getDefaultInstance());
                 }
-                userXId = request.getUserX().getUserX().getUserXId();
+                userXId = request.getUserX().getUserX().getId();
               } else if (!userX.isAdminX()) {
                 return userX.returnForbidden(UpsertUserXResponse.getDefaultInstance());
               }
@@ -283,7 +283,7 @@ public class UserXManagementService {
               if (userX.isAdminX()) {
                 // Update admin privileges.
                 if (request.getUserX().getUserX().getIsAdminX()) {
-                  if (oldUserX.getAdminX() == null) {
+                  if (oldUserX == null || oldUserX.getAdminX() == null) {
                     newUserX.setAdminX(
                         new org.davincischools.leo.database.daos.AdminX()
                             .setCreationTime(Instant.now()));
@@ -296,7 +296,7 @@ public class UserXManagementService {
 
                 // Update teacher privileges.
                 if (request.getUserX().getUserX().getIsTeacher()) {
-                  if (oldUserX.getTeacher() == null) {
+                  if (oldUserX == null || oldUserX.getTeacher() == null) {
                     newUserX.setTeacher(
                         new org.davincischools.leo.database.daos.Teacher()
                             .setCreationTime(Instant.now()));
@@ -309,7 +309,7 @@ public class UserXManagementService {
 
                 // Update student privileges.
                 if (request.getUserX().getUserX().getIsStudent()) {
-                  if (oldUserX.getStudent() == null) {
+                  if (oldUserX == null || oldUserX.getStudent() == null) {
                     newUserX.setStudent(
                         new org.davincischools.leo.database.daos.Student()
                             .setCreationTime(Instant.now()));
@@ -569,10 +569,8 @@ public class UserXManagementService {
         .start(optionalRequest.orElse(GetUserXsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              if (!userX.isAdminX()) {
-                if (!userX.isTeacher()) {
-                  return userX.returnForbidden(GetUserXsResponse.getDefaultInstance());
-                }
+              if (!userX.isAdminX() && !userX.isTeacher()) {
+                return userX.returnForbidden(GetUserXsResponse.getDefaultInstance());
               }
 
               var response = GetUserXsResponse.newBuilder();
@@ -582,7 +580,6 @@ public class UserXManagementService {
                       entityManager,
                       new GetUserXParams()
                           .setIncludeAdminXs(request.getIncludeAdminXs())
-                          .setIncludeTeachers(request.getIncludeAdminXs())
                           .setIncludeTeachers(request.getIncludeTeachers())
                           .setIncludeStudents(request.getIncludeStudents())
                           .setSchoolIds(

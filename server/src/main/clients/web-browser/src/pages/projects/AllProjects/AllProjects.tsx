@@ -33,7 +33,7 @@ export function AllProjects() {
     if (global.userX != null) {
       createService(ProjectManagementService, 'ProjectManagementService')
         .getProjects({
-          userXId: global.userX!.userXId,
+          userXId: global.userX!.id,
           includeUnsuccessful: true,
         })
         .then(response => {

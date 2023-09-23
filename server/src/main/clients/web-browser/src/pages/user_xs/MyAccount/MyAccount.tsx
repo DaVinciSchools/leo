@@ -85,7 +85,7 @@ export function MyAccount() {
           </div>
           <form>
             <ProfileEditor
-              userXId={global?.userX?.userXId ?? null}
+              userXId={global?.userX?.id ?? null}
               profileForm={profileForm}
               profileSaveStatus={profileSaveStatus}
             />

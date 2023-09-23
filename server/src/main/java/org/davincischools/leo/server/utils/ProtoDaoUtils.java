@@ -433,12 +433,7 @@ public class ProtoDaoUtils {
   public static UserX toUserXDao(org.davincischools.leo.protos.pl_types.UserXOrBuilder userX) {
     return translateToDao(
         userX,
-        new UserX()
-            .setCreationTime(Instant.now())
-            .setId(
-                valueOrNull(
-                    userX, org.davincischools.leo.protos.pl_types.UserX.USER_X_ID_FIELD_NUMBER)),
-        org.davincischools.leo.protos.pl_types.UserX.USER_X_ID_FIELD_NUMBER,
+        new UserX().setCreationTime(Instant.now()),
         org.davincischools.leo.protos.pl_types.UserX.IS_ADMIN_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.UserX.IS_TEACHER_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.UserX.IS_STUDENT_FIELD_NUMBER,
@@ -450,13 +445,9 @@ public class ProtoDaoUtils {
       UserX userX, @Nullable org.davincischools.leo.protos.pl_types.UserX.Builder builder) {
     builder = builder != null ? builder : org.davincischools.leo.protos.pl_types.UserX.newBuilder();
     if (userX != null && Hibernate.isInitialized(userX)) {
-      if (userX.getId() != null) {
-        builder.setUserXId(userX.getId());
-      }
       translateToProto(
           userX,
           builder,
-          org.davincischools.leo.protos.pl_types.UserX.USER_X_ID_FIELD_NUMBER,
           org.davincischools.leo.protos.pl_types.UserX.IS_ADMIN_X_FIELD_NUMBER,
           org.davincischools.leo.protos.pl_types.UserX.IS_TEACHER_FIELD_NUMBER,
           org.davincischools.leo.protos.pl_types.UserX.IS_STUDENT_FIELD_NUMBER,

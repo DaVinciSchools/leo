@@ -98,7 +98,7 @@ message School {
 }
 
 message UserX {
-  optional int32 user_x_id = 1;
+  optional int32 id = 1;
   optional int32 district_id = 2;
   optional string first_name = 3;
   optional string last_name = 4;

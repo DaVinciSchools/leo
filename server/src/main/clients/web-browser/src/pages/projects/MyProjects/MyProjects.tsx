@@ -115,7 +115,7 @@ export function MyProjects() {
         projectPost.tags = (projectPost.tags as string[])?.map(e => {
           return {
             text: e,
-            userXId: global.userX?.userXId,
+            userXId: global.userX?.id,
           } as ITag;
         });
         projectPost.name = projectPost.name ?? '';
@@ -156,7 +156,7 @@ export function MyProjects() {
   useEffect(() => {
     // Projects
     createService(ProjectManagementService, 'ProjectManagementService')
-      .getProjects({userXId: global.userX?.userXId, activeOnly: true})
+      .getProjects({userXId: global.userX?.id, activeOnly: true})
       .then(response => {
         setSortedProjects(response.projects.sort(PROJECT_SORTER));
         setSelectedProject(null);
@@ -175,7 +175,7 @@ export function MyProjects() {
 
     // Previously used tags.
     createService(TagService, 'TagService')
-      .getAllPreviousTags({userXId: global.userX?.userXId})
+      .getAllPreviousTags({userXId: global.userX?.id})
       .then(response => {
         setSortedTags(
           [...new Set(response.tags.map(e => e.text ?? ''))].sort()

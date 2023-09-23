@@ -93,7 +93,7 @@ ${issueLink + logErrorBody + errorBody}`);
       }' on ${new Date().toUTCString()}`
     );
 
-    setErrorBody(`User Id: ${global.userX?.userXId ?? 'none'}
+    setErrorBody(`User Id: ${global.userX?.id ?? 'none'}
 
 Error: ${reportErrorRequest.name ?? 'Unknown'}
 From: ${window.location.href}

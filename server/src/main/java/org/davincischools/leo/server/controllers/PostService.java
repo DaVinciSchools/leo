@@ -112,11 +112,11 @@ public class PostService {
         .andThen(
             (request, log) -> {
               UserX postUserX =
-                  request.getProjectPost().getUserX().hasUserXId()
+                  request.getProjectPost().getUserX().hasId()
                       ? ProtoDaoUtils.toUserXDao(request.getProjectPost().getUserX())
                       : checkNotNull(userX.getUserXOrNull());
 
-              if (!userX.isAdminX() && request.getProjectPost().getUserX().hasUserXId()) {
+              if (!userX.isAdminX() && request.getProjectPost().getUserX().hasId()) {
                 Optional<ProjectPost> existingPost =
                     db.getProjectPostRepository().findById(request.getProjectPost().getId());
                 if (existingPost.isPresent()) {
@@ -152,7 +152,7 @@ public class PostService {
         .andThen(
             (request, log) -> {
               UserX postUserX =
-                  request.getProjectPostComment().getUserX().hasUserXId()
+                  request.getProjectPostComment().getUserX().hasId()
                       ? ProtoDaoUtils.toUserXDao(request.getProjectPostComment().getUserX())
                       : checkNotNull(userX.getUserXOrNull());
 

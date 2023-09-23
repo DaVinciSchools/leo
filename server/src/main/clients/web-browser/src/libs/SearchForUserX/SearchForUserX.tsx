@@ -69,7 +69,7 @@ export function SearchForUserX(props: {
           <TableBody>
             {userXs.map(userX => (
               <TableRow
-                key={userX.userX?.userXId ?? 0}
+                key={userX.userX?.id ?? 0}
                 style={{
                   cursor: 'pointer',
                 }}

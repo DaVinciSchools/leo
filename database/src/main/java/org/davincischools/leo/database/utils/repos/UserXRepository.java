@@ -2,16 +2,13 @@ package org.davincischools.leo.database.utils.repos;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.davincischools.leo.database.utils.DaoUtils.addOn;
+import static org.davincischools.leo.database.utils.DaoUtils.notDeleted;
 
 import com.google.common.base.Strings;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.Tuple;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Selection;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -36,7 +33,6 @@ import org.davincischools.leo.database.daos.TeacherSchool_;
 import org.davincischools.leo.database.daos.Teacher_;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.daos.UserX_;
-import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.EntityUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -218,102 +214,61 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
 
   default List<UserX> getUserXs(EntityManager entityManager, GetUserXParams params) {
 
-    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+    var builder = entityManager.getCriteriaBuilder();
+    var query = builder.createQuery(UserX.class);
+    var where = new ArrayList<Predicate>();
 
-    // Set up tables.
-    CriteriaQuery<Tuple> query = builder.createTupleQuery();
-    List<Predicate> whereConjunctions = new ArrayList<>();
-    List<Predicate> whereDisjunctions = new ArrayList<>();
-
-    // FROM ProjectPost.
-    Root<UserX> userX = query.from(UserX.class);
-    userX.fetch(UserX_.adminX, JoinType.LEFT);
-    userX.fetch(UserX_.teacher, JoinType.LEFT);
-    userX.fetch(UserX_.student, JoinType.LEFT);
-
-    // WHERE - General.
-    whereConjunctions.add(builder.isNull(userX.get(UserX_.deleted)));
+    var userX = notDeleted(where, query.from(UserX.class));
+    var adminX = notDeleted(userX.fetch(UserX_.adminX, JoinType.LEFT));
+    var teacher = notDeleted(userX.fetch(UserX_.teacher, JoinType.LEFT));
+    var student = notDeleted(userX.fetch(UserX_.student, JoinType.LEFT));
 
     // WHERE includeAdmins.
     if (params.getIncludeAdminXs().orElse(false)) {
-      whereDisjunctions.add(builder.isNotNull(userX.get(UserX_.adminX)));
+      where.add(adminX.isNotNull());
     }
 
     // WHERE includeTeachers.
     if (params.getIncludeTeachers().orElse(false)) {
-      List<Predicate> includeConjunctions = new ArrayList<>();
-      includeConjunctions.add(builder.isNotNull(userX.get(UserX_.teacher)));
+      where.add(teacher.isNotNull());
 
       // WHERE includeTeachers schoolIds.
-      if (params.getSchoolIds().isPresent() && !params.getSchoolIds().isEmpty()) {
-        var inPredicate =
-            builder.in(
-                DaoUtils.toJoin(
-                        userX
-                            .fetch(UserX_.teacher, JoinType.LEFT)
-                            .fetch(Teacher_.teacherSchools, JoinType.LEFT))
-                    .get(TeacherSchool_.school)
-                    .get(School_.id));
-        params.getSchoolIds().get().forEach(inPredicate::value);
-        includeConjunctions.add(inPredicate);
+      if (params.getSchoolIds().isPresent()) {
+        var teacherSchool = notDeleted(teacher.fetch(Teacher_.teacherSchools, JoinType.INNER));
+        var school = notDeleted(teacherSchool.fetch(TeacherSchool_.school, JoinType.INNER));
+        addOn(school, school.get(School_.id).in(params.getSchoolIds().get()));
       }
 
-      // WHERE includeTeacher classXs.
-      if (params.getClassXIds().isPresent() && !params.getClassXIds().isEmpty()) {
-        var inPredicate =
-            builder.in(
-                DaoUtils.toJoin(
-                        userX
-                            .fetch(UserX_.teacher, JoinType.LEFT)
-                            .fetch(Teacher_.teacherClassXES, JoinType.LEFT))
-                    .get(TeacherClassX_.classX)
-                    .get(ClassX_.id));
-        params.getClassXIds().get().forEach(inPredicate::value);
-        includeConjunctions.add(inPredicate);
+      // WHERE includeTeachers classXs.
+      if (params.getClassXIds().isPresent()) {
+        var teacherClassX = notDeleted(teacher.fetch(Teacher_.teacherClassXES, JoinType.INNER));
+        var classX = notDeleted(teacherClassX.fetch(TeacherClassX_.classX, JoinType.INNER));
+        addOn(classX, classX.get(ClassX_.id).in(params.getClassXIds().get()));
       }
-
-      whereDisjunctions.add(builder.and(includeConjunctions.toArray(new Predicate[0])));
     }
 
     // WHERE includeStudents.
     if (params.getIncludeStudents().orElse(false)) {
-      List<Predicate> includeConjunctions = new ArrayList<>();
-      includeConjunctions.add(builder.isNotNull(userX.get(UserX_.student)));
+      where.add(student.isNotNull());
 
       // WHERE includeStudents schoolIds.
-      if (params.getSchoolIds().isPresent() && !params.getSchoolIds().isEmpty()) {
-        var inPredicate =
-            builder.in(
-                DaoUtils.toJoin(
-                        userX
-                            .fetch(UserX_.student, JoinType.LEFT)
-                            .fetch(Student_.studentSchools, JoinType.LEFT))
-                    .get(StudentSchool_.school)
-                    .get(School_.id));
-        params.getSchoolIds().get().forEach(inPredicate::value);
-        includeConjunctions.add(inPredicate);
+      if (params.getSchoolIds().isPresent()) {
+        var studentSchool = notDeleted(student.fetch(Student_.studentSchools, JoinType.INNER));
+        var school = notDeleted(studentSchool.fetch(StudentSchool_.school, JoinType.INNER));
+        addOn(school, school.get(School_.id).in(params.getSchoolIds().get()));
       }
 
-      // WHERE includeStudent classXs.
-      if (params.getClassXIds().isPresent() && !params.getClassXIds().isEmpty()) {
-        var inPredicate =
-            builder.in(
-                DaoUtils.toJoin(
-                        userX
-                            .fetch(UserX_.student, JoinType.LEFT)
-                            .fetch(Student_.studentClassXES, JoinType.LEFT))
-                    .get(StudentClassX_.classX)
-                    .get(ClassX_.id));
-        params.getClassXIds().get().forEach(inPredicate::value);
-        includeConjunctions.add(inPredicate);
+      // WHERE includeStudents classXs.
+      if (params.getClassXIds().isPresent()) {
+        var studentClassX = notDeleted(student.fetch(Student_.studentClassXES, JoinType.INNER));
+        var classX = notDeleted(studentClassX.fetch(StudentClassX_.classX, JoinType.INNER));
+        addOn(classX, classX.get(ClassX_.id).in(params.getClassXIds().get()));
       }
-
-      whereDisjunctions.add(builder.and(includeConjunctions.toArray(new Predicate[0])));
     }
 
     // WHERE firstLastEmailSearchText.
     if (params.getFirstLastEmailSearchText().isPresent()) {
-      var likePredicate =
+      where.add(
           builder.like(
               builder.concat(
                   builder.concat(
@@ -322,19 +277,8 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
                   builder.concat(
                       builder.concat(userX.get(UserX_.firstName), " "),
                       userX.get(UserX_.emailAddress))),
-              "%" + params.getFirstLastEmailSearchText().get() + "%");
-      whereConjunctions.add(likePredicate);
+              "%" + params.getFirstLastEmailSearchText().get() + "%"));
     }
-
-    // WHERE - includeAdmins / includeStudents / includeTeachers.
-    if (!whereDisjunctions.isEmpty()) {
-      whereConjunctions.add(builder.or(whereDisjunctions.toArray(new Predicate[0])));
-    } else {
-      return new ArrayList<>();
-    }
-
-    // Register WHERE conjunctions.
-    query.where(builder.and(whereConjunctions.toArray(new Predicate[0])));
 
     // ORDER BY.
     query.orderBy(
@@ -346,15 +290,8 @@ public interface UserXRepository extends JpaRepository<UserX, Integer> {
             .toList());
 
     // SELECT.
-    query.select(
-        builder.tuple(Stream.of(userX).filter(Objects::nonNull).toArray(Selection<?>[]::new)));
-
-    // Parse results.
-    List<UserX> userXs = new ArrayList<>();
-    for (Tuple row : entityManager.createQuery(query).getResultList()) {
-      userXs.add(row.get(userX));
-    }
-
-    return userXs;
+    return entityManager
+        .createQuery(query.select(userX).where(where.toArray(new Predicate[0])))
+        .getResultList();
   }
 }

@@ -254,7 +254,7 @@ public class ProtoDaoUtilsTest {
                 long_descr_html: "long"
                 global: true
                 user_x {
-                  user_x_id: 9
+                  id: 9
                   is_demo: true
                   is_authenticated: true
                 }
@@ -333,7 +333,7 @@ public class ProtoDaoUtilsTest {
     UserX proto =
         TextFormat.parse(
             """
-                user_x_id: 1
+                id: 1
                 is_demo: true
                 is_authenticated: true
                 """,
@@ -364,7 +364,7 @@ public class ProtoDaoUtilsTest {
     UserX proto =
         TextFormat.parse(
             """
-                user_x_id: 1
+                id: 1
                 district_id: 2
                 first_name: "first"
                 last_name: "last"
@@ -389,7 +389,7 @@ public class ProtoDaoUtilsTest {
     UserX proto =
         TextFormat.parse(
             """
-                user_x_id: 1
+                id: 1
                 district_id: 2
                 first_name: "first"
                 last_name: "last"
@@ -437,7 +437,7 @@ public class ProtoDaoUtilsTest {
             """
                 id: 1
                 user_x {
-                  user_x_id: 2
+                  id: 2
                   is_demo: true
                   is_authenticated: true
                 }
@@ -462,7 +462,7 @@ public class ProtoDaoUtilsTest {
                 comments {
                   id: 11
                   user_x {
-                    user_x_id: 12
+                    id: 12
                     is_demo: true
                     is_authenticated: true
                   }
@@ -476,7 +476,7 @@ public class ProtoDaoUtilsTest {
                 comments {
                   id: 7
                   user_x {
-                    user_x_id: 8
+                    id: 8
                     is_demo: true
                     is_authenticated: true
                   }
@@ -506,7 +506,7 @@ public class ProtoDaoUtilsTest {
             """
                 id: 1
                 user_x {
-                  user_x_id: 2
+                  id: 2
                   is_demo: true
                   is_authenticated: true
                 }
@@ -531,7 +531,7 @@ public class ProtoDaoUtilsTest {
                 comments {
                   id: 11
                   user_x {
-                    user_x_id: 12
+                    id: 12
                     is_demo: true
                     is_authenticated: true
                   }
@@ -545,7 +545,7 @@ public class ProtoDaoUtilsTest {
                 comments {
                   id: 7
                   user_x {
-                    user_x_id: 8
+                    id: 8
                     is_demo: true
                     is_authenticated: true
                   }
@@ -945,7 +945,7 @@ public class ProtoDaoUtilsTest {
             """
                 id: 1
                 user_x {
-                  user_x_id: 2
+                  id: 2
                   is_demo: true
                   is_authenticated: true
                 }
@@ -972,14 +972,14 @@ public class ProtoDaoUtilsTest {
             """
                 id: 1
                 user_x {
-                  user_x_id: 2
+                  id: 2
                   is_demo: true
                   is_authenticated: true
                 }
                 project_post: {
                   id: 3
                   user_x {
-                    user_x_id: 4
+                    id: 4
                     is_demo: true
                     is_authenticated: true
                   }

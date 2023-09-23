@@ -13,6 +13,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.criteria.Fetch;
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -208,7 +210,36 @@ public class DaoUtils {
 
   @SuppressWarnings("unchecked")
   public static <X, Y> Join<X, Y> toJoin(Fetch<X, Y> fetch) {
+    checkNotNull(fetch);
+
     return ((Join<X, Y>) fetch);
+  }
+
+  public static <T> Root<T> notDeleted(List<Predicate> where, Root<T> entity) {
+    checkNotNull(entity);
+
+    where.add(entity.get("deleted").isNull());
+    return entity;
+  }
+
+  public static <X, Y> Join<X, Y> notDeleted(Fetch<X, Y> fetch) {
+    checkNotNull(fetch);
+
+    var join = toJoin(fetch);
+    join.on(join.get("deleted").isNull());
+    return join;
+  }
+
+  public static <X, Y> Join<X, Y> addOn(Join<X, Y> join, Predicate predicate) {
+    checkNotNull(join);
+
+    if (join.getOn() != null) {
+      join.on(join.getOn(), predicate);
+    } else {
+      join.on(predicate);
+    }
+
+    return join;
   }
 
   private record DaoShallowCopyMethods(

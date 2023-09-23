@@ -35,7 +35,7 @@ export function Accounts() {
     IFullUserXDetails | undefined
   >();
 
-  const disabled = editingUserX?.userX?.userXId == null;
+  const disabled = editingUserX?.userX?.id == null;
 
   const profileForm = useFormFields({
     onChange: () => autoSave.trigger(),
@@ -157,7 +157,7 @@ export function Accounts() {
               </div>
             </div>
             <ProfileEditor
-              userXId={editingUserX?.userX?.userXId ?? null}
+              userXId={editingUserX?.userX?.id ?? null}
               profileForm={profileForm}
               profileSaveStatus={profileSaveStatus}
             />
@@ -229,7 +229,7 @@ export function Accounts() {
               ]}
               dataSource={userXs.map(value => {
                 return {
-                  key: value.userX!.userXId!,
+                  key: value.userX!.id!,
                   value: value,
                   firstName: value.userX!.firstName!,
                   lastName: value.userX!.lastName!,

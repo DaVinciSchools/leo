@@ -323,8 +323,8 @@ export function TeacherEditClassXs() {
                     <Checkbox style={{marginRight: 8}} checked={selected} />
                     {option.name}:&nbsp;
                     <i>{option.shortDescr ?? 'undefined'}</i>{' '}
-                    {((option.userX?.userXId != null &&
-                      option.userX?.userXId === global.userX?.userXId) ||
+                    {((option.userX?.id != null &&
+                      option.userX?.id === global.userX?.id) ||
                       global.userX?.isAdminX) && (
                       <>
                         &nbsp;

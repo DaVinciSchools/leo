@@ -114,7 +114,7 @@ export function OverviewTab() {
       .getProjectPosts({
         schoolIds: schoolFilter.getValue()?.map?.(e => e.id ?? 0),
         classXIds: classXFilter.getValue()?.map?.(e => e.id ?? 0),
-        userXIds: userXFilter.map(e => e.userX?.userXId ?? 0),
+        userXIds: userXFilter.map(e => e.userX?.id ?? 0),
         includeProjects: true,
         includeComments: true,
         includeTags: true,
