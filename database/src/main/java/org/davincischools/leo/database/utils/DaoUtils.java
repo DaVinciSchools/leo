@@ -30,6 +30,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.hibernate.Hibernate;
 
 public class DaoUtils {
@@ -240,6 +241,14 @@ public class DaoUtils {
     }
 
     return join;
+  }
+
+  public static <T> Optional<T> isInitialized(@Nullable T entity) {
+    return Optional.ofNullable(entity).filter(Hibernate::isInitialized);
+  }
+
+  public static <T> void ifInitialized(Iterable<T> entities, Consumer<T> processFn) {
+    isInitialized(entities).ifPresent(initialiedEntities -> initialiedEntities.forEach(processFn));
   }
 
   private record DaoShallowCopyMethods(

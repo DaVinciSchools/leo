@@ -91,7 +91,7 @@ public class PostService {
                   .forEach(
                       fullProjectPost ->
                           ProtoDaoUtils.toProjectPostProto(
-                              fullProjectPost, response.addProjectPostsBuilder()));
+                              fullProjectPost, response::addProjectPostsBuilder));
 
               return response.build();
             })
@@ -183,7 +183,7 @@ public class PostService {
               DaoUtils.removeTransientValues(comment, db.getProjectPostCommentRepository()::save);
 
               ProtoDaoUtils.toProjectPostCommentProto(
-                  comment, response.getProjectPostCommentBuilder());
+                  comment, response::getProjectPostCommentBuilder);
 
               return response.build();
             })

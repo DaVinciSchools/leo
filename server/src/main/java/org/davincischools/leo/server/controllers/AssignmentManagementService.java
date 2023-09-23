@@ -84,10 +84,10 @@ public class AssignmentManagementService {
                             assignment -> {
                               assignment.assignment().setClassX(classXAssignment.classX());
                               ProtoDaoUtils.toAssignmentProto(
-                                  assignment.assignment(), response.addAssignmentsBuilder());
+                                  assignment.assignment(), response::addAssignmentsBuilder);
                             });
                     ProtoDaoUtils.toClassXProto(
-                        classXAssignment.classX(), response.addClassXsBuilder());
+                        classXAssignment.classX(), response::addClassXsBuilder);
                   });
 
               return response.build();
@@ -125,15 +125,14 @@ public class AssignmentManagementService {
               ClassX classX =
                   db.getClassXRepository().findById(request.getClassXId()).orElseThrow();
 
-              response.setAssignment(
-                  ProtoDaoUtils.toAssignmentProto(
-                      db.getAssignmentRepository()
-                          .save(
-                              new Assignment()
-                                  .setCreationTime(Instant.now())
-                                  .setName("New Assignment")
-                                  .setClassX(classX)),
-                      null));
+              ProtoDaoUtils.toAssignmentProto(
+                  db.getAssignmentRepository()
+                      .save(
+                          new Assignment()
+                              .setCreationTime(Instant.now())
+                              .setName("New Assignment")
+                              .setClassX(classX)),
+                  response::getAssignmentBuilder);
 
               return response.build();
             })

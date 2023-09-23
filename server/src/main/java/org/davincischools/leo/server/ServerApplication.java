@@ -185,8 +185,15 @@ public class ServerApplication {
                               Authentication authentication) -> {
                             // Return the user in the reply after authentication.
                             UserX userX = ((UserXDetails) authentication.getPrincipal()).getUserX();
-                            org.davincischools.leo.protos.pl_types.UserX userXProto =
-                                ProtoDaoUtils.toUserXProto(userX, null).build();
+                            org.davincischools.leo.protos.pl_types.UserX.Builder userXProto =
+                                ProtoDaoUtils.toUserXProto(
+                                        userX,
+                                        org.davincischools.leo.protos.pl_types.UserX::newBuilder)
+                                    .orElse(null);
+                            if (userXProto == null) {
+                              throw new IllegalStateException(
+                                  "UserX proto is null after authentication.");
+                            }
 
                             response.setContentType(
                                 ProtobufHttpMessageConverter.PROTOBUF.toString());
@@ -196,7 +203,7 @@ public class ServerApplication {
                             response.setHeader(
                                 ProtobufHttpMessageConverter.X_PROTOBUF_MESSAGE_HEADER,
                                 userXProto.getDescriptorForType().getFullName());
-                            response.getOutputStream().write(userXProto.toByteArray());
+                            response.getOutputStream().write(userXProto.build().toByteArray());
                             response.setStatus(HttpServletResponse.SC_OK);
                           })
                       .failureUrl("/users/login.html?failed=true")

@@ -113,7 +113,7 @@ public class ProjectManagementService {
                   .forEach(
                       e ->
                           ProtoDaoUtils.toKnowledgeAndSkillProto(
-                              e, response.addKnowledgeAndSkillsBuilder()));
+                              e, response::addKnowledgeAndSkillsBuilder));
 
               return response.build();
             })
@@ -155,7 +155,7 @@ public class ProjectManagementService {
                   .ifPresent(
                       ks -> {
                         ProtoDaoUtils.toKnowledgeAndSkillProto(
-                            ks, response.getKnowledgeAndSkillBuilder());
+                            ks, response::getKnowledgeAndSkillBuilder);
                       });
 
               return response.build();
@@ -356,9 +356,9 @@ public class ProjectManagementService {
                 }
               }
 
-              return GetProjectDetailsResponse.newBuilder()
-                  .setProject(ProtoDaoUtils.toProjectProto(project, null))
-                  .build();
+              var response = GetProjectDetailsResponse.newBuilder();
+              ProtoDaoUtils.toProjectProto(project, response::getProjectBuilder);
+              return response.build();
             })
         .finish();
   }
@@ -391,22 +391,17 @@ public class ProjectManagementService {
               }
               var response = GetProjectsResponse.newBuilder();
 
-              response.addAllProjects(
-                  db
-                      .getProjectRepository()
-                      .findProjectsByUserXId(userXId, request.getActiveOnly())
-                      .stream()
-                      .map(e -> ProtoDaoUtils.toProjectProto(e, null).build())
-                      .toList());
+              db.getProjectRepository()
+                  .findProjectsByUserXId(userXId, request.getActiveOnly())
+                  .forEach(e -> ProtoDaoUtils.toProjectProto(e, response::addProjectsBuilder));
 
               if (request.getIncludeUnsuccessful()) {
-                response.addAllUnsuccessfulInputs(
-                    db
-                        .getProjectInputRepository()
-                        .findFullProjectInputByUserXAndUnsuccessful(userXId)
-                        .stream()
-                        .map(ProtoDaoUtils::toProjectDefinition)
-                        .toList());
+                db.getProjectInputRepository()
+                    .findFullProjectInputByUserXAndUnsuccessful(userXId)
+                    .forEach(
+                        e ->
+                            ProtoDaoUtils.toProjectDefinition(
+                                e, response::addUnsuccessfulInputsBuilder));
               }
 
               return response.build();
@@ -550,9 +545,9 @@ public class ProjectManagementService {
                       .orElse(null);
 
               for (FullProjectDefinition fullDefinition : fullDefinitions) {
-                response.addDefinitions(
-                    ProtoDaoUtils.toProjectDefinition(fullDefinition).toBuilder()
-                        .setSelected(fullDefinition == selectedFullDefinition));
+                ProtoDaoUtils.toProjectDefinition(fullDefinition, response::addDefinitionsBuilder)
+                    .ifPresent(
+                        builder -> builder.setSelected(fullDefinition == selectedFullDefinition));
               }
 
               return response.build();
@@ -621,14 +616,13 @@ public class ProjectManagementService {
               DaoUtils.removeTransientValues(
                   existingFullProject.project(), db.getProjectRepository()::save);
 
-              return UpdateProjectResponse.newBuilder()
-                  .setProject(
-                      ProtoDaoUtils.toProjectProto(
-                          db.getProjectRepository()
-                              .findFullProjectById(request.getProject().getId())
-                              .orElseThrow(),
-                          null))
-                  .build();
+              var response = UpdateProjectResponse.newBuilder();
+              ProtoDaoUtils.toProjectProto(
+                  db.getProjectRepository()
+                      .findFullProjectById(request.getProject().getId())
+                      .orElseThrow(),
+                  response::getProjectBuilder);
+              return response.build();
             })
         .finish();
   }

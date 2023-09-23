@@ -89,11 +89,11 @@ public class UserXManagementService {
 
               GetPagedUserXsDetailsResponse.Builder response =
                   GetPagedUserXsDetailsResponse.newBuilder()
-                      .addAllUserXs(
-                          pagedUserXs.getContent().stream()
-                              .map(e -> ProtoDaoUtils.toFullUserXDetailsProto(e, null).build())
-                              .toList())
                       .setTotalUserXs((int) pagedUserXs.getTotalElements());
+              pagedUserXs
+                  .getContent()
+                  .forEach(
+                      e -> ProtoDaoUtils.toFullUserXDetailsProto(e, response::addUserXsBuilder));
               return response.build();
             })
         .finish();
@@ -157,16 +157,16 @@ public class UserXManagementService {
     if (dbUserX == null) {
       return Optional.empty();
     }
-    ProtoDaoUtils.toUserXProto(dbUserX, finalDetails.getUserXBuilder());
+    ProtoDaoUtils.toUserXProto(dbUserX, finalDetails::getUserXBuilder);
 
     if (dbUserX.getDistrict() != null && dbUserX.getDistrict().getId() != null) {
-      ProtoDaoUtils.toDistrictProto(dbUserX.getDistrict(), finalDetails.getDistrictBuilder());
+      ProtoDaoUtils.toDistrictProto(dbUserX.getDistrict(), finalDetails::getDistrictBuilder);
     }
 
     if (includeSchools) {
       db.getSchoolRepository()
           .findSchools(dbUserX.getTeacher(), dbUserX.getStudent())
-          .forEach(school -> ProtoDaoUtils.toSchoolProto(school, finalDetails.addSchoolsBuilder()));
+          .forEach(school -> ProtoDaoUtils.toSchoolProto(school, finalDetails::addSchoolsBuilder));
     }
 
     if (includeClassXs || includeAllAvailableClassXs) {
@@ -178,7 +178,7 @@ public class UserXManagementService {
               includeAllAvailableClassXs,
               includeKnowledgeAndSkills)
           .forEach(
-              classX -> ProtoDaoUtils.toFullClassXProto(classX, finalDetails.addClassXsBuilder()));
+              classX -> ProtoDaoUtils.toFullClassXProto(classX, finalDetails::addClassXsBuilder));
     }
 
     return Optional.of(finalDetails);
@@ -595,7 +595,7 @@ public class UserXManagementService {
                                   ? request.getFirstLastEmailSearchText()
                                   : null))
                   .forEach(
-                      e -> ProtoDaoUtils.toFullUserXDetailsProto(e, response.addUserXsBuilder()));
+                      e -> ProtoDaoUtils.toFullUserXDetailsProto(e, response::addUserXsBuilder));
 
               return response.build();
             })

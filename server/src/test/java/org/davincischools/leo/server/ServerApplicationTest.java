@@ -174,7 +174,7 @@ public class ServerApplicationTest {
     Interest interest =
         db.getInterestRepository().findById(userX.getInterest().getId()).orElseThrow();
 
-    assertThat(ProtoDaoUtils.toUserXProto(userX, null).build())
+    assertThat(ProtoDaoUtils.toUserXProto(userX, UserX::newBuilder).orElseThrow().build())
         .ignoringFields(UserX.ID_FIELD_NUMBER)
         .isEqualTo(
             UserX.newBuilder()
@@ -185,7 +185,10 @@ public class ServerApplicationTest {
                 .setIsAuthenticated(true)
                 .build());
 
-    assertThat(ProtoDaoUtils.toRegisterUserXRequestProto(interest, null).build())
+    assertThat(
+            ProtoDaoUtils.toRegisterUserXRequestProto(interest, RegisterUserXRequest::newBuilder)
+                .orElseThrow()
+                .build())
         .ignoringFields(
             RegisterUserXRequest.PASSWORD_FIELD_NUMBER,
             RegisterUserXRequest.VERIFY_PASSWORD_FIELD_NUMBER)

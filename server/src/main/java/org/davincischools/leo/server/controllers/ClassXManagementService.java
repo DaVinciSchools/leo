@@ -61,7 +61,7 @@ public class ClassXManagementService {
                       request.getIncludeKnowledgeAndSkills())
                   .forEach(
                       fullClassX -> {
-                        ProtoDaoUtils.toFullClassXProto(fullClassX, response.addClassXsBuilder());
+                        ProtoDaoUtils.toFullClassXProto(fullClassX, response::addClassXsBuilder);
                       });
 
               return response.build();
@@ -90,7 +90,7 @@ public class ClassXManagementService {
               db.getClassXRepository()
                   .guardedUpsert(
                       db, fullClassX, userX.isAdminX() ? null : userX.getTeacherIdOrNull());
-              ProtoDaoUtils.toFullClassXProto(fullClassX, response.getClassXBuilder());
+              ProtoDaoUtils.toFullClassXProto(fullClassX, response::getClassXBuilder);
 
               if (userX.getTeacherOrNull() != null) {
                 db.getTeacherClassXRepository()

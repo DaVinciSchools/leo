@@ -24,8 +24,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
@@ -55,6 +56,8 @@ import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
 import org.hibernate.Hibernate;
 import org.hibernate.LazyInitializationException;
+import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.proxy.LazyInitializer;
 
 public class ProtoDaoUtils {
 
@@ -72,25 +75,36 @@ public class ProtoDaoUtils {
           Map<Integer, BiConsumer</* dao= */ Object, /* message= */ Message.Builder>>>
       daoToProtoSetters = Collections.synchronizedMap(new HashMap<>());
 
-  public static org.davincischools.leo.protos.pl_types.ProjectDefinition toProjectDefinition(
-      FullProjectDefinition fullProjectDefinition) {
-    var projectDefinitionProto =
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.newBuilder()
-            .setId(fullProjectDefinition.definition().getId())
-            .setName(fullProjectDefinition.definition().getName())
-            .setTemplate(Boolean.TRUE.equals(fullProjectDefinition.definition().getTemplate()));
-    for (var categoryDao : fullProjectDefinition.categories()) {
-      var type = categoryDao.getProjectDefinitionCategoryType();
-      createProjectInputValueProto(
-          categoryDao.getId(), type, projectDefinitionProto.addInputsBuilder());
-    }
-    return projectDefinitionProto.build();
+  public static Optional<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder>
+      toProjectDefinition(
+          FullProjectDefinition fullProjectDefinition,
+          Supplier<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder> newBuilder) {
+    return translateToProto(
+        fullProjectDefinition.definition(),
+        newBuilder,
+        builder -> {
+          fullProjectDefinition
+              .categories()
+              .forEach(
+                  categoryDao -> {
+                    var type = categoryDao.getProjectDefinitionCategoryType();
+                    createProjectInputValueProto(
+                        categoryDao.getId(), type, builder.addInputsBuilder());
+                  });
+        },
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUT_ID_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER);
   }
 
-  public static org.davincischools.leo.protos.pl_types.ProjectDefinition toProjectDefinition(
-      FullProjectInput fullProjectInput) {
+  public static Optional<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder>
+      toProjectDefinition(
+          FullProjectInput fullProjectInput,
+          Supplier<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder> newBuilder) {
     var projectDefinitionProto =
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.newBuilder()
+        newBuilder
+            .get()
             .setId(fullProjectInput.definition().getId())
             .setName(fullProjectInput.definition().getName())
             .setInputId(fullProjectInput.input().getId())
@@ -121,7 +135,7 @@ public class ProtoDaoUtils {
         case UNSET -> throw new IllegalStateException("Unset value type");
       }
     }
-    return projectDefinitionProto.build();
+    return Optional.of(projectDefinitionProto);
   }
 
   private static ProjectInputValue.Builder createProjectInputValueProto(
@@ -146,18 +160,12 @@ public class ProtoDaoUtils {
   // ---- Automated and tested converters. ----
   //
 
-  public static org.davincischools.leo.protos.pl_types.Project.Milestone.Step.Builder
+  public static Optional<org.davincischools.leo.protos.pl_types.Project.Milestone.Step.Builder>
       toMilestoneStepProto(
           ProjectMilestoneStep projectMilestoneStep,
-          @Nullable org.davincischools.leo.protos.pl_types.Project.Milestone.Step.Builder builder) {
-    builder =
-        builder != null
-            ? builder
-            : org.davincischools.leo.protos.pl_types.Project.Milestone.Step.newBuilder();
-    if (projectMilestoneStep != null && Hibernate.isInitialized(projectMilestoneStep)) {
-      translateToProto(projectMilestoneStep, builder);
-    }
-    return builder;
+          Supplier<org.davincischools.leo.protos.pl_types.Project.Milestone.Step.Builder>
+              newBuilder) {
+    return translateToProto(projectMilestoneStep, newBuilder);
   }
 
   public static ProjectMilestoneStep toProjectMilestoneStepDao(
@@ -167,20 +175,14 @@ public class ProtoDaoUtils {
     return dao;
   }
 
-  public static org.davincischools.leo.protos.pl_types.Project.Milestone.Builder toMilestoneProto(
-      ProjectMilestone projectMilestone,
-      @Nullable org.davincischools.leo.protos.pl_types.Project.Milestone.Builder builder) {
-    builder =
-        builder != null
-            ? builder
-            : org.davincischools.leo.protos.pl_types.Project.Milestone.newBuilder();
-    if (projectMilestone != null && Hibernate.isInitialized(projectMilestone)) {
-      translateToProto(
-          projectMilestone,
-          builder,
-          org.davincischools.leo.protos.pl_types.Project.Milestone.STEPS_FIELD_NUMBER);
-    }
-    return builder;
+  public static Optional<org.davincischools.leo.protos.pl_types.Project.Milestone.Builder>
+      toMilestoneProto(
+          ProjectMilestone projectMilestone,
+          Supplier<org.davincischools.leo.protos.pl_types.Project.Milestone.Builder> newBuilder) {
+    return translateToProto(
+        projectMilestone,
+        newBuilder,
+        org.davincischools.leo.protos.pl_types.Project.Milestone.STEPS_FIELD_NUMBER);
   }
 
   public static ProjectMilestone toProjectMilestoneDao(
@@ -193,17 +195,13 @@ public class ProtoDaoUtils {
     return dao;
   }
 
-  public static org.davincischools.leo.protos.pl_types.Project.Milestone.Builder toMilestoneProto(
-      MilestoneWithSteps milestone,
-      @Nullable org.davincischools.leo.protos.pl_types.Project.Milestone.Builder builder) {
-    builder =
-        builder != null
-            ? builder
-            : org.davincischools.leo.protos.pl_types.Project.Milestone.newBuilder();
-    toMilestoneProto(milestone.milestone(), builder);
-    for (var step : milestone.steps()) {
-      toMilestoneStepProto(step, builder.addStepsBuilder());
-    }
+  public static Optional<org.davincischools.leo.protos.pl_types.Project.Milestone.Builder>
+      toMilestoneProto(
+          MilestoneWithSteps milestone,
+          Supplier<org.davincischools.leo.protos.pl_types.Project.Milestone.Builder> newBuilder) {
+    var builder = toMilestoneProto(milestone.milestone(), newBuilder);
+    builder.ifPresent(
+        b -> milestone.steps().forEach(s -> toMilestoneStepProto(s, b::addStepsBuilder)));
     return builder;
   }
 
@@ -228,32 +226,26 @@ public class ProtoDaoUtils {
     return dao;
   }
 
-  public static org.davincischools.leo.protos.pl_types.Project.Builder toProjectProto(
-      Project project, @Nullable org.davincischools.leo.protos.pl_types.Project.Builder builder) {
-    builder =
-        builder != null ? builder : org.davincischools.leo.protos.pl_types.Project.newBuilder();
-    if (project != null && Hibernate.isInitialized(project)) {
-      translateToProto(
-          project,
-          builder,
-          org.davincischools.leo.protos.pl_types.Project.ASSIGNMENT_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER);
-      if (project.getAssignment() != null) {
-        toAssignmentProto(project.getAssignment(), builder.getAssignmentBuilder());
-      }
-    }
-    return builder;
+  public static Optional<org.davincischools.leo.protos.pl_types.Project.Builder> toProjectProto(
+      Project project,
+      Supplier<org.davincischools.leo.protos.pl_types.Project.Builder> newBuilder) {
+    return translateToProto(
+        project,
+        newBuilder,
+        builder -> toAssignmentProto(project.getAssignment(), builder::getAssignmentBuilder),
+        org.davincischools.leo.protos.pl_types.Project.ASSIGNMENT_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER);
   }
 
-  public static org.davincischools.leo.protos.pl_types.Project.Builder toProjectProto(
+  public static Optional<org.davincischools.leo.protos.pl_types.Project.Builder> toProjectProto(
       ProjectWithMilestones projectWithMilestones,
-      @Nullable org.davincischools.leo.protos.pl_types.Project.Builder builder) {
-    builder =
-        builder != null ? builder : org.davincischools.leo.protos.pl_types.Project.newBuilder();
-    toProjectProto(projectWithMilestones.project(), builder);
-    for (var milestone : projectWithMilestones.milestones()) {
-      toMilestoneProto(milestone, builder.addMilestonesBuilder());
-    }
+      Supplier<org.davincischools.leo.protos.pl_types.Project.Builder> newBuilder) {
+    var builder = toProjectProto(projectWithMilestones.project(), newBuilder);
+    builder.ifPresent(
+        b ->
+            projectWithMilestones
+                .milestones()
+                .forEach(m -> toMilestoneProto(m, b::addMilestonesBuilder)));
     return builder;
   }
 
@@ -301,51 +293,45 @@ public class ProtoDaoUtils {
     return fullProjectPost;
   }
 
-  public static org.davincischools.leo.protos.pl_types.ProjectPost.Builder toProjectPostProto(
-      ProjectPost projectPost,
-      @Nullable org.davincischools.leo.protos.pl_types.ProjectPost.Builder builder) {
-    builder =
-        builder != null ? builder : org.davincischools.leo.protos.pl_types.ProjectPost.newBuilder();
-    if (projectPost != null && Hibernate.isInitialized(projectPost)) {
-      translateToProto(
-          projectPost,
-          builder,
-          org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.ProjectPost.PROJECT_FIELD_NUMBER);
-      if (projectPost.getUserX() != null) {
-        toUserXProto(projectPost.getUserX(), builder.getUserXBuilder());
-      }
-      if (projectPost.getProject() != null) {
-        toProjectProto(projectPost.getProject(), builder.getProjectBuilder());
-      }
-    }
-    return builder;
+  public static Optional<org.davincischools.leo.protos.pl_types.ProjectPost.Builder>
+      toProjectPostProto(
+          ProjectPost projectPost,
+          Supplier<org.davincischools.leo.protos.pl_types.ProjectPost.Builder> newBuilder) {
+    return translateToProto(
+        projectPost,
+        newBuilder,
+        b -> {
+          toUserXProto(projectPost.getUserX(), b::getUserXBuilder);
+          toProjectProto(projectPost.getProject(), b::getProjectBuilder);
+        },
+        org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectPost.PROJECT_FIELD_NUMBER);
   }
 
-  public static org.davincischools.leo.protos.pl_types.ProjectPost.Builder toProjectPostProto(
-      FullProjectPost projectPost,
-      @Nullable org.davincischools.leo.protos.pl_types.ProjectPost.Builder builder) {
-    builder =
-        builder != null ? builder : org.davincischools.leo.protos.pl_types.ProjectPost.newBuilder();
-    if (projectPost != null && Hibernate.isInitialized(projectPost)) {
-      var finalBuilder = builder;
-      toProjectPostProto(projectPost.getProjectPost(), builder);
-      projectPost
-          .getProjectPostComments()
-          .values()
-          .forEach(
-              comment -> toProjectPostCommentProto(comment, finalBuilder.addCommentsBuilder()));
-      projectPost
-          .getTags()
-          .entries()
-          .forEach(
-              tag ->
-                  toTagProto(
-                      new Tag().setUserX(new UserX().setId(tag.getKey())).setText(tag.getValue()),
-                      finalBuilder.addTagsBuilder()));
-    }
+  public static Optional<org.davincischools.leo.protos.pl_types.ProjectPost.Builder>
+      toProjectPostProto(
+          FullProjectPost projectPost,
+          Supplier<org.davincischools.leo.protos.pl_types.ProjectPost.Builder> newBuilder) {
+    var builder = toProjectPostProto(projectPost.getProjectPost(), newBuilder);
+    builder.ifPresent(
+        b -> {
+          projectPost
+              .getProjectPostComments()
+              .values()
+              .forEach(comment -> toProjectPostCommentProto(comment, b::addCommentsBuilder));
+          projectPost
+              .getTags()
+              .entries()
+              .forEach(
+                  tag ->
+                      toTagProto(
+                          new Tag()
+                              .setUserX(new UserX().setId(tag.getKey()))
+                              .setText(tag.getValue()),
+                          b::addTagsBuilder));
+        });
     return builder;
   }
 
@@ -371,42 +357,26 @@ public class ProtoDaoUtils {
     return new FullProjectPostComment(toProjectPostCommentDao(projectPostComment));
   }
 
-  public static org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder
+  public static Optional<org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder>
       toProjectPostCommentProto(
           ProjectPostComment projectPostComment,
-          @Nullable org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder builder) {
-    builder =
-        builder != null
-            ? builder
-            : org.davincischools.leo.protos.pl_types.ProjectPostComment.newBuilder();
-    if (projectPostComment != null && Hibernate.isInitialized(projectPostComment)) {
-      translateToProto(
-          projectPostComment,
-          builder,
-          org.davincischools.leo.protos.pl_types.ProjectPostComment.USER_X_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.ProjectPostComment.PROJECT_POST_FIELD_NUMBER);
-      if (projectPostComment.getUserX() != null) {
-        toUserXProto(projectPostComment.getUserX(), builder.getUserXBuilder());
-      }
-      if (projectPostComment.getProjectPost() != null) {
-        toProjectPostProto(projectPostComment.getProjectPost(), builder.getProjectPostBuilder());
-      }
-    }
-    return builder;
+          Supplier<org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder> newBuilder) {
+    return translateToProto(
+        projectPostComment,
+        newBuilder,
+        builder -> {
+          toUserXProto(projectPostComment.getUserX(), builder::getUserXBuilder);
+          toProjectPostProto(projectPostComment.getProjectPost(), builder::getProjectPostBuilder);
+        },
+        org.davincischools.leo.protos.pl_types.ProjectPostComment.USER_X_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectPostComment.PROJECT_POST_FIELD_NUMBER);
   }
 
-  public static org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder
+  public static Optional<org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder>
       toProjectPostCommentProto(
           FullProjectPostComment projectPostComment,
-          @Nullable org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder builder) {
-    builder =
-        builder != null
-            ? builder
-            : org.davincischools.leo.protos.pl_types.ProjectPostComment.newBuilder();
-    if (projectPostComment != null && Hibernate.isInitialized(projectPostComment)) {
-      toProjectPostCommentProto(projectPostComment.getProjectPostComment(), builder);
-    }
-    return builder;
+          Supplier<org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder> newBuilder) {
+    return toProjectPostCommentProto(projectPostComment.getProjectPostComment(), newBuilder);
   }
 
   public static Interest toInterestDao(RegisterUserXRequest register_userX_request) {
@@ -417,17 +387,13 @@ public class ProtoDaoUtils {
         RegisterUserXRequest.VERIFY_PASSWORD_FIELD_NUMBER);
   }
 
-  public static RegisterUserXRequest.Builder toRegisterUserXRequestProto(
-      Interest interest, RegisterUserXRequest.Builder builder) {
-    builder = builder != null ? builder : RegisterUserXRequest.newBuilder();
-    if (interest != null && Hibernate.isInitialized(interest)) {
-      translateToProto(
-          interest,
-          builder,
-          RegisterUserXRequest.PASSWORD_FIELD_NUMBER,
-          RegisterUserXRequest.VERIFY_PASSWORD_FIELD_NUMBER);
-    }
-    return builder;
+  public static Optional<RegisterUserXRequest.Builder> toRegisterUserXRequestProto(
+      Interest interest, Supplier<RegisterUserXRequest.Builder> newBuilder) {
+    return translateToProto(
+        interest,
+        newBuilder,
+        RegisterUserXRequest.PASSWORD_FIELD_NUMBER,
+        RegisterUserXRequest.VERIFY_PASSWORD_FIELD_NUMBER);
   }
 
   public static UserX toUserXDao(org.davincischools.leo.protos.pl_types.UserXOrBuilder userX) {
@@ -441,39 +407,37 @@ public class ProtoDaoUtils {
         org.davincischools.leo.protos.pl_types.UserX.IS_AUTHENTICATED_FIELD_NUMBER);
   }
 
-  public static org.davincischools.leo.protos.pl_types.UserX.Builder toUserXProto(
-      UserX userX, @Nullable org.davincischools.leo.protos.pl_types.UserX.Builder builder) {
-    builder = builder != null ? builder : org.davincischools.leo.protos.pl_types.UserX.newBuilder();
-    if (userX != null && Hibernate.isInitialized(userX)) {
-      translateToProto(
-          userX,
-          builder,
-          org.davincischools.leo.protos.pl_types.UserX.IS_ADMIN_X_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.UserX.IS_TEACHER_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.UserX.IS_STUDENT_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.UserX.IS_DEMO_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.UserX.IS_AUTHENTICATED_FIELD_NUMBER);
-      if (userX.getAdminX() != null) {
-        builder.setIsAdminX(UserXRepository.isAdminX(userX));
-      }
-      if (userX.getTeacher() != null) {
-        builder.setIsTeacher(UserXRepository.isTeacher(userX));
-      }
-      if (userX.getStudent() != null) {
-        builder.setIsStudent(UserXRepository.isStudent(userX));
-      }
-      builder
-          .setIsDemo(UserXRepository.isDemo(userX))
-          .setIsAuthenticated(UserXRepository.isAuthenticated(userX));
-    }
-    return builder;
+  public static Optional<org.davincischools.leo.protos.pl_types.UserX.Builder> toUserXProto(
+      UserX userX, Supplier<org.davincischools.leo.protos.pl_types.UserX.Builder> newBuilder) {
+    return translateToProto(
+        userX,
+        newBuilder,
+        builder -> {
+          if (UserXRepository.isAdminX(userX)) {
+            builder.setIsAdminX(true);
+          }
+          if (UserXRepository.isTeacher(userX)) {
+            builder.setIsTeacher(true);
+          }
+          if (UserXRepository.isStudent(userX)) {
+            builder.setIsStudent(true);
+          }
+          builder
+              .setIsDemo(UserXRepository.isDemo(userX))
+              .setIsAuthenticated(UserXRepository.isAuthenticated(userX));
+        },
+        org.davincischools.leo.protos.pl_types.UserX.IS_ADMIN_X_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.UserX.IS_TEACHER_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.UserX.IS_STUDENT_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.UserX.IS_DEMO_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.UserX.IS_AUTHENTICATED_FIELD_NUMBER);
   }
 
-  public static FullUserXDetails.Builder toFullUserXDetailsProto(
-      UserX userX, FullUserXDetails.Builder builder) {
-    builder = builder != null ? builder : FullUserXDetails.newBuilder();
-    if (userX != null && Hibernate.isInitialized(userX)) {
-      toUserXProto(userX, builder.getUserXBuilder());
+  public static Optional<FullUserXDetails.Builder> toFullUserXDetailsProto(
+      UserX userX, Supplier<FullUserXDetails.Builder> newBuilder) {
+    if (userX != null) {
+      var builder = newBuilder.get();
+      toUserXProto(userX, builder::getUserXBuilder);
       if (UserXRepository.isStudent(userX)) {
         if (userX.getStudent().getDistrictStudentId() != null) {
           builder.setDistrictStudentId(userX.getStudent().getDistrictStudentId());
@@ -482,8 +446,9 @@ public class ProtoDaoUtils {
           builder.setStudentGrade(userX.getStudent().getGrade());
         }
       }
+      return Optional.of(builder);
     }
-    return builder;
+    return Optional.empty();
   }
 
   public static Assignment toAssignmentDao(
@@ -499,21 +464,17 @@ public class ProtoDaoUtils {
     return dao;
   }
 
-  public static org.davincischools.leo.protos.pl_types.Assignment.Builder toAssignmentProto(
-      Assignment assignment,
-      @Nullable org.davincischools.leo.protos.pl_types.Assignment.Builder builder) {
-    builder =
-        builder != null ? builder : org.davincischools.leo.protos.pl_types.Assignment.newBuilder();
-    if (assignment != null && Hibernate.isInitialized(assignment)) {
-      translateToProto(
-          assignment,
-          builder,
-          org.davincischools.leo.protos.pl_types.Assignment.CLASS_X_FIELD_NUMBER);
-      if (assignment.getClassX() != null) {
-        toClassXProto(assignment.getClassX(), builder.getClassXBuilder());
-      }
-    }
-    return builder;
+  public static Optional<org.davincischools.leo.protos.pl_types.Assignment.Builder>
+      toAssignmentProto(
+          Assignment assignment,
+          Supplier<org.davincischools.leo.protos.pl_types.Assignment.Builder> newBuilder) {
+    return translateToProto(
+        assignment,
+        newBuilder,
+        builder -> {
+          toClassXProto(assignment.getClassX(), builder::getClassXBuilder);
+        },
+        org.davincischools.leo.protos.pl_types.Assignment.CLASS_X_FIELD_NUMBER);
   }
 
   public static ClassX toClassXDao(org.davincischools.leo.protos.pl_types.ClassXOrBuilder classX) {
@@ -530,22 +491,17 @@ public class ProtoDaoUtils {
     return dao;
   }
 
-  public static org.davincischools.leo.protos.pl_types.ClassX.Builder toClassXProto(
-      ClassX classX, @Nullable org.davincischools.leo.protos.pl_types.ClassX.Builder builder) {
-    builder =
-        builder != null ? builder : org.davincischools.leo.protos.pl_types.ClassX.newBuilder();
-    if (classX != null && Hibernate.isInitialized(classX)) {
-      translateToProto(
-          classX,
-          builder,
-          org.davincischools.leo.protos.pl_types.ClassX.SCHOOL_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.ClassX.ENROLLED_FIELD_NUMBER,
-          org.davincischools.leo.protos.pl_types.ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
-      if (classX.getSchool() != null) {
-        toSchoolProto(classX.getSchool(), builder.getSchoolBuilder());
-      }
-    }
-    return builder;
+  public static Optional<org.davincischools.leo.protos.pl_types.ClassX.Builder> toClassXProto(
+      ClassX classX, Supplier<org.davincischools.leo.protos.pl_types.ClassX.Builder> newBuilder) {
+    return translateToProto(
+        classX,
+        newBuilder,
+        builder -> {
+          toSchoolProto(classX.getSchool(), builder::getSchoolBuilder);
+        },
+        org.davincischools.leo.protos.pl_types.ClassX.SCHOOL_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ClassX.ENROLLED_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
   }
 
   public static FullClassX toFullClassXRecord(
@@ -558,14 +514,17 @@ public class ProtoDaoUtils {
             .toList());
   }
 
-  public static org.davincischools.leo.protos.pl_types.ClassX.Builder toFullClassXProto(
+  public static Optional<org.davincischools.leo.protos.pl_types.ClassX.Builder> toFullClassXProto(
       FullClassX fullClassX,
-      @Nullable org.davincischools.leo.protos.pl_types.ClassX.Builder builder) {
-    builder = toClassXProto(fullClassX.classX(), builder);
-    for (var knowledgeAndSkill : fullClassX.knowledgeAndSkills()) {
-      toKnowledgeAndSkillProto(knowledgeAndSkill, builder.addKnowledgeAndSkillsBuilder());
-    }
-    builder.setEnrolled(fullClassX.enrolled());
+      Supplier<org.davincischools.leo.protos.pl_types.ClassX.Builder> newBuilder) {
+    var builder = toClassXProto(fullClassX.classX(), newBuilder);
+    builder.ifPresent(
+        b -> {
+          b.setEnrolled(fullClassX.enrolled());
+          fullClassX
+              .knowledgeAndSkills()
+              .forEach(k -> toKnowledgeAndSkillProto(k, b::addKnowledgeAndSkillsBuilder));
+        });
     return builder;
   }
 
@@ -574,15 +533,10 @@ public class ProtoDaoUtils {
     return translateToDao(district, new District().setCreationTime(Instant.now()));
   }
 
-  public static org.davincischools.leo.protos.pl_types.District.Builder toDistrictProto(
+  public static Optional<org.davincischools.leo.protos.pl_types.District.Builder> toDistrictProto(
       District district,
-      @Nullable org.davincischools.leo.protos.pl_types.District.Builder builder) {
-    builder =
-        builder != null ? builder : org.davincischools.leo.protos.pl_types.District.newBuilder();
-    if (district != null && Hibernate.isInitialized(district)) {
-      translateToProto(district, builder);
-    }
-    return builder;
+      Supplier<org.davincischools.leo.protos.pl_types.District.Builder> newBuilder) {
+    return translateToProto(district, newBuilder);
   }
 
   public static KnowledgeAndSkill toKnowledgeAndSkillDao(
@@ -598,24 +552,17 @@ public class ProtoDaoUtils {
     return dao;
   }
 
-  public static org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Builder
+  public static Optional<org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Builder>
       toKnowledgeAndSkillProto(
           KnowledgeAndSkill knowledgeAndSkill,
-          @Nullable org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Builder builder) {
-    builder =
-        builder != null
-            ? builder
-            : org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.newBuilder();
-    if (knowledgeAndSkill != null && Hibernate.isInitialized(knowledgeAndSkill)) {
-      translateToProto(
-          knowledgeAndSkill,
-          builder,
-          org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.USER_X_FIELD_NUMBER);
-      if (knowledgeAndSkill.getUserX() != null) {
-        toUserXProto(knowledgeAndSkill.getUserX(), builder.getUserXBuilder());
-      }
-    }
-    return builder;
+          Supplier<org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.Builder> newBuilder) {
+    return translateToProto(
+        knowledgeAndSkill,
+        newBuilder,
+        builder -> {
+          toUserXProto(knowledgeAndSkill.getUserX(), builder::getUserXBuilder);
+        },
+        org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.USER_X_FIELD_NUMBER);
   }
 
   public static School toSchoolDao(org.davincischools.leo.protos.pl_types.SchoolOrBuilder school) {
@@ -630,18 +577,15 @@ public class ProtoDaoUtils {
     return dao;
   }
 
-  public static org.davincischools.leo.protos.pl_types.School.Builder toSchoolProto(
-      School school, @Nullable org.davincischools.leo.protos.pl_types.School.Builder builder) {
-    builder =
-        builder != null ? builder : org.davincischools.leo.protos.pl_types.School.newBuilder();
-    if (school != null && Hibernate.isInitialized(school)) {
-      translateToProto(
-          school, builder, org.davincischools.leo.protos.pl_types.School.DISTRICT_FIELD_NUMBER);
-      if (school.getDistrict() != null) {
-        toDistrictProto(school.getDistrict(), builder.getDistrictBuilder());
-      }
-    }
-    return builder;
+  public static Optional<org.davincischools.leo.protos.pl_types.School.Builder> toSchoolProto(
+      School school, Supplier<org.davincischools.leo.protos.pl_types.School.Builder> newBuilder) {
+    return translateToProto(
+        school,
+        newBuilder,
+        builder -> {
+          toDistrictProto(school.getDistrict(), builder::getDistrictBuilder);
+        },
+        org.davincischools.leo.protos.pl_types.School.DISTRICT_FIELD_NUMBER);
   }
 
   public static Tag toTagDao(org.davincischools.leo.protos.pl_types.TagOrBuilder tag) {
@@ -649,13 +593,9 @@ public class ProtoDaoUtils {
     return dao;
   }
 
-  public static org.davincischools.leo.protos.pl_types.Tag.Builder toTagProto(
-      Tag tag, @Nullable org.davincischools.leo.protos.pl_types.Tag.Builder builder) {
-    builder = builder != null ? builder : org.davincischools.leo.protos.pl_types.Tag.newBuilder();
-    if (tag != null && Hibernate.isInitialized(tag)) {
-      translateToProto(tag, builder);
-    }
-    return builder;
+  public static Optional<org.davincischools.leo.protos.pl_types.Tag.Builder> toTagProto(
+      Tag tag, Supplier<org.davincischools.leo.protos.pl_types.Tag.Builder> newBuilder) {
+    return translateToProto(tag, newBuilder);
   }
 
   private static <M extends MessageOrBuilder, D> D translateToDao(
@@ -855,17 +795,49 @@ public class ProtoDaoUtils {
     return toDao;
   }
 
-  private static <M extends Message.Builder, D> M translateToProto(
-      D fromDao, M toMessage, int... ignoreFieldNumbers) {
-    checkNotNull(toMessage);
+  private static <M extends Message.Builder, D> Optional<M> translateToProto(
+      D fromDao, Supplier<M> toMessageSupplier, int... ignoreFieldNumbers) {
+    return translateToProto(fromDao, toMessageSupplier, (builder) -> {}, ignoreFieldNumbers);
+  }
+
+  private static <M extends Message.Builder, D> Optional<M> translateToProto(
+      D fromDao,
+      Supplier<M> toMessageSupplier,
+      Consumer<M> customTranslations,
+      int... ignoreFieldNumbers) {
+    checkNotNull(toMessageSupplier);
 
     if (fromDao == null) {
-      return toMessage;
+      return Optional.empty();
     }
 
+    final Class<?> daoClass;
+    LazyInitializer lazyInitializer = HibernateProxy.extractLazyInitializer(fromDao);
+    if (lazyInitializer != null) {
+      daoClass = lazyInitializer.getPersistentClass();
+    } else {
+      daoClass = fromDao.getClass();
+    }
+
+    if (!Hibernate.isInitialized(fromDao)) {
+      // Still, the ID is there.
+      try {
+        Object id = daoClass.getMethod("getId").invoke(fromDao);
+        if (id instanceof Integer && (Integer) id > 0) {
+          M toMessage = toMessageSupplier.get();
+          Descriptor protoDescriptor = toMessage.getDescriptorForType();
+          toMessage.setField(protoDescriptor.findFieldByName("id"), id);
+          return Optional.of(toMessage);
+        }
+        return Optional.empty();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    M toMessage = toMessageSupplier.get();
     Class<? extends Message.Builder> protoClass = toMessage.getClass();
     Descriptor protoDescriptor = toMessage.getDescriptorForType();
-    Class<?> daoClass = Hibernate.getClass(fromDao);
 
     Set<Integer> ignoredFieldNumbers =
         Arrays.stream(ignoreFieldNumbers).boxed().collect(Collectors.toSet());
@@ -1056,7 +1028,8 @@ public class ProtoDaoUtils {
       }
     }
 
-    return toMessage;
+    customTranslations.accept(toMessage);
+    return Optional.of(toMessage);
   }
 
   private static String toDaoSetMethod(FieldDescriptor field) {

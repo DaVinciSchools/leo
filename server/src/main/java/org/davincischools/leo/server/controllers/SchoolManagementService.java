@@ -102,10 +102,8 @@ public class SchoolManagementService {
     SchoolInformationResponse.Builder response = SchoolInformationResponse.newBuilder();
     response.setDistrictId(districtId);
     response.setNextSchoolId(nextSchoolId);
-    response.addAllSchools(
-        db.getSchoolRepository().findAllByDistrictId(districtId).stream()
-            .map(s -> ProtoDaoUtils.toSchoolProto(s, null).build())
-            .toList());
+    db.getSchoolRepository().findAllByDistrictId(districtId).stream()
+        .forEach(s -> ProtoDaoUtils.toSchoolProto(s, response::addSchoolsBuilder));
     return response.build();
   }
 }
