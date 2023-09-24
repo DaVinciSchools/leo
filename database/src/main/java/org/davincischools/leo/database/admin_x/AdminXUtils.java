@@ -455,6 +455,7 @@ public class AdminXUtils {
       if (Objects.equals(school.getDistrict().getId(), admin.getDistrict().getId())) {
         schoolIds.add(school.getId());
         db.getTeacherSchoolRepository().upsert(admin.getTeacher(), school);
+        db.getStudentSchoolRepository().upsert(admin.getStudent(), school);
       }
     }
     for (ClassX classX : db.getClassXRepository().findAll()) {
@@ -551,14 +552,14 @@ public class AdminXUtils {
 
                           KnowledgeAndSkill eks =
                               db.getKnowledgeAndSkillRepository()
-                                  .upsert(
-                                      eksName,
-                                      Type.EKS,
-                                      ks ->
-                                          ks.setShortDescr(eksDescr)
-                                              .setGlobal(true)
-                                              .setUserX(userX));
-                          // db.getClassXKnowledgeAndSkillRepository().upsert(classX, eks);
+                                  .save(
+                                      new KnowledgeAndSkill()
+                                          .setCreationTime(Instant.now())
+                                          .setName(eksName)
+                                          .setType(Type.EKS.name())
+                                          .setShortDescr(eksDescr)
+                                          .setGlobal(true)
+                                          .setUserX(userX));
                         }
                       }
                     }
@@ -713,14 +714,15 @@ public class AdminXUtils {
 
         KnowledgeAndSkill knowledgeAndSkill =
             db.getKnowledgeAndSkillRepository()
-                .upsert(
-                    xqName,
-                    Type.XQ_COMPETENCY,
-                    ks ->
-                        ks.setShortDescr(xqDescr)
-                            .setGlobal(true)
-                            .setCategory(xqCategory.getCategory())
-                            .setUserX(userX));
+                .save(
+                    new KnowledgeAndSkill()
+                        .setCreationTime(Instant.now())
+                        .setName(xqName)
+                        .setType(Type.XQ_COMPETENCY.name())
+                        .setShortDescr(xqDescr)
+                        .setGlobal(true)
+                        .setCategory(xqCategory.getCategory())
+                        .setUserX(userX));
 
         // ClassX classX =
         // db.getClassXRepository().upsert(school, xqName, c -> c.setShortDescr(xqDescr));

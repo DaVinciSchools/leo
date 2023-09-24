@@ -14,6 +14,28 @@ import org.springframework.stereotype.Repository;
 public interface AssignmentKnowledgeAndSkillRepository
     extends JpaRepository<AssignmentKnowledgeAndSkill, AssignmentKnowledgeAndSkillId> {
 
+  static AssignmentKnowledgeAndSkillId createId(
+      Assignment assignment, KnowledgeAndSkill knowledgeAndSkill) {
+    checkNotNull(assignment);
+    checkNotNull(knowledgeAndSkill);
+
+    return new AssignmentKnowledgeAndSkillId()
+        .setAssignmentId(assignment.getId())
+        .setKnowledgeAndSkillId(knowledgeAndSkill.getId());
+  }
+
+  static AssignmentKnowledgeAndSkill create(
+      Assignment assignment, KnowledgeAndSkill knowledgeAndSkill) {
+    checkNotNull(assignment);
+    checkNotNull(knowledgeAndSkill);
+
+    return new AssignmentKnowledgeAndSkill()
+        .setCreationTime(Instant.now())
+        .setId(createId(assignment, knowledgeAndSkill))
+        .setAssignment(assignment)
+        .setKnowledgeAndSkill(knowledgeAndSkill);
+  }
+
   default AssignmentKnowledgeAndSkill upsert(
       Assignment assignment, KnowledgeAndSkill knowledgeAndSkill) {
     checkNotNull(assignment);

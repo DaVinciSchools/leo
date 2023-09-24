@@ -1,124 +1,113 @@
 package org.davincischools.leo.database.utils.repos;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.davincischools.leo.database.utils.DaoUtils.notDeleted;
+import static org.davincischools.leo.database.utils.DaoUtils.removeTransientValues;
 
-import com.google.common.base.Strings;
-import java.time.Instant;
+import com.google.common.collect.ImmutableList;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Consumer;
 import org.davincischools.leo.database.daos.Assignment;
-import org.davincischools.leo.database.daos.ClassX;
-import org.davincischools.leo.database.daos.KnowledgeAndSkill;
+import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill_;
+import org.davincischools.leo.database.daos.Assignment_;
+import org.davincischools.leo.database.daos.ClassX_;
+import org.davincischools.leo.database.daos.StudentClassX_;
+import org.davincischools.leo.database.daos.Student_;
+import org.davincischools.leo.database.daos.TeacherClassX_;
+import org.davincischools.leo.database.daos.Teacher_;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AssignmentRepository extends JpaRepository<Assignment, Integer> {
 
-  record ClassXAssignmentRow(
-      Object _ignore_1,
-      ClassX classX,
-      Assignment assignment,
-      Object _ignore_2,
-      KnowledgeAndSkill knowledgeAndSkill) {}
+  default Assignment upsert(Assignment assignment) {
+    checkNotNull(assignment);
 
-  record FullAssignment(Assignment assignment, List<KnowledgeAndSkill> knowledgeAndSkills) {}
-
-  record FullClassXAssignment(ClassX classX, List<FullAssignment> assignments) {}
-
-  default Assignment upsert(ClassX classX, String name, Consumer<Assignment> modifier) {
-    checkNotNull(classX);
-    checkArgument(!Strings.isNullOrEmpty(name));
-    checkNotNull(modifier);
-
-    Assignment assignment =
-        findByName(classX.getId(), name)
-            .orElseGet(() -> new Assignment().setCreationTime(Instant.now()))
-            .setClassX(classX)
-            .setName(name);
-
-    modifier.accept(assignment);
-
-    return saveAndFlush(assignment);
+    return removeTransientValues(assignment, this::save);
   }
 
-  /** Note: this includes all classes, even when they have no assignment. */
-  @Query(
-      "SELECT sc, sc.classX, a, ks, ks.knowledgeAndSkill"
-          + " FROM StudentClassX sc"
-          + " LEFT JOIN FETCH sc.classX"
-          + " LEFT JOIN Assignment a"
-          + " ON sc.classX.id = a.classX.id"
-          + " LEFT JOIN AssignmentKnowledgeAndSkill ks"
-          + " ON a.id = ks.assignment.id"
-          + " LEFT JOIN FETCH ks.knowledgeAndSkill"
-          + " WHERE sc.student.id = (:studentId)"
-          + " ORDER BY sc.classX.id, a.id")
-  List<ClassXAssignmentRow> findAllRowsByStudentId(@Param("studentId") int studentId);
+  default List<Assignment> getAssignments(
+      EntityManager entityManager, GetAssignmentsParams params) {
+    checkNotNull(entityManager);
+    checkNotNull(params);
 
-  default List<FullClassXAssignment> findAllByStudentId(int studentId) {
-    return processClassXAssignmentRows(findAllRowsByStudentId(studentId));
+    var builder = entityManager.getCriteriaBuilder();
+    var where = new ArrayList<Predicate>();
+
+    // From assignment.
+    var query = builder.createQuery(Assignment.class);
+    var assignment = notDeleted(where, query.from(Assignment.class));
+
+    // Build query.
+    getAssignments(params, assignment, where);
+
+    // Select.
+    query.select(assignment).where(where.toArray(new Predicate[0]));
+    return entityManager.createQuery(query).getResultList();
   }
 
-  /** Note: this includes all classes, even when they have no assignment. */
-  @Query(
-      "SELECT tc, tc.classX, a, ks, ks.knowledgeAndSkill"
-          + " FROM TeacherClassX tc"
-          + " LEFT JOIN FETCH tc.classX"
-          + " LEFT JOIN Assignment a"
-          + " ON tc.classX.id = a.classX.id"
-          + " LEFT JOIN AssignmentKnowledgeAndSkill ks"
-          + " ON a.id = ks.assignment.id"
-          + " LEFT JOIN FETCH ks.knowledgeAndSkill"
-          + " WHERE tc.teacher.id = (:teacherId)"
-          + " ORDER BY tc.classX.id, a.id")
-  List<ClassXAssignmentRow> findAllRowsByTeacherId(@Param("teacherId") int teacherId);
+  static From<?, Assignment> getAssignments(
+      GetAssignmentsParams params, From<?, Assignment> assignment, List<Predicate> where) {
+    checkNotNull(params);
+    checkNotNull(assignment);
+    checkNotNull(where);
 
-  default List<FullClassXAssignment> findAllByTeacherId(int teacherId) {
-    return processClassXAssignmentRows(findAllRowsByTeacherId(teacherId));
-  }
-
-  private static List<FullClassXAssignment> processClassXAssignmentRows(
-      List<ClassXAssignmentRow> rows) {
-    List<FullClassXAssignment> fullClassXAssignments = new ArrayList<>();
-    FullClassXAssignment fullClassXAssignment = null;
-    FullAssignment fullAssignment = null;
-
-    for (var row : rows) {
-      if (fullClassXAssignment == null
-          || !Objects.equals(row.classX().getId(), fullClassXAssignment.classX().getId())) {
-        fullClassXAssignments.add(
-            fullClassXAssignment = new FullClassXAssignment(row.classX(), new ArrayList<>()));
-        fullAssignment = null;
-      }
-      if (row.assignment() != null) {
-        if (fullAssignment == null
-            || !Objects.equals(row.assignment().getId(), fullAssignment.assignment().getId())) {
-          fullClassXAssignment
-              .assignments()
-              .add(fullAssignment = new FullAssignment(row.assignment(), new ArrayList<>()));
-        }
-
-        if (row.knowledgeAndSkill() != null) {
-          fullAssignment.knowledgeAndSkills().add(row.knowledgeAndSkill());
-        }
-      }
+    // includeClassXs.
+    if (params.getIncludeClassXs().orElse(false)) {
+      ClassXRepository.getClassXs(
+          new GetClassXsParams()
+              .setIncludeKnowledgeAndSkills(params.getIncludeKnowledgeAndSkills().orElse(false)),
+          notDeleted(assignment.fetch(Assignment_.classX, JoinType.LEFT)),
+          where);
     }
 
-    return fullClassXAssignments;
-  }
+    // includeKnowledgeAndSkills.
+    if (params.getIncludeKnowledgeAndSkills().orElse(false)) {
+      var assignmentKnowledgeAndSkills =
+          notDeleted(assignment.fetch(Assignment_.assignmentKnowledgeAndSkills, JoinType.LEFT));
+      notDeleted(
+          assignmentKnowledgeAndSkills.fetch(
+              AssignmentKnowledgeAndSkill_.knowledgeAndSkill, JoinType.LEFT));
+    }
 
-  @Query(
-      "SELECT a"
-          + " FROM Assignment a"
-          + " LEFT JOIN FETCH a.classX"
-          + " WHERE a.classX.id = (:classXId)"
-          + " AND a.name = (:name)")
-  Optional<Assignment> findByName(@Param("classXId") int classXId, @Param("name") String name);
+    // assignmentIds.
+    if (params.getAssignmentIds().isPresent()) {
+      where.add(
+          assignment.get(Assignment_.id).in(ImmutableList.copyOf(params.getAssignmentIds().get())));
+    }
+
+    // classXIds.
+    if (params.getClassXIds().isPresent()) {
+      where.add(
+          assignment
+              .get(Assignment_.classX)
+              .get(ClassX_.id)
+              .in(ImmutableList.copyOf(params.getClassXIds().get())));
+    }
+
+    // teacherIds.
+    if (params.getTeacherIds().isPresent()) {
+      var classXs = notDeleted(assignment.fetch(Assignment_.classX, JoinType.INNER));
+      var teacherClassXs = notDeleted(classXs.fetch(ClassX_.teacherClassXES, JoinType.INNER));
+      notDeleted(teacherClassXs.fetch(TeacherClassX_.teacher))
+          .get(Teacher_.id)
+          .in(ImmutableList.copyOf(params.getTeacherIds().get()));
+    }
+
+    // studentIds.
+    if (params.getStudentIds().isPresent()) {
+      var classXs = notDeleted(assignment.fetch(Assignment_.classX, JoinType.INNER));
+      var studentClassXs = notDeleted(classXs.fetch(ClassX_.studentClassXES, JoinType.INNER));
+      notDeleted(studentClassXs.fetch(StudentClassX_.student))
+          .get(Student_.id)
+          .in(ImmutableList.copyOf(params.getStudentIds().get()));
+    }
+
+    return assignment;
+  }
 }

@@ -1,5 +1,6 @@
 package org.davincischools.leo.server.controllers;
 
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -8,7 +9,7 @@ import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.TeacherClassXId;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.repos.AssignmentRepository.FullClassXAssignment;
+import org.davincischools.leo.database.utils.repos.GetClassXsParams;
 import org.davincischools.leo.protos.assignment_management.CreateAssignmentRequest;
 import org.davincischools.leo.protos.assignment_management.CreateAssignmentResponse;
 import org.davincischools.leo.protos.assignment_management.DeleteAssignmentRequest;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class AssignmentManagementService {
 
   @Autowired Database db;
+  @Autowired EntityManager entityManager;
 
   @PostMapping(value = "/api/protos/AssignmentManagementService/GetAssignments")
   @ResponseBody
@@ -45,50 +47,40 @@ public class AssignmentManagementService {
         .andThen(
             (request, log) -> {
               var response = GetAssignmentsResponse.newBuilder();
+
               if (userX.isNotAuthorized()) {
                 return userX.returnForbidden(response.build());
               }
 
-              List<FullClassXAssignment> classXAssignments;
-              switch (request.getUserXIdCase()) {
-                case TEACHER_ID -> {
-                  if (!userX.isAdminX()
-                      && (!userX.isTeacher()
-                          || !Objects.equals(
-                              userX.get().orElseThrow().getTeacher().getId(),
-                              request.getTeacherId()))) {
+              if (!userX.isAdminX()) {
+                if (userX.isTeacher()) {
+                  if (request.hasTeacherId()
+                      && !Objects.equals(userX.getTeacherIdOrNull(), request.getTeacherId())) {
                     return userX.returnForbidden(response.build());
                   }
-                  classXAssignments =
-                      db.getAssignmentRepository().findAllByTeacherId(request.getTeacherId());
-                }
-                case STUDENT_ID -> {
-                  if (!userX.isAdminX()
-                      && (!userX.isStudent()
-                          || !Objects.equals(
-                              userX.get().orElseThrow().getStudent().getId(),
-                              request.getStudentId()))) {
+                } else if (userX.isStudent()) {
+                  if (request.hasStudentId()
+                      && !Objects.equals(userX.getStudentIdOrNull(), request.getStudentId())) {
                     return userX.returnForbidden(response.build());
                   }
-                  classXAssignments =
-                      db.getAssignmentRepository().findAllByStudentId(request.getStudentId());
+                  if (request.hasTeacherId()) {
+                    return userX.returnForbidden(response.build());
+                  }
                 }
-                default -> throw new IllegalArgumentException("Unsupported user type.");
               }
 
-              classXAssignments.forEach(
-                  classXAssignment -> {
-                    classXAssignment
-                        .assignments()
-                        .forEach(
-                            assignment -> {
-                              assignment.assignment().setClassX(classXAssignment.classX());
-                              ProtoDaoUtils.toAssignmentProto(
-                                  assignment.assignment(), response::addAssignmentsBuilder);
-                            });
-                    ProtoDaoUtils.toClassXProto(
-                        classXAssignment.classX(), response::addClassXsBuilder);
-                  });
+              db.getClassXRepository()
+                  .getClassXs(
+                      entityManager,
+                      new GetClassXsParams()
+                          .setIncludeAssignments(true)
+                          .setTeacherIds(
+                              request.hasTeacherId() ? List.of(request.getTeacherId()) : null)
+                          .setStudentIds(
+                              request.hasStudentId() ? List.of(request.getStudentId()) : null)
+                          .setIncludeKnowledgeAndSkills(true))
+                  .forEach(
+                      classX -> ProtoDaoUtils.toClassXProto(classX, response::addClassXsBuilder));
 
               return response.build();
             })

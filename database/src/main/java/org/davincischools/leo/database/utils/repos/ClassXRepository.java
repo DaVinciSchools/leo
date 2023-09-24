@@ -1,32 +1,23 @@
 package org.davincischools.leo.database.utils.repos;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.davincischools.leo.database.utils.DaoUtils.notDeleted;
 import static org.davincischools.leo.database.utils.DaoUtils.removeTransientValues;
 import static org.davincischools.leo.database.utils.DaoUtils.saveJoinTableAndTargets;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
-import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill_;
-import org.davincischools.leo.database.daos.Assignment_;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill_;
 import org.davincischools.leo.database.daos.ClassX_;
-import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.School_;
 import org.davincischools.leo.database.daos.StudentClassX_;
 import org.davincischools.leo.database.daos.Student_;
@@ -43,20 +34,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
 
-  default ClassX upsert(School school, String name, Consumer<ClassX> modifier) {
-    checkNotNull(school);
-    checkArgument(!Strings.isNullOrEmpty(name));
-    checkNotNull(modifier);
+  default ClassX upsert(ClassX classX) {
+    checkNotNull(classX);
 
-    ClassX classX =
-        findByName(school.getId(), name)
-            .orElseGet(() -> new ClassX().setCreationTime(Instant.now()))
-            .setSchool(school)
-            .setName(name);
-
-    modifier.accept(classX);
-
-    return saveAndFlush(classX);
+    return removeTransientValues(classX, this::save);
   }
 
   @Query("SELECT c FROM ClassX c WHERE c.school.id = (:schoolId) AND c.name = (:name)")
@@ -85,36 +66,46 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
   }
 
   default List<ClassX> getClassXs(EntityManager entityManager, GetClassXsParams params) {
+    checkNotNull(entityManager);
+    checkNotNull(params);
 
-    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-    List<Predicate> where = new ArrayList<>();
+    var builder = entityManager.getCriteriaBuilder();
+    var where = new ArrayList<Predicate>();
 
     // From classX.
-    CriteriaQuery<ClassX> query = builder.createQuery(ClassX.class);
-    Root<ClassX> classX = query.from(ClassX.class);
-    where.add(builder.isNull(classX.get(ClassX_.deleted)));
+    var query = builder.createQuery(ClassX.class);
+    var classX = notDeleted(where, query.from(ClassX.class));
 
-    // Fetch include school.
+    // Build query.
+    getClassXs(params, classX, where);
+
+    // Select.
+    query.select(classX).distinct(true).where(where.toArray(new Predicate[0]));
+    return entityManager.createQuery(query).getResultList();
+  }
+
+  static From<?, ClassX> getClassXs(
+      GetClassXsParams params, From<?, ClassX> classX, List<Predicate> where) {
+    checkNotNull(params);
+    checkNotNull(classX);
+    checkNotNull(where);
+
+    // includeSchool.
     if (params.getIncludeSchool().orElse(false)) {
       var school = notDeleted(classX.fetch(ClassX_.school, JoinType.LEFT));
       notDeleted(school.fetch(School_.district, JoinType.LEFT));
     }
 
-    // Fetch include assignments.
+    // includeAssignments.
     if (params.getIncludeAssignments().orElse(false)) {
-      var assignment = notDeleted(classX.fetch(ClassX_.assignments, JoinType.LEFT));
-
-      // Fetch include knowledge and skills.
-      if (params.getIncludeKnowledgeAndSkills().orElse(false)) {
-        var assignmentKnowledgeAndSkills =
-            notDeleted(assignment.fetch(Assignment_.assignmentKnowledgeAndSkills, JoinType.LEFT));
-        notDeleted(
-            assignmentKnowledgeAndSkills.fetch(
-                AssignmentKnowledgeAndSkill_.knowledgeAndSkill, JoinType.LEFT));
-      }
+      AssignmentRepository.getAssignments(
+          new GetAssignmentsParams()
+              .setIncludeKnowledgeAndSkills(params.getIncludeKnowledgeAndSkills().orElse(false)),
+          notDeleted(classX.fetch(ClassX_.assignments, JoinType.LEFT)),
+          where);
     }
 
-    // Fetch include knowledge and skills.
+    // includeKnowledgeAndSkills.
     if (params.getIncludeKnowledgeAndSkills().orElse(false)) {
       var classXKnowledgeAndSkills =
           notDeleted(classX.fetch(ClassX_.classXKnowledgeAndSkills, JoinType.LEFT));
@@ -123,7 +114,7 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
               ClassXKnowledgeAndSkill_.knowledgeAndSkill, JoinType.LEFT));
     }
 
-    // Where school ids.
+    // schoolIds.
     if (params.getSchoolIds().isPresent()) {
       where.add(
           classX
@@ -132,14 +123,14 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
               .in(ImmutableList.copyOf(params.getSchoolIds().get())));
     }
 
-    // Where classX ids.
+    // classXIds.
     if (params.getClassXIds().isPresent()) {
       where.add(classX.get(ClassX_.id).in(ImmutableList.copyOf(params.getClassXIds().get())));
     }
 
-    // Where teacher ids.
+    // teacherIds.
     if (params.getTeacherIds().isPresent()) {
-      var teacherClassXs = notDeleted(classX.fetch(ClassX_.teacherClassXES, JoinType.RIGHT));
+      var teacherClassXs = notDeleted(classX.fetch(ClassX_.teacherClassXES, JoinType.INNER));
       notDeleted(teacherClassXs.get(TeacherClassX_.teacher))
           .get(Teacher_.id)
           .in(ImmutableList.copyOf(params.getTeacherIds().get()));
@@ -147,14 +138,12 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
 
     // Where student ids.
     if (params.getStudentIds().isPresent()) {
-      var studentClassXs = notDeleted(classX.fetch(ClassX_.studentClassXES, JoinType.RIGHT));
+      var studentClassXs = notDeleted(classX.fetch(ClassX_.studentClassXES, JoinType.INNER));
       notDeleted(studentClassXs.get(StudentClassX_.student))
           .get(Student_.id)
           .in(ImmutableList.copyOf(params.getStudentIds().get()));
     }
 
-    // Select.
-    query.select(classX).where(where.toArray(new Predicate[0]));
-    return entityManager.createQuery(query).getResultList();
+    return classX;
   }
 }

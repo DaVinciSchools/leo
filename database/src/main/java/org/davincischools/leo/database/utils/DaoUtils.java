@@ -18,6 +18,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,6 +35,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.hibernate.Hibernate;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public class DaoUtils {
 
@@ -307,6 +309,25 @@ public class DaoUtils {
               targets.forEach(target -> removeTransientValues(target, saveTargetFn));
               setTargetsFn.accept(entity, targets);
             });
+  }
+
+  public static <E> void updateAllRecords(JpaRepository<E, ?> repository, Consumer<E> setFn) {
+    checkNotNull(repository);
+    checkNotNull(setFn);
+
+    List<E> entities = repository.findAll();
+    entities.forEach(setFn);
+    repository.saveAll(entities);
+  }
+
+  public static <E> void deleteAllRecords(
+      JpaRepository<E, ?> repository, BiConsumer<E, Instant> setFn) {
+    checkNotNull(repository);
+    checkNotNull(setFn);
+
+    List<E> entities = repository.findAll();
+    entities.forEach(entity -> setFn.accept(entity, Instant.now()));
+    repository.saveAll(entities);
   }
 
   private record DaoShallowCopyMethods(

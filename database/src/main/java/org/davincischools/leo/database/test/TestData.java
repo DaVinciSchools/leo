@@ -1,5 +1,8 @@
 package org.davincischools.leo.database.test;
 
+import static org.davincischools.leo.database.utils.DaoUtils.deleteAllRecords;
+import static org.davincischools.leo.database.utils.DaoUtils.updateAllRecords;
+
 import java.time.Instant;
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
@@ -7,12 +10,20 @@ import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.admin_x.AdminXUtils;
 import org.davincischools.leo.database.admin_x.AdminXUtils.DaVinciSchoolsByNickname;
 import org.davincischools.leo.database.daos.Assignment;
+import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill;
+import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.ClassX;
+import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.Motivation;
+import org.davincischools.leo.database.daos.ProjectDefinition;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.School;
+import org.davincischools.leo.database.daos.StudentClassX;
+import org.davincischools.leo.database.daos.TeacherClassX;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserXUtils;
@@ -47,6 +58,7 @@ public class TestData {
   private final Database db;
 
   private District district;
+  private School school;
   private UserX teacher;
   private UserX student;
   private UserX adminX;
@@ -74,6 +86,10 @@ public class TestData {
 
   public District getDistrict() {
     return district;
+  }
+
+  public School getSchool() {
+    return school;
   }
 
   public UserX getTeacher() {
@@ -158,27 +174,35 @@ public class TestData {
    * the only exception because it's not tied to a district or school yet.
    */
   public void addTestData() {
-    // Rename and upsert a new district.
-    String districtName = "Project Leo School District";
-    db.getDistrictRepository()
-        .findByName(districtName)
-        .ifPresent(
-            d -> db.getDistrictRepository().save(d.setName(d.getName() + "-old." + d.getId())));
-    district = db.getDistrictRepository().upsert(districtName);
+    // Upsert a new district.
+    updateAllRecords(
+        db.getDistrictRepository(),
+        d -> d.setDeleted(Instant.now()).setName("delted-" + d.getId() + "-" + d.getName()));
+    district = db.getDistrictRepository().upsert("Project Leo School District");
 
     // Create schools.
+    deleteAllRecords(db.getSchoolRepository(), School::setDeleted);
     for (var school : AdminXUtils.DaVinciSchoolsByNickname.values()) {
       db.getSchoolRepository()
-          .upsert(
-              district, school.name(), school.getName(), s -> s.setAddress(school.getAddress()));
+          .save(
+              new School()
+                  .setCreationTime(Instant.now())
+                  .setDistrict(district)
+                  .setNickname(school.name())
+                  .setName(school.getName())
+                  .setAddress(school.getAddress()));
     }
-    School school =
-        db.getSchoolRepository()
-            .findByNickname(district.getId(), DaVinciSchoolsByNickname.DVS.name())
+    school =
+        db.getSchoolRepository().findAll().stream()
+            .filter(
+                s ->
+                    s.getDeleted() == null
+                        && DaVinciSchoolsByNickname.DVS.name().equals(s.getNickname()))
+            .findFirst()
             .orElseThrow();
 
     // Create motivations.
-    // These are currently not unique per call.
+    deleteAllRecords(db.getMotivationRepository(), Motivation::setDeleted);
     beCentralMotivation =
         db.getMotivationRepository()
             .upsert(
@@ -206,20 +230,18 @@ public class TestData {
             .upsert("Organize", "set up a smooth-running operation", m -> {});
 
     // Create users.
-    String email = "admin@projectleo.net";
-    db.getUserXRepository()
-        .findByEmailAddress(email)
-        .ifPresent(
-            u ->
-                db.getUserXRepository()
-                    .saveAndFlush(
-                        u.setEmailAddress(
-                            u.getEmailAddress().replace("@", "-old." + u.getId() + "@"))));
+    deleteAllRecords(
+        db.getUserXRepository(),
+        (userX, instant) ->
+            userX
+                .setDeleted(instant)
+                .setEmailAddress("deleted-" + userX.getId() + "_" + userX.getEmailAddress()));
+
     adminX =
         db.getUserXRepository()
             .upsert(
                 district,
-                email,
+                "admin@projectleo.net",
                 userX ->
                     UserXUtils.setPassword(
                         db.getAdminXRepository()
@@ -237,20 +259,11 @@ public class TestData {
                                                         .setGrade(12)))),
                         PASSWORD));
 
-    email = "teacher@projectleo.net";
-    db.getUserXRepository()
-        .findByEmailAddress(email)
-        .ifPresent(
-            u ->
-                db.getUserXRepository()
-                    .saveAndFlush(
-                        u.setEmailAddress(
-                            u.getEmailAddress().replace("@", "-old." + u.getId() + "@"))));
     teacher =
         db.getUserXRepository()
             .upsert(
                 district,
-                email,
+                "teacher@projectleo.net",
                 userX ->
                     UserXUtils.setPassword(
                         db.getTeacherRepository()
@@ -258,20 +271,11 @@ public class TestData {
                         PASSWORD));
     db.getTeacherSchoolRepository().upsert(teacher.getTeacher(), school);
 
-    email = "student@projectleo.net";
-    db.getUserXRepository()
-        .findByEmailAddress(email)
-        .ifPresent(
-            u ->
-                db.getUserXRepository()
-                    .saveAndFlush(
-                        u.setEmailAddress(
-                            u.getEmailAddress().replace("@", "-old." + u.getId() + "@"))));
     student =
         db.getUserXRepository()
             .upsert(
                 district,
-                email,
+                "student@projectleo.net",
                 userX ->
                     UserXUtils.setPassword(
                         db.getStudentRepository()
@@ -281,20 +285,11 @@ public class TestData {
                         PASSWORD));
     db.getStudentSchoolRepository().upsert(student.getStudent(), school);
 
-    email = "demo@projectleo.net";
-    db.getUserXRepository()
-        .findByEmailAddress(email)
-        .ifPresent(
-            u ->
-                db.getUserXRepository()
-                    .saveAndFlush(
-                        u.setEmailAddress(
-                            u.getEmailAddress().replace("@", "-old." + u.getId() + "@"))));
     demo =
         db.getUserXRepository()
             .upsert(
                 /* district= */ null,
-                email,
+                "demo@projectleo.net",
                 userX ->
                     UserXUtils.setPassword(
                             userX.setFirstName("Demo").setLastName("Project Leo"), PASSWORD)
@@ -310,105 +305,158 @@ public class TestData {
                                         .setReasonForInterest(""))));
 
     // Create XQ Competencies.
-    // These are currently not unique per call.
+    deleteAllRecords(db.getKnowledgeAndSkillRepository(), KnowledgeAndSkill::setDeleted);
     for (var xqCompetency : AdminXUtils.XqCategoriesByNickname.values()) {
       db.getKnowledgeAndSkillRepository()
-          .upsert(
-              xqCompetency.getExampleName(),
-              Type.XQ_COMPETENCY,
-              k ->
-                  k.setShortDescr(xqCompetency.getExampleDescription())
-                      .setGlobal(true)
-                      .setCategory(xqCompetency.getCategory())
-                      .setUserX(adminX));
+          .save(
+              new KnowledgeAndSkill()
+                  .setCreationTime(Instant.now())
+                  .setName(xqCompetency.getExampleName())
+                  .setType(Type.XQ_COMPETENCY.name())
+                  .setGlobal(true)
+                  .setCategory(xqCompetency.getCategory())
+                  .setUserX(adminX));
     }
 
     // Create programming class.
+    deleteAllRecords(db.getClassXRepository(), ClassX::setDeleted);
+    deleteAllRecords(db.getTeacherClassXRepository(), TeacherClassX::setDeleted);
+    deleteAllRecords(db.getStudentClassXRepository(), StudentClassX::setDeleted);
+    deleteAllRecords(
+        db.getClassXKnowledgeAndSkillRepository(), ClassXKnowledgeAndSkill::setDeleted);
     programmingClassX =
         db.getClassXRepository()
-            .upsert(school, "Intro to Programming", classX -> classX.setNumber("CS 101"));
+            .upsert(
+                new ClassX()
+                    .setCreationTime(Instant.now())
+                    .setSchool(school)
+                    .setName("Intro to Programming")
+                    .setNumber("CS 101"));
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), programmingClassX);
     db.getStudentClassXRepository().upsert(student.getStudent(), programmingClassX);
 
     programmingSortEks =
         db.getKnowledgeAndSkillRepository()
-            .upsert(
-                "Sort Algorithms",
-                Type.EKS,
-                eks ->
-                    eks.setShortDescr("I understand different sort algorithms.")
-                        .setGlobal(true)
-                        .setUserX(adminX));
+            .save(
+                new KnowledgeAndSkill()
+                    .setCreationTime(Instant.now())
+                    .setName("Sort Algorithms")
+                    .setType(Type.EKS.name())
+                    .setShortDescr("I understand different sort algorithms.")
+                    .setGlobal(true)
+                    .setUserX(adminX));
     programmingContainerEks =
         db.getKnowledgeAndSkillRepository()
-            .upsert(
-                "Containers",
-                Type.EKS,
-                eks ->
-                    eks.setShortDescr("I understand Lists, Sets, and Maps.")
-                        .setGlobal(true)
-                        .setUserX(adminX));
+            .save(
+                new KnowledgeAndSkill()
+                    .setCreationTime(Instant.now())
+                    .setName("Containers")
+                    .setType(Type.EKS.name())
+                    .setShortDescr("I understand Lists, Sets, and Maps.")
+                    .setGlobal(true)
+                    .setUserX(adminX));
     db.getClassXKnowledgeAndSkillRepository().upsert(programmingClassX, programmingSortEks);
     db.getClassXKnowledgeAndSkillRepository().upsert(programmingClassX, programmingContainerEks);
 
+    deleteAllRecords(db.getAssignmentRepository(), Assignment::setDeleted);
+    deleteAllRecords(
+        db.getAssignmentKnowledgeAndSkillRepository(), AssignmentKnowledgeAndSkill::setDeleted);
     programmingSortAssignment =
         db.getAssignmentRepository()
-            .upsert(programmingClassX, "Understand Sort Algorithms", a -> {});
+            .upsert(
+                new Assignment()
+                    .setCreationTime(Instant.now())
+                    .setClassX(programmingClassX)
+                    .setName("Sort Algorithms"));
     db.getAssignmentKnowledgeAndSkillRepository()
         .upsert(programmingSortAssignment, programmingSortEks);
 
     programmingContainerAssignment =
-        db.getAssignmentRepository().upsert(programmingClassX, "Understand Containers", a -> {});
+        db.getAssignmentRepository()
+            .upsert(
+                new Assignment()
+                    .setCreationTime(Instant.now())
+                    .setClassX(programmingClassX)
+                    .setName("Understand Containers"));
     db.getAssignmentKnowledgeAndSkillRepository()
         .upsert(programmingContainerAssignment, programmingContainerEks);
 
     // Create chemistry class.
     chemistryClassX =
         db.getClassXRepository()
-            .upsert(school, "Intro to Chemistry", classX -> classX.setNumber("CHEM 101"));
+            .upsert(
+                new ClassX()
+                    .setCreationTime(Instant.now())
+                    .setSchool(school)
+                    .setName("Intro to Chemistry")
+                    .setNumber("CHEM 101"));
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), chemistryClassX);
     db.getStudentClassXRepository().upsert(student.getStudent(), chemistryClassX);
 
     chemistryPeriodicTableEks =
         db.getKnowledgeAndSkillRepository()
-            .upsert(
-                "Periodic Table",
-                Type.EKS,
-                ks ->
-                    ks.setShortDescr("I know how to read a periodic table.")
-                        .setGlobal(true)
-                        .setUserX(adminX));
+            .save(
+                new KnowledgeAndSkill()
+                    .setCreationTime(Instant.now())
+                    .setName("Periodic Table")
+                    .setType(Type.EKS.name())
+                    .setShortDescr("I know how to read a periodic table.")
+                    .setGlobal(true)
+                    .setUserX(adminX));
     chemistryValenceElectronsEks =
         db.getKnowledgeAndSkillRepository()
-            .upsert(
-                "Valence Electrons",
-                Type.EKS,
-                ks ->
-                    ks.setShortDescr(
-                            "I can determine the number of valence electrons for each element.")
-                        .setGlobal(true)
-                        .setUserX(adminX));
+            .save(
+                new KnowledgeAndSkill()
+                    .setCreationTime(Instant.now())
+                    .setName("Valence Electrons")
+                    .setType(Type.EKS.name())
+                    .setShortDescr(
+                        "I can determine the number of valence electrons for each element.")
+                    .setGlobal(true)
+                    .setUserX(adminX));
     db.getClassXKnowledgeAndSkillRepository().upsert(chemistryClassX, chemistryPeriodicTableEks);
     db.getClassXKnowledgeAndSkillRepository().upsert(chemistryClassX, chemistryValenceElectronsEks);
 
     chemistryPeriodicTableAssignment =
-        db.getAssignmentRepository().upsert(chemistryClassX, "Reading the Periodic Table", a -> {});
+        db.getAssignmentRepository()
+            .upsert(
+                new Assignment()
+                    .setCreationTime(Instant.now())
+                    .setClassX(chemistryClassX)
+                    .setName("Reading the Periodic Table"));
     db.getAssignmentKnowledgeAndSkillRepository()
         .upsert(chemistryPeriodicTableAssignment, chemistryPeriodicTableEks);
 
     chemistryValenceElectronsAssignment =
         db.getAssignmentRepository()
-            .upsert(chemistryClassX, "Understand Valence Electrons", a -> {});
+            .upsert(
+                new Assignment()
+                    .setCreationTime(Instant.now())
+                    .setClassX(chemistryClassX)
+                    .setName("Understand Valence Electrons"));
     db.getAssignmentKnowledgeAndSkillRepository()
         .upsert(chemistryValenceElectronsAssignment, chemistryValenceElectronsEks);
 
     // Create an empty class.
     danceClassX =
-        db.getClassXRepository().upsert(school, "Dance", classX -> classX.setNumber("DANCE 101"));
+        db.getClassXRepository()
+            .upsert(
+                new ClassX()
+                    .setCreationTime(Instant.now())
+                    .setSchool(school)
+                    .setName("Dance")
+                    .setNumber("DANCE 101"));
     db.getTeacherClassXRepository().upsert(teacher.getTeacher(), danceClassX);
     db.getStudentClassXRepository().upsert(student.getStudent(), danceClassX);
 
     // Create project definitions.
+    deleteAllRecords(db.getProjectDefinitionRepository(), ProjectDefinition::setDeleted);
+    deleteAllRecords(
+        db.getProjectDefinitionCategoryRepository(), ProjectDefinitionCategory::setDeleted);
+    deleteAllRecords(
+        db.getProjectDefinitionCategoryTypeRepository(), ProjectDefinitionCategoryType::setDeleted);
+    deleteAllRecords(
+        db.getAssignmentProjectDefinitionRepository(), AssignmentProjectDefinition::setDeleted);
     AdminXUtils.addIkigaiDiagramDescriptions(
         db,
         adminX,
