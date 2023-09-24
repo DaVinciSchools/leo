@@ -1,6 +1,5 @@
 package org.davincischools.leo.server.utils;
 
-import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 import static com.google.common.truth.extensions.proto.ProtoTruth.assertThat;
 
@@ -89,6 +88,14 @@ public class ProtoDaoUtilsTest {
               id: 2
               name: "class name"
             }
+            knowledge_and_skills {
+              id: 3
+              name: "ks 3 name"
+            }
+            knowledge_and_skills {
+              id: 4
+              name: "ks 4 name"
+            }
             """,
             Assignment.class);
 
@@ -97,6 +104,7 @@ public class ProtoDaoUtilsTest {
                     ProtoDaoUtils.toAssignmentDao(proto), Assignment::newBuilder)
                 .orElseThrow()
                 .build())
+        .ignoringRepeatedFieldOrder()
         .isEqualTo(proto);
   }
 
@@ -161,8 +169,7 @@ public class ProtoDaoUtilsTest {
             ProtoDaoUtils.toClassXProto(ProtoDaoUtils.toClassXDao(proto), ClassX::newBuilder)
                 .orElseThrow()
                 .build())
-        .ignoringFieldDescriptors(
-            ClassX.getDescriptor().findFieldByNumber(ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER))
+        .ignoringRepeatedFieldOrder()
         .isEqualTo(proto);
   }
 
@@ -179,16 +186,32 @@ public class ProtoDaoUtilsTest {
                 short_descr: "short"
                 long_descr_html: "long"
                 school {
+                  id: 1
+                  name: "school name"
+                }
+                knowledge_and_skills {
                   id: 2
-                  name: "school 2 name"
+                  name: "ks 2 name"
                 }
                 knowledge_and_skills {
                   id: 3
-                  name: "school 3 name"
+                  name: "ks 3 name"
                 }
-                knowledge_and_skills {
+                assignments: {
                   id: 4
-                  name: "school 4 name"
+                  name: "assignment 4 name"
+                  knowledge_and_skills {
+                    id: 5
+                    name: "ks 5 name"
+                  }
+                }
+                assignments: {
+                  id: 6
+                  name: "assignment 6 name"
+                  knowledge_and_skills {
+                    id: 7
+                    name: "ks 7 name"
+                  }
                 }
                 """,
             ClassX.class);
@@ -197,8 +220,7 @@ public class ProtoDaoUtilsTest {
             ProtoDaoUtils.toClassXProto(ProtoDaoUtils.toClassXDao(proto), ClassX::newBuilder)
                 .orElseThrow()
                 .build())
-        .ignoringRepeatedFieldOrderOfFieldDescriptors(
-            ClassX.getDescriptor().findFieldByNumber(ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER))
+        .ignoringRepeatedFieldOrder()
         .isEqualTo(proto);
   }
 
