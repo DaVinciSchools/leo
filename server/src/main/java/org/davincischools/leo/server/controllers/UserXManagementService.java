@@ -190,7 +190,8 @@ public class UserXManagementService {
                           .map(Student::getId)
                           .map(Collections::singletonList)
                           .orElse(null)))
-          .forEach(classX -> ProtoDaoUtils.toClassXProto(classX, finalDetails::addClassXsBuilder));
+          .forEach(
+              classX -> ProtoDaoUtils.toClassXProto(classX, true, finalDetails::addClassXsBuilder));
     }
 
     return Optional.of(finalDetails);

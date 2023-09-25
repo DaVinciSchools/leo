@@ -1,5 +1,8 @@
 package org.davincischools.leo.server.controllers;
 
+import static org.davincischools.leo.database.utils.DaoUtils.createJoinTableRows;
+
+import com.google.common.collect.Lists;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
@@ -9,6 +12,7 @@ import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.TeacherClassXId;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.GetClassXsParams;
 import org.davincischools.leo.protos.assignment_management.CreateAssignmentRequest;
 import org.davincischools.leo.protos.assignment_management.CreateAssignmentResponse;
@@ -80,7 +84,8 @@ public class AssignmentManagementService {
                               request.hasStudentId() ? List.of(request.getStudentId()) : null)
                           .setIncludeKnowledgeAndSkills(true))
                   .forEach(
-                      classX -> ProtoDaoUtils.toClassXProto(classX, response::addClassXsBuilder));
+                      classX ->
+                          ProtoDaoUtils.toClassXProto(classX, true, response::addClassXsBuilder));
 
               return response.build();
             })
@@ -124,6 +129,7 @@ public class AssignmentManagementService {
                               .setCreationTime(Instant.now())
                               .setName("New Assignment")
                               .setClassX(classX)),
+                  true,
                   response::getAssignmentBuilder);
 
               return response.build();
@@ -164,11 +170,19 @@ public class AssignmentManagementService {
               }
 
               db.getAssignmentRepository()
-                  .save(
+                  .upsert(
+                      db,
                       assignment
                           .setName(request.getAssignment().getName())
                           .setShortDescr(request.getAssignment().getShortDescr())
-                          .setLongDescrHtml(request.getAssignment().getLongDescrHtml()));
+                          .setLongDescrHtml(request.getAssignment().getLongDescrHtml())
+                          .setAssignmentKnowledgeAndSkills(
+                              createJoinTableRows(
+                                  assignment,
+                                  Lists.transform(
+                                      request.getAssignment().getKnowledgeAndSkillsList(),
+                                      ProtoDaoUtils::toKnowledgeAndSkillDao),
+                                  AssignmentKnowledgeAndSkillRepository::create)));
 
               return response.build();
             })

@@ -72,7 +72,8 @@ public class ClassXManagementService {
                           .setIncludeAssignments(request.getIncludeAssignments())
                           .setIncludeKnowledgeAndSkills(request.getIncludeKnowledgeAndSkills()))
                   .forEach(
-                      classX -> ProtoDaoUtils.toClassXProto(classX, response::addClassXsBuilder));
+                      classX ->
+                          ProtoDaoUtils.toClassXProto(classX, true, response::addClassXsBuilder));
 
               return response.build();
             })
@@ -99,7 +100,7 @@ public class ClassXManagementService {
               ClassX classX = ProtoDaoUtils.toClassXDao(request.getClassX());
               db.getClassXRepository()
                   .guardedUpsert(db, classX, userX.isAdminX() ? null : userX.getTeacherIdOrNull());
-              ProtoDaoUtils.toClassXProto(classX, response::getClassXBuilder);
+              ProtoDaoUtils.toClassXProto(classX, true, response::getClassXBuilder);
 
               if (userX.getTeacherOrNull() != null) {
                 db.getTeacherClassXRepository().upsert(userX.getTeacherOrNull(), classX);

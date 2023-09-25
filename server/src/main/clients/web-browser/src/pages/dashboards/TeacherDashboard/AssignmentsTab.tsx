@@ -5,6 +5,8 @@ import ReactQuill, {Value} from 'react-quill';
 import {
   Autocomplete,
   Button,
+  Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -20,23 +22,30 @@ import {
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {
   assignment_management,
+  class_x_management_service,
   pl_types,
   project_management,
 } from '../../../generated/protobuf-js';
 import {createService} from '../../../libs/protos';
 import {useContext, useEffect, useRef, useState} from 'react';
-import AssignmentManagementService = assignment_management.AssignmentManagementService;
+import {useFormFields} from '../../../libs/form_utils/forms';
+import {
+  ASSIGNMENT_SORTER,
+  CLASS_X_SORTER,
+  KNOWLEDGE_AND_SKILL_SORTER,
+  PROJECT_DEFINITION_SORTER,
+} from '../../../libs/sorters';
+import {addClassName} from '../../../libs/tags';
 import IAssignment = pl_types.IAssignment;
 import IClassX = pl_types.IClassX;
 import IProjectDefinition = pl_types.IProjectDefinition;
 import IProjectInputValue = pl_types.IProjectInputValue;
 import IUserX = pl_types.IUserX;
+import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
+import ClassXManagementService = class_x_management_service.ClassXManagementService;
 import ProjectManagementService = project_management.ProjectManagementService;
-import {
-  ASSIGNMENT_SORTER,
-  CLASS_X_SORTER,
-  PROJECT_DEFINITION_SORTER,
-} from '../../../libs/sorters';
+import Type = pl_types.KnowledgeAndSkill.Type;
+import AssignmentManagementService = assignment_management.AssignmentManagementService;
 
 export function AssignmentsTab(props: {userX: IUserX | undefined}) {
   const global = useContext(GlobalStateContext);
@@ -45,6 +54,7 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
   const [assignments, setAssignments] = useState<readonly IAssignment[] | null>(
     null
   );
+  const [sortedEks, setSortedEks] = useState<readonly IKnowledgeAndSkill[]>([]);
   const [saveStatus, setSaveStatus] = useState<'Saved' | 'Saving...'>('Saved');
   const [showDeleteAssignment, setShowDeleteAssignment] = useState(false);
   const [showCreateAssignment, setShowCreateAssignment] = useState(false);
@@ -53,10 +63,21 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
   const saveAssignmentTimeout = useRef<NodeJS.Timeout>();
   const assignmentRef = useRef<IAssignment>();
   const [assignment, fnSetAssignment] = useState<IAssignment | null>(null);
+  const [classXEksIds, setClassXEksIds] = useState<Set<number>>(new Set());
+
+  const assignmentFormField = useFormFields({
+    disabled: assignment == null,
+  });
+  const [sortedAssignmentEks, setSortedAssignmentEks] = useState<
+    readonly IKnowledgeAndSkill[]
+  >([]);
   const [classX, setClassX] = useState<IClassX | null>(null);
   const [name, setName] = useState('');
   const [shortDescr, setShortDescr] = useState('');
   const [longDescrHtml, setLongDescrHtml] = useState<Value>('');
+  const assignmentEks = assignmentFormField.useAutocompleteFormField<
+    readonly IKnowledgeAndSkill[]
+  >('knowledgeAndSkills', {isAutocomplete: {isMultiple: true}});
 
   // Used to track the project definition.
   const [projectDefinitions, setProjectDefinitions] = useState<
@@ -69,13 +90,33 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
   );
 
   useEffect(() => {
-    createService(AssignmentManagementService, 'AssignmentManagementService')
-      .getAssignments({
-        teacherId: props.userX?.teacherId,
+    createService(ProjectManagementService, 'ProjectManagementService')
+      .getKnowledgeAndSkills({types: [Type.EKS]})
+      .then(response =>
+        setSortedEks(
+          response.knowledgeAndSkills.sort(KNOWLEDGE_AND_SKILL_SORTER)
+        )
+      )
+      .catch(global.setError);
+  }, []);
+
+  useEffect(() => {
+    createService(ClassXManagementService, 'ClassXManagementService')
+      .getClassXs({
+        teacherIds: [props.userX?.teacherId ?? 0],
+        includeAssignments: true,
+        includeKnowledgeAndSkills: true,
       })
       .then(response => {
         setClassXs(response.classXs);
-        setAssignments(response.assignments);
+
+        const newAssignments: IAssignment[] = [];
+        for (const classX of response.classXs ?? {}) {
+          for (const assignment of classX.assignments ?? []) {
+            newAssignments.push(assignment);
+          }
+        }
+        setAssignments(newAssignments);
       })
       .catch(global.setError);
   }, []);
@@ -92,12 +133,13 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
       assignment.name = name;
       assignment.shortDescr = shortDescr;
       assignment.longDescrHtml = String(longDescrHtml);
+      assignment.knowledgeAndSkills = (assignmentEks.getValue() ?? []).slice();
 
       saveAssignmentTimeout.current = setTimeout(() => {
         saveAssignment();
       }, 1000);
     }
-  }, [classX, name, shortDescr, longDescrHtml]);
+  }, [classX, name, shortDescr, assignmentEks.getValue(), longDescrHtml]);
 
   // Changes that affect labels in the select assignment dropdown.
   useEffect(() => {
@@ -108,8 +150,23 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
     if (assignment == null) {
       setProjectDefinitions(null);
       setProjectDefinition(null);
+      setSortedAssignmentEks([]);
       return;
     }
+    const newClassXEksIds = new Set(
+      (assignment?.classX?.knowledgeAndSkills ?? []).map(eks => eks.id ?? 0)
+    );
+    setClassXEksIds(newClassXEksIds);
+    setSortedAssignmentEks(
+      sortedEks
+        .slice()
+        .sort(
+          (a, b) =>
+            (newClassXEksIds.has(a.id ?? 0) ? 0 : 1) -
+              (newClassXEksIds.has(b.id ?? 0) ? 0 : 1) ||
+            KNOWLEDGE_AND_SKILL_SORTER(a, b)
+        )
+    );
     createService(ProjectManagementService, 'ProjectManagementService')
       .getAssignmentProjectDefinitions({assignmentId: assignment.id!})
       .then(response => {
@@ -123,7 +180,7 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
         }
       })
       .catch(global.setError);
-  }, [assignment]);
+  }, [assignment, sortedEks]);
 
   useEffect(() => {
     if (projectDefinition?.inputs == null) {
@@ -147,6 +204,7 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
     setName(newAssignment?.name ?? '');
     setShortDescr(newAssignment?.shortDescr ?? '');
     setLongDescrHtml(newAssignment?.longDescrHtml ?? '');
+    assignmentEks.setValue(newAssignment?.knowledgeAndSkills ?? []);
   }
 
   function saveAssignment() {
@@ -289,6 +347,50 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
             disabled={assignment == null}
             size="small"
             fullWidth={true}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <Autocomplete
+            {...assignmentEks.autocompleteParams()}
+            multiple
+            autoHighlight
+            disableCloseOnSelect
+            options={sortedAssignmentEks}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            renderInput={params => (
+              <TextField
+                label="Select knowledge and skills"
+                autoComplete="off"
+                {...assignmentEks.textFieldParams(params)}
+              />
+            )}
+            groupBy={eks =>
+              classXEksIds.has(eks.id ?? 0)
+                ? 'Class Knowledge and Skills'
+                : 'Other Knowledge and Skills'
+            }
+            renderOption={(props, option, {selected}) => (
+              <li {...props} key={option.id}>
+                <Checkbox style={{marginRight: 8}} checked={selected} />
+                {option.name}
+              </li>
+            )}
+            getOptionLabel={option =>
+              option.name + ': ' + (option?.shortDescr ?? 'undefined')
+            }
+            renderTags={(tagValue, getTagProps) =>
+              tagValue.map((option, index) => (
+                <Chip
+                  label={option.name}
+                  size="small"
+                  variant="outlined"
+                  {...addClassName(
+                    getTagProps({index}),
+                    'teacher-edit-classes-chips'
+                  )}
+                />
+              ))
+            }
           />
         </Grid>
         <Grid item xs={12}>

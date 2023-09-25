@@ -106,10 +106,13 @@ public class ProjectManagementService {
         .start(optionalRequest.orElse(GetKnowledgeAndSkillsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              db.getKnowledgeAndSkillRepository()
+              db
+                  .getKnowledgeAndSkillRepository()
                   .findAllByTypes(
                       request.getTypesList().stream().map(Enum::name).toList(),
                       userX.isAdminX() ? null : userX.getUserXIdOrNull())
+                  .stream()
+                  .filter(e -> e.getDeleted() == null)
                   .forEach(
                       e ->
                           ProtoDaoUtils.toKnowledgeAndSkillProto(

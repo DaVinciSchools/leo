@@ -51,7 +51,7 @@ public class ProtoDaoUtilsTest {
 
   @Test
   public void toAssignmentConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toAssignmentProto(null, Assignment::newBuilder)).isEmpty();
+    assertThat(ProtoDaoUtils.toAssignmentProto(null, true, Assignment::newBuilder)).isEmpty();
   }
 
   @Test
@@ -59,6 +59,7 @@ public class ProtoDaoUtilsTest {
     assertThat(
             ProtoDaoUtils.toAssignmentProto(
                 newUninitialized(org.davincischools.leo.database.daos.Assignment.class),
+                true,
                 Assignment::newBuilder))
         .isEmpty();
   }
@@ -68,7 +69,7 @@ public class ProtoDaoUtilsTest {
     Assignment proto = Assignment.getDefaultInstance();
     assertThat(
             ProtoDaoUtils.toAssignmentProto(
-                    ProtoDaoUtils.toAssignmentDao(proto), Assignment::newBuilder)
+                    ProtoDaoUtils.toAssignmentDao(proto), true, Assignment::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);
@@ -101,7 +102,7 @@ public class ProtoDaoUtilsTest {
 
     assertThat(
             ProtoDaoUtils.toAssignmentProto(
-                    ProtoDaoUtils.toAssignmentDao(proto), Assignment::newBuilder)
+                    ProtoDaoUtils.toAssignmentDao(proto), true, Assignment::newBuilder)
                 .orElseThrow()
                 .build())
         .ignoringRepeatedFieldOrder()
@@ -150,7 +151,7 @@ public class ProtoDaoUtilsTest {
 
   @Test
   public void toClassXConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toClassXProto(null, ClassX::newBuilder)).isEmpty();
+    assertThat(ProtoDaoUtils.toClassXProto(null, true, ClassX::newBuilder)).isEmpty();
   }
 
   @Test
@@ -158,6 +159,7 @@ public class ProtoDaoUtilsTest {
     assertThat(
             ProtoDaoUtils.toClassXProto(
                 newUninitialized(org.davincischools.leo.database.daos.ClassX.class),
+                true,
                 ClassX::newBuilder))
         .isEmpty();
   }
@@ -166,7 +168,7 @@ public class ProtoDaoUtilsTest {
   public void toClassXConvertersEmpty() throws ParseException {
     ClassX proto = ClassX.getDefaultInstance();
     assertThat(
-            ProtoDaoUtils.toClassXProto(ProtoDaoUtils.toClassXDao(proto), ClassX::newBuilder)
+            ProtoDaoUtils.toClassXProto(ProtoDaoUtils.toClassXDao(proto), true, ClassX::newBuilder)
                 .orElseThrow()
                 .build())
         .ignoringRepeatedFieldOrder()
@@ -217,7 +219,7 @@ public class ProtoDaoUtilsTest {
             ClassX.class);
 
     assertThat(
-            ProtoDaoUtils.toClassXProto(ProtoDaoUtils.toClassXDao(proto), ClassX::newBuilder)
+            ProtoDaoUtils.toClassXProto(ProtoDaoUtils.toClassXDao(proto), true, ClassX::newBuilder)
                 .orElseThrow()
                 .build())
         .ignoringRepeatedFieldOrder()

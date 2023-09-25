@@ -364,6 +364,7 @@ public class TestData {
     programmingSortAssignment =
         db.getAssignmentRepository()
             .upsert(
+                db,
                 new Assignment()
                     .setCreationTime(Instant.now())
                     .setClassX(programmingClassX)
@@ -374,6 +375,7 @@ public class TestData {
     programmingContainerAssignment =
         db.getAssignmentRepository()
             .upsert(
+                db,
                 new Assignment()
                     .setCreationTime(Instant.now())
                     .setClassX(programmingClassX)
@@ -420,6 +422,7 @@ public class TestData {
     chemistryPeriodicTableAssignment =
         db.getAssignmentRepository()
             .upsert(
+                db,
                 new Assignment()
                     .setCreationTime(Instant.now())
                     .setClassX(chemistryClassX)
@@ -430,6 +433,7 @@ public class TestData {
     chemistryValenceElectronsAssignment =
         db.getAssignmentRepository()
             .upsert(
+                db,
                 new Assignment()
                     .setCreationTime(Instant.now())
                     .setClassX(chemistryClassX)

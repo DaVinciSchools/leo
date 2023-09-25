@@ -3,6 +3,7 @@ package org.davincischools.leo.server.utils;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.davincischools.leo.database.utils.DaoUtils.createJoinTableRows;
+import static org.davincischools.leo.database.utils.DaoUtils.getDaoClass;
 import static org.davincischools.leo.database.utils.DaoUtils.ifInitialized;
 
 import com.google.common.collect.ImmutableMap;
@@ -54,14 +55,13 @@ import org.davincischools.leo.database.utils.repos.ProjectPostRepository.FullPro
 import org.davincischools.leo.database.utils.repos.ProjectRepository.MilestoneWithSteps;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
+import org.davincischools.leo.protos.pl_types.ClassX.Builder;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition.State;
 import org.davincischools.leo.protos.pl_types.ProjectInputValue;
 import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
 import org.hibernate.Hibernate;
 import org.hibernate.LazyInitializationException;
-import org.hibernate.proxy.HibernateProxy;
-import org.hibernate.proxy.LazyInitializer;
 
 public class ProtoDaoUtils {
 
@@ -236,7 +236,7 @@ public class ProtoDaoUtils {
     return translateToProto(
         project,
         newBuilder,
-        builder -> toAssignmentProto(project.getAssignment(), builder::getAssignmentBuilder),
+        builder -> toAssignmentProto(project.getAssignment(), true, builder::getAssignmentBuilder),
         org.davincischools.leo.protos.pl_types.Project.ASSIGNMENT_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER);
   }
@@ -478,12 +478,13 @@ public class ProtoDaoUtils {
   public static Optional<org.davincischools.leo.protos.pl_types.Assignment.Builder>
       toAssignmentProto(
           Assignment assignment,
+          boolean recursive,
           Supplier<org.davincischools.leo.protos.pl_types.Assignment.Builder> newBuilder) {
     return translateToProto(
         assignment,
         newBuilder,
         builder -> {
-          toClassXProto(assignment.getClassX(), builder::getClassXBuilder);
+          toClassXProto(assignment.getClassX(), recursive, builder::getClassXBuilder);
           ifInitialized(
               assignment.getAssignmentKnowledgeAndSkills(),
               assignmentKnowledgeAndSkill ->
@@ -521,7 +522,7 @@ public class ProtoDaoUtils {
   }
 
   public static Optional<org.davincischools.leo.protos.pl_types.ClassX.Builder> toClassXProto(
-      ClassX classX, Supplier<org.davincischools.leo.protos.pl_types.ClassX.Builder> newBuilder) {
+      ClassX classX, boolean recursive, Supplier<Builder> newBuilder) {
     return translateToProto(
         classX,
         newBuilder,
@@ -533,9 +534,11 @@ public class ProtoDaoUtils {
                   toKnowledgeAndSkillProto(
                       classXKnowledgeAndSkill.getKnowledgeAndSkill(),
                       builder::addKnowledgeAndSkillsBuilder));
-          ifInitialized(
-              classX.getAssignments(),
-              assignment -> toAssignmentProto(assignment, builder::addAssignmentsBuilder));
+          if (recursive) {
+            ifInitialized(
+                classX.getAssignments(),
+                assignment -> toAssignmentProto(assignment, false, builder::addAssignmentsBuilder));
+          }
         },
         org.davincischools.leo.protos.pl_types.ClassX.SCHOOL_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ClassX.ENROLLED_FIELD_NUMBER,
@@ -620,7 +623,7 @@ public class ProtoDaoUtils {
 
     Class<? extends MessageOrBuilder> protoClass = fromMessage.getClass();
     Descriptor protoDescriptor = fromMessage.getDescriptorForType();
-    Class<?> daoClass = Hibernate.getClass(toDao);
+    Class<?> daoClass = getDaoClass(toDao);
 
     Set<Integer> ignoredFieldNumbers =
         Arrays.stream(ignoreFieldNumbers).boxed().collect(Collectors.toSet());
@@ -697,7 +700,7 @@ public class ProtoDaoUtils {
                             try {
                               if (message.hasField(field)) {
                                 Object innerDao = finalConstructor.newInstance();
-                                Hibernate.getClass(innerDao)
+                                getDaoClass(innerDao)
                                     .getMethod("setId", Integer.class)
                                     .invoke(innerDao, (Integer) message.getField(field));
                                 setDaoMethod.get().invoke(dao, innerDao);
@@ -826,13 +829,7 @@ public class ProtoDaoUtils {
       return Optional.empty();
     }
 
-    final Class<?> daoClass;
-    LazyInitializer lazyInitializer = HibernateProxy.extractLazyInitializer(fromDao);
-    if (lazyInitializer != null) {
-      daoClass = lazyInitializer.getPersistentClass();
-    } else {
-      daoClass = fromDao.getClass();
-    }
+    final Class<?> daoClass = getDaoClass(fromDao);
 
     if (!Hibernate.isInitialized(fromDao)) {
       // Still, the ID is there.

@@ -3,6 +3,7 @@ package org.davincischools.leo.database.utils.repos;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.davincischools.leo.database.utils.DaoUtils.notDeleted;
 import static org.davincischools.leo.database.utils.DaoUtils.removeTransientValues;
+import static org.davincischools.leo.database.utils.DaoUtils.saveJoinTableAndTargets;
 
 import com.google.common.collect.ImmutableList;
 import jakarta.persistence.EntityManager;
@@ -12,6 +13,7 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import org.davincischools.leo.database.daos.Assignment;
+import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill_;
 import org.davincischools.leo.database.daos.Assignment_;
 import org.davincischools.leo.database.daos.ClassX_;
@@ -19,16 +21,25 @@ import org.davincischools.leo.database.daos.StudentClassX_;
 import org.davincischools.leo.database.daos.Student_;
 import org.davincischools.leo.database.daos.TeacherClassX_;
 import org.davincischools.leo.database.daos.Teacher_;
+import org.davincischools.leo.database.utils.Database;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AssignmentRepository extends JpaRepository<Assignment, Integer> {
 
-  default Assignment upsert(Assignment assignment) {
+  default Assignment upsert(Database db, Assignment assignment) {
     checkNotNull(assignment);
 
-    return removeTransientValues(assignment, this::save);
+    removeTransientValues(assignment, this::save);
+    saveJoinTableAndTargets(
+        assignment,
+        Assignment::getAssignmentKnowledgeAndSkills,
+        AssignmentKnowledgeAndSkill::getKnowledgeAndSkill,
+        db.getKnowledgeAndSkillRepository()::save,
+        db.getAssignmentKnowledgeAndSkillRepository()::setAssignmentKnowledgeAndSkills);
+
+    return assignment;
   }
 
   default List<Assignment> getAssignments(

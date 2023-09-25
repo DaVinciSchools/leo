@@ -35,6 +35,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.hibernate.Hibernate;
+import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.proxy.LazyInitializer;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public class DaoUtils {
@@ -46,7 +48,7 @@ public class DaoUtils {
     checkNotNull(dao);
 
     return daoShallowCopyMethods.computeIfAbsent(
-        Hibernate.getClass(dao),
+        getDaoClass(dao),
         clazz -> {
           if (clazz.getAnnotation(Entity.class) == null) {
             return Optional.empty();
@@ -85,7 +87,7 @@ public class DaoUtils {
                         // It's okay if this is not initialized since we just want the id.
                         if (innerDao != null) {
                           var innerDaoShallowCopyMethods =
-                              DaoUtils.getDaoShallowCopyMethods(innerDao)
+                              getDaoShallowCopyMethods(innerDao)
                                   .orElseThrow(
                                       () ->
                                           new IllegalArgumentException(
@@ -163,7 +165,7 @@ public class DaoUtils {
     }
 
     DaoShallowCopyMethods daoMethods =
-        DaoUtils.getDaoShallowCopyMethods(dao)
+        getDaoShallowCopyMethods(dao)
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
@@ -187,10 +189,10 @@ public class DaoUtils {
   public static void copyId(Object from, Object to) {
     checkNotNull(from);
     checkNotNull(to);
-    checkArgument(Hibernate.getClass(from) == Hibernate.getClass(to));
+    checkArgument(getDaoClass(from) == getDaoClass(to));
 
     DaoShallowCopyMethods daoMethods =
-        DaoUtils.getDaoShallowCopyMethods(to)
+        getDaoShallowCopyMethods(to)
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
@@ -328,6 +330,15 @@ public class DaoUtils {
     List<E> entities = repository.findAll();
     entities.forEach(entity -> setFn.accept(entity, Instant.now()));
     repository.saveAll(entities);
+  }
+
+  public static <D> Class<?> getDaoClass(D dao) {
+    LazyInitializer lazyInitializer = HibernateProxy.extractLazyInitializer(dao);
+    if (lazyInitializer != null) {
+      return lazyInitializer.getPersistentClass();
+    } else {
+      return dao.getClass();
+    }
   }
 
   private record DaoShallowCopyMethods(

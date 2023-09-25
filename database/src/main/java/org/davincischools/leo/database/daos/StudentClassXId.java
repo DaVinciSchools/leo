@@ -1,5 +1,7 @@
 package org.davincischools.leo.database.daos;
 
+import static org.davincischools.leo.database.utils.DaoUtils.getDaoClass;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.io.Serializable;
@@ -10,7 +12,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
-import org.hibernate.Hibernate;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -42,7 +43,7 @@ public class StudentClassXId implements Serializable {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+    if (o == null || getDaoClass(this) != getDaoClass(o)) return false;
     StudentClassXId entity = (StudentClassXId) o;
     return Objects.equals(this.studentId, entity.studentId)
         && Objects.equals(this.classXId, entity.classXId);
