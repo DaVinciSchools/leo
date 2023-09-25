@@ -1059,6 +1059,75 @@ public class ProtoDaoUtilsTest {
         .isEqualTo(proto);
   }
 
+  @Test
+  public void toProjectPostRatingConvertersNull() {
+    assertThat(
+            ProtoDaoUtils.toProjectPostRatingProto(
+                    (org.davincischools.leo.database.daos.ProjectPostRating) null, null)
+                .build())
+        .isEqualTo(ProjectPostRating.getDefaultInstance());
+  }
+
+  @Test
+  public void toProjectPostRatingConvertersUninitialized() {
+    assertThat(
+            ProtoDaoUtils.toProjectPostRatingProto(
+                    newUninitialized(org.davincischools.leo.database.daos.ProjectPostRating.class),
+                    null)
+                .build())
+        .isEqualTo(ProjectPostRating.getDefaultInstance());
+  }
+
+  @Test
+  public void toProjectPostRatingConvertersEmpty() {
+    ProjectPostRating proto = ProjectPostRating.getDefaultInstance();
+
+    assertThat(
+            ProtoDaoUtils.toProjectPostRatingProto(
+                    ProtoDaoUtils.toProjectPostRatingDao(proto), null)
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectPostRatingConvertersAll() throws ParseException {
+    ProjectPostRating proto =
+        TextFormat.parse(
+            """
+                id: 1
+                user_x {
+                  user_x_id: 2
+                  is_demo: true
+                  is_authenticated: true
+                }
+                project_post {
+                  id: 3
+                  user_x {
+                    user_x_id: 4
+                    is_demo: true
+                    is_authenticated: true
+                  }
+                }
+                knowledge_and_skill {
+                  id: 5
+                  name: "name_1"
+                }
+                knowledge_and_skill {
+                  id: 6
+                  name: "name_2"
+                }
+                rating: 1
+                rating_type: INITIAL_1_TO_5
+                """,
+            ProjectPostRating.class);
+
+    assertThat(
+            ProtoDaoUtils.toProjectPostRatingProto(
+                    ProtoDaoUtils.toProjectPostRatingDao(proto), null)
+                .build())
+        .isEqualTo(proto);
+  }
+
   private <T> T newUninitialized(Class<T> entityClass) {
     return entityManager.getReference(entityClass, 0);
   }

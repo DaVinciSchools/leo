@@ -1,29 +1,25 @@
 package org.davincischools.leo.database.utils.repos;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.davincischools.leo.database.utils.DaoUtils.notDeleted;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Streams;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Selection;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
-import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Builder.Default;
@@ -69,219 +65,130 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     private final SetMultimap</* UserX.id= */ Integer, String> tags = HashMultimap.create();
   }
 
-  @Setter
-  @Getter
-  @Accessors(chain = true)
-  @NoArgsConstructor
-  class GetProjectPostsParams {
-
-    @Nullable private Boolean includeTags;
-    @Nullable private Boolean includeComments;
-    @Nullable private Boolean includeProjects;
-
-    @Nullable private List<Integer> projectIds;
-    @Nullable private List<Integer> projectPostIds;
-    @Nullable private List<Integer> assignmentIds;
-    @Nullable private List<Integer> classXIds;
-    @Nullable private List<Integer> schoolIds;
-    @Nullable private List<Integer> userXIds;
-    @Nullable private Boolean beingEdited;
-
-    Optional<Boolean> getIncludeTags() {
-      return Optional.ofNullable(includeTags);
-    }
-
-    Optional<Boolean> getIncludeComments() {
-      return Optional.ofNullable(includeComments);
-    }
-
-    Optional<Boolean> getIncludeProjects() {
-      return Optional.ofNullable(includeProjects);
-    }
-
-    Optional<List<Integer>> getProjectIds() {
-      return Optional.ofNullable(projectIds);
-    }
-
-    Optional<List<Integer>> getProjectPostIds() {
-      return Optional.ofNullable(projectPostIds);
-    }
-
-    Optional<List<Integer>> getAssignmentIds() {
-      return Optional.ofNullable(assignmentIds);
-    }
-
-    Optional<List<Integer>> getClassXIds() {
-      return Optional.ofNullable(classXIds);
-    }
-
-    Optional<List<Integer>> getSchoolIds() {
-      return Optional.ofNullable(schoolIds);
-    }
-
-    Optional<List<Integer>> getUserXIds() {
-      return Optional.ofNullable(userXIds);
-    }
-
-    Optional<Boolean> getBeingEdited() {
-      return Optional.ofNullable(beingEdited);
-    }
-  }
-
   default List<FullProjectPost> getProjectPosts(
       EntityManager entityManager, GetProjectPostsParams params) {
+    checkNotNull(entityManager);
+    checkNotNull(params);
 
-    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+    var builder = entityManager.getCriteriaBuilder();
+    var where = new ArrayList<Predicate>();
 
-    // Set up tables.
-    CriteriaQuery<Tuple> query = builder.createTupleQuery();
-    List<Predicate> whereConjunctions = new ArrayList<>();
+    // From projectPost.
+    var query = builder.createQuery(ProjectPost.class);
+    var projectPost = notDeleted(where, query.from(ProjectPost.class));
 
-    // FROM ProjectPost.
-    Root<ProjectPost> projectPost = query.from(ProjectPost.class);
-    projectPost.fetch(ProjectPost_.userX, JoinType.LEFT);
+    // Build query.
+    getProjectPosts(params, builder, projectPost, where);
 
-    // Fetch includeProjects
-    if (params.getIncludeProjects().orElse(false)) {
-      projectPost.fetch(ProjectPost_.project, JoinType.LEFT);
-    }
+    // Select.
+    query.select(projectPost).distinct(true).where(where.toArray(new Predicate[0]));
 
-    // JOIN includeTags.
-    // TODO: This should be a separate query because it's going to cause a huge result.
-    Join<ProjectPost, Tag> tag = null;
-    if (params.getIncludeTags().orElse(false)) {
-      tag = projectPost.join(ProjectPost_.tags, JoinType.LEFT);
-    }
-
-    // JOIN includeComments.
-    Join<ProjectPost, ProjectPostComment> projectPostComment = null;
-    if (params.getIncludeComments().orElse(false)) {
-      projectPostComment = projectPost.join(ProjectPost_.projectPostComments, JoinType.LEFT);
-      projectPostComment.on(builder.isNull(projectPostComment.get(ProjectPostComment_.deleted)));
-      projectPostComment.fetch(ProjectPostComment_.userX, JoinType.LEFT);
-    }
-
-    // WHERE - General
-    whereConjunctions.add(builder.isNull(projectPost.get(ProjectPost_.deleted)));
-
-    // WHERE projectIds.
-    if (params.getProjectIds().isPresent()) {
-      var inPredicate =
-          builder.in(
-              DaoUtils.toJoin(projectPost.fetch(ProjectPost_.project, JoinType.LEFT))
-                  .get(Project_.id));
-      params.getProjectIds().get().forEach(inPredicate::value);
-      whereConjunctions.add(inPredicate);
-    }
-
-    // WHERE projectIds.
-    if (params.getProjectPostIds().isPresent()) {
-      var inPredicate = builder.in(projectPost.get(ProjectPost_.id));
-      params.getProjectPostIds().get().forEach(inPredicate::value);
-      whereConjunctions.add(inPredicate);
-    }
-
-    // WHERE assignmentIds.
-    if (params.getAssignmentIds().isPresent()) {
-      var inPredicate =
-          builder.in(
-              DaoUtils.toJoin(
-                      projectPost
-                          .fetch(ProjectPost_.project, JoinType.LEFT)
-                          .fetch(Project_.assignment, JoinType.LEFT))
-                  .get(Assignment_.id));
-      params.getAssignmentIds().get().forEach(inPredicate::value);
-      whereConjunctions.add(inPredicate);
-    }
-
-    // WHERE classXIds.
-    if (params.getClassXIds().isPresent()) {
-      var inPredicate =
-          builder.in(
-              DaoUtils.toJoin(
-                      projectPost
-                          .fetch(ProjectPost_.project, JoinType.LEFT)
-                          .fetch(Project_.assignment, JoinType.LEFT)
-                          .fetch(Assignment_.classX, JoinType.LEFT))
-                  .get(ClassX_.id));
-      params.getClassXIds().get().forEach(inPredicate::value);
-      whereConjunctions.add(inPredicate);
-    }
-
-    // WHERE schoolIds.
-    if (params.getSchoolIds().isPresent()) {
-      var inPredicate =
-          builder.in(
-              DaoUtils.toJoin(
-                      projectPost
-                          .fetch(ProjectPost_.project, JoinType.LEFT)
-                          .fetch(Project_.assignment, JoinType.LEFT)
-                          .fetch(Assignment_.classX, JoinType.LEFT)
-                          .fetch(ClassX_.school, JoinType.LEFT))
-                  .get(School_.id));
-      params.getSchoolIds().get().forEach(inPredicate::value);
-      whereConjunctions.add(inPredicate);
-    }
-
-    // WHERE userXIds.
-    if (params.getUserXIds().isPresent()) {
-      var inPredicate =
-          builder.in(
-              DaoUtils.toJoin(projectPost.fetch(ProjectPost_.userX, JoinType.LEFT)).get(UserX_.id));
-      params.getUserXIds().get().forEach(inPredicate::value);
-      whereConjunctions.add(inPredicate);
-    }
-
-    // WHERE beingEdited.
-    if (params.getBeingEdited().isPresent()) {
-      whereConjunctions.add(
-          builder.equal(projectPost.get(ProjectPost_.beingEdited), params.getBeingEdited().get()));
-    }
-
-    // Register WHERE conjunctions.
-    query.where(builder.and(whereConjunctions.toArray(new Predicate[0])));
-
-    // ORDER BY.
-    query.orderBy(
-        Stream.of(
-                builder.desc(projectPost.get(ProjectPost_.postTime)),
-                builder.desc(projectPost.get(ProjectPost_.id)),
-                projectPostComment != null
-                    ? builder.desc(projectPostComment.get(ProjectPostComment_.id))
-                    : null)
-            .filter(Objects::nonNull)
-            .toList());
-
-    // SELECT.
-    query.select(
-        builder.tuple(
-            Stream.of(projectPost, projectPostComment, tag)
-                .filter(Objects::nonNull)
-                .toArray(Selection<?>[]::new)));
-
-    // Parse results.
     List<FullProjectPost> fullProjectPosts = new ArrayList<>();
-    FullProjectPost fullProjectPost = null;
-    for (Tuple row : entityManager.createQuery(query).getResultList()) {
-      if (fullProjectPost == null
-          || !Objects.equals(
-              fullProjectPost.getProjectPost().getId(), row.get(projectPost).getId())) {
-        fullProjectPosts.add(
-            fullProjectPost = new FullProjectPost().setProjectPost(row.get(projectPost)));
-      }
-      if (tag != null && row.get(tag) != null) {
-        fullProjectPost.getTags().put(row.get(tag).getUserX().getId(), row.get(tag).getText());
-      }
-      if (projectPostComment != null && row.get(projectPostComment) != null) {
-        fullProjectPost
+    for (ProjectPost post : entityManager.createQuery(query).getResultList()) {
+      var fullPost = new FullProjectPost().setProjectPost(post);
+      fullProjectPosts.add(fullPost);
+      for (ProjectPostComment comment : post.getProjectPostComments()) {
+        fullPost
             .getProjectPostComments()
             .put(
-                row.get(projectPostComment).getPostTime(),
-                new FullProjectPostComment().setProjectPostComment(row.get(projectPostComment)));
+                comment.getPostTime(), new FullProjectPostComment().setProjectPostComment(comment));
+      }
+      for (Tag tag : post.getTags()) {
+        fullPost.getTags().put(tag.getUserX().getId(), tag.getText());
       }
     }
 
     return fullProjectPosts;
+  }
+
+  static From<?, ProjectPost> getProjectPosts(
+      GetProjectPostsParams params,
+      CriteriaBuilder builder,
+      From<?, ProjectPost> projectPost,
+      List<Predicate> where) {
+    checkNotNull(params);
+    checkNotNull(builder);
+    checkNotNull(projectPost);
+    checkNotNull(where);
+
+    // includeTags.
+    if (params.getIncludeTags().orElse(false)) {
+      notDeleted(projectPost.fetch(ProjectPost_.tags, JoinType.LEFT));
+    }
+
+    // includeComments.
+    if (params.getIncludeComments().orElse(false)) {
+      var projectPostComment =
+          notDeleted(projectPost.fetch(ProjectPost_.projectPostComments, JoinType.LEFT));
+      notDeleted(projectPostComment.fetch(ProjectPostComment_.userX, JoinType.LEFT));
+    }
+
+    // includeProjects
+    if (params.getIncludeProjects().orElse(false)) {
+      notDeleted(projectPost.fetch(ProjectPost_.project, JoinType.LEFT));
+    }
+
+    // includeRatings.
+    if (params.getIncludeRatings().orElse(false)) {
+      notDeleted(projectPost.fetch(ProjectPost_.projectPostRatings, JoinType.LEFT));
+    }
+
+    // projectPostIds.
+    if (params.getProjectPostIds().isPresent()) {
+      where.add(
+          projectPost
+              .get(ProjectPost_.id)
+              .in(ImmutableList.copyOf(params.getProjectPostIds().get())));
+    }
+
+    // projectIds.
+    if (params.getProjectIds().isPresent()) {
+      notDeleted(projectPost.fetch(ProjectPost_.project, JoinType.INNER))
+          .get(Project_.id)
+          .in(ImmutableList.copyOf(params.getProjectIds().get()));
+    }
+
+    // assignmentIds.
+    if (params.getAssignmentIds().isPresent()) {
+      var project = notDeleted(projectPost.fetch(ProjectPost_.project, JoinType.INNER));
+      notDeleted(project.fetch(Project_.assignment, JoinType.INNER))
+          .get(Assignment_.id)
+          .in(ImmutableList.copyOf(params.getAssignmentIds().get()));
+    }
+
+    // classXIds.
+    if (params.getClassXIds().isPresent()) {
+      var project = notDeleted(projectPost.fetch(ProjectPost_.project, JoinType.INNER));
+      var assignment = notDeleted(project.fetch(Project_.assignment, JoinType.INNER));
+      notDeleted(assignment.fetch(Assignment_.classX, JoinType.INNER))
+          .get(ClassX_.id)
+          .in(ImmutableList.copyOf(params.getClassXIds().get()));
+    }
+
+    // schoolIds.
+    if (params.getSchoolIds().isPresent()) {
+      var project = notDeleted(projectPost.fetch(ProjectPost_.project, JoinType.INNER));
+      var assignment = notDeleted(project.fetch(Project_.assignment, JoinType.INNER));
+      var classX = notDeleted(assignment.fetch(Assignment_.classX, JoinType.INNER));
+      notDeleted(classX.fetch(ClassX_.school, JoinType.INNER))
+          .get(School_.id)
+          .in(ImmutableList.copyOf(params.getSchoolIds().get()));
+    }
+
+    // userXIds.
+    if (params.getUserXIds().isPresent()) {
+      notDeleted(projectPost.fetch(ProjectPost_.userX, JoinType.INNER))
+          .get(UserX_.id)
+          .in(ImmutableList.copyOf(params.getUserXIds().get()));
+    }
+
+    // beingEdited.
+    if (params.getBeingEdited().isPresent()) {
+      where.add(
+          builder.equal(projectPost.get(ProjectPost_.beingEdited), params.getBeingEdited().get()));
+    }
+
+    return projectPost;
   }
 
   default void upsert(Database db, UserX tagUserX, FullProjectPost fullProjectPost) {

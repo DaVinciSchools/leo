@@ -2,6 +2,7 @@ package org.davincischools.leo.server.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toSet;
 import static org.davincischools.leo.database.utils.DaoUtils.createJoinTableRows;
 import static org.davincischools.leo.database.utils.DaoUtils.getDaoClass;
 import static org.davincischools.leo.database.utils.DaoUtils.ifInitialized;
@@ -43,6 +44,7 @@ import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.ProjectPostComment;
+import org.davincischools.leo.database.daos.ProjectPostRating;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.daos.UserX;
@@ -271,13 +273,18 @@ public class ProtoDaoUtils {
             org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
             org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER,
             org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER,
-            org.davincischools.leo.protos.pl_types.ProjectPost.PROJECT_FIELD_NUMBER);
+            org.davincischools.leo.protos.pl_types.ProjectPost.PROJECT_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.ProjectPost.RATINGS_FIELD_NUMBER);
     if (projectPost.hasUserX()) {
       dao.setUserX(toUserXDao(projectPost.getUserX()));
     }
     if (projectPost.hasProject()) {
       dao.setProject(toProjectDao(projectPost.getProject()));
     }
+    dao.setProjectPostRatings(
+        projectPost.getRatingsList().stream()
+            .map(ProtoDaoUtils::toProjectPostRatingDao)
+            .collect(toSet()));
     return dao;
   }
 
@@ -306,12 +313,16 @@ public class ProtoDaoUtils {
         newBuilder,
         b -> {
           toUserXProto(projectPost.getUserX(), b::getUserXBuilder);
-          toProjectProto(projectPost.getProject(), b::getProjectBuilder);
+          // toProjectProto(projectPost.getProject(), b::getProjectBuilder);
+          ifInitialized(projectPost.getTags(), tag -> toTagProto(tag, b::addTagsBuilder));
+          // ifInitialized(projectPost.getProjectPostComments(), comment -> toProjectPostCommentProto(comment, b::addCommentsBuilder));
+          ifInitialized(projectPost.getProjectPostRatings(), rating -> toProjectPostRatingProto(rating, b::addRatingsBuilder));
         },
         org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectPost.PROJECT_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectPost.PROJECT_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.ProjectPost.RATINGS_FIELD_NUMBER);
   }
 
   public static Optional<org.davincischools.leo.protos.pl_types.ProjectPost.Builder>
@@ -370,7 +381,7 @@ public class ProtoDaoUtils {
         newBuilder,
         builder -> {
           toUserXProto(projectPostComment.getUserX(), builder::getUserXBuilder);
-          toProjectPostProto(projectPostComment.getProjectPost(), builder::getProjectPostBuilder);
+          // toProjectPostProto(projectPostComment.getProjectPost(), builder::getProjectPostBuilder);
         },
         org.davincischools.leo.protos.pl_types.ProjectPostComment.USER_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPostComment.PROJECT_POST_FIELD_NUMBER);
@@ -381,6 +392,46 @@ public class ProtoDaoUtils {
           FullProjectPostComment projectPostComment,
           Supplier<org.davincischools.leo.protos.pl_types.ProjectPostComment.Builder> newBuilder) {
     return toProjectPostCommentProto(projectPostComment.getProjectPostComment(), newBuilder);
+  }
+
+  public static ProjectPostRating toProjectPostRatingDao(
+      org.davincischools.leo.protos.pl_types.ProjectPostRatingOrBuilder projectPostRating) {
+    ProjectPostRating dao =
+        translateToDao(
+            projectPostRating,
+            new ProjectPostRating().setCreationTime(Instant.now()),
+            org.davincischools.leo.protos.pl_types.ProjectPostRating.USER_X_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.ProjectPostRating
+                .KNOWLEDGE_AND_SKILL_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.ProjectPostRating.PROJECT_POST_FIELD_NUMBER);
+    if (projectPostRating.hasUserX()) {
+      dao.setUserX(toUserXDao(projectPostRating.getUserX()));
+    }
+    if (projectPostRating.hasKnowledgeAndSkill()) {
+      dao.setKnowledgeAndSkill(toKnowledgeAndSkillDao(projectPostRating.getKnowledgeAndSkill()));
+    }
+    if (projectPostRating.hasProjectPost()) {
+      dao.setProjectPost(toProjectPostDao(projectPostRating.getProjectPost()));
+    }
+    return dao;
+  }
+
+  public static Optional<org.davincischools.leo.protos.pl_types.ProjectPostRating.Builder>
+      toProjectPostRatingProto(
+          ProjectPostRating projectPostRating,
+          Supplier<org.davincischools.leo.protos.pl_types.ProjectPostRating.Builder> newBuilder) {
+    return translateToProto(
+        projectPostRating,
+        newBuilder,
+        builder -> {
+          toUserXProto(projectPostRating.getUserX(), builder::getUserXBuilder);
+          toKnowledgeAndSkillProto(
+              projectPostRating.getKnowledgeAndSkill(), builder::getKnowledgeAndSkillBuilder);
+          // toProjectPostProto(projectPostRating.getProjectPost(), builder::getProjectPostBuilder);
+        },
+        org.davincischools.leo.protos.pl_types.ProjectPostRating.USER_X_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectPostRating.KNOWLEDGE_AND_SKILL_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectPostRating.PROJECT_POST_FIELD_NUMBER);
   }
 
   public static Interest toInterestDao(RegisterUserXRequest register_userX_request) {
@@ -511,7 +562,7 @@ public class ProtoDaoUtils {
     dao.setAssignments(
         classX.getAssignmentsList().stream()
             .map(ProtoDaoUtils::toAssignmentDao)
-            .collect(Collectors.toSet()));
+            .collect(toSet()));
     dao.setClassXKnowledgeAndSkills(
         createJoinTableRows(
             dao,
@@ -626,7 +677,7 @@ public class ProtoDaoUtils {
     Class<?> daoClass = getDaoClass(toDao);
 
     Set<Integer> ignoredFieldNumbers =
-        Arrays.stream(ignoreFieldNumbers).boxed().collect(Collectors.toSet());
+        Arrays.stream(ignoreFieldNumbers).boxed().collect(toSet());
 
     Map<Integer, BiConsumer</* message= */ MessageOrBuilder, /* dao= */ Object>> daoSetters =
         protoToDaoSetters.computeIfAbsent(
@@ -852,7 +903,7 @@ public class ProtoDaoUtils {
     Descriptor protoDescriptor = toMessage.getDescriptorForType();
 
     Set<Integer> ignoredFieldNumbers =
-        Arrays.stream(ignoreFieldNumbers).boxed().collect(Collectors.toSet());
+        Arrays.stream(ignoreFieldNumbers).boxed().collect(toSet());
 
     Map<Integer, BiConsumer</* dao= */ Object, /* message= */ Message.Builder>> protoSetters =
         daoToProtoSetters.computeIfAbsent(

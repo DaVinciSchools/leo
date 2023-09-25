@@ -194,6 +194,20 @@ message ProjectPostComment {
   reserved 'project_post_id';
 }
 
+message ProjectPostRating {
+  enum RatingType {
+    UNSET = 0;
+    INITIAL_1_TO_5 = 1;
+  }
+
+  optional int32 id = 1;
+  optional UserX user_x = 2;
+  optional int32 rating = 3;
+  optional RatingType rating_type = 4;
+  optional ProjectPost project_post = 5;
+  optional KnowledgeAndSkill knowledge_and_skill = 6;
+}
+
 message ProjectPost {
   optional int32 id = 1;
   optional UserX user_x = 2;
@@ -205,6 +219,7 @@ message ProjectPost {
   repeated ProjectPostComment comments = 11;
   optional int64 post_time_ms = 8;
   optional bool being_edited = 9;
+  repeated ProjectPostRating ratings = 13;
 
   reserved 10;
   reserved 'project_id';

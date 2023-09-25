@@ -58,7 +58,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Integer>
     getAssignments(params, assignment, where);
 
     // Select.
-    query.select(assignment).where(where.toArray(new Predicate[0]));
+    query.select(assignment).distinct(true).where(where.toArray(new Predicate[0]));
     return entityManager.createQuery(query).getResultList();
   }
 

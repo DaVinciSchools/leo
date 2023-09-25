@@ -18,6 +18,7 @@ message GetProjectPostsRequest {
   optional bool include_tags = 8;
   optional bool include_comments = 9;
   optional bool include_projects = 10;
+  optional bool include_ratings = 12;
 
   repeated int32 project_ids = 7;
   repeated int32 project_post_ids = 11;
