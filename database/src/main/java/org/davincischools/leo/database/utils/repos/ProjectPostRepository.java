@@ -27,6 +27,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill_;
 import org.davincischools.leo.database.daos.Assignment_;
 import org.davincischools.leo.database.daos.ClassX_;
 import org.davincischools.leo.database.daos.ProjectPost;
@@ -87,14 +88,19 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     for (ProjectPost post : entityManager.createQuery(query).getResultList()) {
       var fullPost = new FullProjectPost().setProjectPost(post);
       fullProjectPosts.add(fullPost);
-      for (ProjectPostComment comment : post.getProjectPostComments()) {
-        fullPost
-            .getProjectPostComments()
-            .put(
-                comment.getPostTime(), new FullProjectPostComment().setProjectPostComment(comment));
+      if (params.getIncludeComments().orElse(false)) {
+        for (ProjectPostComment comment : post.getProjectPostComments()) {
+          fullPost
+              .getProjectPostComments()
+              .put(
+                  comment.getPostTime(),
+                  new FullProjectPostComment().setProjectPostComment(comment));
+        }
       }
-      for (Tag tag : post.getTags()) {
-        fullPost.getTags().put(tag.getUserX().getId(), tag.getText());
+      if (params.getIncludeTags().orElse(false)) {
+        for (Tag tag : post.getTags()) {
+          fullPost.getTags().put(tag.getUserX().getId(), tag.getText());
+        }
       }
     }
 
@@ -131,6 +137,17 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     // includeRatings.
     if (params.getIncludeRatings().orElse(false)) {
       notDeleted(projectPost.fetch(ProjectPost_.projectPostRatings, JoinType.LEFT));
+    }
+
+    // includeAssignments.
+    if (params.getIncludeAssignments().orElse(false)) {
+      var project = notDeleted(projectPost.fetch(ProjectPost_.project, JoinType.LEFT));
+      var assignment = notDeleted(project.fetch(Project_.assignment, JoinType.LEFT));
+      var assignmentKnowledgeAndSkills =
+          notDeleted(assignment.fetch(Assignment_.assignmentKnowledgeAndSkills, JoinType.LEFT));
+      notDeleted(
+          assignmentKnowledgeAndSkills.fetch(
+              AssignmentKnowledgeAndSkill_.knowledgeAndSkill.getName(), JoinType.LEFT));
     }
 
     // projectPostIds.

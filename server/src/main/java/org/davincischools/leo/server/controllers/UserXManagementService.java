@@ -360,6 +360,7 @@ public class UserXManagementService {
                           request.getUserX().getSchoolsList(), ProtoDaoUtils::toSchoolDao));
 
               // Update classes.
+              // TODO: move this under admin requirements.
               List<ClassX> classXs =
                   Lists.transform(request.getUserX().getClassXsList(), ProtoDaoUtils::toClassXDao);
               if (newUserX.getTeacher() != null) {

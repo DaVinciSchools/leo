@@ -71,9 +71,35 @@ export function formatAsTag(text: string | null | undefined) {
   return '#' + (text ?? 'tag').replace(/^#/, '');
 }
 
-export type DeepReadonly<T> = T extends void | undefined
-  ? undefined
-  : T extends undefined | null | boolean | string | number | Function
+export type DeepWritable<T> = T extends
+  | undefined
+  | void
+  | null
+  | boolean
+  | string
+  | number
+  | Function
+  ? T
+  : T extends ReadonlyArray<infer E>
+  ? Array<DeepWritable<E>>
+  : T extends ReadonlyMap<infer K, infer V>
+  ? Map<DeepWritable<K>, DeepWritable<V>>
+  : T extends ReadonlySet<infer E>
+  ? Set<DeepWritable<E>>
+  : {-readonly [K in keyof T]: DeepWritable<T[K]>};
+
+export function DeepWritable<T>(value: T | DeepReadonly<T>): DeepWritable<T> {
+  return value as DeepWritable<T>;
+}
+
+export type DeepReadonly<T> = T extends
+  | undefined
+  | void
+  | null
+  | boolean
+  | string
+  | number
+  | Function
   ? T
   : T extends Array<infer E>
   ? ReadonlyArray<DeepReadonly<E>>
@@ -82,3 +108,7 @@ export type DeepReadonly<T> = T extends void | undefined
   : T extends Set<infer E>
   ? ReadonlySet<DeepReadonly<E>>
   : {readonly [K in keyof T]: DeepReadonly<T[K]>};
+
+export function DeepReadonly<T>(value: T | DeepWritable<T>): DeepReadonly<T> {
+  return value as DeepReadonly<T>;
+}

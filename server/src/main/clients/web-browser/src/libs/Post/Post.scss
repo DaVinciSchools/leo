@@ -96,6 +96,13 @@
     gap: 1rem;
   }
 
+  .post-in-feed-ratings {
+    @extend .global-flex-column;
+    border-top: 1px solid lightgrey;
+    padding-top: 1rem;
+    gap: 1rem;
+  }
+
   .post-in-feed-comment {
     @extend .global-flex-row;
   }

@@ -12,6 +12,7 @@ service PostService {
   rpc UpsertProjectPost(UpsertProjectPostRequest) returns (UpsertProjectPostResponse) {};
   rpc UpsertProjectPostComment(UpsertProjectPostCommentRequest) returns (UpsertProjectPostCommentResponse) {};
   rpc DeleteProjectPostComment(DeleteProjectPostCommentRequest) returns (DeleteProjectPostCommentResponse) {};
+  rpc UpsertProjectPostRating(UpsertProjectPostRatingRequest) returns (UpsertProjectPostRatingResponse) {};
 }
 
 message GetProjectPostsRequest {
@@ -19,6 +20,7 @@ message GetProjectPostsRequest {
   optional bool include_comments = 9;
   optional bool include_projects = 10;
   optional bool include_ratings = 12;
+  optional bool include_assignments = 13;
 
   repeated int32 project_ids = 7;
   repeated int32 project_post_ids = 11;
@@ -59,3 +61,12 @@ message DeleteProjectPostCommentRequest {
 
 message DeleteProjectPostCommentResponse {
 }
+
+message UpsertProjectPostRatingRequest {
+  optional pl_types.ProjectPostRating project_post_rating = 1;
+}
+
+message UpsertProjectPostRatingResponse {
+  optional int32 id = 1;
+}
+

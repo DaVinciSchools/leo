@@ -17,6 +17,7 @@ public class GetProjectPostsParams {
   @Nullable private Boolean includeComments;
   @Nullable private Boolean includeProjects;
   @Nullable private Boolean includeRatings;
+  @Nullable private Boolean includeAssignments;
 
   @Nullable private Iterable<Integer> projectPostIds;
   @Nullable private Iterable<Integer> projectIds;
@@ -40,6 +41,10 @@ public class GetProjectPostsParams {
 
   Optional<Boolean> getIncludeRatings() {
     return Optional.ofNullable(includeRatings);
+  }
+
+  Optional<Boolean> getIncludeAssignments() {
+    return Optional.ofNullable(includeAssignments);
   }
 
   Optional<Iterable<Integer>> getProjectIds() {

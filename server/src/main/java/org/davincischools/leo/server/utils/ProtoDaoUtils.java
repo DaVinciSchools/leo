@@ -307,16 +307,22 @@ public class ProtoDaoUtils {
   public static Optional<org.davincischools.leo.protos.pl_types.ProjectPost.Builder>
       toProjectPostProto(
           ProjectPost projectPost,
+          boolean recursive,
           Supplier<org.davincischools.leo.protos.pl_types.ProjectPost.Builder> newBuilder) {
     return translateToProto(
         projectPost,
         newBuilder,
         b -> {
           toUserXProto(projectPost.getUserX(), b::getUserXBuilder);
-          // toProjectProto(projectPost.getProject(), b::getProjectBuilder);
+          toProjectProto(projectPost.getProject(), b::getProjectBuilder);
           ifInitialized(projectPost.getTags(), tag -> toTagProto(tag, b::addTagsBuilder));
-          // ifInitialized(projectPost.getProjectPostComments(), comment -> toProjectPostCommentProto(comment, b::addCommentsBuilder));
-          ifInitialized(projectPost.getProjectPostRatings(), rating -> toProjectPostRatingProto(rating, b::addRatingsBuilder));
+          // ifInitialized(projectPost.getProjectPostComments(), comment ->
+          // toProjectPostCommentProto(comment, b::addCommentsBuilder));
+          if (recursive) {
+            ifInitialized(
+                projectPost.getProjectPostRatings(),
+                rating -> toProjectPostRatingProto(rating, b::addRatingsBuilder));
+          }
         },
         org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.PROJECT_FIELD_NUMBER,
@@ -329,7 +335,7 @@ public class ProtoDaoUtils {
       toProjectPostProto(
           FullProjectPost projectPost,
           Supplier<org.davincischools.leo.protos.pl_types.ProjectPost.Builder> newBuilder) {
-    var builder = toProjectPostProto(projectPost.getProjectPost(), newBuilder);
+    var builder = toProjectPostProto(projectPost.getProjectPost(), true, newBuilder);
     builder.ifPresent(
         b -> {
           projectPost
@@ -381,7 +387,8 @@ public class ProtoDaoUtils {
         newBuilder,
         builder -> {
           toUserXProto(projectPostComment.getUserX(), builder::getUserXBuilder);
-          // toProjectPostProto(projectPostComment.getProjectPost(), builder::getProjectPostBuilder);
+          // toProjectPostProto(projectPostComment.getProjectPost(),
+          // builder::getProjectPostBuilder);
         },
         org.davincischools.leo.protos.pl_types.ProjectPostComment.USER_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPostComment.PROJECT_POST_FIELD_NUMBER);
@@ -427,7 +434,8 @@ public class ProtoDaoUtils {
           toUserXProto(projectPostRating.getUserX(), builder::getUserXBuilder);
           toKnowledgeAndSkillProto(
               projectPostRating.getKnowledgeAndSkill(), builder::getKnowledgeAndSkillBuilder);
-          // toProjectPostProto(projectPostRating.getProjectPost(), builder::getProjectPostBuilder);
+          toProjectPostProto(
+              projectPostRating.getProjectPost(), false, builder::getProjectPostBuilder);
         },
         org.davincischools.leo.protos.pl_types.ProjectPostRating.USER_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPostRating.KNOWLEDGE_AND_SKILL_FIELD_NUMBER,
@@ -560,9 +568,7 @@ public class ProtoDaoUtils {
       dao.setSchool(toSchoolDao(classX.getSchool()));
     }
     dao.setAssignments(
-        classX.getAssignmentsList().stream()
-            .map(ProtoDaoUtils::toAssignmentDao)
-            .collect(toSet()));
+        classX.getAssignmentsList().stream().map(ProtoDaoUtils::toAssignmentDao).collect(toSet()));
     dao.setClassXKnowledgeAndSkills(
         createJoinTableRows(
             dao,
@@ -676,8 +682,7 @@ public class ProtoDaoUtils {
     Descriptor protoDescriptor = fromMessage.getDescriptorForType();
     Class<?> daoClass = getDaoClass(toDao);
 
-    Set<Integer> ignoredFieldNumbers =
-        Arrays.stream(ignoreFieldNumbers).boxed().collect(toSet());
+    Set<Integer> ignoredFieldNumbers = Arrays.stream(ignoreFieldNumbers).boxed().collect(toSet());
 
     Map<Integer, BiConsumer</* message= */ MessageOrBuilder, /* dao= */ Object>> daoSetters =
         protoToDaoSetters.computeIfAbsent(
@@ -902,8 +907,7 @@ public class ProtoDaoUtils {
     Class<? extends Message.Builder> protoClass = toMessage.getClass();
     Descriptor protoDescriptor = toMessage.getDescriptorForType();
 
-    Set<Integer> ignoredFieldNumbers =
-        Arrays.stream(ignoreFieldNumbers).boxed().collect(toSet());
+    Set<Integer> ignoredFieldNumbers = Arrays.stream(ignoreFieldNumbers).boxed().collect(toSet());
 
     Map<Integer, BiConsumer</* dao= */ Object, /* message= */ Message.Builder>> protoSetters =
         daoToProtoSetters.computeIfAbsent(

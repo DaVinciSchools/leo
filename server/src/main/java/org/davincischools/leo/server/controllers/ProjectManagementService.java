@@ -2,6 +2,7 @@ package org.davincischools.leo.server.controllers;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
@@ -499,7 +500,7 @@ public class ProjectManagementService {
                 Option.newBuilder()
                     .setId(i.getId())
                     .setName(i.getName())
-                    .setShortDescr(i.getShortDescr())
+                    .setShortDescr(Strings.nullToEmpty(i.getShortDescr()))
                     .setUserXId(i.getUserX().getId());
             if (i.getCategory() != null) {
               option.setCategory(i.getCategory());

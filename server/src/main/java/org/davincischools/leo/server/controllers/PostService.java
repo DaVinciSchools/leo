@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.ProjectPostComment;
+import org.davincischools.leo.database.daos.ProjectPostRating;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
@@ -19,6 +20,8 @@ import org.davincischools.leo.protos.post_service.GetProjectPostsRequest;
 import org.davincischools.leo.protos.post_service.GetProjectPostsResponse;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostCommentRequest;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostCommentResponse;
+import org.davincischools.leo.protos.post_service.UpsertProjectPostRatingRequest;
+import org.davincischools.leo.protos.post_service.UpsertProjectPostRatingResponse;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostRequest;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostResponse;
 import org.davincischools.leo.server.utils.ProtoDaoUtils;
@@ -64,6 +67,10 @@ public class PostService {
                               request.hasIncludeProjects() ? request.getIncludeProjects() : null)
                           .setIncludeRatings(
                               request.hasIncludeRatings() ? request.getIncludeRatings() : null)
+                          .setIncludeAssignments(
+                              request.hasIncludeAssignments()
+                                  ? request.getIncludeAssignments()
+                                  : null)
                           .setProjectIds(
                               request.getProjectIdsList().isEmpty()
                                   ? null
@@ -232,6 +239,54 @@ public class PostService {
               db.getProjectPostCommentRepository().upsert(fullProjectPostComment);
 
               return DeleteProjectPostCommentResponse.getDefaultInstance();
+            })
+        .finish();
+  }
+
+  @Transactional
+  @PostMapping(value = "/api/protos/PostService/UpsertProjectPostRating")
+  @ResponseBody
+  public UpsertProjectPostRatingResponse upsertProjectPostRating(
+      @Authenticated HttpUserX userX,
+      @RequestBody Optional<UpsertProjectPostRatingRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    return httpExecutors
+        .start(optionalRequest.orElse(UpsertProjectPostRatingRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              if (userX.isNotAuthorized()) {
+                return userX.returnForbidden(UpsertProjectPostRatingResponse.getDefaultInstance());
+              }
+
+              if (!userX.isAdminX()) {
+                if (!Objects.equals(
+                    request.getProjectPostRating().getUserX().getId(), userX.getUserXIdOrNull())) {
+                  return userX.returnForbidden(
+                      UpsertProjectPostRatingResponse.getDefaultInstance());
+                }
+                if (request.getProjectPostRating().hasId()) {
+                  ProjectPostRating oldRating =
+                      db.getProjectPostRatingRepository()
+                          .findById(request.getProjectPostRating().getId())
+                          .orElse(null);
+                  if (oldRating != null) {
+                    if (!Objects.equals(oldRating.getUserX().getId(), userX.getUserXIdOrNull())) {
+                      return userX.returnForbidden(
+                          UpsertProjectPostRatingResponse.getDefaultInstance());
+                    }
+                  }
+                }
+              }
+
+              ProjectPostRating savedRating =
+                  DaoUtils.removeTransientValues(
+                      ProtoDaoUtils.toProjectPostRatingDao(request.getProjectPostRating()),
+                      db.getProjectPostRatingRepository()::save);
+
+              return UpsertProjectPostRatingResponse.newBuilder()
+                  .setId(savedRating.getId())
+                  .build();
             })
         .finish();
   }

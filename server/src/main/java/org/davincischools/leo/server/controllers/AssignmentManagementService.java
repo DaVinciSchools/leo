@@ -84,8 +84,15 @@ public class AssignmentManagementService {
                               request.hasStudentId() ? List.of(request.getStudentId()) : null)
                           .setIncludeKnowledgeAndSkills(true))
                   .forEach(
-                      classX ->
-                          ProtoDaoUtils.toClassXProto(classX, true, response::addClassXsBuilder));
+                      classX -> {
+                        ProtoDaoUtils.toClassXProto(classX, true, response::addClassXsBuilder);
+                        classX
+                            .getAssignments()
+                            .forEach(
+                                assignment ->
+                                    ProtoDaoUtils.toAssignmentProto(
+                                        assignment, true, response::addAssignmentsBuilder));
+                      });
 
               return response.build();
             })

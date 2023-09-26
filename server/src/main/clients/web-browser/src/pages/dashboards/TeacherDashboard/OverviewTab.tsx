@@ -11,27 +11,27 @@ import {
   school_management,
   user_x_management,
 } from '../../../generated/protobuf-js';
-import IClassX = pl_types.IClassX;
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {
   filterAutocompleteFormField,
   useFormFields,
 } from '../../../libs/form_utils/forms';
-import SchoolManagementService = school_management.SchoolManagementService;
 import {createService} from '../../../libs/protos';
-import ISchool = pl_types.ISchool;
 import {MultiSchoolAutocomplete} from '../../../libs/common_fields/MultiSchoolAutocomplete';
 import {SCHOOL_SORTER} from '../../../libs/sorters';
 import {MultiClassXAutocomplete} from '../../../libs/common_fields/MultiClassXAutocomplete';
-import ClassXManagementService = class_x_management_service.ClassXManagementService;
-import PostService = post_service.PostService;
-import IProjectPost = pl_types.IProjectPost;
 import {FilterAltTwoTone} from '@mui/icons-material';
 import {PostsFeed} from '../../../libs/PostsFeed/PostsFeed';
 import {DeepReadonly} from '../../../libs/misc';
-import IFullUserXDetails = user_x_management.IFullUserXDetails;
 import {Button} from '@mui/material';
 import {SearchForUserXModal} from '../../../libs/SearchForUserX/SearchForUserXModal';
+import IClassX = pl_types.IClassX;
+import SchoolManagementService = school_management.SchoolManagementService;
+import ISchool = pl_types.ISchool;
+import ClassXManagementService = class_x_management_service.ClassXManagementService;
+import PostService = post_service.PostService;
+import IProjectPost = pl_types.IProjectPost;
+import IFullUserXDetails = user_x_management.IFullUserXDetails;
 
 export function OverviewTab() {
   const global = useContext(GlobalStateContext);
@@ -118,6 +118,8 @@ export function OverviewTab() {
         includeProjects: true,
         includeComments: true,
         includeTags: true,
+        includeRatings: true,
+        includeAssignments: true,
         beingEdited: false,
       })
       .then(response => {

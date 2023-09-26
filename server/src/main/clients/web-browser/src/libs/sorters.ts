@@ -65,3 +65,7 @@ export const PROJECT_DEFINITION_SORTER = (
 export const TAG_SORTER = (a: ITag, b: ITag) =>
   (a.userXId ?? 0) - (b.userXId ?? 0) ||
   (a.text ?? '').localeCompare(b.text ?? '');
+
+export const USER_X_SORTER = (a: pl_types.IUserX, b: pl_types.IUserX) =>
+  (a.lastName ?? '').localeCompare(b.lastName ?? '') ||
+  (a.firstName ?? '').localeCompare(b.firstName ?? '');

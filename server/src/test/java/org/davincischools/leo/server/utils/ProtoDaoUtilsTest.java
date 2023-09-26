@@ -16,6 +16,7 @@ import org.davincischools.leo.protos.pl_types.Project;
 import org.davincischools.leo.protos.pl_types.Project.Milestone;
 import org.davincischools.leo.protos.pl_types.ProjectPost;
 import org.davincischools.leo.protos.pl_types.ProjectPostComment;
+import org.davincischools.leo.protos.pl_types.ProjectPostRating;
 import org.davincischools.leo.protos.pl_types.School;
 import org.davincischools.leo.protos.pl_types.Tag;
 import org.davincischools.leo.protos.pl_types.UserX;
@@ -434,7 +435,9 @@ public class ProtoDaoUtilsTest {
   public void toProjectPostConvertersNull() throws ParseException {
     assertThat(
             ProtoDaoUtils.toProjectPostProto(
-                (org.davincischools.leo.database.daos.ProjectPost) null, ProjectPost::newBuilder))
+                (org.davincischools.leo.database.daos.ProjectPost) null,
+                true,
+                ProjectPost::newBuilder))
         .isEmpty();
   }
 
@@ -443,6 +446,7 @@ public class ProtoDaoUtilsTest {
     assertThat(
             ProtoDaoUtils.toProjectPostProto(
                 newUninitialized(org.davincischools.leo.database.daos.ProjectPost.class),
+                true,
                 ProjectPost::newBuilder))
         .isEmpty();
   }
@@ -453,7 +457,7 @@ public class ProtoDaoUtilsTest {
 
     assertThat(
             ProtoDaoUtils.toProjectPostProto(
-                    ProtoDaoUtils.toProjectPostDao(proto), ProjectPost::newBuilder)
+                    ProtoDaoUtils.toProjectPostDao(proto), true, ProjectPost::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);
@@ -523,7 +527,7 @@ public class ProtoDaoUtilsTest {
 
     assertThat(
             ProtoDaoUtils.toProjectPostProto(
-                    ProtoDaoUtils.toProjectPostDao(proto), ProjectPost::newBuilder)
+                    ProtoDaoUtils.toProjectPostDao(proto), true, ProjectPost::newBuilder)
                 .orElseThrow()
                 .build())
         .ignoringFields(ProjectPost.TAGS_FIELD_NUMBER)
@@ -599,6 +603,9 @@ public class ProtoDaoUtilsTest {
                 .orElseThrow()
                 .build())
         .ignoringFields(ProjectPost.TAGS_FIELD_NUMBER)
+        .ignoringFieldDescriptors(
+            ProjectPostComment.getDescriptor()
+                .findFieldByNumber(ProjectPostComment.PROJECT_POST_FIELD_NUMBER))
         .isEqualTo(proto);
   }
 
@@ -1023,6 +1030,7 @@ public class ProtoDaoUtilsTest {
                     ProtoDaoUtils.toProjectPostCommentDao(proto), ProjectPostComment::newBuilder)
                 .orElseThrow()
                 .build())
+        .ignoringFields(ProjectPostComment.PROJECT_POST_FIELD_NUMBER)
         .isEqualTo(proto);
   }
 
@@ -1056,26 +1064,23 @@ public class ProtoDaoUtilsTest {
                     ProtoDaoUtils.toFullProjectPostComment(proto), ProjectPostComment::newBuilder)
                 .orElseThrow()
                 .build())
+        .ignoringFields(ProjectPostComment.PROJECT_POST_FIELD_NUMBER)
         .isEqualTo(proto);
   }
 
   @Test
   public void toProjectPostRatingConvertersNull() {
-    assertThat(
-            ProtoDaoUtils.toProjectPostRatingProto(
-                    (org.davincischools.leo.database.daos.ProjectPostRating) null, null)
-                .build())
-        .isEqualTo(ProjectPostRating.getDefaultInstance());
+    assertThat(ProtoDaoUtils.toProjectPostRatingProto(null, ProjectPostRating::newBuilder))
+        .isEmpty();
   }
 
   @Test
   public void toProjectPostRatingConvertersUninitialized() {
     assertThat(
             ProtoDaoUtils.toProjectPostRatingProto(
-                    newUninitialized(org.davincischools.leo.database.daos.ProjectPostRating.class),
-                    null)
-                .build())
-        .isEqualTo(ProjectPostRating.getDefaultInstance());
+                newUninitialized(org.davincischools.leo.database.daos.ProjectPostRating.class),
+                ProjectPostRating::newBuilder))
+        .isEmpty();
   }
 
   @Test
@@ -1084,7 +1089,8 @@ public class ProtoDaoUtilsTest {
 
     assertThat(
             ProtoDaoUtils.toProjectPostRatingProto(
-                    ProtoDaoUtils.toProjectPostRatingDao(proto), null)
+                    ProtoDaoUtils.toProjectPostRatingDao(proto), ProjectPostRating::newBuilder)
+                .orElseThrow()
                 .build())
         .isEqualTo(proto);
   }
@@ -1096,14 +1102,14 @@ public class ProtoDaoUtilsTest {
             """
                 id: 1
                 user_x {
-                  user_x_id: 2
+                  id: 2
                   is_demo: true
                   is_authenticated: true
                 }
                 project_post {
                   id: 3
                   user_x {
-                    user_x_id: 4
+                    id: 4
                     is_demo: true
                     is_authenticated: true
                   }
@@ -1123,7 +1129,8 @@ public class ProtoDaoUtilsTest {
 
     assertThat(
             ProtoDaoUtils.toProjectPostRatingProto(
-                    ProtoDaoUtils.toProjectPostRatingDao(proto), null)
+                    ProtoDaoUtils.toProjectPostRatingDao(proto), ProjectPostRating::newBuilder)
+                .orElseThrow()
                 .build())
         .isEqualTo(proto);
   }
