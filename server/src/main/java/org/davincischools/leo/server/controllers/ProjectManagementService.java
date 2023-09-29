@@ -361,7 +361,7 @@ public class ProjectManagementService {
               }
 
               var response = GetProjectDetailsResponse.newBuilder();
-              ProtoDaoUtils.toProjectProto(project, response::getProjectBuilder);
+              ProtoDaoUtils.toProjectProto(project.project(), true, response::getProjectBuilder);
               return response.build();
             })
         .finish();
@@ -397,7 +397,8 @@ public class ProjectManagementService {
 
               db.getProjectRepository()
                   .findProjectsByUserXId(userXId, request.getActiveOnly())
-                  .forEach(e -> ProtoDaoUtils.toProjectProto(e, response::addProjectsBuilder));
+                  .forEach(
+                      e -> ProtoDaoUtils.toProjectProto(e, true, response::addProjectsBuilder));
 
               if (request.getIncludeUnsuccessful()) {
                 db.getProjectInputRepository()

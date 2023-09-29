@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
@@ -53,7 +52,6 @@ import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillReposi
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.FullProjectInput;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
-import org.davincischools.leo.database.utils.repos.ProjectPostRepository.FullProjectPost;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.MilestoneWithSteps;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
@@ -234,11 +232,16 @@ public class ProtoDaoUtils {
 
   public static Optional<org.davincischools.leo.protos.pl_types.Project.Builder> toProjectProto(
       Project project,
+      boolean includeChildren,
       Supplier<org.davincischools.leo.protos.pl_types.Project.Builder> newBuilder) {
     return translateToProto(
         project,
         newBuilder,
-        builder -> toAssignmentProto(project.getAssignment(), true, builder::getAssignmentBuilder),
+        builder -> {
+          if (includeChildren) {
+            toAssignmentProto(project.getAssignment(), true, builder::getAssignmentBuilder);
+          }
+        },
         org.davincischools.leo.protos.pl_types.Project.ASSIGNMENT_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER);
   }
@@ -246,7 +249,7 @@ public class ProtoDaoUtils {
   public static Optional<org.davincischools.leo.protos.pl_types.Project.Builder> toProjectProto(
       ProjectWithMilestones projectWithMilestones,
       Supplier<org.davincischools.leo.protos.pl_types.Project.Builder> newBuilder) {
-    var builder = toProjectProto(projectWithMilestones.project(), newBuilder);
+    var builder = toProjectProto(projectWithMilestones.project(), true, newBuilder);
     builder.ifPresent(
         b ->
             projectWithMilestones
@@ -281,44 +284,34 @@ public class ProtoDaoUtils {
     if (projectPost.hasProject()) {
       dao.setProject(toProjectDao(projectPost.getProject()));
     }
+    dao.setTags(projectPost.getTagsList().stream().map(ProtoDaoUtils::toTagDao).collect(toSet()));
     dao.setProjectPostRatings(
         projectPost.getRatingsList().stream()
             .map(ProtoDaoUtils::toProjectPostRatingDao)
             .collect(toSet()));
+    dao.setProjectPostComments(
+        projectPost.getCommentsList().stream()
+            .map(ProtoDaoUtils::toProjectPostCommentDao)
+            .collect(toSet()));
     return dao;
-  }
-
-  public static FullProjectPost toFullProjectPostRecord(
-      org.davincischools.leo.protos.pl_types.ProjectPostOrBuilder projectPost) {
-    FullProjectPost fullProjectPost =
-        new FullProjectPost().setProjectPost(toProjectPostDao(projectPost));
-    projectPost
-        .getTagsList()
-        .forEach(tag -> fullProjectPost.getTags().put(tag.getUserXId(), tag.getText()));
-    fullProjectPost
-        .getProjectPostComments()
-        .putAll(
-            projectPost.getCommentsList().stream()
-                .map(ProtoDaoUtils::toFullProjectPostComment)
-                .collect(Collectors.toMap(e -> e.getProjectPostComment().getPostTime(), e -> e)));
-    return fullProjectPost;
   }
 
   public static Optional<org.davincischools.leo.protos.pl_types.ProjectPost.Builder>
       toProjectPostProto(
           ProjectPost projectPost,
-          boolean recursive,
+          boolean includeChildren,
           Supplier<org.davincischools.leo.protos.pl_types.ProjectPost.Builder> newBuilder) {
     return translateToProto(
         projectPost,
         newBuilder,
         b -> {
           toUserXProto(projectPost.getUserX(), b::getUserXBuilder);
-          toProjectProto(projectPost.getProject(), b::getProjectBuilder);
+          toProjectProto(projectPost.getProject(), false, b::getProjectBuilder);
           ifInitialized(projectPost.getTags(), tag -> toTagProto(tag, b::addTagsBuilder));
-          // ifInitialized(projectPost.getProjectPostComments(), comment ->
-          // toProjectPostCommentProto(comment, b::addCommentsBuilder));
-          if (recursive) {
+          if (includeChildren) {
+            ifInitialized(
+                projectPost.getProjectPostComments(),
+                comment -> toProjectPostCommentProto(comment, b::addCommentsBuilder));
             ifInitialized(
                 projectPost.getProjectPostRatings(),
                 rating -> toProjectPostRatingProto(rating, b::addRatingsBuilder));
@@ -329,31 +322,6 @@ public class ProtoDaoUtils {
         org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.RATINGS_FIELD_NUMBER);
-  }
-
-  public static Optional<org.davincischools.leo.protos.pl_types.ProjectPost.Builder>
-      toProjectPostProto(
-          FullProjectPost projectPost,
-          Supplier<org.davincischools.leo.protos.pl_types.ProjectPost.Builder> newBuilder) {
-    var builder = toProjectPostProto(projectPost.getProjectPost(), true, newBuilder);
-    builder.ifPresent(
-        b -> {
-          projectPost
-              .getProjectPostComments()
-              .values()
-              .forEach(comment -> toProjectPostCommentProto(comment, b::addCommentsBuilder));
-          projectPost
-              .getTags()
-              .entries()
-              .forEach(
-                  tag ->
-                      toTagProto(
-                          new Tag()
-                              .setUserX(new UserX().setId(tag.getKey()))
-                              .setText(tag.getValue()),
-                          b::addTagsBuilder));
-        });
-    return builder;
   }
 
   public static ProjectPostComment toProjectPostCommentDao(

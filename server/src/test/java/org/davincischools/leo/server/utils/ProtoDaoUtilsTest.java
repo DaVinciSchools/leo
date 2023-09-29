@@ -499,9 +499,6 @@ public class ProtoDaoUtilsTest {
                     is_demo: true
                     is_authenticated: true
                   }
-                  project_post {
-                    id: 13
-                  }
                   long_descr_html: "long_descr_html"
                   post_time_ms: 14
                   being_edited: true
@@ -512,9 +509,6 @@ public class ProtoDaoUtilsTest {
                     id: 8
                     is_demo: true
                     is_authenticated: true
-                  }
-                  project_post {
-                    id: 9
                   }
                   long_descr_html: "long_descr_html"
                   post_time_ms: 10
@@ -530,82 +524,7 @@ public class ProtoDaoUtilsTest {
                     ProtoDaoUtils.toProjectPostDao(proto), true, ProjectPost::newBuilder)
                 .orElseThrow()
                 .build())
-        .ignoringFields(ProjectPost.TAGS_FIELD_NUMBER)
-        .ignoringFields(ProjectPost.COMMENTS_FIELD_NUMBER)
-        .isEqualTo(proto);
-  }
-
-  @Test
-  public void toFullProjectPostConverter() throws ParseException {
-    ProjectPost proto =
-        TextFormat.parse(
-            """
-                id: 1
-                user_x {
-                  id: 2
-                  is_demo: true
-                  is_authenticated: true
-                }
-                project {
-                  id: 3
-                }
-                name: "name"
-                long_descr_html: "long_descr_html"
-                desired_feedback: "desired_feedback"
-                tags {
-                  user_x_id: 4
-                  text: "tag1"
-                }
-                tags {
-                  user_x_id: 5
-                  text: "tag2"
-                }
-                tags {
-                  user_x_id: 6
-                  text: "tag3"
-                }
-                comments {
-                  id: 11
-                  user_x {
-                    id: 12
-                    is_demo: true
-                    is_authenticated: true
-                  }
-                  project_post {
-                    id: 13
-                  }
-                  long_descr_html: "long_descr_html"
-                  post_time_ms: 14
-                  being_edited: true
-                }
-                comments {
-                  id: 7
-                  user_x {
-                    id: 8
-                    is_demo: true
-                    is_authenticated: true
-                  }
-                  project_post {
-                    id: 9
-                  }
-                  long_descr_html: "long_descr_html"
-                  post_time_ms: 10
-                  being_edited: true
-                }
-                post_time_ms: 7
-                being_edited: true
-                """,
-            ProjectPost.class);
-
-    assertThat(
-            ProtoDaoUtils.toProjectPostProto(
-                    ProtoDaoUtils.toFullProjectPostRecord(proto), ProjectPost::newBuilder)
-                .orElseThrow()
-                .build())
-        .ignoringFields(ProjectPost.TAGS_FIELD_NUMBER)
-        .ignoringFieldDescriptors(
-            ProjectPostComment.getDescriptor()
-                .findFieldByNumber(ProjectPostComment.PROJECT_POST_FIELD_NUMBER))
+        .ignoringRepeatedFieldOrder()
         .isEqualTo(proto);
   }
 
@@ -798,10 +717,7 @@ public class ProtoDaoUtilsTest {
 
   @Test
   public void toProjectConvertersNull() throws ParseException {
-    assertThat(
-            ProtoDaoUtils.toProjectProto(
-                (org.davincischools.leo.database.daos.Project) null, Project::newBuilder))
-        .isEmpty();
+    assertThat(ProtoDaoUtils.toProjectProto(null, true, Project::newBuilder)).isEmpty();
   }
 
   @Test
@@ -809,6 +725,7 @@ public class ProtoDaoUtilsTest {
     assertThat(
             ProtoDaoUtils.toProjectProto(
                 newUninitialized(org.davincischools.leo.database.daos.Project.class),
+                true,
                 Project::newBuilder))
         .isEmpty();
   }
@@ -818,7 +735,8 @@ public class ProtoDaoUtilsTest {
     Project proto = Project.getDefaultInstance();
 
     assertThat(
-            ProtoDaoUtils.toProjectProto(ProtoDaoUtils.toProjectDao(proto), Project::newBuilder)
+            ProtoDaoUtils.toProjectProto(
+                    ProtoDaoUtils.toProjectDao(proto), true, Project::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);
@@ -864,7 +782,8 @@ public class ProtoDaoUtilsTest {
             Project.class);
 
     assertThat(
-            ProtoDaoUtils.toProjectProto(ProtoDaoUtils.toProjectDao(proto), Project::newBuilder)
+            ProtoDaoUtils.toProjectProto(
+                    ProtoDaoUtils.toProjectDao(proto), true, Project::newBuilder)
                 .orElseThrow()
                 .build())
         .ignoringFields(Project.MILESTONES_FIELD_NUMBER)
@@ -880,7 +799,8 @@ public class ProtoDaoUtilsTest {
                 """, Project.class);
 
     assertThat(
-            ProtoDaoUtils.toProjectProto(ProtoDaoUtils.toProjectDao(proto), Project::newBuilder)
+            ProtoDaoUtils.toProjectProto(
+                    ProtoDaoUtils.toProjectDao(proto), true, Project::newBuilder)
                 .orElseThrow()
                 .build())
         .ignoringFields(Project.MILESTONES_FIELD_NUMBER)

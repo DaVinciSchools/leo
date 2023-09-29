@@ -14,6 +14,7 @@ import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetProjectPostsParams;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
+import org.davincischools.leo.database.utils.repos.ProjectPostRepository;
 import org.davincischools.leo.protos.post_service.DeleteProjectPostCommentRequest;
 import org.davincischools.leo.protos.post_service.DeleteProjectPostCommentResponse;
 import org.davincischools.leo.protos.post_service.GetProjectPostsRequest;
@@ -55,8 +56,7 @@ public class PostService {
 
               var response = GetProjectPostsResponse.newBuilder();
 
-              db.getProjectPostRepository()
-                  .getProjectPosts(
+              ProjectPostRepository.getProjectPosts(
                       entityManager,
                       new GetProjectPostsParams()
                           .setIncludeTags(
@@ -100,7 +100,7 @@ public class PostService {
                   .forEach(
                       fullProjectPost ->
                           ProtoDaoUtils.toProjectPostProto(
-                              fullProjectPost, response::addProjectPostsBuilder));
+                              fullProjectPost, true, response::addProjectPostsBuilder));
 
               return response.build();
             })
@@ -135,12 +135,12 @@ public class PostService {
                 }
               }
 
-              var fullProjectPost = ProtoDaoUtils.toFullProjectPostRecord(request.getProjectPost());
-              fullProjectPost.getProjectPost().setUserX(postUserX);
-              fullProjectPost.getProjectPost().setPostTime(Instant.now());
+              var projectPost = ProtoDaoUtils.toProjectPostDao(request.getProjectPost());
+              projectPost.setUserX(postUserX);
+              projectPost.setPostTime(Instant.now());
 
-              db.getProjectPostRepository().upsert(db, postUserX, fullProjectPost);
-              response.setProjectPostId(fullProjectPost.getProjectPost().getId());
+              db.getProjectPostRepository().upsert(db, postUserX, projectPost);
+              response.setProjectPostId(projectPost.getId());
 
               return response.build();
             })
