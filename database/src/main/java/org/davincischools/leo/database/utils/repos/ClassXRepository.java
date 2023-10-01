@@ -131,7 +131,7 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
     // teacherIds.
     if (params.getTeacherIds().isPresent()) {
       var teacherClassXs = notDeleted(classX.fetch(ClassX_.teacherClassXES, JoinType.INNER));
-      notDeleted(teacherClassXs.get(TeacherClassX_.teacher))
+      notDeleted(where, teacherClassXs.get(TeacherClassX_.teacher))
           .get(Teacher_.id)
           .in(ImmutableList.copyOf(params.getTeacherIds().get()));
     }
@@ -139,7 +139,7 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
     // Where student ids.
     if (params.getStudentIds().isPresent()) {
       var studentClassXs = notDeleted(classX.fetch(ClassX_.studentClassXES, JoinType.INNER));
-      notDeleted(studentClassXs.get(StudentClassX_.student))
+      notDeleted(where, studentClassXs.get(StudentClassX_.student))
           .get(Student_.id)
           .in(ImmutableList.copyOf(params.getStudentIds().get()));
     }

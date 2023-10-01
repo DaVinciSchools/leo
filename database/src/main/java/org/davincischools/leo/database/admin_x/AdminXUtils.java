@@ -1,8 +1,10 @@
 package org.davincischools.leo.database.admin_x;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -19,12 +21,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import org.apache.commons.text.RandomStringGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.davincischools.leo.database.daos.AdminX;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
@@ -33,10 +36,13 @@ import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.School;
+import org.davincischools.leo.database.daos.Student;
+import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.test.TestData;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserXUtils;
+import org.davincischools.leo.database.utils.repos.AdminXRepository;
 import org.davincischools.leo.database.utils.repos.GetClassXsParams;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
@@ -406,50 +412,124 @@ public class AdminXUtils {
   @Value("${loadTestData:false}")
   private String loadTestData;
 
+  @Autowired private AdminXRepository adminXRepository;
+
   private District createDistrict() {
     checkArgument(createDistrict != null, "--createDistrict required.");
 
     return db.getDistrictRepository().upsert(createDistrict);
   }
 
+  public static UserX createUserX(
+      Database db,
+      EntityManager entityManager,
+      District district,
+      String emailAddress,
+      Consumer<UserX> modifier) {
+    checkArgument(!Strings.isNullOrEmpty(emailAddress));
+    checkNotNull(modifier);
+
+    UserX userX = db.getUserXRepository().findByEmailAddress(emailAddress).orElse(null);
+    if (userX == null) {
+      userX =
+          new UserX()
+              .setCreationTime(Instant.now())
+              .setDistrict(district)
+              .setEmailAddress(emailAddress)
+              .setFirstName("First Name")
+              .setLastName("Last Name")
+              .setEncodedPassword(UserXRepository.INVALID_ENCODED_PASSWORD);
+    }
+    userX.setDeleted(null);
+
+    modifier.accept(userX);
+
+    return db.getUserXRepository().save(userX);
+  }
+
+  public static UserX createAdminX(Database db, UserX userX) {
+    checkNotNull(userX);
+
+    if (userX.getAdminX() == null) {
+      userX.setAdminX(db.getAdminXRepository().save(new AdminX().setCreationTime(Instant.now())));
+    } else {
+      userX.setAdminX(db.getAdminXRepository().findById(userX.getAdminX().getId()).orElseThrow());
+    }
+    db.getUserXRepository().save(userX);
+
+    return userX;
+  }
+
+  public static UserX createTeacher(Database db, UserX userX) {
+    checkNotNull(userX);
+
+    if (userX.getTeacher() == null) {
+      userX.setTeacher(
+          db.getTeacherRepository().save(new Teacher().setCreationTime(Instant.now())));
+    } else {
+      userX.setTeacher(
+          db.getTeacherRepository().findById(userX.getTeacher().getId()).orElseThrow());
+    }
+    db.getUserXRepository().save(userX);
+
+    return userX;
+  }
+
+  public static UserX createStudent(Database db, UserX userX, Consumer<Student> modifier) {
+    checkNotNull(userX);
+
+    if (userX.getStudent() == null) {
+      userX.setStudent(
+          db.getStudentRepository().save(new Student().setCreationTime(Instant.now())));
+    } else {
+      userX.setStudent(
+          db.getStudentRepository().findById(userX.getStudent().getId()).orElseThrow());
+    }
+    db.getUserXRepository().save(userX);
+
+    modifier.accept(userX.getStudent());
+
+    return userX;
+  }
+
   private void createAdmins() {
     checkArgument(!createAdmins.isEmpty(), "--createAdmin required.");
 
-    for (String createAdmin : createAdmins) {
-      String password = createPassword();
-      District district = createDistrict();
-      AtomicBoolean passwordUpdated = new AtomicBoolean(false);
+    for (String createAdminEmail : createAdmins) {
+      var password = new AtomicReference<String>(null);
       UserX userX =
-          db.getUserXRepository()
-              .upsert(
-                  district,
-                  createAdmin,
-                  userX2 -> {
-                    db.getAdminXRepository().upsert(userX2);
-                    if (userX2
-                        .getEncodedPassword()
-                        .equals(UserXRepository.INVALID_ENCODED_PASSWORD)) {
-                      UserXUtils.setPassword(userX2, password);
-                      passwordUpdated.set(true);
-                    }
-                  });
-      addAdminXToDistrictSchoolsAndClassXs(db, userX);
+          createUserX(
+              db,
+              entityManager,
+              createDistrict(),
+              createAdminEmail,
+              u -> {
+                if (Objects.equals(
+                    u.getEncodedPassword(), UserXRepository.INVALID_ENCODED_PASSWORD)) {
+                  password.set(createPassword());
+                  UserXUtils.setPassword(u, password.get());
+                }
+              });
 
-      if (passwordUpdated.get()) {
+      createAdminX(db, userX);
+      createTeacher(db, userX);
+      createStudent(db, userX, s -> {});
+
+      addAdminXToSchoolsAndClassXs(db, userX);
+
+      if (password.get() != null) {
         log.atWarn()
             .log(
                 "IMPORTANT! Log in and change the temporary password:"
                     + " login: \"{}\", temporary password: \"{}\"",
-                createAdmin,
+                createAdminEmail,
                 password);
       }
     }
   }
 
   // TODO: For now admins are teachers and students of all schools and classes in their district.
-  public static void addAdminXToDistrictSchoolsAndClassXs(Database db, UserX admin) {
-    db.getTeacherRepository().upsert(admin);
-    db.getStudentRepository().upsert(admin, entity -> {});
+  public static void addAdminXToSchoolsAndClassXs(Database db, UserX admin) {
     Set<Integer> schoolIds = new HashSet<>();
     for (School school : db.getSchoolRepository().findAll()) {
       if (Objects.equals(school.getDistrict().getId(), admin.getDistrict().getId())) {
@@ -472,18 +552,16 @@ public class AdminXUtils {
     resetPasswords.stream()
         .parallel()
         .forEach(
-            resetPassword -> {
+            emailAddress -> {
+              UserX userX = db.getUserXRepository().findByEmailAddress(emailAddress).orElseThrow();
+
               String password = createPassword();
-              db.getUserXRepository()
-                  .save(
-                      UserXUtils.setPassword(
-                          db.getUserXRepository().findByEmailAddress(resetPassword).orElseThrow(),
-                          password));
+              db.getUserXRepository().save(UserXUtils.setPassword(userX, password));
               log.atWarn()
                   .log(
                       "IMPORTANT! Log in and change the temporary password:"
                           + " login: \"{}\", temporary password: \"{}\"",
-                      resetPassword,
+                      emailAddress,
                       password);
             });
   }
@@ -628,16 +706,20 @@ public class AdminXUtils {
                     checkArgument(!schoolNickname.isEmpty(), "School nickname required.");
 
                     UserX student =
-                        db.getUserXRepository()
-                            .upsert(
-                                district,
-                                emailAddress,
-                                userX ->
-                                    db.getStudentRepository()
-                                        .upsert(
-                                            userX, u -> u.setDistrictStudentId(id).setGrade(grade))
-                                        .setFirstName(firstName)
-                                        .setLastName(lastName));
+                        createUserX(
+                            db,
+                            entityManager,
+                            district,
+                            emailAddress,
+                            u -> {
+                              u.setFirstName(firstName).setLastName(lastName);
+                            });
+                    createStudent(
+                        db,
+                        student,
+                        s -> {
+                          s.setDistrictStudentId(id).setGrade(grade);
+                        });
 
                     School school =
                         DaVinciSchoolsByNickname.valueOf(schoolNickname).createSchool(db, district);
@@ -814,10 +896,7 @@ public class AdminXUtils {
     // Create project definitions.
     ProjectDefinition ksDefinition =
         db.getProjectDefinitionRepository()
-            .upsert(
-                "Knowledge and Skills + Motivations",
-                creator,
-                def -> def.setCreationTime(Instant.now()));
+            .upsert("Knowledge and Skills + Motivations", creator, def -> def.setUserX(creator));
     types.getCareerInterestType().addProjectDefinitionCategory(ksDefinition, entity -> {});
     types.getMotivationType().addProjectDefinitionCategory(ksDefinition, entity -> {});
     types.getEksType().addProjectDefinitionCategory(ksDefinition, entity -> {});
@@ -825,14 +904,14 @@ public class AdminXUtils {
 
     ProjectDefinition xqDefinition =
         db.getProjectDefinitionRepository()
-            .upsert("XQ Competencies", creator, def -> def.setCreationTime(Instant.now()));
+            .upsert("XQ Competencies", creator, def -> def.setUserX(creator));
     types.getCareerInterestType().addProjectDefinitionCategory(xqDefinition, entity -> {});
     types.getXqType().addProjectDefinitionCategory(xqDefinition, entity -> {});
     types.getStudentInterestsType().addProjectDefinitionCategory(xqDefinition, entity -> {});
 
     ProjectDefinition requirementDefinition =
         db.getProjectDefinitionRepository()
-            .upsert("Requirements Template", creator, pd -> pd.setTemplate(true));
+            .upsert("Requirements Template", creator, pd -> pd.setUserX(creator).setTemplate(true));
     types.getEksType().addProjectDefinitionCategory(requirementDefinition, entity -> {});
     types.getXqType().addProjectDefinitionCategory(requirementDefinition, entity -> {});
     types.getMotivationType().addProjectDefinitionCategory(requirementDefinition, entity -> {});
@@ -892,7 +971,7 @@ public class AdminXUtils {
     }
     if (!Objects.equals(loadTestData, "false")) {
       log.atInfo().log("Loading test data");
-      new TestData(db).addTestData();
+      new TestData(db, entityManager).addTestData();
     } else {
       checkArgument(!createAdmins.isEmpty(), "--createAdmin required.");
       UserX userX = db.getUserXRepository().findByEmailAddress(createAdmins.get(0)).orElseThrow();

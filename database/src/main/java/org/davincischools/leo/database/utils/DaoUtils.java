@@ -233,14 +233,29 @@ public class DaoUtils {
     checkNotNull(fetch);
 
     var join = toJoin(fetch);
+    addOn(join, join.get("deleted").isNull());
+    return join;
+  }
+
+  public static <X, Y> Join<X, Y> notDeleted(List<Predicate> where, Fetch<X, Y> fetch) {
+    checkNotNull(fetch);
+
+    var join = toJoin(fetch);
+    // where.add(Predicate.addOn(join, join.get("deleted").isNull()));
+    return join;
+  }
+
+  public static <X, Y> Join<X, Y> notDeleted(Join<X, Y> join) {
+    checkNotNull(join);
+
     join.on(join.get("deleted").isNull());
     return join;
   }
 
-  public static <T> Path<T> notDeleted(Path<T> entity) {
+  public static <E, T extends Path<E>> T notDeleted(List<Predicate> where, T entity) {
     checkNotNull(entity);
 
-    entity.get("deleted").isNull();
+    where.add(entity.get("deleted").isNull());
     return entity;
   }
 
@@ -256,16 +271,20 @@ public class DaoUtils {
     return join;
   }
 
-  public static <T> List<T> singletonOrNull(@Nullable T entity) {
-    return entity == null ? null : Collections.singletonList(entity);
-  }
-
   public static <T> Optional<T> isInitialized(@Nullable T entity) {
     return Optional.ofNullable(entity).filter(Hibernate::isInitialized);
   }
 
   public static <T> void ifInitialized(Iterable<T> entities, Consumer<T> processFn) {
     isInitialized(entities).ifPresent(initialiedEntities -> initialiedEntities.forEach(processFn));
+  }
+
+  public static <T, E> void ifInitialized(
+      Iterable<T> entities, Function<T, E> transform, Consumer<E> processFn) {
+    isInitialized(entities)
+        .ifPresent(
+            initialiedEntities ->
+                Streams.stream(initialiedEntities).map(transform).forEach(processFn));
   }
 
   public static <T, R> List<T> getJoinTableDaos(
@@ -323,12 +342,16 @@ public class DaoUtils {
   }
 
   public static <E> void deleteAllRecords(
-      JpaRepository<E, ?> repository, BiConsumer<E, Instant> setFn) {
+      JpaRepository<E, ?> repository,
+      Function<E, Instant> getDeletedFn,
+      BiConsumer<E, Instant> setFn) {
     checkNotNull(repository);
     checkNotNull(setFn);
 
     List<E> entities = repository.findAll();
-    entities.forEach(entity -> setFn.accept(entity, Instant.now()));
+    entities.stream()
+        .filter(e -> getDeletedFn.apply(e) == null)
+        .forEach(entity -> setFn.accept(entity, Instant.now()));
     repository.saveAll(entities);
   }
 

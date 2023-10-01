@@ -1,14 +1,21 @@
 package org.davincischools.leo.database.test;
 
+import static org.davincischools.leo.database.admin_x.AdminXUtils.createAdminX;
+import static org.davincischools.leo.database.admin_x.AdminXUtils.createStudent;
+import static org.davincischools.leo.database.admin_x.AdminXUtils.createTeacher;
+import static org.davincischools.leo.database.admin_x.AdminXUtils.createUserX;
 import static org.davincischools.leo.database.utils.DaoUtils.deleteAllRecords;
-import static org.davincischools.leo.database.utils.DaoUtils.updateAllRecords;
+import static org.davincischools.leo.database.utils.UserXUtils.setPassword;
 
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.Arrays;
+import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.admin_x.AdminXUtils;
 import org.davincischools.leo.database.admin_x.AdminXUtils.DaVinciSchoolsByNickname;
+import org.davincischools.leo.database.daos.AdminX;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
@@ -22,11 +29,14 @@ import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.School;
+import org.davincischools.leo.database.daos.Student;
 import org.davincischools.leo.database.daos.StudentClassX;
+import org.davincischools.leo.database.daos.StudentSchool;
+import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.daos.TeacherClassX;
+import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.UserXUtils;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +46,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 @Component
+@Getter
 public class TestData {
 
   public static final String PASSWORD = "password";
@@ -56,6 +67,7 @@ public class TestData {
   }
 
   private final Database db;
+  private final EntityManager entityManager;
 
   private District district;
   private School school;
@@ -80,92 +92,9 @@ public class TestData {
   private Motivation advanceMotivation;
   private Motivation organizeMotivation;
 
-  public TestData(@Autowired Database db) {
+  public TestData(@Autowired Database db, @Autowired EntityManager entityManager) {
     this.db = db;
-  }
-
-  public District getDistrict() {
-    return district;
-  }
-
-  public School getSchool() {
-    return school;
-  }
-
-  public UserX getTeacher() {
-    return teacher;
-  }
-
-  public UserX getStudent() {
-    return student;
-  }
-
-  public UserX getAdminX() {
-    return adminX;
-  }
-
-  public ClassX getChemistryClassX() {
-    return chemistryClassX;
-  }
-
-  public KnowledgeAndSkill getChemistryPeriodicTableEks() {
-    return chemistryPeriodicTableEks;
-  }
-
-  public KnowledgeAndSkill getChemistryValenceElectronsEks() {
-    return chemistryValenceElectronsEks;
-  }
-
-  public Assignment getChemistryPeriodicTableAssignment() {
-    return chemistryPeriodicTableAssignment;
-  }
-
-  public Assignment getChemistryValenceElectronsAssignment() {
-    return chemistryValenceElectronsAssignment;
-  }
-
-  public ClassX getProgrammingClassX() {
-    return programmingClassX;
-  }
-
-  public KnowledgeAndSkill getProgrammingSortEks() {
-    return programmingSortEks;
-  }
-
-  public KnowledgeAndSkill getProgrammingContainerEks() {
-    return programmingContainerEks;
-  }
-
-  public Assignment getProgrammingSortAssignment() {
-    return programmingSortAssignment;
-  }
-
-  public Assignment getProgrammingContainerAssignment() {
-    return programmingContainerAssignment;
-  }
-
-  public ClassX getDanceClassX() {
-    return danceClassX;
-  }
-
-  public Motivation getBeCentralMotivation() {
-    return beCentralMotivation;
-  }
-
-  public Motivation getExcelMotivation() {
-    return excelMotivation;
-  }
-
-  public Motivation getExploreMotivation() {
-    return exploreMotivation;
-  }
-
-  public Motivation getAdvanceMotivation() {
-    return advanceMotivation;
-  }
-
-  public Motivation getOrganizeMotivation() {
-    return organizeMotivation;
+    this.entityManager = entityManager;
   }
 
   /**
@@ -175,13 +104,18 @@ public class TestData {
    */
   public void addTestData() {
     // Upsert a new district.
-    updateAllRecords(
+    deleteAllRecords(
         db.getDistrictRepository(),
-        d -> d.setDeleted(Instant.now()).setName("delted-" + d.getId() + "-" + d.getName()));
+        District::getDeleted,
+        (d, instant) -> d.setDeleted(instant).setName("deleted-" + d.getId() + "-" + d.getName()));
     district = db.getDistrictRepository().upsert("Project Leo School District");
 
     // Create schools.
-    deleteAllRecords(db.getSchoolRepository(), School::setDeleted);
+    deleteAllRecords(db.getSchoolRepository(), School::getDeleted, School::setDeleted);
+    deleteAllRecords(
+        db.getStudentSchoolRepository(), StudentSchool::getDeleted, StudentSchool::setDeleted);
+    deleteAllRecords(
+        db.getTeacherSchoolRepository(), TeacherSchool::getDeleted, TeacherSchool::setDeleted);
     for (var school : AdminXUtils.DaVinciSchoolsByNickname.values()) {
       db.getSchoolRepository()
           .save(
@@ -202,110 +136,126 @@ public class TestData {
             .orElseThrow();
 
     // Create motivations.
-    deleteAllRecords(db.getMotivationRepository(), Motivation::setDeleted);
+    deleteAllRecords(db.getMotivationRepository(), Motivation::getDeleted, Motivation::setDeleted);
     beCentralMotivation =
         db.getMotivationRepository()
-            .upsert(
-                "Be Central",
-                "be a key person who holds things together and gives them meaning and/or direction",
-                m -> {});
+            .save(
+                new Motivation()
+                    .setCreationTime(Instant.now())
+                    .setName("Be Central")
+                    .setShortDescr(
+                        "be a key person who holds things together and gives them meaning and/or"
+                            + " direction"));
     excelMotivation =
         db.getMotivationRepository()
-            .upsert(
-                "Excel",
-                "give your absolute best as you exceed performance and expectation",
-                m -> {});
+            .save(
+                new Motivation()
+                    .setCreationTime(Instant.now())
+                    .setName("Excel")
+                    .setShortDescr(
+                        "give your absolute best as you exceed performance and expectation"));
     exploreMotivation =
         db.getMotivationRepository()
-            .upsert(
-                "Explore",
-                "press beyond the existing limits of your knowledge and experience to discover what"
-                    + " is unknown to you",
-                m -> {});
+            .save(
+                new Motivation()
+                    .setCreationTime(Instant.now())
+                    .setName("Explore")
+                    .setShortDescr(
+                        "press beyond the existing limits of your knowledge and experience to"
+                            + " discover what is unknown to you"));
     advanceMotivation =
         db.getMotivationRepository()
-            .upsert("Advance", "make progress as you accomplish a series of goals", m -> {});
+            .save(
+                new Motivation()
+                    .setCreationTime(Instant.now())
+                    .setName("Advance")
+                    .setShortDescr("make progress as you accomplish a series of goals"));
     organizeMotivation =
         db.getMotivationRepository()
-            .upsert("Organize", "set up a smooth-running operation", m -> {});
+            .save(
+                new Motivation()
+                    .setCreationTime(Instant.now())
+                    .setName("Organize")
+                    .setShortDescr("set up a smooth-running operation"));
 
     // Create users.
     deleteAllRecords(
         db.getUserXRepository(),
+        UserX::getDeleted,
         (userX, instant) ->
             userX
                 .setDeleted(instant)
                 .setEmailAddress("deleted-" + userX.getId() + "_" + userX.getEmailAddress()));
+    deleteAllRecords(db.getAdminXRepository(), AdminX::getDeleted, AdminX::setDeleted);
+    deleteAllRecords(db.getTeacherRepository(), Teacher::getDeleted, Teacher::setDeleted);
+    deleteAllRecords(db.getStudentRepository(), Student::getDeleted, Student::setDeleted);
 
     adminX =
-        db.getUserXRepository()
-            .upsert(
-                district,
-                "admin@projectleo.net",
-                userX ->
-                    UserXUtils.setPassword(
-                        db.getAdminXRepository()
-                            .upsert(
-                                db.getTeacherRepository()
-                                    .upsert(
-                                        db.getStudentRepository()
-                                            .upsert(
-                                                userX
-                                                    .setFirstName("Admin")
-                                                    .setLastName("Project Leo"),
-                                                student ->
-                                                    student
-                                                        .setDistrictStudentId(1111)
-                                                        .setGrade(12)))),
-                        PASSWORD));
+        createUserX(
+            db,
+            entityManager,
+            district,
+            "admin@projectleo.net",
+            userX -> {
+              userX.setFirstName("Admin").setLastName("Project Leo");
+              createAdminX(db, userX);
+              createTeacher(db, userX);
+              createStudent(db, userX, student -> student.setDistrictStudentId(1111).setGrade(12));
+              setPassword(userX, PASSWORD);
+            });
 
     teacher =
-        db.getUserXRepository()
-            .upsert(
-                district,
-                "teacher@projectleo.net",
-                userX ->
-                    UserXUtils.setPassword(
-                        db.getTeacherRepository()
-                            .upsert(userX.setFirstName("Teacher").setLastName("Project Leo")),
-                        PASSWORD));
+        createUserX(
+            db,
+            entityManager,
+            district,
+            "teacher@projectleo.net",
+            userX -> {
+              userX.setFirstName("Teacher").setLastName("Project Leo");
+              createTeacher(db, userX);
+              setPassword(userX, PASSWORD);
+            });
     db.getTeacherSchoolRepository().upsert(teacher.getTeacher(), school);
 
     student =
-        db.getUserXRepository()
-            .upsert(
-                district,
-                "student@projectleo.net",
-                userX ->
-                    UserXUtils.setPassword(
-                        db.getStudentRepository()
-                            .upsert(
-                                userX.setFirstName("Student").setLastName("Project Leo"),
-                                student -> student.setDistrictStudentId(1234).setGrade(9)),
-                        PASSWORD));
+        createUserX(
+            db,
+            entityManager,
+            district,
+            "student@projectleo.net",
+            userX -> {
+              userX.setFirstName("Student").setLastName("Project Leo");
+              createStudent(db, userX, s -> s.setDistrictStudentId(1234).setGrade(9));
+              setPassword(userX, PASSWORD);
+            });
     db.getStudentSchoolRepository().upsert(student.getStudent(), school);
 
     demo =
-        db.getUserXRepository()
-            .upsert(
-                /* district= */ null,
-                "demo@projectleo.net",
-                userX ->
-                    UserXUtils.setPassword(
-                            userX.setFirstName("Demo").setLastName("Project Leo"), PASSWORD)
-                        .setInterest(
-                            db.getInterestRepository()
-                                .save(
-                                    new Interest()
-                                        .setCreationTime(Instant.now())
-                                        .setFirstName(userX.getFirstName())
-                                        .setLastName(userX.getLastName())
-                                        .setEmailAddress(userX.getEmailAddress())
-                                        .setProfession("")
-                                        .setReasonForInterest(""))));
+        createUserX(
+            db,
+            entityManager,
+            /* district= */ null,
+            "demo@projectleo.net",
+            userX -> {
+              userX.setFirstName("Demo").setLastName("Project Leo");
+              setPassword(userX, PASSWORD);
+              userX.setInterest(
+                  db.getInterestRepository()
+                      .save(
+                          new Interest()
+                              .setCreationTime(Instant.now())
+                              .setFirstName(userX.getFirstName())
+                              .setLastName(userX.getLastName())
+                              .setEmailAddress(userX.getEmailAddress())
+                              .setProfession("")
+                              .setReasonForInterest("")));
+            });
 
     // Create XQ Competencies.
-    deleteAllRecords(db.getKnowledgeAndSkillRepository(), KnowledgeAndSkill::setDeleted);
+    deleteAllRecords(
+        db.getKnowledgeAndSkillRepository(),
+        KnowledgeAndSkill::getDeleted,
+        KnowledgeAndSkill::setDeleted);
     for (var xqCompetency : AdminXUtils.XqCategoriesByNickname.values()) {
       db.getKnowledgeAndSkillRepository()
           .save(
@@ -319,11 +269,15 @@ public class TestData {
     }
 
     // Create programming class.
-    deleteAllRecords(db.getClassXRepository(), ClassX::setDeleted);
-    deleteAllRecords(db.getTeacherClassXRepository(), TeacherClassX::setDeleted);
-    deleteAllRecords(db.getStudentClassXRepository(), StudentClassX::setDeleted);
+    deleteAllRecords(db.getClassXRepository(), ClassX::getDeleted, ClassX::setDeleted);
     deleteAllRecords(
-        db.getClassXKnowledgeAndSkillRepository(), ClassXKnowledgeAndSkill::setDeleted);
+        db.getTeacherClassXRepository(), TeacherClassX::getDeleted, TeacherClassX::setDeleted);
+    deleteAllRecords(
+        db.getStudentClassXRepository(), StudentClassX::getDeleted, StudentClassX::setDeleted);
+    deleteAllRecords(
+        db.getClassXKnowledgeAndSkillRepository(),
+        ClassXKnowledgeAndSkill::getDeleted,
+        ClassXKnowledgeAndSkill::setDeleted);
     programmingClassX =
         db.getClassXRepository()
             .upsert(
@@ -358,9 +312,11 @@ public class TestData {
     db.getClassXKnowledgeAndSkillRepository().upsert(programmingClassX, programmingSortEks);
     db.getClassXKnowledgeAndSkillRepository().upsert(programmingClassX, programmingContainerEks);
 
-    deleteAllRecords(db.getAssignmentRepository(), Assignment::setDeleted);
+    deleteAllRecords(db.getAssignmentRepository(), Assignment::getDeleted, Assignment::setDeleted);
     deleteAllRecords(
-        db.getAssignmentKnowledgeAndSkillRepository(), AssignmentKnowledgeAndSkill::setDeleted);
+        db.getAssignmentKnowledgeAndSkillRepository(),
+        AssignmentKnowledgeAndSkill::getDeleted,
+        AssignmentKnowledgeAndSkill::setDeleted);
     programmingSortAssignment =
         db.getAssignmentRepository()
             .upsert(
@@ -454,13 +410,22 @@ public class TestData {
     db.getStudentClassXRepository().upsert(student.getStudent(), danceClassX);
 
     // Create project definitions.
-    deleteAllRecords(db.getProjectDefinitionRepository(), ProjectDefinition::setDeleted);
     deleteAllRecords(
-        db.getProjectDefinitionCategoryRepository(), ProjectDefinitionCategory::setDeleted);
+        db.getProjectDefinitionRepository(),
+        ProjectDefinition::getDeleted,
+        ProjectDefinition::setDeleted);
     deleteAllRecords(
-        db.getProjectDefinitionCategoryTypeRepository(), ProjectDefinitionCategoryType::setDeleted);
+        db.getProjectDefinitionCategoryRepository(),
+        ProjectDefinitionCategory::getDeleted,
+        ProjectDefinitionCategory::setDeleted);
     deleteAllRecords(
-        db.getAssignmentProjectDefinitionRepository(), AssignmentProjectDefinition::setDeleted);
+        db.getProjectDefinitionCategoryTypeRepository(),
+        ProjectDefinitionCategoryType::getDeleted,
+        ProjectDefinitionCategoryType::setDeleted);
+    deleteAllRecords(
+        db.getAssignmentProjectDefinitionRepository(),
+        AssignmentProjectDefinition::getDeleted,
+        AssignmentProjectDefinition::setDeleted);
     AdminXUtils.addIkigaiDiagramDescriptions(
         db,
         adminX,
@@ -471,6 +436,6 @@ public class TestData {
             chemistryValenceElectronsAssignment));
 
     // Add the admin to all schools and classes
-    AdminXUtils.addAdminXToDistrictSchoolsAndClassXs(db, adminX);
+    AdminXUtils.addAdminXToSchoolsAndClassXs(db, adminX);
   }
 }
