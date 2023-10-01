@@ -1,7 +1,7 @@
 package org.davincischools.leo.database.utils.repos;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.davincischools.leo.database.utils.DaoUtils.addOn;
+import static org.davincischools.leo.database.utils.DaoUtils.addJoinOn;
 import static org.davincischools.leo.database.utils.DaoUtils.notDeleted;
 
 import com.google.common.collect.ImmutableList;
@@ -113,7 +113,7 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     // projectIds.
     if (params.getProjectIds().isPresent()) {
       var project = notDeleted(projectPost.fetch(ProjectPost_.project, JoinType.INNER));
-      addOn(
+      addJoinOn(
           project, project.get(Project_.id).in(ImmutableList.copyOf(params.getProjectIds().get())));
     }
 
@@ -121,7 +121,7 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     if (params.getAssignmentIds().isPresent()) {
       var project = notDeleted(projectPost.fetch(ProjectPost_.project, JoinType.INNER));
       var assignment = notDeleted(project.fetch(Project_.assignment, JoinType.INNER));
-      addOn(
+      addJoinOn(
           assignment,
           assignment.get(Assignment_.id).in(ImmutableList.copyOf(params.getAssignmentIds().get())));
     }
@@ -131,7 +131,8 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
       var project = notDeleted(projectPost.fetch(ProjectPost_.project, JoinType.INNER));
       var assignment = notDeleted(project.fetch(Project_.assignment, JoinType.INNER));
       var classX = notDeleted(assignment.fetch(Assignment_.classX, JoinType.INNER));
-      addOn(classX, classX.get(ClassX_.id).in(ImmutableList.copyOf(params.getClassXIds().get())));
+      addJoinOn(
+          classX, classX.get(ClassX_.id).in(ImmutableList.copyOf(params.getClassXIds().get())));
     }
 
     // schoolIds.
@@ -140,13 +141,14 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
       var assignment = notDeleted(project.fetch(Project_.assignment, JoinType.INNER));
       var classX = notDeleted(assignment.fetch(Assignment_.classX, JoinType.INNER));
       var school = notDeleted(classX.fetch(ClassX_.school, JoinType.INNER));
-      addOn(school, school.get(School_.id).in(ImmutableList.copyOf(params.getSchoolIds().get())));
+      addJoinOn(
+          school, school.get(School_.id).in(ImmutableList.copyOf(params.getSchoolIds().get())));
     }
 
     // userXIds.
     if (params.getUserXIds().isPresent()) {
       var userX = notDeleted(projectPost.fetch(ProjectPost_.userX, JoinType.INNER));
-      addOn(userX, userX.get(UserX_.id).in(ImmutableList.copyOf(params.getUserXIds().get())));
+      addJoinOn(userX, userX.get(UserX_.id).in(ImmutableList.copyOf(params.getUserXIds().get())));
     }
 
     // beingEdited.

@@ -26,7 +26,7 @@ import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserXUtils;
 import org.davincischools.leo.database.utils.repos.GetClassXsParams;
-import org.davincischools.leo.database.utils.repos.UserXRepository.GetUserXParams;
+import org.davincischools.leo.database.utils.repos.GetUserXsParams;
 import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
 import org.davincischools.leo.protos.user_x_management.GetPagedUserXsDetailsRequest;
 import org.davincischools.leo.protos.user_x_management.GetPagedUserXsDetailsResponse;
@@ -48,8 +48,6 @@ import org.davincischools.leo.server.utils.http_user_x.Anonymous;
 import org.davincischools.leo.server.utils.http_user_x.Authenticated;
 import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -83,13 +81,13 @@ public class UserXManagementService {
             (request, log) -> {
               var pagedUserXs =
                   db.getUserXRepository()
-                      .findAllByDistrictId(
-                          userX.get().orElseThrow().getDistrict().getId(),
-                          "%" + request.getSearchText().toLowerCase() + "%",
-                          PageRequest.of(
-                              request.getPage(),
-                              request.getPageSize(),
-                              Sort.by("lastName", "firstName", "emailAddress")));
+                      .getUserXs(
+                          new GetUserXsParams()
+                              .setInDistrictIds(
+                                  List.of(userX.get().orElseThrow().getDistrict().getId()))
+                              .setFirstLastEmailSearchText(request.getSearchText().toLowerCase())
+                              .setPage(request.getPage())
+                              .setPageSize(request.getPageSize()));
 
               GetPagedUserXsDetailsResponse.Builder response =
                   GetPagedUserXsDetailsResponse.newBuilder()
@@ -591,16 +589,15 @@ public class UserXManagementService {
 
               db.getUserXRepository()
                   .getUserXs(
-                      entityManager,
-                      new GetUserXParams()
-                          .setIncludeAdminXs(request.getIncludeAdminXs())
-                          .setIncludeTeachers(request.getIncludeTeachers())
-                          .setIncludeStudents(request.getIncludeStudents())
-                          .setSchoolIds(
+                      new GetUserXsParams()
+                          .setAdminXsOnly(request.getIncludeAdminXs())
+                          .setTeachersOnly(request.getIncludeTeachers())
+                          .setStudentsOnly(request.getIncludeStudents())
+                          .setInSchoolIds(
                               request.getSchoolIdsList().isEmpty()
                                   ? null
                                   : request.getSchoolIdsList())
-                          .setClassXIds(
+                          .setInClassXIds(
                               request.getClassXIdsList().isEmpty()
                                   ? null
                                   : request.getClassXIdsList())

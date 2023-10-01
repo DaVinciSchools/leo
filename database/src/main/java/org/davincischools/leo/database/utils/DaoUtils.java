@@ -15,7 +15,6 @@ import jakarta.persistence.criteria.Fetch;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.time.Instant;
@@ -219,47 +218,27 @@ public class DaoUtils {
   public static <X, Y> Join<X, Y> toJoin(Fetch<X, Y> fetch) {
     checkNotNull(fetch);
 
-    return ((Join<X, Y>) fetch);
+    return (Join<X, Y>) fetch;
   }
 
-  public static <T> Root<T> notDeleted(List<Predicate> where, Root<T> entity) {
-    checkNotNull(entity);
-
-    where.add(entity.get("deleted").isNull());
-    return entity;
+  public static <E, P extends Path<E>> P notDeleted(List<Predicate> where, P path) {
+    checkNotNull(where);
+    checkNotNull(path);
+    where.add(path.get("deleted").isNull());
+    return path;
   }
 
   public static <X, Y> Join<X, Y> notDeleted(Fetch<X, Y> fetch) {
     checkNotNull(fetch);
-
-    var join = toJoin(fetch);
-    addOn(join, join.get("deleted").isNull());
-    return join;
-  }
-
-  public static <X, Y> Join<X, Y> notDeleted(List<Predicate> where, Fetch<X, Y> fetch) {
-    checkNotNull(fetch);
-
-    var join = toJoin(fetch);
-    // where.add(Predicate.addOn(join, join.get("deleted").isNull()));
-    return join;
+    return notDeleted(toJoin(fetch));
   }
 
   public static <X, Y> Join<X, Y> notDeleted(Join<X, Y> join) {
     checkNotNull(join);
-
-    join.on(join.get("deleted").isNull());
-    return join;
+    return addJoinOn(join, join.get("deleted").isNull());
   }
 
-  public static <E, T extends Path<E>> T notDeleted(List<Predicate> where, T entity) {
-    checkNotNull(entity);
-
-    where.add(entity.get("deleted").isNull());
-    return entity;
-  }
-
-  public static <X, Y> Join<X, Y> addOn(Join<X, Y> join, Predicate predicate) {
+  public static <X, Y> Join<X, Y> addJoinOn(Join<X, Y> join, Predicate predicate) {
     checkNotNull(join);
 
     if (join.getOn() != null) {
