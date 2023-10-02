@@ -72,7 +72,7 @@ export function SpinButton(props: {
         role="button"
         onClick={onClick}
       >
-        SPIN
+        Go!
       </div>
     </>
   );
