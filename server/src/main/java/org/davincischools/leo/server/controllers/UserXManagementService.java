@@ -10,12 +10,10 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Message;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
@@ -25,13 +23,7 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserXUtils;
-import org.davincischools.leo.database.utils.repos.GetClassXsParams;
 import org.davincischools.leo.database.utils.repos.GetUserXsParams;
-import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
-import org.davincischools.leo.protos.user_x_management.GetPagedUserXsDetailsRequest;
-import org.davincischools.leo.protos.user_x_management.GetPagedUserXsDetailsResponse;
-import org.davincischools.leo.protos.user_x_management.GetUserXDetailsRequest;
-import org.davincischools.leo.protos.user_x_management.GetUserXDetailsResponse;
 import org.davincischools.leo.protos.user_x_management.GetUserXsRequest;
 import org.davincischools.leo.protos.user_x_management.GetUserXsResponse;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
@@ -44,10 +36,10 @@ import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.AdminX;
-import org.davincischools.leo.server.utils.http_user_x.Anonymous;
 import org.davincischools.leo.server.utils.http_user_x.Authenticated;
 import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -63,137 +55,6 @@ public class UserXManagementService {
 
   @Autowired Database db;
   @Autowired EntityManager entityManager;
-
-  @PostMapping(value = "/api/protos/UserXManagementService/GetPagedUserXsDetails")
-  @ResponseBody
-  public GetPagedUserXsDetailsResponse getPagedUserXsDetails(
-      @AdminX HttpUserX userX,
-      @RequestBody Optional<GetPagedUserXsDetailsRequest> optionalRequest,
-      HttpExecutors httpExecutors)
-      throws HttpExecutorException {
-    if (userX.isNotAuthorized()) {
-      return userX.returnForbidden(GetPagedUserXsDetailsResponse.getDefaultInstance());
-    }
-
-    return httpExecutors
-        .start(optionalRequest.orElse(GetPagedUserXsDetailsRequest.getDefaultInstance()))
-        .andThen(
-            (request, log) -> {
-              var pagedUserXs =
-                  db.getUserXRepository()
-                      .getUserXs(
-                          new GetUserXsParams()
-                              .setInDistrictIds(
-                                  List.of(userX.get().orElseThrow().getDistrict().getId()))
-                              .setFirstLastEmailSearchText(request.getSearchText().toLowerCase())
-                              .setPage(request.getPage())
-                              .setPageSize(request.getPageSize()));
-
-              GetPagedUserXsDetailsResponse.Builder response =
-                  GetPagedUserXsDetailsResponse.newBuilder()
-                      .setTotalUserXs((int) pagedUserXs.getTotalElements());
-              pagedUserXs
-                  .getContent()
-                  .forEach(
-                      e -> ProtoDaoUtils.toFullUserXDetailsProto(e, response::addUserXsBuilder));
-              return response.build();
-            })
-        .finish();
-  }
-
-  @PostMapping(value = "/api/protos/UserXManagementService/GetUserXDetails")
-  @ResponseBody
-  public GetUserXDetailsResponse getUserXDetails(
-      @Anonymous HttpUserX userX,
-      @RequestBody Optional<GetUserXDetailsRequest> optionalRequest,
-      HttpExecutors httpExecutors)
-      throws HttpExecutorException {
-    return httpExecutors
-        .start(optionalRequest.orElse(GetUserXDetailsRequest.getDefaultInstance()))
-        .andThen(
-            (request, log) -> {
-              GetUserXDetailsResponse.Builder response = GetUserXDetailsResponse.newBuilder();
-
-              int userXId;
-              if (request.hasUserXId()) {
-                if (!(userX.isAdminX()
-                    || Objects.equals(request.getUserXId(), userX.getUserXIdOrNull()))) {
-                  return userX.returnForbidden(GetUserXDetailsResponse.getDefaultInstance());
-                }
-                userXId = request.getUserXId();
-              } else if (userX.isAuthenticated()) {
-                userXId = checkNotNull(userX.getUserXIdOrNull());
-              } else {
-                return userX.returnForbidden(GetUserXDetailsResponse.getDefaultInstance());
-              }
-
-              FullUserXDetails.Builder details =
-                  getUserXDetails(
-                          userXId,
-                          request.getIncludeSchools(),
-                          request.getIncludeClassXs(),
-                          request.getIncludeAllAvailableClassXs(),
-                          request.getIncludeKnowledgeAndSkills(),
-                          null)
-                      .orElse(null);
-              if (details == null) {
-                return userX.returnNotFound(GetUserXDetailsResponse.getDefaultInstance());
-              }
-
-              return response.setUserX(details).build();
-            })
-        .finish();
-  }
-
-  public Optional<FullUserXDetails.Builder> getUserXDetails(
-      int userXId,
-      boolean includeSchools,
-      boolean includeClassXs,
-      boolean includeAllAvailableClassXs,
-      boolean includeKnowledgeAndSkills,
-      @Nullable FullUserXDetails.Builder details) {
-
-    var finalDetails = details != null ? details : FullUserXDetails.newBuilder();
-
-    UserX dbUserX = db.getUserXRepository().findById(userXId).orElse(null);
-    if (dbUserX == null) {
-      return Optional.empty();
-    }
-    ProtoDaoUtils.toUserXProto(dbUserX, finalDetails::getUserXBuilder);
-
-    if (dbUserX.getDistrict() != null && dbUserX.getDistrict().getId() != null) {
-      ProtoDaoUtils.toDistrictProto(dbUserX.getDistrict(), finalDetails::getDistrictBuilder);
-    }
-
-    if (includeSchools) {
-      db.getSchoolRepository()
-          .findSchools(dbUserX.getTeacher(), dbUserX.getStudent())
-          .forEach(school -> ProtoDaoUtils.toSchoolProto(school, finalDetails::addSchoolsBuilder));
-    }
-
-    if (includeClassXs || includeAllAvailableClassXs) {
-      db.getClassXRepository()
-          .getClassXs(
-              entityManager,
-              new GetClassXsParams()
-                  .setIncludeSchool(true)
-                  .setIncludeKnowledgeAndSkills(true)
-                  .setTeacherIds(
-                      Optional.ofNullable(dbUserX.getTeacher())
-                          .map(Teacher::getId)
-                          .map(Collections::singletonList)
-                          .orElse(null))
-                  .setStudentIds(
-                      Optional.ofNullable(dbUserX.getStudent())
-                          .map(Student::getId)
-                          .map(Collections::singletonList)
-                          .orElse(null)))
-          .forEach(
-              classX -> ProtoDaoUtils.toClassXProto(classX, true, finalDetails::addClassXsBuilder));
-    }
-
-    return Optional.of(finalDetails);
-  }
 
   @PostMapping(value = "/api/protos/UserXManagementService/UpsertUserX")
   @ResponseBody
@@ -390,14 +251,16 @@ public class UserXManagementService {
                 }
               }
 
+              // TODO: Restore knowledge and skill.
               final Integer finalUserXId = newUserX.getId();
-              getUserXDetails(
-                      finalUserXId,
-                      /* includeHighSchools= */ true,
-                      /* includeClassXs= */ true,
-                      /* includeAllAvailableClassXs= */ true,
-                      /* includeKnowledgeAndSkills= */ false,
-                      response.getUserXBuilder())
+              db
+                  .getUserXRepository()
+                  .getUserXs(
+                      new GetUserXsParams()
+                          .setInUserXIds(List.of(finalUserXId))
+                          .setIncludeClassXs(true))
+                  .stream()
+                  .findFirst()
                   .orElseThrow(
                       () ->
                           new IllegalStateException(
@@ -568,7 +431,7 @@ public class UserXManagementService {
 
   @PostMapping(value = "/api/protos/UserXManagementService/GetUserXs")
   @ResponseBody
-  public GetUserXsResponse registerUserX(
+  public GetUserXsResponse getUserX(
       @Authenticated HttpUserX userX,
       @RequestBody Optional<GetUserXsRequest> optionalRequest,
       HttpExecutors httpExecutors)
@@ -581,32 +444,61 @@ public class UserXManagementService {
         .start(optionalRequest.orElse(GetUserXsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
+              if (request.getOfSelf()) {
+                request =
+                    request.toBuilder()
+                        .addInUserXIds(checkNotNull(userX.getUserXIdOrNull()))
+                        .build();
+              }
+
               if (!userX.isAdminX() && !userX.isTeacher()) {
-                return userX.returnForbidden(GetUserXsResponse.getDefaultInstance());
+                if (request
+                    .getInUserXIdsList()
+                    .equals(List.of(checkNotNull(userX.getUserXIdOrNull())))) {
+                  return userX.returnForbidden(GetUserXsResponse.getDefaultInstance());
+                }
               }
 
               var response = GetUserXsResponse.newBuilder();
 
-              db.getUserXRepository()
-                  .getUserXs(
-                      new GetUserXsParams()
-                          .setAdminXsOnly(request.getIncludeAdminXs())
-                          .setTeachersOnly(request.getIncludeTeachers())
-                          .setStudentsOnly(request.getIncludeStudents())
-                          .setInSchoolIds(
-                              request.getSchoolIdsList().isEmpty()
-                                  ? null
-                                  : request.getSchoolIdsList())
-                          .setInClassXIds(
-                              request.getClassXIdsList().isEmpty()
-                                  ? null
-                                  : request.getClassXIdsList())
-                          .setFirstLastEmailSearchText(
-                              request.hasFirstLastEmailSearchText()
-                                  ? request.getFirstLastEmailSearchText()
-                                  : null))
-                  .forEach(
-                      e -> ProtoDaoUtils.toFullUserXDetailsProto(e, response::addUserXsBuilder));
+              Page<UserX> userXs =
+                  db.getUserXRepository()
+                      .getUserXs(
+                          new GetUserXsParams()
+                              .setIncludeSchools(
+                                  valueOrNull(
+                                      request, GetUserXsRequest.INCLUDE_SCHOOLS_FIELD_NUMBER))
+                              .setIncludeClassXs(
+                                  valueOrNull(
+                                      request, GetUserXsRequest.INCLUDE_CLASS_XS_FIELD_NUMBER))
+                              .setInDistrictIds(
+                                  listOrNull(
+                                      request, GetUserXsRequest.IN_DISTRICT_IDS_FIELD_NUMBER))
+                              .setInUserXIds(
+                                  listOrNull(request, GetUserXsRequest.IN_USER_X_IDS_FIELD_NUMBER))
+                              .setInSchoolIds(
+                                  listOrNull(request, GetUserXsRequest.IN_SCHOOL_IDS_FIELD_NUMBER))
+                              .setInClassXIds(
+                                  listOrNull(request, GetUserXsRequest.IN_CLASS_X_IDS_FIELD_NUMBER))
+                              .setHasEmailAddress(
+                                  valueOrNull(
+                                      request, GetUserXsRequest.HAS_EMAIL_ADDRESS_FIELD_NUMBER))
+                              .setAdminXsOnly(
+                                  valueOrNull(request, GetUserXsRequest.ADMIN_XS_ONLY_FIELD_NUMBER))
+                              .setTeachersOnly(
+                                  valueOrNull(request, GetUserXsRequest.TEACHERS_ONLY_FIELD_NUMBER))
+                              .setStudentsOnly(
+                                  valueOrNull(request, GetUserXsRequest.STUDENTS_ONLY_FIELD_NUMBER))
+                              .setFirstLastEmailSearchText(
+                                  valueOrNull(
+                                      request,
+                                      GetUserXsRequest.FIRST_LAST_EMAIL_SEARCH_TEXT_FIELD_NUMBER))
+                              .setPage(valueOrNull(request, GetUserXsRequest.PAGE_FIELD_NUMBER))
+                              .setPageSize(
+                                  valueOrNull(request, GetUserXsRequest.PAGE_SIZE_FIELD_NUMBER)));
+              userXs.forEach(
+                  e -> ProtoDaoUtils.toFullUserXDetailsProto(e, response::addUserXsBuilder));
+              response.setTotalUserXs(userXs.getTotalElements());
 
               return response.build();
             })
@@ -617,6 +509,15 @@ public class UserXManagementService {
   private <T> T valueOrNull(Message request, int fieldNumber) {
     FieldDescriptor descriptor = request.getDescriptorForType().findFieldByNumber(fieldNumber);
     if (request.hasField(descriptor)) {
+      return (T) request.getField(descriptor);
+    }
+    return null;
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T listOrNull(Message request, int fieldNumber) {
+    FieldDescriptor descriptor = request.getDescriptorForType().findFieldByNumber(fieldNumber);
+    if (request.getRepeatedFieldCount(descriptor) > 0) {
       return (T) request.getField(descriptor);
     }
     return null;

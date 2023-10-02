@@ -162,22 +162,27 @@ export function ProfileEditor(props: {
       props.profileForm.reset();
     } else {
       createService(UserXManagementService, 'UserXManagementService')
-        .getUserXDetails({
-          userXId: props.userXId,
+        .getUserXs({
+          inUserXIds: [props.userXId],
           includeSchools: true,
-          includeAllAvailableClassXs: true,
+          includeClassXs: true,
         })
         .then(response => {
+          const userX = response.userXs?.[0];
+
+          if (userX == null) {
+            props.profileForm.reset();
+            return;
+          }
+
           // TODO: Get rid of this hack.
           props.profileForm.setValuesObject({
-            ...(response.userX?.userX ?? {}),
-            ...(response.userX ?? {}),
+            ...(userX?.userX ?? {}),
+            ...(userX ?? {}),
           });
 
-          profileSchools.setValue(response?.userX?.schools ?? []);
-          profileClassXs.setValue(
-            (response?.userX?.classXs ?? []).filter(e => e?.enrolled === true)
-          );
+          profileSchools.setValue(userX?.schools ?? []);
+          profileClassXs.setValue(userX?.classXs ?? []);
         })
         .catch(global.setError);
     }

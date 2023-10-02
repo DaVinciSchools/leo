@@ -20,6 +20,7 @@ import {
 } from '@ant-design/icons';
 import UserXManagementService = user_x_management.UserXManagementService;
 import IFullUserXDetails = user_x_management.IFullUserXDetails;
+import {toLong} from '../../../libs/misc';
 
 export function Accounts() {
   const global = useContext(GlobalStateContext);
@@ -106,15 +107,14 @@ export function Accounts() {
 
   useEffect(() => {
     createService(UserXManagementService, 'UserXManagementService')
-      .getPagedUserXsDetails({
-        districtId: global.userX?.districtId,
+      .getUserXs({
         page: page - 1,
         pageSize: pageSize,
-        searchText: searchText,
+        firstLastEmailSearchText: searchText,
       })
       .then(response => {
         setUserXs(response.userXs);
-        setTotalUserXs(response.totalUserXs!);
+        setTotalUserXs(toLong(response.totalUserXs!).toNumber());
       })
       .catch(global.setError);
   }, [page, pageSize, searchText, showSearchForAccount]);

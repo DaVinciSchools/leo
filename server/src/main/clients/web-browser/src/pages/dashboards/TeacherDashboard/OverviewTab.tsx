@@ -216,9 +216,9 @@ export function OverviewTab() {
           setUserXFilter(userX ? [userX] : []);
         }}
         baseRequest={{
-          includeStudents: true,
-          schoolIds: schoolOptions.map(e => e.id ?? 0),
-          classXIds: classXOptions.map(e => e.id ?? 0),
+          studentsOnly: true,
+          inSchoolIds: schoolOptions.map(e => e.id ?? 0),
+          inClassXIds: classXOptions.map(e => e.id ?? 0),
         }}
       />
     </>

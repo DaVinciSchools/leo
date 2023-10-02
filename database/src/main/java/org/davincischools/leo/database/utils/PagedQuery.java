@@ -13,6 +13,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.metamodel.SetAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,6 +79,19 @@ public class PagedQuery<T> {
   @SuppressWarnings("unchecked")
   public <X, Y, P extends From<?, X> & FetchParent<?, X>> Join<X, Y> fetch(
       P parent, SingularAttribute<? super X, Y> attribute, JoinType joinType) {
+    checkNotNull(parent);
+    checkNotNull(attribute);
+
+    if (useFecth) {
+      return toJoin(parent.fetch(attribute, joinType));
+    } else {
+      return parent.join(attribute, joinType);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public <X, Y, P extends From<?, X> & FetchParent<?, X>> Join<X, Y> fetch(
+      P parent, SetAttribute<? super X, Y> attribute, JoinType joinType) {
     checkNotNull(parent);
     checkNotNull(attribute);
 

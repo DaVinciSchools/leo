@@ -3,6 +3,11 @@ package org.davincischools.leo.database.utils.repos;
 import static com.google.common.truth.Truth.assertThat;
 
 import jakarta.persistence.EntityManager;
+import java.util.List;
+import org.davincischools.leo.database.daos.ClassX;
+import org.davincischools.leo.database.daos.School;
+import org.davincischools.leo.database.daos.StudentClassX;
+import org.davincischools.leo.database.daos.StudentSchool;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.test.TestData;
 import org.davincischools.leo.database.test.TestDatabase;
@@ -98,5 +103,52 @@ public class UserXRepositoryTest {
     var userXs = db.getUserXRepository().getUserXs(new GetUserXsParams().setPage(1).setPageSize(3));
     assertThat(userXs.stream().map(UserX::getId).toList())
         .containsExactly(testData.getTeacher().getId());
+  }
+
+  @Test
+  public void includeSchoolsTest() {
+    var userX =
+        db
+            .getUserXRepository()
+            .getUserXs(
+                new GetUserXsParams()
+                    .setIncludeSchools(true)
+                    .setInUserXIds(List.of(testData.getStudent().getId())))
+            .stream()
+            .findFirst()
+            .orElseThrow();
+
+    assertThat(userX.getStudent()).isNotNull();
+    assertThat(
+            userX.getStudent().getStudentSchools().stream()
+                .map(StudentSchool::getSchool)
+                .map(School::getId)
+                .toList())
+        .containsExactly(testData.getSchool().getId());
+  }
+
+  @Test
+  public void includeClassXsTest() {
+    var userX =
+        db
+            .getUserXRepository()
+            .getUserXs(
+                new GetUserXsParams()
+                    .setIncludeClassXs(true)
+                    .setInUserXIds(List.of(testData.getStudent().getId())))
+            .stream()
+            .findFirst()
+            .orElseThrow();
+
+    assertThat(userX.getStudent()).isNotNull();
+    assertThat(
+            userX.getStudent().getStudentClassXES().stream()
+                .map(StudentClassX::getClassX)
+                .map(ClassX::getId)
+                .toList())
+        .containsExactly(
+            testData.getChemistryClassX().getId(),
+            testData.getProgrammingClassX().getId(),
+            testData.getDanceClassX().getId());
   }
 }

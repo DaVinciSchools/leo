@@ -8,12 +8,10 @@ option java_package = "org.davincischools.leo.protos.user_x_management";
 package user_x_management;
 
 service UserXManagementService {
-  rpc GetPagedUserXsDetails (GetPagedUserXsDetailsRequest) returns (GetPagedUserXsDetailsResponse) {}
-  rpc GetUserXs(GetUserXsRequest) returns (GetUserXsResponse) {}
-  rpc GetUserXDetails (GetUserXDetailsRequest) returns (GetUserXDetailsResponse) {}
   rpc UpsertUserX (UpsertUserXRequest) returns (UpsertUserXResponse) {}
-  rpc RemoveUserX (RemoveUserXRequest) returns (RemoveUserXResponse) {}
   rpc RegisterUserX (RegisterUserXRequest) returns (RegisterUserXResponse) {}
+  rpc RemoveUserX (RemoveUserXRequest) returns (RemoveUserXResponse) {}
+  rpc GetUserXs(GetUserXsRequest) returns (GetUserXsResponse) {}
 }
 
 message FullUserXDetails {
@@ -25,41 +23,6 @@ message FullUserXDetails {
 
   optional int32 district_student_id = 3;
   optional int32 student_grade = 4;
-}
-
-message GetPagedUserXsDetailsRequest {
-  enum OrderBy {
-    UNSET = 0;
-    EMAIL = 1;
-    NAME = 2;
-  }
-
-  optional int32 district_id = 1;
-
-  // Zero-based page.
-  optional int32 page = 2;
-  optional int32 page_size = 3;
-  optional string search_text = 4;
-}
-
-message GetPagedUserXsDetailsResponse {
-  repeated FullUserXDetails user_xs = 1;
-  optional int32 total_user_xs = 2;
-}
-
-message GetUserXDetailsRequest {
-  // If unset, returns details about the current user_x.
-  optional int32 user_x_id = 1;
-
-  optional bool include_schools = 2;
-  optional bool include_class_xs = 3;
-
-  optional bool include_all_available_class_xs = 4;
-  optional bool include_knowledge_and_skills = 5;
-}
-
-message GetUserXDetailsResponse {
-  optional FullUserXDetails user_x = 1;
 }
 
 message UpsertUserXRequest {
@@ -75,13 +38,6 @@ message UpsertUserXResponse {
   optional FullUserXDetails user_x = 1;
 
   optional string error = 5;
-}
-
-message RemoveUserXRequest {
-  optional int32 user_x_id = 2;
-}
-
-message RemoveUserXResponse {
 }
 
 message RegisterUserXRequest {
@@ -107,16 +63,36 @@ message RegisterUserXResponse {
   optional bool account_already_exists = 1;
 }
 
-message GetUserXsRequest {
-  optional bool includeAdminXs = 1;
-  optional bool includeTeachers = 2;
-  optional bool includeStudents = 3;
+message RemoveUserXRequest {
+  optional int32 user_x_id = 2;
+}
 
-  repeated int32 schoolIds = 4;
-  repeated int32 classXIds = 5;
-  optional string firstLastEmailSearchText = 6;
+message RemoveUserXResponse {
+}
+
+message GetUserXsRequest {
+  optional bool include_schools = 7;
+  optional bool include_class_xs = 8;
+
+  optional bool of_self = 14;
+  repeated int32 in_district_ids = 9;
+  repeated int32 in_user_x_ids = 10;
+  repeated int32 in_school_ids = 4;
+  repeated int32 in_class_x_ids = 5;
+
+  optional string has_email_address = 11;
+
+  optional bool admin_xs_only = 1;
+  optional bool teachers_only = 2;
+  optional bool students_only = 3;
+
+  optional string first_last_email_search_text = 6;
+
+  optional int32 page = 12;
+  optional int32 page_size = 13;
 }
 
 message GetUserXsResponse {
   repeated FullUserXDetails user_xs = 1;
+  optional int64 total_user_xs = 2;
 }

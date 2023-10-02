@@ -74,10 +74,10 @@ export function GlobalState(props: PropsWithChildren<{}>) {
 
   useEffect(() => {
     createService(UserXManagementService, 'UserXManagementService')
-      .getUserXDetails({})
+      .getUserXs({ofSelf: true})
       .then(response => {
-        if (response?.userX?.userX != null) {
-          setUserX(response.userX.userX);
+        if (response?.userXs?.length === 1 && response.userXs[0]?.userX) {
+          setUserX(response.userXs[0].userX);
           setLoaded(true);
         } else {
           logout(global).finally(() => setLoaded(true));

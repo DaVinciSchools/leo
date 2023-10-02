@@ -45,7 +45,11 @@ import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.ProjectPostComment;
 import org.davincischools.leo.database.daos.ProjectPostRating;
 import org.davincischools.leo.database.daos.School;
+import org.davincischools.leo.database.daos.StudentClassX;
+import org.davincischools.leo.database.daos.StudentSchool;
 import org.davincischools.leo.database.daos.Tag;
+import org.davincischools.leo.database.daos.TeacherClassX;
+import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillRepository;
@@ -477,6 +481,35 @@ public class ProtoDaoUtils {
           builder.setStudentGrade(userX.getStudent().getGrade());
         }
       }
+
+      var schools = new HashMap<Integer, School>();
+      var classXs = new HashMap<Integer, ClassX>();
+
+      if (userX.getTeacher() != null) {
+        ifInitialized(
+            userX.getTeacher().getTeacherSchools(),
+            TeacherSchool::getSchool,
+            school -> schools.put(school.getId(), school));
+        ifInitialized(
+            userX.getTeacher().getTeacherClassXES(),
+            TeacherClassX::getClassX,
+            classX -> classXs.put(classX.getId(), classX));
+      }
+      if (userX.getStudent() != null) {
+        ifInitialized(
+            userX.getStudent().getStudentSchools(),
+            StudentSchool::getSchool,
+            school -> schools.put(school.getId(), school));
+        ifInitialized(
+            userX.getStudent().getStudentClassXES(),
+            StudentClassX::getClassX,
+            classX -> classXs.put(classX.getId(), classX));
+      }
+
+      schools.values().forEach(school -> toSchoolProto(school, builder::addSchoolsBuilder));
+      classXs.values().forEach(classX -> toClassXProto(classX, false, builder::addClassXsBuilder));
+      toDistrictProto(userX.getDistrict(), builder::getDistrictBuilder);
+
       return Optional.of(builder);
     }
     return Optional.empty();
@@ -529,7 +562,6 @@ public class ProtoDaoUtils {
             classX,
             new ClassX().setCreationTime(Instant.now()),
             org.davincischools.leo.protos.pl_types.ClassX.SCHOOL_FIELD_NUMBER,
-            org.davincischools.leo.protos.pl_types.ClassX.ENROLLED_FIELD_NUMBER,
             org.davincischools.leo.protos.pl_types.ClassX.ASSIGNMENTS_FIELD_NUMBER,
             org.davincischools.leo.protos.pl_types.ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
     if (classX.hasSchool()) {
@@ -566,7 +598,6 @@ public class ProtoDaoUtils {
           }
         },
         org.davincischools.leo.protos.pl_types.ClassX.SCHOOL_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ClassX.ENROLLED_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ClassX.ASSIGNMENTS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ClassX.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
   }
