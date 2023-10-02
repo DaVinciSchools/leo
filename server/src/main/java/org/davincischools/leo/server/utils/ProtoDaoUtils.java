@@ -324,7 +324,7 @@ public class ProtoDaoUtils {
         newBuilder,
         b -> {
           toUserXProto(projectPost.getUserX(), b::getUserXBuilder);
-          toProjectProto(projectPost.getProject(), false, b::getProjectBuilder);
+          toProjectProto(projectPost.getProject(), true, b::getProjectBuilder);
           ifInitialized(projectPost.getTags(), tag -> toTagProto(tag, b::addTagsBuilder));
           if (includeChildren) {
             ifInitialized(

@@ -21,6 +21,7 @@ import org.davincischools.leo.database.daos.Assignment_;
 import org.davincischools.leo.database.daos.ClassX_;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.ProjectPostComment_;
+import org.davincischools.leo.database.daos.ProjectPostRating_;
 import org.davincischools.leo.database.daos.ProjectPost_;
 import org.davincischools.leo.database.daos.Project_;
 import org.davincischools.leo.database.daos.School_;
@@ -88,7 +89,8 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
 
     // includeRatings.
     if (params.getIncludeRatings().orElse(false)) {
-      notDeleted(projectPost.fetch(ProjectPost_.projectPostRatings, JoinType.LEFT));
+      var rating = notDeleted(projectPost.fetch(ProjectPost_.projectPostRatings, JoinType.LEFT));
+      notDeleted(rating.fetch(ProjectPostRating_.userX, JoinType.LEFT));
     }
 
     // includeAssignments.
