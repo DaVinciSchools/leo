@@ -1,6 +1,10 @@
 package org.davincischools.leo.server.controllers;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.davincischools.leo.database.utils.DaoUtils.ifInitialized;
+import static org.davincischools.leo.database.utils.DaoUtils.isInitialized;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toMilestoneProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toMilestoneStepProto;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -32,6 +36,7 @@ import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
+import org.davincischools.leo.database.utils.repos.ProjectRepository.MilestoneWithSteps;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
@@ -354,6 +359,25 @@ public class ProjectManagementService {
 
               var response = GetProjectDetailsResponse.newBuilder();
               ProtoDaoUtils.toProjectProto(project.project(), true, response::getProjectBuilder);
+              project
+                  .milestones()
+                  .forEach(
+                      fullMilestone -> {
+                        isInitialized(fullMilestone.milestone())
+                            .ifPresent(
+                                milestone -> {
+                                  var milestoneProto =
+                                      toMilestoneProto(
+                                              milestone,
+                                              response.getProjectBuilder()::addMilestonesBuilder)
+                                          .orElseThrow();
+                                  ifInitialized(
+                                      fullMilestone.steps(),
+                                      step ->
+                                          toMilestoneStepProto(
+                                              step, milestoneProto::addStepsBuilder));
+                                });
+                      });
               return response.build();
             })
         .finish();
