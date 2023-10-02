@@ -1,9 +1,12 @@
+import '../global.scss';
+
 import {CSSProperties, useEffect, useState} from 'react';
 import {Layout} from 'react-grid-layout';
 import {PersistedReactGridLayout} from '../PersistedReactGridLayout/PersistedReactGridLayout';
 import {TitledPaper} from '../TitledPaper/TitledPaper';
 import {VISIBLE_ALPHA} from '../../Ikigai/Ikigai';
 import {pl_types} from '../../generated/protobuf-js';
+import Markdown from 'react-markdown';
 
 interface Category {
   category: pl_types.IProjectInputValue;
@@ -80,7 +83,11 @@ export function IkigaiProjectConfigurer(props: {
         id: (c.category?.category?.typeId ?? 0).toString(),
         panel: (
           <TitledPaper
-            title={c.category?.category?.name ?? 'undefined'}
+            title={
+              <Markdown className="global-markdown">
+                {c.category?.category?.name ?? 'undefined'}
+              </Markdown>
+            }
             headerColor={c.headerColor}
             highlightColor={c.highlightColor}
             draggableCursorType="ns-resize"
@@ -111,7 +118,9 @@ export function IkigaiProjectConfigurer(props: {
               </>
             }
           >
-            {c.category?.category?.shortDescr ?? 'undefined'}
+            <Markdown className="global-markdown">
+              {c.category?.category?.shortDescr ?? 'undefined'}
+            </Markdown>
           </TitledPaper>
         ),
         layout: {x: 0, y: index, w: 1, h: 1},

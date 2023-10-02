@@ -40,6 +40,7 @@ message KnowledgeAndSkill {
     UNSET = 0;
     EKS = 1;
     XQ_COMPETENCY = 2;
+    CTE = 3;
   }
 
   optional int32 id = 1;
@@ -152,6 +153,7 @@ message ProjectInputCategory {
     EKS = 2;
     XQ_COMPETENCY = 3;
     MOTIVATION = 4;
+    CTE = 5;
   }
 
   message Option {

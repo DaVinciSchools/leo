@@ -5,7 +5,7 @@ CREATE TABLE knowledge_and_skill
     deleted         DATETIME,
 
     name            VARCHAR(255) NOT NULL,
-    type            ENUM ('EKS', 'XQ_COMPETENCY') NOT NULL,
+    type            ENUM ('EKS', 'XQ_COMPETENCY', 'CTE') NOT NULL,
     category        VARCHAR(255),
     short_descr     TEXT,
     long_descr_html TEXT,

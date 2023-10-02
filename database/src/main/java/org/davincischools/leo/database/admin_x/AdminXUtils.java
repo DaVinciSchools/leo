@@ -160,9 +160,10 @@ public class AdminXUtils {
     private final ProjectDefinitionCategoryTypeBuilder careerInterestType;
     private final ProjectDefinitionCategoryTypeBuilder assignmentTopicType;
     private final ProjectDefinitionCategoryTypeBuilder motivationType;
-    private final ProjectDefinitionCategoryTypeBuilder projectLeadTheWay;
+    private final ProjectDefinitionCategoryTypeBuilder projectLeadTheWayType;
     private final ProjectDefinitionCategoryTypeBuilder eksType;
     private final ProjectDefinitionCategoryTypeBuilder xqType;
+    private final ProjectDefinitionCategoryTypeBuilder cteType;
 
     public ProjectDefinitionCategoryTypes(Database db) {
       this.db = db;
@@ -246,24 +247,26 @@ public class AdminXUtils {
               db,
               db.getProjectDefinitionCategoryTypeRepository()
                   .upsert(
-                      "Motivations",
+                      "TruMotivate",
                       type ->
                           type.setShortDescr(
-                                  "This is a demo category where you can select results from"
-                                      + " a TruMotivate assessment. Normally, this would be pulled"
-                                      + " from a student's actual TruMotivate assessment results"
-                                      + " and not entered by the student.")
+                                  "This is a demo category where you can select results from a"
+                                      + " [TruMotivate](https://trumotivate.com/) assessment."
+                                      + " Normally, this would be pulled from a student's actual"
+                                      + " TruMotivate assessment results and not entered by the"
+                                      + " student.")
                               .setIncludeInDemo(true)
                               .setHint("Click to add motivations.")
                               .setInputDescr(
-                                  "Normally, this would be pulled from a student's TruMotivate"
-                                      + " assessment. But, for demo purposes, you can select"
-                                      + " multiple results from the options below.")
+                                  "Normally, this would be pulled from a student's"
+                                      + " [TruMotivate](https://trumotivate.com/) assessment."
+                                      + " But, for demo purposes, you can select multiple results"
+                                      + " from the options below.")
                               .setInputPlaceholder("Select a Motivation")
                               .setQueryPrefix("You are motivated by")
                               .setValueType(ValueType.MOTIVATION.name())));
 
-      projectLeadTheWay =
+      projectLeadTheWayType =
           new ProjectDefinitionCategoryTypeBuilder(
               db,
               db.getProjectDefinitionCategoryTypeRepository()
@@ -271,10 +274,11 @@ public class AdminXUtils {
                       "Project Lead The Way",
                       type ->
                           type.setShortDescr(
-                                  "This is a demo category for adding Project Lead The Way (PLTW)"
-                                      + " standards that a course is working towards. Normally,"
-                                      + " these standards would be pulled from class information"
-                                      + " or an assignment and not entered by the student.")
+                                  "This is a demo category for adding [Project Lead The Way"
+                                      + " (PLTW)](https://www.pltw.org/) standards that a course"
+                                      + " is working towards. Normally, these standards would be"
+                                      + " pulled from class information or an assignment and not"
+                                      + " entered by the student.")
                               .setIncludeInDemo(true)
                               .setHint("Click to add PLTW standards.")
                               .setInputDescr(
@@ -338,6 +342,30 @@ public class AdminXUtils {
                                   "It is very important that every project"
                                       + " MUST help you learn how to")
                               .setValueType(ValueType.XQ_COMPETENCY.name())));
+
+      cteType =
+          new ProjectDefinitionCategoryTypeBuilder(
+              db,
+              db.getProjectDefinitionCategoryTypeRepository()
+                  .upsert(
+                      "Career & Technical Education",
+                      type ->
+                          type.setShortDescr(
+                                  "[Career & Technical Education"
+                                      + " (CTE)](https://www.cde.ca.gov/ci/ct/) courses that"
+                                      + " integrate core academic knowledge with technical and"
+                                      + " occupational knowledge to provide students with a"
+                                      + " pathway to postsecondary education and careers.")
+                              .setIncludeInDemo(true)
+                              .setHint("Click to add CTE Industry Sectors.")
+                              .setInputDescr(
+                                  "Select [Career & Technical Education"
+                                      + " (CTE)](https://www.cde.ca.gov/ci/ct/) industry sectors.")
+                              .setInputPlaceholder("Select CTE Industry Sectors")
+                              .setQueryPrefix(
+                                  "You would like projects that are part of the following"
+                                      + " industries")
+                              .setValueType(ValueType.CTE.name())));
     }
 
     public ProjectDefinitionCategoryTypeBuilder getCareerInterestType() {
@@ -364,8 +392,8 @@ public class AdminXUtils {
       return assignmentTopicType;
     }
 
-    public ProjectDefinitionCategoryTypeBuilder getProjectLeadTheWay() {
-      return projectLeadTheWay;
+    public ProjectDefinitionCategoryTypeBuilder getProjectLeadTheWayType() {
+      return projectLeadTheWayType;
     }
   }
 

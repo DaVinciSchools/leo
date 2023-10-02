@@ -22,7 +22,8 @@ public interface ProjectDefinitionCategoryTypeRepository
     FREE_TEXT,
     EKS,
     XQ_COMPETENCY,
-    MOTIVATION
+    MOTIVATION,
+    CTE,
   }
 
   default ProjectDefinitionCategoryType upsert(

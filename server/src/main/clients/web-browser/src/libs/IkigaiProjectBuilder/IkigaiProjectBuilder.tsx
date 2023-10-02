@@ -1,3 +1,4 @@
+import '../global.scss';
 import './IkigaiProjectBuilder.scss';
 
 import {
@@ -20,6 +21,7 @@ import ValueType = pl_types.ProjectInputCategory.ValueType;
 import {OPTION_SORTER, TEXT_SORTER} from '../sorters';
 import {getInputField} from '../form_utils/forms';
 import {addClassName} from '../tags';
+import Markdown from 'react-markdown';
 
 const MODAL_STYLE: Partial<CSSProperties> = {
   position: 'absolute',
@@ -96,9 +98,13 @@ function FreeTextInput(props: {
         onClick={onClick}
         className="ikigai-project-builder-panel"
       >
-        <div className="ikigai-project-builder-title">{props.title}</div>
+        <div className="ikigai-project-builder-title">
+          <Markdown className="global-markdown">{props.title}</Markdown>
+        </div>
         {props.values.length === 0 && (
-          <div className="ikigai-project-builder-hint">{props.hint}</div>
+          <div className="ikigai-project-builder-hint">
+            <Markdown className="global-markdown">{props.hint}</Markdown>
+          </div>
         )}
         <div>
           {props.values.length > 0 &&
@@ -127,7 +133,7 @@ function FreeTextInput(props: {
         className="ikigai-project-builder"
       >
         <TitledPaper
-          title={props.title}
+          title={<Markdown className="global-markdown">{props.title}</Markdown>}
           headerColor={`hsla(${props.hue}, 100%, 75%, ${VISIBLE_ALPHA})`}
           highlightColor={`hsla(${props.hue}, 100%, 75%, 100%)`}
           titleStyle={MODAL_STYLE}
@@ -140,7 +146,11 @@ function FreeTextInput(props: {
         >
           <div className="ikigai-project-builder-modal-content">
             <div>
-              <div style={{paddingBottom: '1em'}}>{props.description}</div>
+              <div style={{paddingBottom: '1em'}}>
+                <Markdown className="global-markdown">
+                  {props.description}
+                </Markdown>
+              </div>
               <Autocomplete
                 ref={inputRef}
                 multiple
@@ -221,9 +231,13 @@ function DropdownSelectInput(props: {
         onClick={onClick}
         className="ikigai-project-builder-panel"
       >
-        <div className="ikigai-project-builder-title">{props.title}</div>
+        <div className="ikigai-project-builder-title">
+          <Markdown className="global-markdown">{props.title}</Markdown>
+        </div>
         {props.values.length === 0 && (
-          <span className="ikigai-project-builder-hint">{props.hint}</span>
+          <span className="ikigai-project-builder-hint">
+            <Markdown className="global-markdown">{props.hint}</Markdown>
+          </span>
         )}
         <div>
           {props.values.length > 0 &&
@@ -252,7 +266,7 @@ function DropdownSelectInput(props: {
         className="ikigai-project-builder"
       >
         <TitledPaper
-          title={props.title}
+          title={<Markdown className="global-markdown">{props.title}</Markdown>}
           headerColor={`hsla(${props.hue}, 100%, 75%, ${VISIBLE_ALPHA})`}
           highlightColor={`hsla(${props.hue}, 100%, 75%, 100%)`}
           titleStyle={MODAL_STYLE}
@@ -265,7 +279,11 @@ function DropdownSelectInput(props: {
         >
           <div className="ikigai-project-builder-modal-content">
             <div>
-              <div style={{paddingBottom: '1em'}}>{props.description}</div>
+              <div style={{paddingBottom: '1em'}}>
+                <Markdown className="global-markdown">
+                  {props.description}
+                </Markdown>
+              </div>
               <Autocomplete
                 multiple
                 autoHighlight
@@ -284,8 +302,13 @@ function DropdownSelectInput(props: {
                 renderOption={(props, option, {selected}) => (
                   <li {...props}>
                     <Checkbox style={{marginRight: 8}} checked={selected} />
-                    {option?.name ?? 'undefined'}:&nbsp;
-                    <i>{option?.shortDescr ?? 'undefined'}</i>
+                    {option?.name ?? 'undefined'}
+                    {option?.shortDescr && (
+                      <>
+                        :&nbsp;
+                        <i>{option?.shortDescr ?? 'undefined'}</i>
+                      </>
+                    )}
                   </li>
                 )}
                 getOptionLabel={option =>

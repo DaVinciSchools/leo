@@ -24,8 +24,9 @@ CREATE TABLE project_definition_category_type
 
     -- The type of value being stored.
     value_type        ENUM('FREE_TEXT',
-        'EKS' /*knowledge_and_skill_value_id*/,
-        'XQ_COMPETENCY' /*knowledge_and_skill_value_id*/,
+        'EKS' /*knowledge_and_skill.type*/,
+        'XQ_COMPETENCY' /*knowledge_and_skill.type*/,
+        'CTE' /*knowledge_and_skill.type*/,
         'MOTIVATION') NOT NULL
 ) ENGINE InnoDB
   CHAR SET UTF8MB4;

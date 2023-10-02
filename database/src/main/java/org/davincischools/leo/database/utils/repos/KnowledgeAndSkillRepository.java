@@ -19,6 +19,7 @@ public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndS
   enum Type {
     EKS,
     XQ_COMPETENCY,
+    CTE,
   }
 
   @Query("SELECT ks FROM KnowledgeAndSkill ks WHERE ks.type = (:type)")

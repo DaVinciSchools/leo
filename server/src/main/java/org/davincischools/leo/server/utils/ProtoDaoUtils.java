@@ -128,19 +128,19 @@ public class ProtoDaoUtils {
             categoryValues.values().stream()
                 .map(org.davincischools.leo.database.daos.ProjectInputValue::getFreeTextValue)
                 .toList());
-        case EKS, XQ_COMPETENCY -> inputValueProto.addAllSelectedIds(
-            categoryValues.values().stream()
-                .map(
-                    org.davincischools.leo.database.daos.ProjectInputValue
-                        ::getKnowledgeAndSkillValue)
-                .map(KnowledgeAndSkill::getId)
-                .toList());
         case MOTIVATION -> inputValueProto.addAllSelectedIds(
             categoryValues.values().stream()
                 .map(org.davincischools.leo.database.daos.ProjectInputValue::getMotivationValue)
                 .map(Motivation::getId)
                 .toList());
         case UNSET -> throw new IllegalStateException("Unset value type");
+        default -> inputValueProto.addAllSelectedIds(
+            categoryValues.values().stream()
+                .map(
+                    org.davincischools.leo.database.daos.ProjectInputValue
+                        ::getKnowledgeAndSkillValue)
+                .map(KnowledgeAndSkill::getId)
+                .toList());
       }
     }
     return Optional.of(projectDefinitionProto);

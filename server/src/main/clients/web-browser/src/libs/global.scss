@@ -124,6 +124,25 @@
   }
 }
 
+.global-markdown {
+  p:first-child {
+    margin-top: 0;
+  }
+
+  p {
+    margin-left: 0;
+    margin-right: 0;
+
+    a {
+      text-decoration: underline;
+    }
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
 // ------------------ Avatar ------------------
 
 .global-avatar {

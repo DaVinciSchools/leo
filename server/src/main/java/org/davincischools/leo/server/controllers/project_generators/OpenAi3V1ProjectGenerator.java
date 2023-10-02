@@ -1,10 +1,11 @@
 package org.davincischools.leo.server.controllers.project_generators;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
-import org.davincischools.leo.database.daos.KnowledgeAndSkill;
+import java.util.stream.Stream;
 import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
@@ -40,18 +41,23 @@ public class OpenAi3V1ProjectGenerator {
                     .map(ProjectInputValue::getFreeTextValue)
                     .map(ProjectManagementService::quoteAndEscape)
                     .toList()));
-        case EKS, XQ_COMPETENCY -> sb.append(
-            COMMA_AND_JOINER.join(
-                values.stream()
-                    .map(ProjectInputValue::getKnowledgeAndSkillValue)
-                    .map(KnowledgeAndSkill::getShortDescr)
-                    .map(ProjectManagementService::quoteAndEscape)
-                    .toList()));
         case MOTIVATION -> sb.append(
             COMMA_AND_JOINER.join(
                 values.stream()
                     .map(ProjectInputValue::getMotivationValue)
                     .map(Motivation::getShortDescr)
+                    .map(ProjectManagementService::quoteAndEscape)
+                    .toList()));
+        default -> sb.append(
+            COMMA_AND_JOINER.join(
+                values.stream()
+                    .map(ProjectInputValue::getKnowledgeAndSkillValue)
+                    .map(
+                        ks ->
+                            Stream.of(ks.getShortDescr(), ks.getName())
+                                .filter(s -> !Strings.isNullOrEmpty(s))
+                                .findFirst()
+                                .orElse("Unknown"))
                     .map(ProjectManagementService::quoteAndEscape)
                     .toList()));
       }

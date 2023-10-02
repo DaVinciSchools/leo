@@ -29,7 +29,6 @@ import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
@@ -143,7 +142,7 @@ public class ProjectManagementService {
             (request, log) -> {
               if (!switch (request.getKnowledgeAndSkill().getType()) {
                 case EKS -> userX.isAdminX() || userX.isTeacher();
-                case XQ_COMPETENCY -> userX.isAdminX();
+                case CTE, XQ_COMPETENCY -> userX.isAdminX();
                 case UNSET, UNRECOGNIZED -> throw new IllegalArgumentException(
                     "Unknown knowledge and skill type: "
                         + request.getKnowledgeAndSkill().getType().name());
@@ -238,23 +237,6 @@ public class ProjectManagementService {
                           inputProto.getFreeTextsList().stream()
                               .map(s -> newProjectInputValue.get().setFreeTextValue(s))
                               .toList()));
-                  case EKS -> projectInputValues.addAll(
-                      throwIfEmptyCategory(
-                          db
-                              .getKnowledgeAndSkillRepository()
-                              .findAllByIdsAndType(inputProto.getSelectedIdsList(), Type.EKS.name())
-                              .stream()
-                              .map(ks -> newProjectInputValue.get().setKnowledgeAndSkillValue(ks))
-                              .toList()));
-                  case XQ_COMPETENCY -> projectInputValues.addAll(
-                      throwIfEmptyCategory(
-                          db
-                              .getKnowledgeAndSkillRepository()
-                              .findAllByIdsAndType(
-                                  inputProto.getSelectedIdsList(), Type.XQ_COMPETENCY.name())
-                              .stream()
-                              .map(ks -> newProjectInputValue.get().setKnowledgeAndSkillValue(ks))
-                              .toList()));
                   case MOTIVATION -> projectInputValues.addAll(
                       throwIfEmptyCategory(
                           db
@@ -262,6 +244,16 @@ public class ProjectManagementService {
                               .findAllByIds(inputProto.getSelectedIdsList())
                               .stream()
                               .map(m -> newProjectInputValue.get().setMotivationValue(m))
+                              .toList()));
+                  default -> projectInputValues.addAll(
+                      throwIfEmptyCategory(
+                          db
+                              .getKnowledgeAndSkillRepository()
+                              .findAllByIdsAndType(
+                                  inputProto.getSelectedIdsList(),
+                                  category.getProjectDefinitionCategoryType().getValueType())
+                              .stream()
+                              .map(ks -> newProjectInputValue.get().setKnowledgeAndSkillValue(ks))
                               .toList()));
                 }
                 state.values.add(projectInputValues.build());
@@ -479,23 +471,16 @@ public class ProjectManagementService {
         .setMaxNumValues(category.getMaxNumValues());
 
     switch (input.getValueType()) {
-      case EKS -> populateOptions(
-          db.getKnowledgeAndSkillRepository().findAll(Type.EKS.name()),
-          i -> {
-            var option =
-                Option.newBuilder()
-                    .setId(i.getId())
-                    .setName(i.getName())
-                    .setShortDescr(i.getShortDescr())
-                    .setUserXId(i.getUserX().getId());
-            if (i.getCategory() != null) {
-              option.setCategory(i.getCategory());
-            }
-            return option;
-          },
+      case MOTIVATION -> populateOptions(
+          db.getMotivationRepository().findAll(),
+          i ->
+              Option.newBuilder()
+                  .setId(i.getId())
+                  .setName(i.getName())
+                  .setShortDescr(i.getShortDescr()),
           input);
-      case XQ_COMPETENCY -> populateOptions(
-          db.getKnowledgeAndSkillRepository().findAll(Type.XQ_COMPETENCY.name()),
+      default -> populateOptions(
+          db.getKnowledgeAndSkillRepository().findAll(input.getValueType().name()),
           i -> {
             var option =
                 Option.newBuilder()
@@ -508,14 +493,6 @@ public class ProjectManagementService {
             }
             return option;
           },
-          input);
-      case MOTIVATION -> populateOptions(
-          db.getMotivationRepository().findAll(),
-          i ->
-              Option.newBuilder()
-                  .setId(i.getId())
-                  .setName(i.getName())
-                  .setShortDescr(i.getShortDescr()),
           input);
     }
   }
