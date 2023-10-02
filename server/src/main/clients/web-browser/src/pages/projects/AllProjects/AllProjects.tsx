@@ -34,12 +34,14 @@ export function AllProjects() {
       createService(ProjectManagementService, 'ProjectManagementService')
         .getProjects({
           userXId: global.userX?.id ?? 0,
-          // TODO: includeUnsuccessful: true,
+          includeUnsuccessful: true,
         })
         .then(response => {
           setProjects(response.projects.sort(REVERSE_DATE_THEN_PROJECT_SORTER));
           setUnsuccessfulProjects(
-            (response.unsuccessfulInputs ?? []).sort(PROJECT_DEFINITION_SORTER)
+            (response.unsuccessfulInputs ?? [])
+              .filter(p => p.state === State.PROCESSING)
+              .sort(PROJECT_DEFINITION_SORTER)
           );
         })
         .catch(global.setError);

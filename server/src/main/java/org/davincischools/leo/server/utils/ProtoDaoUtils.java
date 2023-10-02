@@ -54,6 +54,7 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
+import org.davincischools.leo.database.utils.repos.ProjectInputRepository;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.FullProjectInput;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.MilestoneWithSteps;
@@ -116,7 +117,14 @@ public class ProtoDaoUtils {
             .setId(fullProjectInput.definition().getId())
             .setName(fullProjectInput.definition().getName())
             .setInputId(fullProjectInput.input().getId())
-            .setState(State.valueOf(fullProjectInput.input().getState()))
+            .setState(
+                switch (ProjectInputRepository.State.valueOf(fullProjectInput.input().getState())) {
+                  case COMPLETED -> State.COMPLETED;
+                  case PROCESSING -> fullProjectInput.input().getTimeout().isBefore(Instant.now())
+                      ? State.FAILED
+                      : State.PROCESSING;
+                  case FAILED -> State.FAILED;
+                })
             .setTemplate(Boolean.TRUE.equals(fullProjectInput.definition().getTemplate()));
     for (var categoryValues : fullProjectInput.values()) {
       var type = categoryValues.type();
