@@ -14,7 +14,6 @@ import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetProjectPostsParams;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
-import org.davincischools.leo.database.utils.repos.ProjectPostRepository;
 import org.davincischools.leo.protos.post_service.DeleteProjectPostCommentRequest;
 import org.davincischools.leo.protos.post_service.DeleteProjectPostCommentResponse;
 import org.davincischools.leo.protos.post_service.GetProjectPostsRequest;
@@ -46,7 +45,9 @@ public class PostService {
   @PostMapping(value = "/api/protos/PostService/GetProjectPosts")
   @ResponseBody
   public GetProjectPostsResponse getProjectPosts(
-      @RequestBody Optional<GetProjectPostsRequest> optionalRequest, HttpExecutors httpExecutors)
+      @Authenticated HttpUserX userX,
+      @RequestBody Optional<GetProjectPostsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
       throws HttpExecutorException {
     return httpExecutors
         .start(optionalRequest.orElse(GetProjectPostsRequest.getDefaultInstance()))
@@ -56,51 +57,62 @@ public class PostService {
 
               var response = GetProjectPostsResponse.newBuilder();
 
-              ProjectPostRepository.getProjectPosts(
-                      entityManager,
-                      new GetProjectPostsParams()
-                          .setIncludeTags(
-                              request.hasIncludeTags() ? request.getIncludeTags() : null)
-                          .setIncludeComments(
-                              request.hasIncludeComments() ? request.getIncludeComments() : null)
-                          .setIncludeProjects(
-                              request.hasIncludeProjects() ? request.getIncludeProjects() : null)
-                          .setIncludeRatings(
-                              request.hasIncludeRatings() ? request.getIncludeRatings() : null)
-                          .setIncludeAssignments(
-                              request.hasIncludeAssignments()
-                                  ? request.getIncludeAssignments()
-                                  : null)
-                          .setProjectIds(
-                              request.getProjectIdsList().isEmpty()
-                                  ? null
-                                  : request.getProjectIdsList())
-                          .setProjectPostIds(
-                              request.getProjectPostIdsList().isEmpty()
-                                  ? null
-                                  : request.getProjectPostIdsList())
-                          .setAssignmentIds(
-                              request.getAssignmentIdsList().isEmpty()
-                                  ? null
-                                  : request.getAssignmentIdsList())
-                          .setClassXIds(
-                              request.getClassXIdsList().isEmpty()
-                                  ? null
-                                  : request.getClassXIdsList())
-                          .setSchoolIds(
-                              request.getSchoolIdsList().isEmpty()
-                                  ? null
-                                  : request.getSchoolIdsList())
-                          .setUserXIds(
-                              request.getUserXIdsList().isEmpty()
-                                  ? null
-                                  : request.getUserXIdsList())
-                          .setBeingEdited(
-                              !request.hasBeingEdited() ? null : request.getBeingEdited()))
-                  .forEach(
-                      fullProjectPost ->
-                          ProtoDaoUtils.toProjectPostProto(
-                              fullProjectPost, true, response::addProjectPostsBuilder));
+              var page =
+                  db.getProjectPostRepository()
+                      .getProjectPosts(
+                          new GetProjectPostsParams()
+                              .setIncludeTags(
+                                  request.hasIncludeTags() ? request.getIncludeTags() : null)
+                              .setIncludeComments(
+                                  request.hasIncludeComments()
+                                      ? request.getIncludeComments()
+                                      : null)
+                              .setIncludeProjects(
+                                  request.hasIncludeProjects()
+                                      ? request.getIncludeProjects()
+                                      : null)
+                              .setIncludeRatings(
+                                  (userX.isAdminX() || userX.isTeacher())
+                                          && request.hasIncludeRatings()
+                                      ? request.getIncludeRatings()
+                                      : null)
+                              .setIncludeAssignments(
+                                  request.hasIncludeAssignments()
+                                      ? request.getIncludeAssignments()
+                                      : null)
+                              .setProjectIds(
+                                  request.getProjectIdsList().isEmpty()
+                                      ? null
+                                      : request.getProjectIdsList())
+                              .setProjectPostIds(
+                                  request.getProjectPostIdsList().isEmpty()
+                                      ? null
+                                      : request.getProjectPostIdsList())
+                              .setAssignmentIds(
+                                  request.getAssignmentIdsList().isEmpty()
+                                      ? null
+                                      : request.getAssignmentIdsList())
+                              .setClassXIds(
+                                  request.getClassXIdsList().isEmpty()
+                                      ? null
+                                      : request.getClassXIdsList())
+                              .setSchoolIds(
+                                  request.getSchoolIdsList().isEmpty()
+                                      ? null
+                                      : request.getSchoolIdsList())
+                              .setUserXIds(
+                                  request.getUserXIdsList().isEmpty()
+                                      ? null
+                                      : request.getUserXIdsList())
+                              .setBeingEdited(
+                                  !request.hasBeingEdited() ? null : request.getBeingEdited())
+                              .setPage(request.hasPage() ? request.getPage() : null)
+                              .setPageSize(request.hasPageSize() ? request.getPageSize() : null));
+              page.forEach(
+                  fullProjectPost ->
+                      ProtoDaoUtils.toProjectPostProto(
+                          fullProjectPost, true, response::addProjectPostsBuilder));
+              response.setTotalPosts(page.getTotalElements());
 
               return response.build();
             })
@@ -184,8 +196,7 @@ public class PostService {
 
               if (!userX.isAdminX()
                   && !userX.isTeacher()
-                  && !Objects.equals(
-                      comment.getUserX().getId(), userX.getUserXIdOrNull())) {
+                  && !Objects.equals(comment.getUserX().getId(), userX.getUserXIdOrNull())) {
                 return userX.returnForbidden(response.build());
               }
 

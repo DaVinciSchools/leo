@@ -107,14 +107,14 @@ public interface UserXRepository
           var student = notDeleted(u.fetch(userX, UserX_.student, JoinType.LEFT));
 
           if (params.getInDistrictIds().isPresent()) {
-            u.addWhere(
+            u.where(
                 district
                     .get(District_.id)
                     .in(ImmutableList.copyOf(params.getInDistrictIds().get())));
           }
 
           if (params.getInUserXIds().isPresent()) {
-            u.addWhere(userX.get(UserX_.id).in(ImmutableList.copyOf(params.getInUserXIds().get())));
+            u.where(userX.get(UserX_.id).in(ImmutableList.copyOf(params.getInUserXIds().get())));
           }
 
           if (params.getIncludeSchools().orElse(false) || params.getInSchoolIds().isPresent()) {
@@ -129,7 +129,7 @@ public interface UserXRepository
                 notDeleted(studentSchools.fetch(StudentSchool_.school, JoinType.LEFT));
 
             if (params.getInSchoolIds().isPresent()) {
-              u.addWhere(
+              u.where(
                   builder.or(
                       teacherSchool
                           .get(School_.id)
@@ -152,7 +152,7 @@ public interface UserXRepository
                 notDeleted(studentClassXs.fetch(StudentClassX_.classX, JoinType.LEFT));
 
             if (params.getInSchoolIds().isPresent()) {
-              u.addWhere(
+              u.where(
                   builder.or(
                       teacherClassX
                           .get(ClassX_.id)
@@ -164,24 +164,24 @@ public interface UserXRepository
           }
 
           if (params.getHasEmailAddress().isPresent()) {
-            u.addWhere(
+            u.where(
                 builder.equal(userX.get(UserX_.emailAddress), params.getHasEmailAddress().get()));
           }
 
           if (params.getAdminXsOnly().orElse(false)) {
-            u.addWhere(adminX.isNotNull());
+            u.where(adminX.isNotNull());
           }
 
           if (params.getTeachersOnly().orElse(false)) {
-            u.addWhere(teacher.isNotNull());
+            u.where(teacher.isNotNull());
           }
 
           if (params.getStudentsOnly().orElse(false)) {
-            u.addWhere(student.isNotNull());
+            u.where(student.isNotNull());
           }
 
           if (params.getFirstLastEmailSearchText().isPresent()) {
-            u.addWhere(
+            u.where(
                 builder.like(
                     builder.concat(
                         builder.concat(

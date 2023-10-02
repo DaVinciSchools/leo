@@ -32,6 +32,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.davincischools.leo.database.daos.Assignment;
+import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
@@ -258,7 +259,9 @@ public class ProtoDaoUtils {
           if (includeChildren) {
             toAssignmentProto(project.getAssignment(), true, builder::getAssignmentBuilder);
           }
-          ifInitialized(project.getProjectMilestones(), milestone -> toMilestoneProto(milestone, builder::addMilestonesBuilder));
+          ifInitialized(
+              project.getProjectMilestones(),
+              milestone -> toMilestoneProto(milestone, builder::addMilestonesBuilder));
         },
         org.davincischools.leo.protos.pl_types.Project.ASSIGNMENT_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER);
@@ -561,10 +564,10 @@ public class ProtoDaoUtils {
           toClassXProto(assignment.getClassX(), recursive, builder::getClassXBuilder);
           ifInitialized(
               assignment.getAssignmentKnowledgeAndSkills(),
-              assignmentKnowledgeAndSkill ->
+              AssignmentKnowledgeAndSkill::getKnowledgeAndSkill,
+              knowledgeAndSkill ->
                   toKnowledgeAndSkillProto(
-                      assignmentKnowledgeAndSkill.getKnowledgeAndSkill(),
-                      builder::addKnowledgeAndSkillsBuilder));
+                      knowledgeAndSkill, builder::addKnowledgeAndSkillsBuilder));
         },
         org.davincischools.leo.protos.pl_types.Assignment.CLASS_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.Assignment.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);

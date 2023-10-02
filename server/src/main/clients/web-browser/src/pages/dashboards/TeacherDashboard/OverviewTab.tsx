@@ -3,7 +3,7 @@ import './TeacherDashboard.scss';
 import NotificationsTwoToneIcon from '@mui/icons-material/NotificationsTwoTone';
 import {TitledPaper} from '../../../libs/TitledPaper/TitledPaper';
 import {PersistedReactGridLayout} from '../../../libs/PersistedReactGridLayout/PersistedReactGridLayout';
-import {useContext, useEffect, useState} from 'react';
+import {useContext, useEffect, useRef, useState} from 'react';
 import {
   class_x_management_service,
   pl_types,
@@ -33,10 +33,16 @@ import PostService = post_service.PostService;
 import IProjectPost = pl_types.IProjectPost;
 import IFullUserXDetails = user_x_management.IFullUserXDetails;
 
+const pageSize = 10;
+
 export function OverviewTab() {
   const global = useContext(GlobalStateContext);
 
   const [projectPosts, setProjectPosts] = useState<readonly IProjectPost[]>([]);
+  const [page, setPage] = useState(-1);
+  const loadedPage = useRef(-1);
+  const loadingPage = useRef(-1);
+  const [exhaustedPosts, setExhaustedPosts] = useState(false);
 
   const filterForm = useFormFields();
 
@@ -110,6 +116,11 @@ export function OverviewTab() {
   // Update project posts.
 
   useEffect(() => {
+    if (page < 0 || page <= loadingPage.current || exhaustedPosts) {
+      return;
+    }
+    loadingPage.current = page;
+
     createService(PostService, 'PostService')
       .getProjectPosts({
         schoolIds: schoolFilter.getValue()?.map?.(e => e.id ?? 0),
@@ -121,12 +132,31 @@ export function OverviewTab() {
         includeRatings: true,
         includeAssignments: true,
         beingEdited: false,
+        page: page,
+        pageSize: pageSize,
       })
       .then(response => {
-        setProjectPosts(response.projectPosts);
+        if (response.projectPosts.length === 0) {
+          setExhaustedPosts(true);
+          return;
+        }
+        loadedPage.current = page;
+        setProjectPosts(posts => {
+          const newPosts = posts.slice();
+          newPosts.splice(
+            page * pageSize,
+            response.projectPosts.length,
+            ...response.projectPosts
+          );
+          return newPosts;
+        });
       })
       .catch(global.setError);
-  }, [schoolFilter.getValue(), classXFilter.getValue(), userXFilter]);
+  }, [schoolFilter.getValue(), classXFilter.getValue(), userXFilter, page]);
+
+  useEffect(() => {
+    setPage(0);
+  }, []);
 
   if (!global.requireUserX(userX => userX?.isAdminX || userX?.isTeacher)) {
     return <></>;
@@ -189,7 +219,24 @@ export function OverviewTab() {
           },
           {
             id: 'posts',
-            panel: <PostsFeed posts={projectPosts} />,
+            panel: (
+              <>
+                <div>
+                  <PostsFeed posts={projectPosts} />
+                </div>
+                <div style={{display: exhaustedPosts ? 'none' : undefined}}>
+                  <Button
+                    className="global-button"
+                    onClick={() => {
+                      setPage(page + 1);
+                    }}
+                    disabled={page > loadedPage.current}
+                  >
+                    Load More Posts
+                  </Button>
+                </div>
+              </>
+            ),
             layout: {x: 0, y: 0, w: 8, h: 12},
           },
           {

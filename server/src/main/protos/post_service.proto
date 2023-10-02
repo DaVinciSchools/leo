@@ -30,11 +30,15 @@ message GetProjectPostsRequest {
   repeated int32 user_x_ids = 4;
   optional bool being_edited = 2;
 
+  optional int32 page = 14;
+  optional int32 page_size = 15;
+
   reserved 1;
 }
 
 message GetProjectPostsResponse {
   repeated pl_types.ProjectPost project_posts = 1;
+  optional int64 total_posts = 2;
 }
 
 message UpsertProjectPostRequest {

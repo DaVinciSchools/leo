@@ -23,6 +23,11 @@ import org.springframework.data.support.PageableExecutionUtils;
 
 public class PagedQuery<T> {
 
+  public interface PagedQueryBuilder<T> {
+    void configureQuery(
+        PagedQuery<T> utils, Root<T> root, CriteriaQuery<?> query, CriteriaBuilder builder);
+  }
+
   public static <T> Page<T> getPageResults(
       EntityManager em, Class<T> rootClass, PagedQueryBuilder<T> builder, Pageable pageable) {
     var criteriaBuilder = em.getCriteriaBuilder();
@@ -57,15 +62,6 @@ public class PagedQuery<T> {
         });
   }
 
-  public void addWhere(Predicate predicate) {
-    where.add(predicate);
-  }
-
-  public interface PagedQueryBuilder<T> {
-    void configureQuery(
-        PagedQuery<T> utils, Root<T> root, CriteriaQuery<?> query, CriteriaBuilder builder);
-  }
-
   private final CriteriaBuilder builder;
   private final List<Predicate> where;
   private final boolean useFecth;
@@ -77,6 +73,22 @@ public class PagedQuery<T> {
   }
 
   @SuppressWarnings("unchecked")
+  public boolean isCount() {
+    return !useFecth;
+  }
+
+  public void where(Predicate predicate) {
+    where.add(predicate);
+  }
+
+  public Predicate isTrueOrFalse(Path<Boolean> attribute, Boolean value) {
+    if (value) {
+      return builder.isTrue(attribute);
+    } else {
+      return builder.or(builder.isNull(attribute), builder.isFalse(attribute));
+    }
+  }
+
   public <X, Y, P extends From<?, X> & FetchParent<?, X>> Join<X, Y> fetch(
       P parent, SingularAttribute<? super X, Y> attribute, JoinType joinType) {
     checkNotNull(parent);
