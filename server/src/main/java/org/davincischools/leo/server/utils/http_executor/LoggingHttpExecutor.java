@@ -337,7 +337,11 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
         return new String(Base64.getMimeEncoder().encode((byte[]) o), StandardCharsets.US_ASCII);
       }
     } else {
-      return o.toString();
+      try {
+        return o.toString();
+      } catch (Throwable t) {
+        return "Error converting to string: " + t.getMessage();
+      }
     }
   }
 }
