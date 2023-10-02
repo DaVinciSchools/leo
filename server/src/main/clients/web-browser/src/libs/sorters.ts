@@ -10,6 +10,7 @@ import State = pl_types.ProjectDefinition.State;
 import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
 import Type = pl_types.KnowledgeAndSkill.Type;
 import ITag = pl_types.ITag;
+import {toLong} from './misc';
 
 export const TEXT_SORTER = (a: string, b: string) => a.localeCompare(b);
 
@@ -46,6 +47,11 @@ export const ASSIGNMENT_SORTER = (a: IAssignment, b: IAssignment) =>
 export const PROJECT_SORTER = (a: IProject, b: IProject) =>
   (a.name ?? '').localeCompare(b.name ?? '') ||
   (a.shortDescr ?? '').localeCompare(b.shortDescr ?? '');
+
+export const PROJECT_POST_COMMENT_SORTER = (
+  a: pl_types.IProjectPostComment,
+  b: pl_types.IProjectPostComment
+) => toLong(b.postTimeMs ?? 0).compare(toLong(a.postTimeMs ?? 0));
 
 export const REVERSE_DATE_THEN_PROJECT_SORTER = (a: IProject, b: IProject) =>
   (b.id ?? 0) - (a.id ?? 0) ||
