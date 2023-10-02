@@ -83,12 +83,17 @@ public interface ProjectInputRepository extends JpaRepository<ProjectInput, Inte
             input = new FullProjectInput(row.input(), row.definition(), new ArrayList<>()));
         values = null;
       }
+      if (row.category() == null || row.type() == null) {
+        continue;
+      }
       if (values == null || !Objects.equals(values.category().getId(), row.category().getId())) {
         input
             .values()
             .add(values = new InputCategoryValues(row.category(), row.type(), new ArrayList<>()));
       }
-      values.values().add(row.value());
+      if (row.value() != null) {
+        values.values().add(row.value());
+      }
     }
 
     return allInputs;
