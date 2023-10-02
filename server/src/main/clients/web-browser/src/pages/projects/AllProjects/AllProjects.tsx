@@ -33,8 +33,8 @@ export function AllProjects() {
     if (global.userX != null) {
       createService(ProjectManagementService, 'ProjectManagementService')
         .getProjects({
-          userXId: global.userX!.id,
-          includeUnsuccessful: true,
+          userXId: global.userX?.id ?? 0,
+          // TODO: includeUnsuccessful: true,
         })
         .then(response => {
           setProjects(response.projects.sort(REVERSE_DATE_THEN_PROJECT_SORTER));
