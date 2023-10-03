@@ -69,6 +69,8 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
     checkNotNull(projectPost);
     checkNotNull(where);
 
+    notDeleted(projectPost.fetch(ProjectPost_.userX, JoinType.LEFT));
+
     // includeTags.
     if (params.getIncludeTags().orElse(false)) {
       notDeleted(projectPost.fetch(ProjectPost_.tags, JoinType.LEFT));
