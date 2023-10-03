@@ -93,7 +93,7 @@ public interface ProjectPostRepository
     }
 
     // includeAssignments.
-    if (params.getIncludeAssignments().orElse(false)) {
+    if (params.getIncludeAssignments().orElse(false) || params.getIncludeRatings().orElse(false)) {
       var project = notDeleted(projectPost.fetch(ProjectPost_.project, JoinType.LEFT));
       var assignment = notDeleted(project.fetch(Project_.assignment, JoinType.LEFT));
       var assignmentKnowledgeAndSkills =

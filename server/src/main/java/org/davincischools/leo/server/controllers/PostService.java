@@ -43,7 +43,9 @@ public class PostService {
   @PostMapping(value = "/api/protos/PostService/GetProjectPosts")
   @ResponseBody
   public GetProjectPostsResponse getProjectPosts(
-      @RequestBody Optional<GetProjectPostsRequest> optionalRequest, HttpExecutors httpExecutors)
+      @Authenticated HttpUserX userX,
+      @RequestBody Optional<GetProjectPostsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
       throws HttpExecutorException {
     return httpExecutors
         .start(optionalRequest.orElse(GetProjectPostsRequest.getDefaultInstance()))
@@ -63,7 +65,9 @@ public class PostService {
                           .setIncludeProjects(
                               request.hasIncludeProjects() ? request.getIncludeProjects() : null)
                           .setIncludeRatings(
-                              request.hasIncludeRatings() ? request.getIncludeRatings() : null)
+                              (userX.isAdminX() || userX.isTeacher()) && request.hasIncludeRatings()
+                                  ? request.getIncludeRatings()
+                                  : null)
                           .setIncludeAssignments(
                               request.hasIncludeAssignments()
                                   ? request.getIncludeAssignments()
