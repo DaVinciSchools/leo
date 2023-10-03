@@ -21,7 +21,11 @@ import {
 import {EditableReactQuill} from '../EditableReactQuill/EditableReactQuill';
 import {PostHeader} from './PostHeader';
 import {GlobalStateContext} from '../GlobalState';
-import {KNOWLEDGE_AND_SKILL_SORTER, USER_X_SORTER} from '../sorters';
+import {
+  KNOWLEDGE_AND_SKILL_SORTER,
+  PROJECT_POST_COMMENT_SORTER,
+  USER_X_SORTER,
+} from '../sorters';
 import {FormControl, InputLabel, MenuItem, Select} from '@mui/material';
 import {createService} from '../protos';
 import IProjectPost = pl_types.IProjectPost;
@@ -317,51 +321,53 @@ export function Post(props: {
           {props.post?.comments?.length === 0 && (
             <span className="post-in-feed-empty-post">No Comments</span>
           )}
-          {props.post?.comments?.map(comment => (
-            <div key={comment.id ?? 0} className="post-in-feed-comment">
-              <AccountCircle className="post-in-feed-avatar" />
-              <div className="global-flex-column" style={{gap: 0}}>
-                <PostHeader
-                  userX={comment?.userX}
-                  postTimeMs={toLong(comment?.postTimeMs ?? 0)}
-                  saveStatus={
-                    props.editingCommentId === comment.id
-                      ? props.saveStatus
-                      : ''
-                  }
-                  editIconClicked={() =>
-                    props.setEditingCommentId(
-                      props.editingCommentId !== comment.id
-                        ? comment.id ?? undefined
+          {props.post?.comments
+            ?.sort(PROJECT_POST_COMMENT_SORTER)
+            ?.map(comment => (
+              <div key={comment.id ?? 0} className="post-in-feed-comment">
+                <AccountCircle className="post-in-feed-avatar" />
+                <div className="global-flex-column" style={{gap: 0}}>
+                  <PostHeader
+                    userX={comment?.userX}
+                    postTimeMs={toLong(comment?.postTimeMs ?? 0)}
+                    saveStatus={
+                      props.editingCommentId === comment.id
+                        ? props.saveStatus
+                        : ''
+                    }
+                    editIconClicked={() =>
+                      props.setEditingCommentId(
+                        props.editingCommentId !== comment.id
+                          ? comment.id ?? undefined
+                          : undefined
+                      )
+                    }
+                    deleteIconClicked={
+                      props.deleteCommentId
+                        ? () => props.deleteCommentId?.(comment.id ?? 0)
                         : undefined
-                    )
-                  }
-                  deleteIconClicked={
-                    props.deleteCommentId
-                      ? () => props.deleteCommentId?.(comment.id ?? 0)
-                      : undefined
-                  }
-                />
-                <EditableReactQuill
-                  value={comment.longDescrHtml}
-                  placeholder={
-                    <span className="post-in-feed-empty-post">
-                      No Comment Content
-                    </span>
-                  }
-                  editing={props.editingCommentId === comment.id}
-                  onBlur={() => {
-                    props.setEditingCommentId(undefined);
-                  }}
-                  onChange={value => {
-                    comment.longDescrHtml = value;
-                    props.setCommentToSave(comment);
-                  }}
-                  editingStyle={{paddingTop: '1rem'}}
-                />
+                    }
+                  />
+                  <EditableReactQuill
+                    value={comment.longDescrHtml}
+                    placeholder={
+                      <span className="post-in-feed-empty-post">
+                        No Comment Content
+                      </span>
+                    }
+                    editing={props.editingCommentId === comment.id}
+                    onBlur={() => {
+                      props.setEditingCommentId(undefined);
+                    }}
+                    onChange={value => {
+                      comment.longDescrHtml = value;
+                      props.setCommentToSave(comment);
+                    }}
+                    editingStyle={{paddingTop: '1rem'}}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </>

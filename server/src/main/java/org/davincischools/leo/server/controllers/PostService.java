@@ -165,29 +165,30 @@ public class PostService {
                       ? ProtoDaoUtils.toUserXDao(request.getProjectPostComment().getUserX())
                       : checkNotNull(userX.getUserXOrNull());
 
-              Optional<ProjectPostComment> existingComment =
+              ProjectPostComment comment =
                   db.getProjectPostCommentRepository()
-                      .findById(request.getProjectPostComment().getId());
+                      .findById(request.getProjectPostComment().getId())
+                      .orElseGet(
+                          () ->
+                              new ProjectPostComment()
+                                  .setCreationTime(Instant.now())
+                                  .setUserX(postUserX)
+                                  .setProjectPost(
+                                      new ProjectPost()
+                                          .setId(
+                                              request
+                                                  .getProjectPostComment()
+                                                  .getProjectPost()
+                                                  .getId()))
+                                  .setPostTime(Instant.now()));
 
-              if (existingComment.isPresent()
-                  && !userX.isAdminX()
+              if (!userX.isAdminX()
                   && !userX.isTeacher()
-                  && !Objects.equals(
-                      existingComment.get().getUserX().getId(), userX.getUserXIdOrNull())) {
+                  && !Objects.equals(comment.getUserX().getId(), userX.getUserXIdOrNull())) {
                 return userX.returnForbidden(response.build());
               }
 
-              ProjectPostComment comment =
-                  ProtoDaoUtils.toProjectPostCommentDao(request.getProjectPostComment())
-                      .setCreationTime(Instant.now())
-                      .setUserX(postUserX)
-                      .setPostTime(Instant.now());
-              existingComment.ifPresent(
-                  existing ->
-                      comment
-                          .setUserX(existing.getUserX())
-                          .setCreationTime(existing.getCreationTime())
-                          .setPostTime(existing.getPostTime()));
+              comment.setLongDescrHtml(request.getProjectPostComment().getLongDescrHtml());
 
               DaoUtils.removeTransientValues(comment, db.getProjectPostCommentRepository()::save);
 

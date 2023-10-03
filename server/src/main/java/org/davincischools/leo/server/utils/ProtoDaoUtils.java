@@ -258,7 +258,9 @@ public class ProtoDaoUtils {
           if (includeChildren) {
             toAssignmentProto(project.getAssignment(), true, builder::getAssignmentBuilder);
           }
-          ifInitialized(project.getProjectMilestones(), milestone -> toMilestoneProto(milestone, builder::addMilestonesBuilder));
+          ifInitialized(
+              project.getProjectMilestones(),
+              milestone -> toMilestoneProto(milestone, builder::addMilestonesBuilder));
         },
         org.davincischools.leo.protos.pl_types.Project.ASSIGNMENT_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER);
