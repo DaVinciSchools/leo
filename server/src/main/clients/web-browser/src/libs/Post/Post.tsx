@@ -240,6 +240,7 @@ export function Post(props: {
                           labelId="demo-simple-select-label"
                           id="demo-simple-select"
                           size="small"
+                          disabled={(userX.id ?? 0) !== (global.userX?.id ?? 0)}
                           value={
                             ratings.get(
                               JSON.stringify({
