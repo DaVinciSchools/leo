@@ -755,7 +755,6 @@ public class AdminXUtils {
 
                     db.getClassXRepository()
                         .getClassXs(
-                            entityManager,
                             new GetClassXsParams().setSchoolIds(ImmutableList.of(school.getId())))
                         .forEach(
                             classX ->

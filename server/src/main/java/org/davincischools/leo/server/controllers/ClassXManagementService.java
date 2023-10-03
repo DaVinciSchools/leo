@@ -1,7 +1,6 @@
 package org.davincischools.leo.server.controllers;
 
 import com.google.common.collect.Iterables;
-import jakarta.persistence.EntityManager;
 import java.util.Objects;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.ClassX;
@@ -27,7 +26,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class ClassXManagementService {
 
   @Autowired Database db;
-  @Autowired EntityManager entityManager;
 
   @PostMapping(value = "/api/protos/ClassXManagementService/GetClassXs")
   @ResponseBody
@@ -59,7 +57,6 @@ public class ClassXManagementService {
 
               db.getClassXRepository()
                   .getClassXs(
-                      entityManager,
                       new GetClassXsParams()
                           .setSchoolIds(
                               request.getSchoolIdsCount() > 0 ? request.getSchoolIdsList() : null)

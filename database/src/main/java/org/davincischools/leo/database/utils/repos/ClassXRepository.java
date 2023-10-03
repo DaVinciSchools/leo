@@ -6,7 +6,6 @@ import static org.davincischools.leo.database.utils.DaoUtils.removeTransientValu
 import static org.davincischools.leo.database.utils.DaoUtils.saveJoinTableAndTargets;
 
 import com.google.common.collect.ImmutableList;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -26,13 +25,15 @@ import org.davincischools.leo.database.daos.TeacherClassX_;
 import org.davincischools.leo.database.daos.Teacher_;
 import org.davincischools.leo.database.exceptions.UnauthorizedUserX;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.custom.CustomEntityManagerRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
+public interface ClassXRepository
+    extends JpaRepository<ClassX, Integer>, CustomEntityManagerRepository {
 
   default ClassX upsert(ClassX classX) {
     checkNotNull(classX);
@@ -65,11 +66,10 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
         db.getClassXKnowledgeAndSkillRepository()::setClassXKnowledgeAndSkills);
   }
 
-  default List<ClassX> getClassXs(EntityManager entityManager, GetClassXsParams params) {
-    checkNotNull(entityManager);
+  default List<ClassX> getClassXs(GetClassXsParams params) {
     checkNotNull(params);
 
-    var builder = entityManager.getCriteriaBuilder();
+    var builder = getEntityManager().getCriteriaBuilder();
     var where = new ArrayList<Predicate>();
 
     // From classX.
@@ -81,7 +81,7 @@ public interface ClassXRepository extends JpaRepository<ClassX, Integer> {
 
     // Select.
     query.select(classX).distinct(true).where(where.toArray(new Predicate[0]));
-    return entityManager.createQuery(query).getResultList();
+    return getEntityManager().createQuery(query).getResultList();
   }
 
   static From<?, ClassX> getClassXs(

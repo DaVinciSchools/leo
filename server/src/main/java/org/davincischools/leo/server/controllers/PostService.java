@@ -2,7 +2,6 @@ package org.davincischools.leo.server.controllers;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
@@ -14,7 +13,6 @@ import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetProjectPostsParams;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
-import org.davincischools.leo.database.utils.repos.ProjectPostRepository;
 import org.davincischools.leo.protos.post_service.DeleteProjectPostCommentRequest;
 import org.davincischools.leo.protos.post_service.DeleteProjectPostCommentResponse;
 import org.davincischools.leo.protos.post_service.GetProjectPostsRequest;
@@ -40,7 +38,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class PostService {
 
-  @Autowired EntityManager entityManager;
   @Autowired Database db;
 
   @PostMapping(value = "/api/protos/PostService/GetProjectPosts")
@@ -56,8 +53,8 @@ public class PostService {
 
               var response = GetProjectPostsResponse.newBuilder();
 
-              ProjectPostRepository.getProjectPosts(
-                      entityManager,
+              db.getProjectPostRepository()
+                  .getProjectPosts(
                       new GetProjectPostsParams()
                           .setIncludeTags(
                               request.hasIncludeTags() ? request.getIncludeTags() : null)

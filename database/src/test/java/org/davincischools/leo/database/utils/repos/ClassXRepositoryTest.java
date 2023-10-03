@@ -3,7 +3,6 @@ package org.davincischools.leo.database.utils.repos;
 import static com.google.common.truth.Truth.assertThat;
 import static java.util.stream.Collectors.toSet;
 
-import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -37,7 +36,6 @@ public class ClassXRepositoryTest {
   public static class TestApplicationConfiguration {}
 
   @Autowired private Database db;
-  @Autowired private EntityManager entityManager;
   @Autowired private TestData testData;
 
   @Before
@@ -47,7 +45,7 @@ public class ClassXRepositoryTest {
 
   @Test
   public void getClassXsTest() {
-    var classXs = db.getClassXRepository().getClassXs(entityManager, new GetClassXsParams());
+    var classXs = db.getClassXRepository().getClassXs(new GetClassXsParams());
 
     assertThat(classXs.stream().map(ClassX::getId).toList())
         .containsExactly(
@@ -70,8 +68,7 @@ public class ClassXRepositoryTest {
   @Test
   public void getClassXsIncludeAssignmentsTest() {
     var classXs =
-        db.getClassXRepository()
-            .getClassXs(entityManager, new GetClassXsParams().setIncludeAssignments(true));
+        db.getClassXRepository().getClassXs(new GetClassXsParams().setIncludeAssignments(true));
 
     assertThat(
             classXs.stream()
@@ -109,7 +106,7 @@ public class ClassXRepositoryTest {
   public void getClassXsIncludeKnowledgeAndSkillTest() {
     var classXs =
         db.getClassXRepository()
-            .getClassXs(entityManager, new GetClassXsParams().setIncludeKnowledgeAndSkills(true));
+            .getClassXs(new GetClassXsParams().setIncludeKnowledgeAndSkills(true));
 
     assertThat(
             classXs.stream()
@@ -141,7 +138,6 @@ public class ClassXRepositoryTest {
     var classXs =
         db.getClassXRepository()
             .getClassXs(
-                entityManager,
                 new GetClassXsParams()
                     .setIncludeAssignments(true)
                     .setIncludeKnowledgeAndSkills(true));
@@ -189,8 +185,7 @@ public class ClassXRepositoryTest {
   @Test
   public void getClassXsIncludeSchoolTest() {
     var classXs =
-        db.getClassXRepository()
-            .getClassXs(entityManager, new GetClassXsParams().setIncludeSchool(true));
+        db.getClassXRepository().getClassXs(new GetClassXsParams().setIncludeSchool(true));
 
     assertThat(classXs.stream().map(ClassX::getSchool).map(School::getId).toList())
         .containsExactly(

@@ -3,7 +3,6 @@ package org.davincischools.leo.server.controllers;
 import static org.davincischools.leo.database.utils.DaoUtils.createJoinTableRows;
 
 import com.google.common.collect.Lists;
-import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -37,7 +36,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class AssignmentManagementService {
 
   @Autowired Database db;
-  @Autowired EntityManager entityManager;
 
   @PostMapping(value = "/api/protos/AssignmentManagementService/GetAssignments")
   @ResponseBody
@@ -75,7 +73,6 @@ public class AssignmentManagementService {
 
               db.getClassXRepository()
                   .getClassXs(
-                      entityManager,
                       new GetClassXsParams()
                           .setIncludeAssignments(true)
                           .setTeacherIds(

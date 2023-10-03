@@ -6,7 +6,6 @@ import static org.davincischools.leo.database.utils.DaoUtils.notDeleted;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
@@ -29,18 +28,18 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.daos.UserX_;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.custom.CustomEntityManagerRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ProjectPostRepository extends JpaRepository<ProjectPost, Integer> {
+public interface ProjectPostRepository
+    extends JpaRepository<ProjectPost, Integer>, CustomEntityManagerRepository {
 
-  static List<ProjectPost> getProjectPosts(
-      EntityManager entityManager, GetProjectPostsParams params) {
-    checkNotNull(entityManager);
+  default List<ProjectPost> getProjectPosts(GetProjectPostsParams params) {
     checkNotNull(params);
 
-    var builder = entityManager.getCriteriaBuilder();
+    var builder = getEntityManager().getCriteriaBuilder();
     var where = new ArrayList<Predicate>();
 
     // From projectPost.
@@ -56,7 +55,7 @@ public interface ProjectPostRepository extends JpaRepository<ProjectPost, Intege
         .distinct(true)
         .where(where.toArray(new Predicate[0]))
         .orderBy(builder.desc(projectPost.get(ProjectPost_.postTime)));
-    return entityManager.createQuery(query).getResultList();
+    return getEntityManager().createQuery(query).getResultList();
   }
 
   static From<?, ProjectPost> getProjectPosts(

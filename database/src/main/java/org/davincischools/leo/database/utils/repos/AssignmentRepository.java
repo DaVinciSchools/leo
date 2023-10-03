@@ -6,7 +6,6 @@ import static org.davincischools.leo.database.utils.DaoUtils.removeTransientValu
 import static org.davincischools.leo.database.utils.DaoUtils.saveJoinTableAndTargets;
 
 import com.google.common.collect.ImmutableList;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -22,11 +21,13 @@ import org.davincischools.leo.database.daos.Student_;
 import org.davincischools.leo.database.daos.TeacherClassX_;
 import org.davincischools.leo.database.daos.Teacher_;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.custom.CustomEntityManagerRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AssignmentRepository extends JpaRepository<Assignment, Integer> {
+public interface AssignmentRepository
+    extends JpaRepository<Assignment, Integer>, CustomEntityManagerRepository {
 
   default Assignment upsert(Database db, Assignment assignment) {
     checkNotNull(assignment);
@@ -42,12 +43,10 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Integer>
     return assignment;
   }
 
-  default List<Assignment> getAssignments(
-      EntityManager entityManager, GetAssignmentsParams params) {
-    checkNotNull(entityManager);
+  default List<Assignment> getAssignments(GetAssignmentsParams params) {
     checkNotNull(params);
 
-    var builder = entityManager.getCriteriaBuilder();
+    var builder = getEntityManager().getCriteriaBuilder();
     var where = new ArrayList<Predicate>();
 
     // From assignment.
@@ -59,7 +58,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Integer>
 
     // Select.
     query.select(assignment).distinct(true).where(where.toArray(new Predicate[0]));
-    return entityManager.createQuery(query).getResultList();
+    return getEntityManager().createQuery(query).getResultList();
   }
 
   static From<?, Assignment> getAssignments(
