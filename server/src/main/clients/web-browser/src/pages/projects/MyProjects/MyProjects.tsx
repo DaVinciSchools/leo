@@ -136,10 +136,6 @@ export function MyProjects() {
     1500
   );
 
-  // View posts tab.
-
-  const [projectPosts, setProjectPosts] = useState<IProjectPost[]>([]);
-
   // Hidden form to track project selection.
 
   const hiddenForm = useFormFields({
@@ -190,7 +186,6 @@ export function MyProjects() {
       postForm.setValuesObject({});
       postId.current = undefined;
       postBeingEdited.current = true;
-      setProjectPosts([]);
     } else {
       projectForm.setValuesObject(selectedProject);
       postForm.setValuesObject({});
@@ -215,18 +210,6 @@ export function MyProjects() {
                 .filter(e => e.length > 0),
             })
           );
-        })
-        .catch(global.setError);
-      createService(PostService, 'PostService')
-        .getProjectPosts({
-          projectIds: selectedProject ? [selectedProject.id ?? 0] : [],
-          includeComments: true,
-          includeTags: true,
-          beingEdited: false,
-        })
-        .then(response => {
-          console.log(response.projectPosts);
-          setProjectPosts(response.projectPosts);
         })
         .catch(global.setError);
     }
@@ -332,7 +315,17 @@ export function MyProjects() {
                 label: 'View Posts',
                 content: (
                   <>
-                    <PostsFeed posts={projectPosts} />
+                    <PostsFeed
+                      request={{
+                        projectIds: selectedProject
+                          ? [selectedProject.id ?? 0]
+                          : undefined,
+                        includeComments: true,
+                        includeTags: true,
+                        includeRatings: true,
+                        beingEdited: false,
+                      }}
+                    />
                   </>
                 ),
               },

@@ -1,110 +1,57 @@
 import {Post} from '../Post/Post';
 import {pl_types, post_service} from '../../generated/protobuf-js';
 import IProjectPost = pl_types.IProjectPost;
-import {useContext, useEffect, useState} from 'react';
-import {useDelayedAction} from '../delayed_action';
-import IProjectPostComment = pl_types.IProjectPostComment;
+import {useContext, useEffect, useRef, useState} from 'react';
 import {createService} from '../protos';
 import PostService = post_service.PostService;
 import {GlobalStateContext} from '../GlobalState';
+import IGetProjectPostsRequest = post_service.IGetProjectPostsRequest;
+import {DeepReadonly, replaceInPlace} from '../misc';
 
-interface PostMetadata {
-  post: IProjectPost;
-}
-
-export function PostsFeed(props: {posts: readonly IProjectPost[]}) {
+export function PostsFeed(props: {
+  posts?: DeepReadonly<IProjectPost[]>;
+  request?: DeepReadonly<IGetProjectPostsRequest>;
+}) {
   const global = useContext(GlobalStateContext);
 
-  const [posts, setPosts] = useState<readonly PostMetadata[]>([]);
-
-  const [saveStatus, setSaveStatus] = useState<string>('');
-  const [editingCommentId, setEditingCommentId] = useState<number>();
-  const [commentToSave, setCommentToSave] =
-    useState<IProjectPostComment | null>(null);
-
-  const autoSave = useDelayedAction(
-    () => setSaveStatus('Modified'),
-    () => {
-      setSaveStatus('Saving...');
-      const commentToSaveLocal = commentToSave;
-      if (commentToSaveLocal != null) {
-        createService(PostService, 'PostService')
-          .upsertProjectPostComment({
-            projectPostComment: commentToSaveLocal,
-          })
-          .then(() => {
-            setSaveStatus('');
-            setCommentToSave(null);
-          })
-          .catch(global.setError);
-      } else {
-        setSaveStatus('');
-      }
-    },
-    1500
-  );
+  const [posts, setPosts] = useState<DeepReadonly<IProjectPost>[]>([]);
+  // This request is expensive. So, verify that the request has changed before issuing it again.
+  const lastGetProjectsPostRequest = useRef('');
 
   useEffect(() => {
-    const existingMetadata = new Map(posts.map(m => [m.post.id, m]));
-    setPosts(props.posts.map(post => existingMetadata.get(post.id) ?? {post}));
-  }, [props.posts]);
+    if (props.posts != null) {
+      lastGetProjectsPostRequest.current = '';
+      setPosts([...(props.posts ?? [])]);
+    } else if (props.request != null) {
+      const newGetProjectsPostRequest = JSON.stringify(props.request);
+      if (lastGetProjectsPostRequest.current !== newGetProjectsPostRequest) {
+        lastGetProjectsPostRequest.current = newGetProjectsPostRequest;
+        createService(PostService, 'PostService')
+          .getProjectPosts(Object.assign(props.request))
+          .then(response => {
+            if (
+              lastGetProjectsPostRequest.current === newGetProjectsPostRequest
+            ) {
+              setPosts(response.projectPosts ?? []);
+            }
+          })
+          .catch(global.setError);
+      }
+    }
+  }, [props.posts, props.request]);
 
   return (
     <>
       <div className="post-feed-posts">
-        {posts?.map(post => (
+        {posts.map(post => (
           <Post
-            key={post.post?.id ?? 0}
-            post={post.post}
-            saveStatus={saveStatus}
-            editingCommentId={editingCommentId}
-            setEditingCommentId={id => {
-              autoSave.forceDelayedAction(() => setEditingCommentId(id));
-            }}
-            addComment={() => {
-              autoSave.forceDelayedAction(() =>
-                createService(PostService, 'PostService')
-                  .upsertProjectPostComment({
-                    projectPostComment: {
-                      longDescrHtml: '',
-                      projectPost: post.post,
-                    },
-                  })
-                  .then(response => {
-                    post.post.comments = [
-                      response.projectPostComment!,
-                      ...(post.post.comments ?? []),
-                    ];
-                    setPosts([...posts]);
-                    setEditingCommentId(
-                      response.projectPostComment?.id ?? undefined
-                    );
-                  })
-                  .catch(global.setError)
-              );
-            }}
-            setCommentToSave={comment => {
-              autoSave.trigger();
-              setCommentToSave(comment);
-            }}
-            deleteCommentId={id => {
-              autoSave.forceDelayedAction(() => {
-                setEditingCommentId(undefined);
-                createService(PostService, 'PostService')
-                  .deleteProjectPostComment({
-                    projectPostCommentId: id,
-                  })
-                  .then(() => {
-                    const index = post.post?.comments?.findIndex(
-                      comment => comment.id === id
-                    );
-                    if (index != null && index >= 0) {
-                      post.post?.comments?.splice(index, 1);
-                      setPosts([...posts]);
-                    }
-                  })
-                  .catch(global.setError);
-              });
+            key={post.id ?? 0}
+            post={post}
+            postUpdated={(post, refresh) => {
+              replaceInPlace(posts, post, p => p.id);
+              if (refresh) {
+                setPosts([...posts]);
+              }
             }}
           />
         ))}

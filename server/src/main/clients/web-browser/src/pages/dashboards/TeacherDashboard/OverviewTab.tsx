@@ -7,7 +7,6 @@ import {useContext, useEffect, useState} from 'react';
 import {
   class_x_management_service,
   pl_types,
-  post_service,
   school_management,
   user_x_management,
 } from '../../../generated/protobuf-js';
@@ -29,14 +28,10 @@ import IClassX = pl_types.IClassX;
 import SchoolManagementService = school_management.SchoolManagementService;
 import ISchool = pl_types.ISchool;
 import ClassXManagementService = class_x_management_service.ClassXManagementService;
-import PostService = post_service.PostService;
-import IProjectPost = pl_types.IProjectPost;
 import IFullUserXDetails = user_x_management.IFullUserXDetails;
 
 export function OverviewTab() {
   const global = useContext(GlobalStateContext);
-
-  const [projectPosts, setProjectPosts] = useState<readonly IProjectPost[]>([]);
 
   const filterForm = useFormFields();
 
@@ -107,27 +102,6 @@ export function OverviewTab() {
   const [showSearchForStudent, setShowSearchForStudent] =
     useState<boolean>(false);
 
-  // Update project posts.
-
-  useEffect(() => {
-    createService(PostService, 'PostService')
-      .getProjectPosts({
-        schoolIds: schoolFilter.getValue()?.map?.(e => e.id ?? 0),
-        classXIds: classXFilter.getValue()?.map?.(e => e.id ?? 0),
-        userXIds: userXFilter.map(e => e.userX?.id ?? 0),
-        includeProjects: true,
-        includeComments: true,
-        includeTags: true,
-        includeRatings: true,
-        includeAssignments: true,
-        beingEdited: false,
-      })
-      .then(response => {
-        setProjectPosts(response.projectPosts);
-      })
-      .catch(global.setError);
-  }, [schoolFilter.getValue(), classXFilter.getValue(), userXFilter]);
-
   if (!global.requireUserX(userX => userX?.isAdminX || userX?.isTeacher)) {
     return <></>;
   }
@@ -189,7 +163,20 @@ export function OverviewTab() {
           },
           {
             id: 'posts',
-            panel: <PostsFeed posts={projectPosts} />,
+            panel: (
+              <PostsFeed
+                request={{
+                  schoolIds: schoolFilter.getValue()?.map(e => e.id ?? 0),
+                  classXIds: classXFilter.getValue()?.map(e => e.id ?? 0),
+                  userXIds: userXFilter.map(e => e.userX?.id ?? 0),
+                  includeProjects: true,
+                  includeComments: true,
+                  includeTags: true,
+                  includeRatings: true,
+                  beingEdited: false,
+                }}
+              />
+            ),
             layout: {x: 0, y: 0, w: 8, h: 12},
           },
           {

@@ -15,6 +15,8 @@ import {
   DeepWritable,
   formatAsTag,
   isTextEmpty,
+  removeInPlace,
+  replaceInPlace,
   textOrEmpty,
   toLong,
 } from '../misc';
@@ -24,62 +26,75 @@ import {GlobalStateContext} from '../GlobalState';
 import {
   KNOWLEDGE_AND_SKILL_SORTER,
   PROJECT_POST_COMMENT_SORTER,
+  TAG_SORTER,
   USER_X_SORTER,
 } from '../sorters';
 import {FormControl, InputLabel, MenuItem, Select} from '@mui/material';
 import {createService} from '../protos';
+import IProjectPostRating = pl_types.IProjectPostRating;
 import IProjectPost = pl_types.IProjectPost;
-import IProjectPostComment = pl_types.IProjectPostComment;
+import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
 import IUserX = pl_types.IUserX;
+import IProjectPostComment = pl_types.IProjectPostComment;
+import ITag = pl_types.ITag;
+import ProjectPostRating = pl_types.ProjectPostRating;
 import PostService = post_service.PostService;
 
 interface RatingKey {
   readonly userXId: number;
-  readonly ratingType: pl_types.ProjectPostRating.RatingType;
+  readonly ratingType: ProjectPostRating.RatingType;
   readonly knowledgeAndSkillId: number;
 }
 
 export function Post(props: {
-  post: IProjectPost;
-  saveStatus: string;
-
-  addComment: () => void;
-  editingCommentId?: number;
-  setEditingCommentId: (id?: number) => void;
-  setCommentToSave: (comment: IProjectPostComment) => void;
-  deleteCommentId?: (id: number) => void;
-
-  editingPostId?: number;
+  post: DeepReadonly<IProjectPost>;
+  postUpdated: (post: DeepReadonly<IProjectPost>, refresh: boolean) => void;
 }) {
   const global = useContext(GlobalStateContext);
 
-  const [assignmentKs, setAssignmentKs] = useState<
-    readonly pl_types.IKnowledgeAndSkill[]
+  const [sortedAssignmentKs, setSortedAssignmentKs] = useState<
+    DeepReadonly<IKnowledgeAndSkill[]>
   >([]);
-  const [ratingUsers, setRatingUsers] = useState<readonly IUserX[]>([]);
+  const [sortedRatingUsers, setSortedRatingUsers] = useState<
+    DeepReadonly<IUserX[]>
+  >([]);
+  const [sortedTags, setSortedTags] = useState<DeepReadonly<ITag[]>>([]);
+  const [sortedComments, setSortedComments] = useState<
+    DeepReadonly<IProjectPostComment>[]
+  >([]);
+
   const [ratings, setRatings] = useState<
     DeepReadonly<
-      Map</* JSON.stringify(RatingKey)= */ string, pl_types.IProjectPostRating>
+      Map</* JSON.stringify(RatingKey)= */ string, IProjectPostRating>
     >
   >(new Map());
+
+  const [commentBeingEdited, setCommentBeingEdited] = useState<
+    DeepReadonly<IProjectPostComment> | undefined
+  >(undefined);
+  const [newCommentContent, setNewCommentContent] = useState('');
 
   const [showComments, setShowComments] = useState<boolean>(false);
   const [showRatings, setShowRatings] = useState<boolean>(false);
 
   useEffect(() => {
-    for (const comment of props.post?.comments ?? []) {
-      if (comment.id === props.editingCommentId) {
-        setShowComments(true);
-        break;
-      }
-    }
-  }, [props.editingCommentId]);
+    setSortedAssignmentKs(
+      (props.post?.project?.assignment?.knowledgeAndSkills ?? [])
+        .slice()
+        .sort(KNOWLEDGE_AND_SKILL_SORTER)
+    );
 
-  useEffect(() => {
-    if (props.post.ratings == null) {
-      setRatings(new Map());
-      return;
-    }
+    const users = new Map(
+      props.post?.ratings?.map(rating => [
+        rating.userX?.id ?? 0,
+        rating.userX ?? {},
+      ])
+    );
+    users.delete(global.userX?.id ?? 0);
+    setSortedRatingUsers([
+      global.userX ?? {},
+      ...[...users.values()].sort(USER_X_SORTER),
+    ]);
 
     setRatings(
       new Map(
@@ -93,24 +108,101 @@ export function Post(props: {
         ])
       )
     );
-    setAssignmentKs(
-      (props.post?.project?.assignment?.knowledgeAndSkills ?? [])
-        .slice()
-        .sort(KNOWLEDGE_AND_SKILL_SORTER)
+
+    setSortedTags((props.post?.tags ?? []).slice().sort(TAG_SORTER));
+
+    setSortedComments(
+      (props.post?.comments ?? []).slice().sort(PROJECT_POST_COMMENT_SORTER)
+    );
+  }, [props.post]);
+
+  function saveCommentBeingEdited(then?: () => void) {
+    if (commentBeingEdited == null) {
+      then && then();
+      return;
+    }
+
+    const newComment = Object.assign({}, DeepWritable(commentBeingEdited), {
+      longDescrHtml: newCommentContent,
+    } as IProjectPostComment);
+    setCommentBeingEdited(undefined);
+
+    replaceInPlace(sortedComments, newComment, c => c.id);
+    setSortedComments([...sortedComments]);
+
+    props.postUpdated(
+      Object.assign({}, props.post, {
+        comments: sortedComments,
+      } as IProjectPost),
+      false
     );
 
-    const users = new Map(
-      props.post?.ratings?.map(rating => [
-        rating.userX?.id ?? 0,
-        rating.userX ?? {},
-      ])
+    createService(PostService, 'PostService')
+      .upsertProjectPostComment({
+        projectPostComment: newComment,
+      })
+      .then(() => {
+        then && then();
+      })
+      .catch(global.setError);
+  }
+
+  function addComment() {
+    setShowComments(true);
+    saveCommentBeingEdited(() => {
+      createService(PostService, 'PostService')
+        .upsertProjectPostComment({
+          projectPostComment: {
+            longDescrHtml: '',
+            projectPost: {id: props.post.id},
+          },
+        })
+        .then(response => {
+          const newSortedComments = [
+            response.projectPostComment!,
+            ...sortedComments,
+          ];
+          setSortedComments(newSortedComments);
+
+          props.postUpdated(
+            Object.assign({}, props.post, {
+              comments: newSortedComments,
+            } as IProjectPost),
+            false
+          );
+
+          saveCommentBeingEdited(() => {
+            setCommentBeingEdited(newSortedComments[0]);
+            setNewCommentContent(newSortedComments[0].longDescrHtml ?? '');
+          });
+        })
+        .catch(global.setError);
+    });
+  }
+
+  function deleteComment(comment: DeepReadonly<IProjectPostComment>) {
+    saveCommentBeingEdited();
+
+    const newSortedComments = removeInPlace(
+      sortedComments.slice(),
+      comment,
+      c => c.id
     );
-    users.delete(global.userX?.id ?? 0);
-    setRatingUsers([
-      global.userX ?? {},
-      ...[...users.values()].sort(USER_X_SORTER),
-    ]);
-  }, [props.post]);
+    setSortedComments(newSortedComments);
+
+    props.postUpdated(
+      Object.assign({}, props.post, {
+        comments: newSortedComments,
+      } as IProjectPost),
+      false
+    );
+
+    createService(PostService, 'PostService')
+      .deleteProjectPostComment({
+        projectPostCommentId: comment.id ?? 0,
+      })
+      .catch(global.setError);
+  }
 
   return (
     <>
@@ -137,20 +229,17 @@ export function Post(props: {
             placeholder={
               <span className="post-in-feed-empty-post">No Post Content</span>
             }
-            editing={props.editingPostId === props.post.id}
           />
         </div>
         <div
           className="post-in-feed-tags"
           style={{
-            display: (props.post?.tags?.length ?? 0) > 0 ? undefined : 'none',
+            display: (sortedTags.length ?? 0) > 0 ? undefined : 'none',
           }}
         >
-          {[...new Set(props.post?.tags?.map(tag => formatAsTag(tag.text)))]
-            .sort()
-            .map(tag => (
-              <span key={tag}>{tag}&nbsp;&nbsp;</span>
-            ))}
+          {sortedTags.map(tag => (
+            <span key={tag.text}>{formatAsTag(tag.text)}&nbsp;&nbsp;</span>
+          ))}
         </div>
         <div
           style={{
@@ -172,14 +261,11 @@ export function Post(props: {
           >
             {showComments ? <South /> : <North />}
             <CommentTwoTone className="global-two-tone-chat-color" />
-            <span>{props.post?.comments?.length ?? 0}</span>
+            <span>{sortedComments.length ?? 0}</span>
           </div>
           <div
             className="post-in-feed-footer-group"
-            onClick={() => {
-              setShowComments(true);
-              props.addComment();
-            }}
+            onClick={addComment}
             style={{cursor: 'pointer'}}
           >
             <AddCommentTwoTone className="global-two-tone-chat-color" />
@@ -210,7 +296,7 @@ export function Post(props: {
             <thead>
               <tr>
                 <th key={-1}>Skill</th>
-                {ratingUsers.map(userX => (
+                {sortedRatingUsers.map(userX => (
                   <th key={userX?.id ?? 0}>
                     {userX?.lastName ?? ''},&nbsp;
                     {(userX?.firstName ?? '').charAt(0)}
@@ -219,7 +305,7 @@ export function Post(props: {
               </tr>
             </thead>
             <tbody>
-              {assignmentKs.map(ks => (
+              {sortedAssignmentKs.map(ks => (
                 <tr key={ks.id ?? 0}>
                   <th
                     key={-1}
@@ -230,7 +316,7 @@ export function Post(props: {
                   >
                     {ks.name}
                   </th>
-                  {ratingUsers.map(userX => (
+                  {sortedRatingUsers.map(userX => (
                     <td key={userX.id ?? 0}>
                       <FormControl fullWidth>
                         <InputLabel id="demo-simple-select-label" size="small">
@@ -246,8 +332,7 @@ export function Post(props: {
                               JSON.stringify({
                                 userXId: userX.id ?? 0,
                                 ratingType:
-                                  pl_types.ProjectPostRating.RatingType
-                                    .INITIAL_1_TO_5,
+                                  ProjectPostRating.RatingType.INITIAL_1_TO_5,
                                 knowledgeAndSkillId: ks.id ?? 0,
                               } as RatingKey)
                             )?.rating ?? ''
@@ -261,25 +346,21 @@ export function Post(props: {
                             const key = JSON.stringify({
                               userXId: userX.id ?? 0,
                               ratingType:
-                                pl_types.ProjectPostRating.RatingType
-                                  .INITIAL_1_TO_5,
+                                ProjectPostRating.RatingType.INITIAL_1_TO_5,
                               knowledgeAndSkillId: ks.id ?? 0,
                             } as RatingKey);
 
-                            console.log('props', props);
                             let oldRating = ratings.get(key);
                             if (oldRating == null) {
                               oldRating = {
                                 userX: {id: userX.id},
                                 rating: value,
                                 ratingType:
-                                  pl_types.ProjectPostRating.RatingType
-                                    .INITIAL_1_TO_5,
+                                  ProjectPostRating.RatingType.INITIAL_1_TO_5,
                                 knowledgeAndSkill: {id: ks.id},
                                 projectPost: {id: props.post.id},
                               };
                             }
-                            console.log('oldRating', oldRating);
                             const newRating = Object.assign(
                               {},
                               DeepWritable(oldRating),
@@ -287,13 +368,18 @@ export function Post(props: {
                                 rating: value,
                               }
                             );
-                            console.log('newRating', newRating);
                             createService(PostService, 'PostService')
                               .upsertProjectPostRating({
                                 projectPostRating: newRating,
                               })
                               .then(response => {
                                 newRating.id = response.id ?? 0;
+                                props.postUpdated(
+                                  Object.assign({}, props.post, {
+                                    ratings: Array.from(ratings.values()),
+                                  } as IProjectPost),
+                                  false
+                                );
                                 setRatings(
                                   new Map(ratings).set(key, newRating)
                                 );
@@ -319,56 +405,53 @@ export function Post(props: {
           className="post-in-feed-comments"
           style={{display: showComments ? undefined : 'none'}}
         >
-          {props.post?.comments?.length === 0 && (
+          {sortedComments.length === 0 && (
             <span className="post-in-feed-empty-post">No Comments</span>
           )}
-          {props.post?.comments
-            ?.sort(PROJECT_POST_COMMENT_SORTER)
-            ?.map(comment => (
-              <div key={comment.id ?? 0} className="post-in-feed-comment">
-                <AccountCircle className="post-in-feed-avatar" />
-                <div className="global-flex-column" style={{gap: 0}}>
-                  <PostHeader
-                    userX={comment?.userX}
-                    postTimeMs={toLong(comment?.postTimeMs ?? 0)}
-                    saveStatus={
-                      props.editingCommentId === comment.id
-                        ? props.saveStatus
-                        : ''
+          {sortedComments.map(comment => (
+            <div key={comment.id ?? 0} className="post-in-feed-comment">
+              <AccountCircle className="post-in-feed-avatar" />
+              <div className="global-flex-column" style={{gap: 0}}>
+                <PostHeader
+                  userX={comment?.userX}
+                  postTimeMs={toLong(comment?.postTimeMs ?? 0)}
+                  deleteIconClicked={() => deleteComment(comment)}
+                />
+                <EditableReactQuill
+                  value={
+                    comment.id === commentBeingEdited?.id
+                      ? newCommentContent
+                      : comment.longDescrHtml
+                  }
+                  placeholder={
+                    <span className="post-in-feed-empty-post">
+                      No Comment Content
+                    </span>
+                  }
+                  editing={comment.id === commentBeingEdited?.id}
+                  onClick={() => {
+                    if (comment.id !== commentBeingEdited?.id) {
+                      saveCommentBeingEdited(() => {
+                        setCommentBeingEdited(comment);
+                        setNewCommentContent(comment.longDescrHtml ?? '');
+                      });
                     }
-                    editIconClicked={() =>
-                      props.setEditingCommentId(
-                        props.editingCommentId !== comment.id
-                          ? comment.id ?? undefined
-                          : undefined
-                      )
+                  }}
+                  onBlur={() => {
+                    saveCommentBeingEdited();
+                  }}
+                  onChange={value => {
+                    if (comment.id === commentBeingEdited?.id) {
+                      setNewCommentContent(value);
                     }
-                    deleteIconClicked={
-                      props.deleteCommentId
-                        ? () => props.deleteCommentId?.(comment.id ?? 0)
-                        : undefined
-                    }
-                  />
-                  <EditableReactQuill
-                    value={comment.longDescrHtml}
-                    placeholder={
-                      <span className="post-in-feed-empty-post">
-                        No Comment Content
-                      </span>
-                    }
-                    editing={props.editingCommentId === comment.id}
-                    onBlur={() => {
-                      props.setEditingCommentId(undefined);
-                    }}
-                    onChange={value => {
-                      comment.longDescrHtml = value;
-                      props.setCommentToSave(comment);
-                    }}
-                    editingStyle={{paddingTop: '1rem'}}
-                  />
-                </div>
+                  }}
+                  editingStyle={{
+                    marginTop: '1rem',
+                  }}
+                />
               </div>
-            ))}
+            </div>
+          ))}
         </div>
       </div>
     </>
