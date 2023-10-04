@@ -43,6 +43,19 @@ export function replaceInPlace<T>(
   return values;
 }
 
+export function removeInPlace<T>(
+  values: T[],
+  oldValue: T,
+  toKey: (value: T) => any
+): T[] {
+  const key = toKey(oldValue);
+  const index = values.findIndex(value => toKey(value) === key);
+  if (index !== -1) {
+    values.splice(index, 1);
+  }
+  return values;
+}
+
 export type Writable<T> = {-readonly [P in keyof T]: T[P]};
 
 export function isTextEmpty(text: string | null | undefined) {
