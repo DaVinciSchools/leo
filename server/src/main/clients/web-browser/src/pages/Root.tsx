@@ -6,6 +6,8 @@ import {useNavigate} from 'react-router';
 export function Root() {
   const navigate = useNavigate();
 
+  // This is the main landing page.
+
   return (
     <>
       <header>

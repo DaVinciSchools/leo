@@ -124,6 +124,7 @@ public class ServerApplication {
             new AntPathRequestMatcher("/index.html", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/manifest.json", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/robots.txt", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/schools/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/static/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/users/login.html", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/users/logout.html", HttpMethod.GET.name()),

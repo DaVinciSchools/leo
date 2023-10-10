@@ -24,6 +24,8 @@ import {RedirectToDashboard} from './pages/dashboards/RedirectToDashboard';
 import {DemoProjectBuilder} from './pages/demos/DemoProjectBuilder/DemoProjectBuilder';
 import {GlobalState} from './libs/GlobalState';
 import {TeacherEditClassXs} from './pages/class_xs/TeacherEditClassXs/TeacherEditClassXs';
+import {MechanicalEngineering} from './pages/schools/dvs/MechanicalEngineering';
+import {SchoolsIndex} from './pages/schools/SchoolsIndex';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -142,6 +144,24 @@ const router = createBrowserRouter([
       {
         path: 'all-projects.html',
         element: <AllProjects />,
+      },
+    ],
+  },
+  {
+    path: '/schools',
+    children: [
+      {
+        path: 'index.html',
+        element: <SchoolsIndex />,
+      },
+      {
+        path: 'dvs',
+        children: [
+          {
+            path: 'mechanical-engineering.html',
+            element: <MechanicalEngineering />,
+          },
+        ],
       },
     ],
   },

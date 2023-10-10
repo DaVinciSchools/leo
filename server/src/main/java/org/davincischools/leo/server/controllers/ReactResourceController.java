@@ -65,6 +65,7 @@ public class ReactResourceController {
     "/profiles/**",
     "/projects/**",
     "/robots.txt",
+    "/schools/**",
     "/static/**",
     "/users/**",
     // TODO: Move these out of the prod server.
