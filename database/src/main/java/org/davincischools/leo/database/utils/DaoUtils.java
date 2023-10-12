@@ -11,10 +11,6 @@ import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.criteria.Fetch;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Path;
-import jakarta.persistence.criteria.Predicate;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.time.Instant;
@@ -212,42 +208,6 @@ public class DaoUtils {
     deleteAll.accept(
         Streams.stream(oldValues).filter(e -> !newIds.contains(toId.apply(e))).toList());
     saveAll.accept(Streams.stream(newValues).filter(e -> !oldIds.contains(toId.apply(e))).toList());
-  }
-
-  @SuppressWarnings("unchecked")
-  public static <X, Y> Join<X, Y> toJoin(Fetch<X, Y> fetch) {
-    checkNotNull(fetch);
-
-    return (Join<X, Y>) fetch;
-  }
-
-  public static <E, P extends Path<E>> P notDeleted(List<Predicate> where, P path) {
-    checkNotNull(where);
-    checkNotNull(path);
-    where.add(path.get("deleted").isNull());
-    return path;
-  }
-
-  public static <X, Y> Join<X, Y> notDeleted(Fetch<X, Y> fetch) {
-    checkNotNull(fetch);
-    return notDeleted(toJoin(fetch));
-  }
-
-  public static <X, Y> Join<X, Y> notDeleted(Join<X, Y> join) {
-    checkNotNull(join);
-    return addJoinOn(join, join.get("deleted").isNull());
-  }
-
-  public static <X, Y> Join<X, Y> addJoinOn(Join<X, Y> join, Predicate predicate) {
-    checkNotNull(join);
-
-    if (join.getOn() != null) {
-      join.on(join.getOn(), predicate);
-    } else {
-      join.on(predicate);
-    }
-
-    return join;
   }
 
   public static <T> Optional<T> isInitialized(@Nullable T entity) {

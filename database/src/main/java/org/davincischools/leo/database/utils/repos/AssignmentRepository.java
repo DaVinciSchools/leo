@@ -1,15 +1,13 @@
 package org.davincischools.leo.database.utils.repos;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.davincischools.leo.database.utils.DaoUtils.notDeleted;
 import static org.davincischools.leo.database.utils.DaoUtils.removeTransientValues;
 import static org.davincischools.leo.database.utils.DaoUtils.saveJoinTableAndTargets;
 
 import com.google.common.collect.ImmutableList;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Predicate;
-import java.util.ArrayList;
 import java.util.List;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill;
@@ -21,13 +19,13 @@ import org.davincischools.leo.database.daos.Student_;
 import org.davincischools.leo.database.daos.TeacherClassX_;
 import org.davincischools.leo.database.daos.Teacher_;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.repos.custom.CustomEntityManagerRepository;
+import org.davincischools.leo.database.utils.QueryHelper.QueryHelperUtils;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AssignmentRepository
-    extends JpaRepository<Assignment, Integer>, CustomEntityManagerRepository {
+    extends JpaRepository<Assignment, Integer>, AutowiredRepositoryValues {
 
   default Assignment upsert(Database db, Assignment assignment) {
     checkNotNull(assignment);
@@ -46,78 +44,80 @@ public interface AssignmentRepository
   default List<Assignment> getAssignments(GetAssignmentsParams params) {
     checkNotNull(params);
 
-    var builder = getEntityManager().getCriteriaBuilder();
-    var where = new ArrayList<Predicate>();
-
-    // From assignment.
-    var query = builder.createQuery(Assignment.class);
-    var assignment = notDeleted(where, query.from(Assignment.class));
-
-    // Build query.
-    getAssignments(params, assignment, where);
-
-    // Select.
-    query.select(assignment).distinct(true).where(where.toArray(new Predicate[0]));
-    return getEntityManager().createQuery(query).getResultList();
+    return getQueryHelper()
+        .query(
+            Assignment.class,
+            (u, assignment, builder) -> configureQuery(u, assignment, builder, params));
   }
 
-  static From<?, Assignment> getAssignments(
-      GetAssignmentsParams params, From<?, Assignment> assignment, List<Predicate> where) {
-    checkNotNull(params);
+  public static void configureQuery(
+      QueryHelperUtils u,
+      From<?, Assignment> assignment,
+      CriteriaBuilder builder,
+      GetAssignmentsParams params) {
+    checkNotNull(u);
     checkNotNull(assignment);
-    checkNotNull(where);
+    checkNotNull(builder);
+    checkNotNull(params);
 
-    // includeClassXs.
+    u.notDeleted(assignment);
+
     if (params.getIncludeClassXs().orElse(false)) {
-      ClassXRepository.getClassXs(
+      ClassXRepository.configureQuery(
+          u,
+          u.notDeleted(u.fetch(assignment, Assignment_.classX, JoinType.LEFT)),
+          builder,
           new GetClassXsParams()
-              .setIncludeKnowledgeAndSkills(params.getIncludeKnowledgeAndSkills().orElse(false)),
-          notDeleted(assignment.fetch(Assignment_.classX, JoinType.LEFT)),
-          where);
+              .setIncludeKnowledgeAndSkills(params.getIncludeKnowledgeAndSkills().orElse(false)));
     }
 
-    // includeKnowledgeAndSkills.
     if (params.getIncludeKnowledgeAndSkills().orElse(false)) {
       var assignmentKnowledgeAndSkills =
-          notDeleted(assignment.fetch(Assignment_.assignmentKnowledgeAndSkills, JoinType.LEFT));
-      notDeleted(
-          assignmentKnowledgeAndSkills.fetch(
-              AssignmentKnowledgeAndSkill_.knowledgeAndSkill, JoinType.LEFT));
+          u.notDeleted(
+              u.fetch(
+                  assignment,
+                  Assignment_.assignmentKnowledgeAndSkills,
+                  JoinType.LEFT,
+                  AssignmentKnowledgeAndSkill::getAssignment,
+                  Assignment::setAssignmentKnowledgeAndSkills));
+      u.notDeleted(
+          u.fetch(
+              assignmentKnowledgeAndSkills,
+              AssignmentKnowledgeAndSkill_.knowledgeAndSkill,
+              JoinType.LEFT));
     }
 
-    // assignmentIds.
     if (params.getAssignmentIds().isPresent()) {
-      where.add(
+      u.where(
           assignment.get(Assignment_.id).in(ImmutableList.copyOf(params.getAssignmentIds().get())));
     }
 
-    // classXIds.
     if (params.getClassXIds().isPresent()) {
-      where.add(
+      u.where(
           assignment
               .get(Assignment_.classX)
               .get(ClassX_.id)
               .in(ImmutableList.copyOf(params.getClassXIds().get())));
     }
 
-    // teacherIds.
     if (params.getTeacherIds().isPresent()) {
-      var classXs = notDeleted(assignment.fetch(Assignment_.classX, JoinType.INNER));
-      var teacherClassXs = notDeleted(classXs.fetch(ClassX_.teacherClassXES, JoinType.INNER));
-      notDeleted(teacherClassXs.fetch(TeacherClassX_.teacher))
-          .get(Teacher_.id)
-          .in(ImmutableList.copyOf(params.getTeacherIds().get()));
+      var classXs = u.notDeleted(u.join(assignment, Assignment_.classX, JoinType.INNER));
+      var teacherClassXs = u.notDeleted(u.join(classXs, ClassX_.teacherClassXES, JoinType.INNER));
+      u.where(
+          teacherClassXs
+              .get(TeacherClassX_.teacher)
+              .get(Teacher_.id)
+              .in(ImmutableList.copyOf(params.getTeacherIds().get())));
     }
 
-    // studentIds.
     if (params.getStudentIds().isPresent()) {
-      var classXs = notDeleted(assignment.fetch(Assignment_.classX, JoinType.INNER));
-      var studentClassXs = notDeleted(classXs.fetch(ClassX_.studentClassXES, JoinType.INNER));
-      notDeleted(studentClassXs.fetch(StudentClassX_.student))
-          .get(Student_.id)
-          .in(ImmutableList.copyOf(params.getStudentIds().get()));
+      var classXs = u.notDeleted(u.join(assignment, Assignment_.classX, JoinType.INNER));
+      var studentClassXs = u.notDeleted(u.join(classXs, ClassX_.studentClassXES, JoinType.INNER));
+      u.where(
+          studentClassXs
+              .get(StudentClassX_.student)
+              .get(Student_.id)
+              .in(ImmutableList.copyOf(params.getStudentIds().get())));
     }
-
-    return assignment;
   }
 }
