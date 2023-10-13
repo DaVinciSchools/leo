@@ -52,15 +52,27 @@ public class QueryHelperTest {
   }
 
   @Test
-  public void getEntitiesWithNoConfiguration() {
+  public void getEmptyResultsTest() {
+    var results =
+        queryHelper.query(
+            UserX.class,
+            (u, root, builder) -> {
+              u.where(builder.notEqual(root.get(UserX_.id), root.get(UserX_.id)));
+            });
+
+    assertThat(results).isEmpty();
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
+  }
+
+  @Test
+  public void getEntitiesWithNoConfigurationTest() {
     var results =
         queryHelper.query(
             UserX.class,
             (u, root, builder) -> {
               u.notDeleted(root);
             });
-
-    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
 
     assertThat(results.stream().map(UserX::getId).toList())
         .containsExactly(
@@ -68,10 +80,12 @@ public class QueryHelperTest {
             testData.getTeacher().getId(),
             testData.getStudent().getId(),
             testData.getDemo().getId());
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
   }
 
   @Test
-  public void getEntitiesWithSingleJoin() {
+  public void getEntitiesWithSingleJoinTest() {
     var results =
         queryHelper.query(
             UserX.class,
@@ -79,8 +93,6 @@ public class QueryHelperTest {
               u.notDeleted(root);
               u.join(root, UserX_.adminX, JoinType.LEFT);
             });
-
-    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
 
     assertThat(results.stream().map(UserX::getId).toList())
         .containsExactly(
@@ -92,10 +104,12 @@ public class QueryHelperTest {
         .containsExactly(true, false, false, false);
     assertThat(results.stream().map(UserX::getAdminX).map(Hibernate::isInitialized).toList())
         .containsExactly(false, true, true, true);
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
   }
 
   @Test
-  public void getEntitiesWithSingleFetch() {
+  public void getEntitiesWithSingleFetchTest() {
     var results =
         queryHelper.query(
             UserX.class,
@@ -103,8 +117,6 @@ public class QueryHelperTest {
               u.notDeleted(root);
               u.fetch(root, UserX_.adminX, JoinType.LEFT);
             });
-
-    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
 
     assertThat(results.stream().map(UserX::getId).toList())
         .containsExactly(
@@ -116,10 +128,12 @@ public class QueryHelperTest {
         .containsExactly(true, false, false, false);
     assertThat(results.stream().map(UserX::getAdminX).map(Hibernate::isInitialized).toList())
         .containsExactly(true, true, true, true);
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
   }
 
   @Test
-  public void getEntitiesWithSetFetch() {
+  public void getEntitiesWithSetFetchTest() {
     var results =
         queryHelper.query(
             Teacher.class,
@@ -132,8 +146,6 @@ public class QueryHelperTest {
                   TeacherClassX::getTeacher,
                   Teacher::setTeacherClassXES);
             });
-
-    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
 
     assertThat(results.stream().map(Teacher::getId).toList())
         .containsExactly(
@@ -169,6 +181,8 @@ public class QueryHelperTest {
                     .stream()
                     .sorted()
                     .toList()));
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
   }
 
   @Test
@@ -242,7 +256,7 @@ public class QueryHelperTest {
             },
             PageRequest.of(4, 1));
 
-    assertThat(results.stream().map(UserX::getId).toList()).isEmpty();
+    assertThat(results).isEmpty();
   }
 
   @Test
@@ -286,7 +300,7 @@ public class QueryHelperTest {
             },
             PageRequest.of(2, 2));
 
-    assertThat(results.stream().map(UserX::getId).toList()).isEmpty();
+    assertThat(results).isEmpty();
   }
 
   @Test
