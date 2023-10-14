@@ -1,7 +1,7 @@
 # Building Project Leo
 
 Project Leo is built on Linux using [Apache Maven](https://maven.apache.org/).
-The instructions on this page are for the [Ubuntu](https://ubuntu.com/)
+The instructions on this page are for the [Ubuntu](https://ubuntu.com/)F
 distribution. But, other distributions may work as well.
 
 If you use Windows, you can install an instance of
@@ -59,11 +59,16 @@ install Docker Desktop for you:
 Log out and log back in so that your group membership is re-evaluated.
 
 > <picture>
->   <source media="(prefers-color-scheme: light)" srcset="https://github.com/Mqxx/GitHub-Markdown/blob/main/blockquotes/badge/light-theme/warning.svg">
->   <img alt="Warning" src="https://github.com/Mqxx/GitHub-Markdown/blob/main/blockquotes/badge/dark-theme/warning.svg">
+>   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Mqxx/GitHub-Markdown/main/blockquotes/badge/light-theme/warning.svg">
+>   <img alt="Warning" src="https://raw.githubusercontent.com/Mqxx/GitHub-Markdown/main/blockquotes/badge/dark-theme/warning.svg">
 > </picture><br>
 > Be sure to log out and back in. Docker will not work until this is done
 > (including for Maven).
+
+### Build Dependencies: MySQL (Optional)
+
+If you wish to use MySQL for development and you are using WSL, you need
+to install MySQL in the WSL environment -- not in Windows.
 
 ## External Dependencies
 
@@ -94,6 +99,7 @@ openai.api.key=<your_open_ai_api_key>
 # spring.datasource.username=temp
 # spring.datasource.password=temp
 # spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+# spring.jpa.hibernate.ddl-auto=none
 
 # Add the following properties to post bugs to JIRA.
 #
@@ -168,8 +174,8 @@ BROWSER=none npm start
 ```
 
 > <picture>
->   <source media="(prefers-color-scheme: light)" srcset="https://github.com/Mqxx/GitHub-Markdown/blob/main/blockquotes/badge/light-theme/warning.svg">
->   <img alt="Warning" src="https://github.com/Mqxx/GitHub-Markdown/blob/main/blockquotes/badge/dark-theme/warning.svg">
+>   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Mqxx/GitHub-Markdown/main/blockquotes/badge/light-theme/warning.svg">
+>   <img alt="Warning" src="https://raw.githubusercontent.com/Mqxx/GitHub-Markdown/main/blockquotes/badge/dark-theme/warning.svg">
 > </picture><br>
 > Starting the React server may open a browser to http://localhost:3000. This
 > does NOT go through the Spring server and will NOT work. You need to go to
