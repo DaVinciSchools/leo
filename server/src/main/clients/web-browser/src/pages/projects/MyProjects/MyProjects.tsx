@@ -37,7 +37,7 @@ enum TabValue {
   OVERVIEW,
   EDIT_PROJECT,
   CREATE_POST,
-  VIEW_POSTS,
+  MY_POSTS,
 }
 
 export function MyProjects() {
@@ -239,7 +239,7 @@ export function MyProjects() {
               [TabValue.OVERVIEW]: <></>,
               [TabValue.EDIT_PROJECT]: <>{projectSaveStatus}</>,
               [TabValue.CREATE_POST]: <>{postSaveStatus}</>,
-              [TabValue.VIEW_POSTS]: <></>,
+              [TabValue.MY_POSTS]: <></>,
             }[activeTab] || <></>}
           </span>
         </div>
@@ -311,18 +311,18 @@ export function MyProjects() {
                 ),
               },
               {
-                key: TabValue.VIEW_POSTS,
-                label: 'View Posts',
+                key: TabValue.MY_POSTS,
+                label: 'My Posts',
                 content: (
                   <>
                     <PostsFeed
                       request={{
-                        projectIds: selectedProject
-                          ? [selectedProject.id ?? 0]
-                          : undefined,
+                        projectIds:
+                          selectedProject != null
+                            ? [selectedProject?.id ?? 0]
+                            : sortedProjects.map(p => p.id ?? 0),
                         includeComments: true,
                         includeTags: true,
-                        includeRatings: true,
                         beingEdited: false,
                       }}
                     />

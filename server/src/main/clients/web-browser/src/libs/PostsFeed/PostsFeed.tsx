@@ -53,6 +53,8 @@ export function PostsFeed(props: {
                 setPosts([...posts]);
               }
             }}
+            showComments={props.request?.includeComments}
+            showRatings={props.request?.includeRatings}
           />
         ))}
       </div>

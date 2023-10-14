@@ -49,6 +49,8 @@ interface RatingKey {
 export function Post(props: {
   post: DeepReadonly<IProjectPost>;
   postUpdated: (post: DeepReadonly<IProjectPost>, refresh: boolean) => void;
+  showComments?: boolean | null | undefined;
+  showRatings?: boolean | null | undefined;
 }) {
   const global = useContext(GlobalStateContext);
 
@@ -74,8 +76,8 @@ export function Post(props: {
   >(undefined);
   const [newCommentContent, setNewCommentContent] = useState('');
 
-  const [showComments, setShowComments] = useState<boolean>(false);
-  const [showRatings, setShowRatings] = useState<boolean>(false);
+  const [expandComments, setExpandComments] = useState<boolean>(false);
+  const [expandRatings, setExpandRatings] = useState<boolean>(false);
 
   useEffect(() => {
     setSortedAssignmentKs(
@@ -148,7 +150,7 @@ export function Post(props: {
   }
 
   function addComment() {
-    setShowComments(true);
+    setExpandComments(true);
     saveCommentBeingEdited(() => {
       createService(PostService, 'PostService')
         .upsertProjectPostComment({
@@ -253,42 +255,56 @@ export function Post(props: {
           </span>
           {textOrEmpty(props.post?.desiredFeedback, 'No Feedback Desired')}
         </div>
-        <div className="post-in-feed-footer">
-          <div
-            className="post-in-feed-footer-group"
-            onClick={() => setShowComments(!showComments)}
-            style={{cursor: 'pointer'}}
-          >
-            {showComments ? <South /> : <North />}
-            <CommentTwoTone className="global-two-tone-chat-color" />
-            <span>{sortedComments.length ?? 0}</span>
-          </div>
-          <div
-            className="post-in-feed-footer-group"
-            onClick={addComment}
-            style={{cursor: 'pointer'}}
-          >
-            <AddCommentTwoTone className="global-two-tone-chat-color" />
-          </div>
-          <div
-            className="post-in-feed-footer-group"
-            onClick={() => {
-              setShowRatings(!showRatings);
-            }}
-            style={{
-              cursor: 'pointer',
-              display:
-                global.userX?.isAdminX || global.userX?.isTeacher
-                  ? undefined
-                  : 'none',
-            }}
-          >
-            {showRatings ? <South /> : <North />}
-            <AssessmentTwoTone className="global-two-tone-rating-color" />
-            <span>{props.post?.ratings?.length ?? 0}</span>
-          </div>
+        <div
+          className="post-in-feed-footer"
+          style={{
+            display:
+              props.showComments || props.showRatings ? undefined : 'none',
+          }}
+        >
+          {props.showComments && (
+            <>
+              <div
+                className="post-in-feed-footer-group"
+                onClick={() => setExpandComments(!expandComments)}
+                style={{cursor: 'pointer'}}
+              >
+                {expandComments ? <South /> : <North />}
+                <CommentTwoTone className="global-two-tone-chat-color" />
+                <span>{sortedComments.length ?? 0}</span>
+              </div>
+              <div
+                className="post-in-feed-footer-group"
+                onClick={addComment}
+                style={{cursor: 'pointer'}}
+              >
+                <AddCommentTwoTone className="global-two-tone-chat-color" />
+              </div>
+            </>
+          )}
+          {props.showRatings && (
+            <>
+              <div
+                className="post-in-feed-footer-group"
+                onClick={() => {
+                  setExpandRatings(!expandRatings);
+                }}
+                style={{
+                  cursor: 'pointer',
+                  display:
+                    global.userX?.isAdminX || global.userX?.isTeacher
+                      ? undefined
+                      : 'none',
+                }}
+              >
+                {expandRatings ? <South /> : <North />}
+                <AssessmentTwoTone className="global-two-tone-rating-color" />
+                <span>{props.post?.ratings?.length ?? 0}</span>
+              </div>
+            </>
+          )}
         </div>
-        {showRatings && (
+        {expandRatings && (
           <div className="post-in-feed-ratings">
             <table width="fit-content">
               <thead>
@@ -405,10 +421,10 @@ export function Post(props: {
             </table>
           </div>
         )}
-        {showComments && (
+        {expandComments && (
           <div
             className="post-in-feed-comments"
-            style={{display: showComments ? undefined : 'none'}}
+            style={{display: expandComments ? undefined : 'none'}}
           >
             {sortedComments.length === 0 && (
               <span className="post-in-feed-empty-post">No Comments</span>
