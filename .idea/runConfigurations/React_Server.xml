@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="React Server" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/server/src/main/clients/web-browser/package.json" />
+    <command value="start" />
+    <node-interpreter value="project" />
+    <envs>
+      <env name="BROWSER" value="none" />
+    </envs>
+    <method v="2" />
+  </configuration>
+</component>

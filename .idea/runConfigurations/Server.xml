@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Server" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" activateToolWindowBeforeRun="false">
+  <configuration default="false" name="Server" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" activateToolWindowBeforeRun="false" focusToolWindowBeforeRun="true">
     <envs>
       <env name="PROJECT_LEO_TEST_DATABASE_PORT" value="3307" />
     </envs>

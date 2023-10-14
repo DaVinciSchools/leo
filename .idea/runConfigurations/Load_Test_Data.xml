@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Load Test Data" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" activateToolWindowBeforeRun="false">
+  <configuration default="false" name="Load Test Data" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" activateToolWindowBeforeRun="false" focusToolWindowBeforeRun="true">
     <module name="project-leo-database" />
     <option name="PROGRAM_PARAMETERS" value="--loadTestData" />
     <selectedOptions>
