@@ -5,9 +5,13 @@ import static com.google.common.truth.Truth.assertThat;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.criteria.JoinType;
 import java.util.Objects;
+import java.util.Set;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.daos.TeacherClassX;
+import org.davincischools.leo.database.daos.TeacherClassX_;
 import org.davincischools.leo.database.daos.Teacher_;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.daos.UserX_;
@@ -91,7 +95,7 @@ public class QueryHelperTest {
             UserX.class,
             (u, root, builder) -> {
               u.notDeleted(root);
-              u.join(root, UserX_.adminX, JoinType.LEFT);
+              u.notDeleted(u.join(root, UserX_.adminX, JoinType.LEFT));
             });
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -115,7 +119,7 @@ public class QueryHelperTest {
             UserX.class,
             (u, root, builder) -> {
               u.notDeleted(root);
-              u.fetch(root, UserX_.adminX, JoinType.LEFT);
+              u.notDeleted(u.fetch(root, UserX_.adminX, JoinType.LEFT));
             });
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -139,12 +143,15 @@ public class QueryHelperTest {
             Teacher.class,
             (u, root, builder) -> {
               u.notDeleted(root);
-              u.fetch(
-                  root,
-                  Teacher_.teacherClassXES,
-                  JoinType.LEFT,
-                  TeacherClassX::getTeacher,
-                  Teacher::setTeacherClassXES);
+              var teacherClassX =
+                  u.notDeleted(
+                      u.fetch(
+                          root,
+                          Teacher_.teacherClassXES,
+                          JoinType.LEFT,
+                          TeacherClassX::getTeacher,
+                          Teacher::setTeacherClassXES));
+              u.notDeleted(u.fetch(teacherClassX, TeacherClassX_.classX, JoinType.INNER));
             });
 
     assertThat(results.stream().map(Teacher::getId).toList())

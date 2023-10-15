@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import javax.annotation.Nullable;
+import org.hibernate.FetchNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -85,11 +87,14 @@ public class QueryHelper {
   }
 
   @Transactional(readOnly = true)
-  public <T> Page<T> query(Class<T> rootClass, QueryBuilder<T> queryBuilder, Pageable pageable) {
+  public <T> Page<T> query(
+      Class<T> rootClass, QueryBuilder<T> queryBuilder, @Nullable Pageable pageable) {
     var queryHelper = new QueryHelperImpl<T>(rootClass, queryBuilder);
     queryHelper.getIds(pageable);
     return PageableExecutionUtils.getPage(
-        queryHelper.getEntities(), pageable, queryHelper.rootIdsSet::size);
+        queryHelper.getEntities(),
+        pageable != null ? pageable : Pageable.unpaged(),
+        queryHelper.rootIdsSet::size);
   }
 
   public <T> List<T> query(Class<T> rootClass, QueryBuilder<T> queryBuilder) {
@@ -180,9 +185,13 @@ public class QueryHelper {
       }
       queryBuilder.configureQuery(this, root, criteriaBuilder);
 
-      return entityManager
-          .createQuery(query.select(root).where(where.toArray(new Predicate[0])).orderBy(orderBy))
-          .getResultList();
+      try {
+        return entityManager
+            .createQuery(query.select(root).where(where.toArray(new Predicate[0])).orderBy(orderBy))
+            .getResultList();
+      } catch (FetchNotFoundException e) {
+        return List.of();
+      }
     }
 
     @Override
@@ -279,7 +288,12 @@ public class QueryHelper {
     public <E, P extends Path<E>> P notDeleted(P path) {
       checkNotNull(path);
 
-      where.add(path.get("deleted").isNull());
+      if (path instanceof Join) {
+        notDeleted((Join<?, E>) path);
+      } else {
+        where.add(path.get("deleted").isNull());
+      }
+
       return path;
     }
   }
