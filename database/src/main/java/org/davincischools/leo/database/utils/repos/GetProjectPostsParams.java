@@ -27,6 +27,9 @@ public class GetProjectPostsParams {
   @Nullable private Iterable<Integer> userXIds;
   @Nullable private Boolean beingEdited;
 
+  @Nullable private Integer page;
+  @Nullable private Integer pageSize;
+
   Optional<Boolean> getIncludeTags() {
     return Optional.ofNullable(includeTags);
   }
@@ -73,5 +76,13 @@ public class GetProjectPostsParams {
 
   Optional<Boolean> getBeingEdited() {
     return Optional.ofNullable(beingEdited);
+  }
+
+  Optional<Integer> getPage() {
+    return Optional.ofNullable(page);
+  }
+
+  Optional<Integer> getPageSize() {
+    return Optional.ofNullable(pageSize);
   }
 }

@@ -31,6 +31,7 @@ import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.Authenticated;
 import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,47 +58,68 @@ public class PostService {
 
               var response = GetProjectPostsResponse.newBuilder();
 
-              db.getProjectPostRepository()
-                  .getProjectPosts(
-                      new GetProjectPostsParams()
-                          .setIncludeTags(
-                              valueOrNull(
-                                  request, GetProjectPostsRequest.INCLUDE_TAGS_FIELD_NUMBER))
-                          .setIncludeComments(
-                              valueOrNull(
-                                  request, GetProjectPostsRequest.INCLUDE_COMMENTS_FIELD_NUMBER))
-                          .setIncludeProjects(
-                              valueOrNull(
-                                  request, GetProjectPostsRequest.INCLUDE_PROJECTS_FIELD_NUMBER))
-                          .setIncludeRatings(
-                              valueOrNull(
-                                  request,
-                                  GetProjectPostsRequest.INCLUDE_RATINGS_FIELD_NUMBER,
-                                  userX.isAdminX() || userX.isTeacher()))
-                          .setIncludeAssignments(
-                              valueOrNull(
-                                  request, GetProjectPostsRequest.INCLUDE_ASSIGNMENTS_FIELD_NUMBER))
-                          .setProjectIds(
-                              listOrNull(request, GetProjectPostsRequest.PROJECT_IDS_FIELD_NUMBER))
-                          .setProjectPostIds(
-                              listOrNull(
-                                  request, GetProjectPostsRequest.PROJECT_POST_IDS_FIELD_NUMBER))
-                          .setAssignmentIds(
-                              listOrNull(
-                                  request, GetProjectPostsRequest.ASSIGNMENT_IDS_FIELD_NUMBER))
-                          .setClassXIds(
-                              listOrNull(request, GetProjectPostsRequest.CLASS_X_IDS_FIELD_NUMBER))
-                          .setSchoolIds(
-                              listOrNull(request, GetProjectPostsRequest.SCHOOL_IDS_FIELD_NUMBER))
-                          .setUserXIds(
-                              listOrNull(request, GetProjectPostsRequest.USER_X_IDS_FIELD_NUMBER))
-                          .setBeingEdited(
-                              valueOrNull(
-                                  request, GetProjectPostsRequest.BEING_EDITED_FIELD_NUMBER)))
-                  .forEach(
-                      fullProjectPost ->
-                          ProtoDaoUtils.toProjectPostProto(
-                              fullProjectPost, true, response::addProjectPostsBuilder));
+              Page<ProjectPost> projectPosts =
+                  db.getProjectPostRepository()
+                      .getProjectPosts(
+                          new GetProjectPostsParams()
+                              .setIncludeTags(
+                                  valueOrNull(
+                                      request, GetProjectPostsRequest.INCLUDE_TAGS_FIELD_NUMBER))
+                              .setIncludeComments(
+                                  valueOrNull(
+                                      request,
+                                      GetProjectPostsRequest.INCLUDE_COMMENTS_FIELD_NUMBER))
+                              .setIncludeProjects(
+                                  valueOrNull(
+                                      request,
+                                      GetProjectPostsRequest.INCLUDE_PROJECTS_FIELD_NUMBER))
+                              .setIncludeRatings(
+                                  valueOrNull(
+                                      request,
+                                      GetProjectPostsRequest.INCLUDE_RATINGS_FIELD_NUMBER,
+                                      userX.isAdminX() || userX.isTeacher()))
+                              .setIncludeAssignments(
+                                  valueOrNull(
+                                      request,
+                                      GetProjectPostsRequest.INCLUDE_ASSIGNMENTS_FIELD_NUMBER))
+                              .setProjectIds(
+                                  listOrNull(
+                                      request, GetProjectPostsRequest.PROJECT_IDS_FIELD_NUMBER))
+                              .setProjectPostIds(
+                                  listOrNull(
+                                      request,
+                                      GetProjectPostsRequest.PROJECT_POST_IDS_FIELD_NUMBER))
+                              .setAssignmentIds(
+                                  listOrNull(
+                                      request, GetProjectPostsRequest.ASSIGNMENT_IDS_FIELD_NUMBER))
+                              .setClassXIds(
+                                  listOrNull(
+                                      request, GetProjectPostsRequest.CLASS_X_IDS_FIELD_NUMBER))
+                              .setSchoolIds(
+                                  listOrNull(
+                                      request, GetProjectPostsRequest.SCHOOL_IDS_FIELD_NUMBER))
+                              .setUserXIds(
+                                  listOrNull(
+                                      request, GetProjectPostsRequest.USER_X_IDS_FIELD_NUMBER))
+                              .setBeingEdited(
+                                  valueOrNull(
+                                      request, GetProjectPostsRequest.BEING_EDITED_FIELD_NUMBER))
+                              .setPage(
+                                  valueOrNull(request, GetProjectPostsRequest.PAGE_FIELD_NUMBER))
+                              .setPageSize(
+                                  valueOrNull(
+                                      request, GetProjectPostsRequest.PAGE_SIZE_FIELD_NUMBER)));
+              projectPosts.forEach(
+                  fullProjectPost ->
+                      ProtoDaoUtils.toProjectPostProto(
+                          fullProjectPost, true, response::addProjectPostsBuilder));
+
+              if (request.hasPage()) {
+                response
+                    .setPage(request.getPage())
+                    .setPageSize(request.getPageSize())
+                    .setTotalProjectPosts(projectPosts.getTotalElements());
+              }
 
               return response.build();
             })

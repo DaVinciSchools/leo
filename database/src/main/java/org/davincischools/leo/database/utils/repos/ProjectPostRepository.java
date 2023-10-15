@@ -8,7 +8,6 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import org.davincischools.leo.database.daos.Assignment;
@@ -29,6 +28,8 @@ import org.davincischools.leo.database.daos.UserX_;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.QueryHelper.QueryHelperUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -36,13 +37,19 @@ import org.springframework.stereotype.Repository;
 public interface ProjectPostRepository
     extends JpaRepository<ProjectPost, Integer>, AutowiredRepositoryValues {
 
-  default List<ProjectPost> getProjectPosts(GetProjectPostsParams params) {
+  public static final int DEFAULT_PAGE_SIZE = 25;
+
+  default Page<ProjectPost> getProjectPosts(GetProjectPostsParams params) {
     checkNotNull(params);
 
     return getQueryHelper()
         .query(
             ProjectPost.class,
-            (u, projectPost, builder) -> configureQuery(u, projectPost, builder, params));
+            (u, projectPost, builder) -> configureQuery(u, projectPost, builder, params),
+            params
+                .getPage()
+                .map(page -> PageRequest.of(page, params.getPageSize().orElse(DEFAULT_PAGE_SIZE)))
+                .orElse(null));
   }
 
   public static void configureQuery(
@@ -120,31 +127,28 @@ public interface ProjectPostRepository
     }
 
     if (params.getProjectIds().isPresent()) {
-      var project = u.notDeleted(u.fetch(projectPost, ProjectPost_.project, JoinType.INNER));
-      u.addJoinOn(
-          project, project.get(Project_.id).in(ImmutableList.copyOf(params.getProjectIds().get())));
+      var project = u.notDeleted(u.fetch(projectPost, ProjectPost_.project, JoinType.LEFT));
+      u.where(project.get(Project_.id).in(ImmutableList.copyOf(params.getProjectIds().get())));
     }
 
     if (params.getClassXIds().isPresent()) {
-      var project = u.notDeleted(u.fetch(projectPost, ProjectPost_.project, JoinType.INNER));
-      var assignment = u.notDeleted(u.fetch(project, Project_.assignment, JoinType.INNER));
-      var classX = u.notDeleted(u.fetch(assignment, Assignment_.classX, JoinType.INNER));
-      u.addJoinOn(
-          classX, classX.get(ClassX_.id).in(ImmutableList.copyOf(params.getClassXIds().get())));
+      var project = u.notDeleted(u.fetch(projectPost, ProjectPost_.project, JoinType.LEFT));
+      var assignment = u.notDeleted(u.fetch(project, Project_.assignment, JoinType.LEFT));
+      var classX = u.notDeleted(u.fetch(assignment, Assignment_.classX, JoinType.LEFT));
+      u.where(classX.get(ClassX_.id).in(ImmutableList.copyOf(params.getClassXIds().get())));
     }
 
     if (params.getSchoolIds().isPresent()) {
-      var project = u.notDeleted(u.fetch(projectPost, ProjectPost_.project, JoinType.INNER));
-      var assignment = u.notDeleted(u.fetch(project, Project_.assignment, JoinType.INNER));
-      var classX = u.notDeleted(u.fetch(assignment, Assignment_.classX, JoinType.INNER));
-      var school = u.notDeleted(u.fetch(classX, ClassX_.school, JoinType.INNER));
-      u.addJoinOn(
-          school, school.get(School_.id).in(ImmutableList.copyOf(params.getSchoolIds().get())));
+      var project = u.notDeleted(u.fetch(projectPost, ProjectPost_.project, JoinType.LEFT));
+      var assignment = u.notDeleted(u.fetch(project, Project_.assignment, JoinType.LEFT));
+      var classX = u.notDeleted(u.fetch(assignment, Assignment_.classX, JoinType.LEFT));
+      var school = u.notDeleted(u.fetch(classX, ClassX_.school, JoinType.LEFT));
+      u.where(school.get(School_.id).in(ImmutableList.copyOf(params.getSchoolIds().get())));
     }
 
     if (params.getUserXIds().isPresent()) {
-      var userX = u.notDeleted(u.fetch(projectPost, ProjectPost_.userX, JoinType.INNER));
-      u.addJoinOn(userX, userX.get(UserX_.id).in(ImmutableList.copyOf(params.getUserXIds().get())));
+      var userX = u.notDeleted(u.fetch(projectPost, ProjectPost_.userX, JoinType.LEFT));
+      u.where(userX.get(UserX_.id).in(ImmutableList.copyOf(params.getUserXIds().get())));
     }
 
     if (params.getBeingEdited().isPresent()) {

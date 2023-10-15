@@ -5,7 +5,6 @@ import static org.davincischools.leo.database.admin_x.AdminXUtils.createStudent;
 import static org.davincischools.leo.database.admin_x.AdminXUtils.createTeacher;
 import static org.davincischools.leo.database.admin_x.AdminXUtils.createUserX;
 import static org.davincischools.leo.database.utils.DaoUtils.deleteAllRecords;
-import static org.davincischools.leo.database.utils.UserXUtils.setPassword;
 
 import com.google.common.base.Strings;
 import jakarta.persistence.EntityManager;
