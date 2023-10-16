@@ -1,6 +1,8 @@
 package org.davincischools.leo.server.controllers;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -59,45 +61,39 @@ public class PostService {
                   .getProjectPosts(
                       new GetProjectPostsParams()
                           .setIncludeTags(
-                              request.hasIncludeTags() ? request.getIncludeTags() : null)
+                              valueOrNull(
+                                  request, GetProjectPostsRequest.INCLUDE_TAGS_FIELD_NUMBER))
                           .setIncludeComments(
-                              request.hasIncludeComments() ? request.getIncludeComments() : null)
+                              valueOrNull(
+                                  request, GetProjectPostsRequest.INCLUDE_COMMENTS_FIELD_NUMBER))
                           .setIncludeProjects(
-                              request.hasIncludeProjects() ? request.getIncludeProjects() : null)
+                              valueOrNull(
+                                  request, GetProjectPostsRequest.INCLUDE_PROJECTS_FIELD_NUMBER))
                           .setIncludeRatings(
-                              (userX.isAdminX() || userX.isTeacher()) && request.hasIncludeRatings()
-                                  ? request.getIncludeRatings()
-                                  : null)
+                              valueOrNull(
+                                  request,
+                                  GetProjectPostsRequest.INCLUDE_RATINGS_FIELD_NUMBER,
+                                  userX.isAdminX() || userX.isTeacher()))
                           .setIncludeAssignments(
-                              request.hasIncludeAssignments()
-                                  ? request.getIncludeAssignments()
-                                  : null)
+                              valueOrNull(
+                                  request, GetProjectPostsRequest.INCLUDE_ASSIGNMENTS_FIELD_NUMBER))
                           .setProjectIds(
-                              request.getProjectIdsList().isEmpty()
-                                  ? null
-                                  : request.getProjectIdsList())
+                              listOrNull(request, GetProjectPostsRequest.PROJECT_IDS_FIELD_NUMBER))
                           .setProjectPostIds(
-                              request.getProjectPostIdsList().isEmpty()
-                                  ? null
-                                  : request.getProjectPostIdsList())
+                              listOrNull(
+                                  request, GetProjectPostsRequest.PROJECT_POST_IDS_FIELD_NUMBER))
                           .setAssignmentIds(
-                              request.getAssignmentIdsList().isEmpty()
-                                  ? null
-                                  : request.getAssignmentIdsList())
+                              listOrNull(
+                                  request, GetProjectPostsRequest.ASSIGNMENT_IDS_FIELD_NUMBER))
                           .setClassXIds(
-                              request.getClassXIdsList().isEmpty()
-                                  ? null
-                                  : request.getClassXIdsList())
+                              listOrNull(request, GetProjectPostsRequest.CLASS_X_IDS_FIELD_NUMBER))
                           .setSchoolIds(
-                              request.getSchoolIdsList().isEmpty()
-                                  ? null
-                                  : request.getSchoolIdsList())
+                              listOrNull(request, GetProjectPostsRequest.SCHOOL_IDS_FIELD_NUMBER))
                           .setUserXIds(
-                              request.getUserXIdsList().isEmpty()
-                                  ? null
-                                  : request.getUserXIdsList())
+                              listOrNull(request, GetProjectPostsRequest.USER_X_IDS_FIELD_NUMBER))
                           .setBeingEdited(
-                              !request.hasBeingEdited() ? null : request.getBeingEdited()))
+                              valueOrNull(
+                                  request, GetProjectPostsRequest.BEING_EDITED_FIELD_NUMBER)))
                   .forEach(
                       fullProjectPost ->
                           ProtoDaoUtils.toProjectPostProto(
