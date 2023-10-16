@@ -71,6 +71,29 @@ import org.hibernate.LazyInitializationException;
 
 public class ProtoDaoUtils {
 
+  @SuppressWarnings("unchecked")
+  public static <T> T valueOrNull(Message request, int fieldNumber) {
+    FieldDescriptor descriptor = request.getDescriptorForType().findFieldByNumber(fieldNumber);
+    if (request.hasField(descriptor)) {
+      return (T) request.getField(descriptor);
+    }
+    return null;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> T valueOrNull(Message request, int fieldNumber, boolean condition) {
+    return condition ? valueOrNull(request, fieldNumber) : null;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> T listOrNull(Message request, int fieldNumber) {
+    FieldDescriptor descriptor = request.getDescriptorForType().findFieldByNumber(fieldNumber);
+    if (request.getRepeatedFieldCount(descriptor) > 0) {
+      return (T) request.getField(descriptor);
+    }
+    return null;
+  }
+
   private record ProtoDaoFields(
       Class<? extends MessageOrBuilder> messageOrBuilderClass,
       Class<?> daoClass,

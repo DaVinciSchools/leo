@@ -2,12 +2,12 @@ package org.davincischools.leo.server.controllers;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.protobuf.Descriptors.FieldDescriptor;
-import com.google.protobuf.Message;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
@@ -503,23 +503,5 @@ public class UserXManagementService {
               return response.build();
             })
         .finish();
-  }
-
-  @SuppressWarnings("unchecked")
-  private <T> T valueOrNull(Message request, int fieldNumber) {
-    FieldDescriptor descriptor = request.getDescriptorForType().findFieldByNumber(fieldNumber);
-    if (request.hasField(descriptor)) {
-      return (T) request.getField(descriptor);
-    }
-    return null;
-  }
-
-  @SuppressWarnings("unchecked")
-  private <T> T listOrNull(Message request, int fieldNumber) {
-    FieldDescriptor descriptor = request.getDescriptorForType().findFieldByNumber(fieldNumber);
-    if (request.getRepeatedFieldCount(descriptor) > 0) {
-      return (T) request.getField(descriptor);
-    }
-    return null;
   }
 }
