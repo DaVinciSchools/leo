@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.davincischools.leo.protos.mailjet";
+
+package mailjet;
+
+// Definitions from:
+// https://dev.mailjet.com/email/reference/
+
+// https://dev.mailjet.com/email/reference/send-emails#v3_1_post_send
+
+enum MailjetSendResponseStatus {
+  UNKNOWN = 0;
+  // Lowercase because that's how it comes back from the API.
+  success = 1;
+  error = 2;
+}
+
+message MailjetSendRequest {
+  optional bool SandboxMode = 1;
+  optional bool AdvanceErrorHandling = 2;
+  repeated MailjetSendRequestMessage messages = 3;
+}
+
+message MailjetSendResponse {
+  repeated MailjetSendResponseMessage Messages = 1;
+}
+
+message MailjetSendRequestMessage {
+  MailjetSendRequestFrom From = 1;
+  repeated MailjetSendRequestTo To = 2;
+  optional MailjetSendRequestReplyTo ReplyTo = 3;
+
+  optional string Subject = 4;
+  optional string TextPart = 5;
+  optional string HTMLPart = 6;
+  optional string CustomID = 7;
+}
+
+message MailjetSendRequestFrom {
+  string Email = 1;
+  optional string Name = 2;
+}
+
+message MailjetSendRequestTo {
+  string Email = 1;
+  optional string Name = 2;
+}
+
+message MailjetSendRequestReplyTo {
+  string Email = 1;
+  optional string Name = 2;
+}
+
+message MailjetSendResponseMessage {
+  optional MailjetSendResponseStatus Status = 1;
+  repeated MailjetSendResponseError Errors = 2;
+  optional string CustomID = 3;
+  repeated MailjetSendResponseTo To = 4;
+  repeated MailjetSendResponseCc Cc = 5;
+  repeated MailjetSendResponseBcc Bcc = 6;
+}
+
+message MailjetSendResponseError {
+  optional string ErrorIdentifier = 1;
+  optional string ErrorCode = 2;
+  optional int32 StatusCode = 3;
+  optional string ErrorMessage = 4;
+  optional string ErrorRelatedTo = 5;
+}
+
+message MailjetSendResponseTo {
+  optional string Email = 1;
+  optional string MessageUUID = 2;
+  optional int64 MessageID = 3;
+  optional string MessageHref = 4;
+}
+
+message MailjetSendResponseCc {
+  optional string Email = 1;
+  optional string MessageUUID = 2;
+  optional int64 MessageID = 3;
+  optional string MessageHref = 4;
+}
+
+message MailjetSendResponseBcc {
+  optional string Email = 1;
+  optional string MessageUUID = 2;
+  optional int64 MessageID = 3;
+  optional string MessageHref = 4;
+}

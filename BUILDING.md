@@ -84,29 +84,12 @@ command line flag or SPRING_CONFIG_IMPORT environment variable.
 
 See [```application.properties```](https://github.com/DaVinciSchools/leo/blob/main/server/src/main/resources/application.properties)
 in this repository for all property settings. However, for local development,
-you will probably only need to override the following properties in
-```${HOME}/project_leo.properties```.
+you will probably only need to override the following "openai.api.key" property
+in ```${HOME}/project_leo.properties```. It is necessary to generate projects.
 
 ```properties
 # Set to the OpenAI key used for queries. Its value starts with "sk-".
-openai.api.key=<your_open_ai_api_key>
-
-# Enable the following profile and properties to use an external database.
-# 
-# spring.profiles.active=useExternalDatabase
-#
-# spring.datasource.url=jdbc:mysql://localhost:3306/leo_temp
-# spring.datasource.username=temp
-# spring.datasource.password=temp
-# spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-# spring.jpa.hibernate.ddl-auto=none
-
-# Add the following properties to post bugs to JIRA.
-#
-# atlassian.username.email=<account_for_jira_api>
-# atlassian.api.token=<token_for_jira_api>
-# atlassian.reporter.email=<default_reporter_email>
-# atlassian.assignee.email=<default_assignee_email>
+openai.api.key=<Your OpenAI key starting with "sk-".>
 ```
 
 Properties can also be set using environment variables. For instance,
