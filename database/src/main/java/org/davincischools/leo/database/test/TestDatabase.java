@@ -35,7 +35,7 @@ public class TestDatabase {
   private static final String DATABASE_NAME = "leo_container_test";
   private static final String ROOT_USERNAME = "root";
   private static final String ROOT_PASSWORD = "password";
-  private static final String USERNAME = "dev";
+  private static final String USERNAME = "test";
   private static final String PASSWORD = "password";
 
   // Created connection.
@@ -56,11 +56,10 @@ public class TestDatabase {
         int port =
             Optional.ofNullable(environment.getProperty(TEST_DATABASE_PORT_KEY, Integer.class))
                 .orElse(-1);
-        MySQLContainer<?> container = createMySqlContainer(port);
-        container.start();
+        MySQLContainer<?> container = createAndStartMySqlContainer(port);
 
         // Configure a data source to point to the container.
-        dataSource =
+        DataSource rootDataSource =
             DataSourceBuilder.create()
                 .driverClassName(org.testcontainers.jdbc.ContainerDatabaseDriver.class.getName())
                 .url(container.getJdbcUrl())
@@ -70,17 +69,27 @@ public class TestDatabase {
                 .build();
 
         // Create the user and grant them permission.
-        createUserX(dataSource, USERNAME, PASSWORD);
-        grantAllAccess(dataSource, DATABASE_NAME, USERNAME);
+        createUserX(rootDataSource, USERNAME, PASSWORD);
+        grantAllAccess(rootDataSource, DATABASE_NAME, USERNAME);
 
         // Load the schema into it.
-        DatabaseManagement.loadSchema(dataSource);
+        DatabaseManagement.loadSchema(rootDataSource);
 
         logger
             .atWarn()
             .log(
                 "Created a test database at {}. Data will not be persisted.",
                 container.getJdbcUrl());
+
+        // Create a data source for the user.
+        dataSource =
+            DataSourceBuilder.create()
+                .driverClassName(org.testcontainers.jdbc.ContainerDatabaseDriver.class.getName())
+                .url(container.getJdbcUrl())
+                .username(USERNAME)
+                .password(PASSWORD)
+                .type(MysqlDataSource.class)
+                .build();
 
         return dataSource;
       }
@@ -97,7 +106,7 @@ public class TestDatabase {
   }
 
   @NotNull
-  private static MySQLContainer<?> createMySqlContainer(int port) {
+  private static MySQLContainer<?> createAndStartMySqlContainer(int port) {
     // Configure the test database container.
     MySQLContainer<?> container =
         new MySQLContainer<>(DockerImageName.parse("mysql").withTag("8-debian"))
@@ -105,8 +114,6 @@ public class TestDatabase {
             .withUsername(USERNAME)
             .withPassword(PASSWORD)
             .withEnv("MYSQL_ROOT_PASSWORD", ROOT_PASSWORD);
-    container.setPortBindings(
-        ImmutableList.of((port > 0 ? port : TestSocketUtils.findAvailableTcpPort()) + ":3306"));
 
     // Workaround for
     // "STDERR: mysqld: Can't read dir of '/etc/mysql/conf.d/' (Errcode: 13 - Permission denied)"
@@ -114,6 +121,32 @@ public class TestDatabase {
     // See:
     // https://github.com/testcontainers/testcontainers-java/issues/914#issuecomment-876965013
     container.addParameter("TC_MY_CNF", null);
+
+    int attempts = 0;
+    while (true) {
+      int attemptedPort = port > 0 ? port : TestSocketUtils.findAvailableTcpPort();
+      logger.atInfo().log("Trying to start container on port {}.", attemptedPort);
+      try {
+        container.setPortBindings(ImmutableList.of(attemptedPort + ":3306"));
+        container.start();
+        break;
+      } catch (RuntimeException e) {
+        if (attempts++ < 10) {
+          logger
+              .atWarn()
+              .withThrowable(e)
+              .log("Failed to start container on port {}. Retrying...", attemptedPort);
+        } else {
+          logger
+              .atError()
+              .withThrowable(e)
+              .log("Failed to start container on port {}.", attemptedPort);
+          throw e;
+        }
+      }
+    }
+    logger.atInfo().log("Successfully started container.");
+
     return container;
   }
 

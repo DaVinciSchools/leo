@@ -7,9 +7,12 @@ import static org.davincischools.leo.database.admin_x.AdminXUtils.createUserX;
 import static org.davincischools.leo.database.utils.DaoUtils.deleteAllRecords;
 import static org.davincischools.leo.database.utils.UserXUtils.setPassword;
 
+import com.google.common.base.Strings;
 import jakarta.persistence.EntityManager;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Arrays;
+import javax.sql.DataSource;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,6 +51,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Getter
 public class TestData {
+  private static final Logger logger = LogManager.getLogger();
 
   public static final String PASSWORD = "password";
 
@@ -66,6 +70,7 @@ public class TestData {
     }
   }
 
+  private final DataSource dataSource;
   private final Database db;
   private final EntityManager entityManager;
 
@@ -92,7 +97,11 @@ public class TestData {
   private Motivation advanceMotivation;
   private Motivation organizeMotivation;
 
-  public TestData(@Autowired Database db, @Autowired EntityManager entityManager) {
+  public TestData(
+      @Autowired DataSource dataSource,
+      @Autowired Database db,
+      @Autowired EntityManager entityManager) {
+    this.dataSource = dataSource;
     this.db = db;
     this.entityManager = entityManager;
   }
@@ -103,6 +112,21 @@ public class TestData {
    * the only exception because it's not tied to a district or school yet.
    */
   public void addTestData() {
+    try {
+      if (!Strings.nullToEmpty(dataSource.getConnection().getMetaData().getUserName())
+          .startsWith("test@")) {
+        logger
+            .atError()
+            .log(
+                "Not loading test data. It may only be loaded to a database using"
+                    + " 'test' as the username. But, the username was '{}'.",
+                dataSource.getConnection().getMetaData().getUserName());
+        return;
+      }
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+
     // Upsert a new district.
     deleteAllRecords(
         db.getDistrictRepository(),

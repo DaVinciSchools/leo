@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import javax.sql.DataSource;
 import org.apache.commons.text.RandomStringGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -410,6 +411,7 @@ public class AdminXUtils {
         .generate(20);
   }
 
+  @Autowired private DataSource dataSource;
   @Autowired private Database db;
   @Autowired private EntityManager entityManager;
 
@@ -998,7 +1000,7 @@ public class AdminXUtils {
     }
     if (!Objects.equals(loadTestData, "false")) {
       log.atInfo().log("Loading test data");
-      new TestData(db, entityManager).addTestData();
+      new TestData(dataSource, db, entityManager).addTestData();
     } else {
       checkArgument(!createAdmins.isEmpty(), "--createAdmin required.");
       UserX userX = db.getUserXRepository().findByEmailAddress(createAdmins.get(0)).orElseThrow();
