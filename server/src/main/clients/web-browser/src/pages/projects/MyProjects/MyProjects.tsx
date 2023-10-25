@@ -320,11 +320,12 @@ export function MyProjects() {
                         projectIds:
                           selectedProject != null
                             ? [selectedProject?.id ?? 0]
-                            : sortedProjects.map(p => p.id ?? 0),
+                            : [0, ...sortedProjects.map(p => p.id ?? 0)],
                         includeComments: true,
                         includeTags: true,
                         beingEdited: false,
                       }}
+                      paged={true}
                     />
                   </>
                 ),

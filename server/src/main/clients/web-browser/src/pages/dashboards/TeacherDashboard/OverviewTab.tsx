@@ -175,6 +175,7 @@ export function OverviewTab() {
                   includeRatings: true,
                   beingEdited: false,
                 }}
+                paged={true}
               />
             ),
             layout: {x: 0, y: 0, w: 8, h: 12},
