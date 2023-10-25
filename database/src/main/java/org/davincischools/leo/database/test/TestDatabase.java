@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.Optional;
 import javax.sql.DataSource;
 import org.apache.logging.log4j.LogManager;
@@ -114,6 +115,9 @@ public class TestDatabase {
             .withUsername(USERNAME)
             .withPassword(PASSWORD)
             .withEnv("MYSQL_ROOT_PASSWORD", ROOT_PASSWORD);
+    container.setStartupAttempts(1);
+    container.withStartupTimeout(Duration.ofMinutes(5));
+    container.withConnectTimeoutSeconds((int) Duration.ofMinutes(5).getSeconds());
 
     // Workaround for
     // "STDERR: mysqld: Can't read dir of '/etc/mysql/conf.d/' (Errcode: 13 - Permission denied)"

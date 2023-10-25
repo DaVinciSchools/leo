@@ -58,7 +58,7 @@ public class AdminX implements Serializable {
     return deleted;
   }
 
-  @OneToOne(mappedBy = "adminX")
+  @OneToOne(mappedBy = "adminX", fetch = jakarta.persistence.FetchType.LAZY)
   public UserX getUserX() {
     return userX;
   }

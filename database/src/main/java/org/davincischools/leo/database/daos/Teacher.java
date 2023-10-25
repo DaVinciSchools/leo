@@ -75,7 +75,7 @@ public class Teacher implements Serializable {
     return teacherSchools;
   }
 
-  @OneToOne(mappedBy = "teacher")
+  @OneToOne(mappedBy = "teacher", fetch = jakarta.persistence.FetchType.LAZY)
   public UserX getUserX() {
     return userX;
   }

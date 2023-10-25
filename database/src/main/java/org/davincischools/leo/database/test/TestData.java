@@ -46,6 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -73,6 +74,8 @@ public class TestData {
   private final DataSource dataSource;
   private final Database db;
   private final EntityManager entityManager;
+
+  private final String ENCODED_PASSWORD;
 
   private District district;
   private School school;
@@ -104,6 +107,8 @@ public class TestData {
     this.dataSource = dataSource;
     this.db = db;
     this.entityManager = entityManager;
+    this.ENCODED_PASSWORD =
+        PasswordEncoderFactories.createDelegatingPasswordEncoder().encode(PASSWORD);
   }
 
   /**
@@ -140,16 +145,18 @@ public class TestData {
         db.getStudentSchoolRepository(), StudentSchool::getDeleted, StudentSchool::setDeleted);
     deleteAllRecords(
         db.getTeacherSchoolRepository(), TeacherSchool::getDeleted, TeacherSchool::setDeleted);
-    for (var school : AdminXUtils.DaVinciSchoolsByNickname.values()) {
-      db.getSchoolRepository()
-          .save(
-              new School()
-                  .setCreationTime(Instant.now())
-                  .setDistrict(district)
-                  .setNickname(school.name())
-                  .setName(school.getName())
-                  .setAddress(school.getAddress()));
-    }
+    db.getSchoolRepository()
+        .saveAll(
+            Arrays.stream(DaVinciSchoolsByNickname.values())
+                .map(
+                    n ->
+                        new School()
+                            .setCreationTime(Instant.now())
+                            .setDistrict(district)
+                            .setNickname(n.name())
+                            .setName(n.getName())
+                            .setAddress(n.getAddress()))
+                .toList());
     school =
         db.getSchoolRepository().findAll().stream()
             .filter(
@@ -225,7 +232,7 @@ public class TestData {
               createAdminX(db, userX);
               createTeacher(db, userX);
               createStudent(db, userX, student -> student.setDistrictStudentId(1111).setGrade(12));
-              setPassword(userX, PASSWORD);
+              userX.setEncodedPassword(ENCODED_PASSWORD);
             });
 
     teacher =
@@ -237,7 +244,7 @@ public class TestData {
             userX -> {
               userX.setFirstName("Teacher").setLastName("Project Leo");
               createTeacher(db, userX);
-              setPassword(userX, PASSWORD);
+              userX.setEncodedPassword(ENCODED_PASSWORD);
             });
     db.getTeacherSchoolRepository().upsert(teacher.getTeacher(), school);
 
@@ -250,7 +257,7 @@ public class TestData {
             userX -> {
               userX.setFirstName("Student").setLastName("Project Leo");
               createStudent(db, userX, s -> s.setDistrictStudentId(1234).setGrade(9));
-              setPassword(userX, PASSWORD);
+              userX.setEncodedPassword(ENCODED_PASSWORD);
             });
     db.getStudentSchoolRepository().upsert(student.getStudent(), school);
 
@@ -262,7 +269,7 @@ public class TestData {
             "demo@projectleo.net",
             userX -> {
               userX.setFirstName("Demo").setLastName("Project Leo");
-              setPassword(userX, PASSWORD);
+              userX.setEncodedPassword(ENCODED_PASSWORD);
               userX.setInterest(
                   db.getInterestRepository()
                       .save(

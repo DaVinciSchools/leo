@@ -149,7 +149,7 @@ public class AdminXUtils {
                   type,
                   pdc2 -> pdc2.setPosition((float) position.getAndIncrement()).setMaxNumValues(4));
       modifier.accept(pdc);
-      db.getProjectDefinitionCategoryRepository().saveAndFlush(pdc);
+      db.getProjectDefinitionCategoryRepository().save(pdc);
       return pdc;
     }
   }
@@ -692,7 +692,7 @@ public class AdminXUtils {
             // })
             .toList();
 
-    // db.getUserXRepository().saveAllAndFlush(userXs);
+    // db.getUserXRepository().saveAll(userXs);
 
     if (!errors.isEmpty()) {
       log.atError()
@@ -783,7 +783,7 @@ public class AdminXUtils {
                 })
             .toList();
 
-    db.getUserXRepository().saveAllAndFlush(students);
+    db.getUserXRepository().saveAll(students);
 
     if (!errors.isEmpty()) {
       log.atError()
@@ -959,8 +959,7 @@ public class AdminXUtils {
             db.getAssignmentProjectDefinitionRepository()
                 .upsert(assignment, projectDefinition, entity -> {});
         if ((assignmentCount % 3) == (projectDefinitionCount % 3)) {
-          db.getAssignmentProjectDefinitionRepository()
-              .saveAndFlush(apd.setSelected(Instant.now()));
+          db.getAssignmentProjectDefinitionRepository().save(apd.setSelected(Instant.now()));
         }
       }
     }

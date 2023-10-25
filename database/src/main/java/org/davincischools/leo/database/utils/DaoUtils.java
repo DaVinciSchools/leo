@@ -29,12 +29,16 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public class DaoUtils {
+
+  private static final Logger logger = LogManager.getLogger();
 
   private static final Map<Class<?>, Optional<DaoShallowCopyMethods>> daoShallowCopyMethods =
       Collections.synchronizedMap(new HashMap<>());
@@ -287,11 +291,10 @@ public class DaoUtils {
     checkNotNull(repository);
     checkNotNull(setFn);
 
-    List<E> entities = repository.findAll();
-    entities.stream()
-        .filter(e -> getDeletedFn.apply(e) == null)
-        .forEach(entity -> setFn.accept(entity, Instant.now()));
-    repository.saveAll(entities);
+    List<E> deleted =
+        repository.findAll().stream().filter(e -> getDeletedFn.apply(e) == null).toList();
+    deleted.forEach(entity -> setFn.accept(entity, Instant.now()));
+    repository.saveAll(deleted);
   }
 
   public static <D> Class<?> getDaoClass(D dao) {

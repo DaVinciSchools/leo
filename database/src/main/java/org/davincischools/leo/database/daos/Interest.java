@@ -172,7 +172,7 @@ public class Interest implements Serializable {
     return numStudents;
   }
 
-  @OneToOne(mappedBy = "interest")
+  @OneToOne(mappedBy = "interest", fetch = jakarta.persistence.FetchType.LAZY)
   public UserX getUserX() {
     return userX;
   }
