@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.davincischools.leo</groupId>
     <artifactId>project-leo</artifactId>
@@ -21,9 +21,9 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring.boot.version>3.1.1</spring.boot.version>
-        <spring.boot.starter.version>3.1.1</spring.boot.starter.version>
-        <spring.framework.version>6.0.10</spring.framework.version>
+        <spring.boot.version>3.1.5</spring.boot.version>
+        <spring.boot.starter.version>3.1.5</spring.boot.starter.version>
+        <spring.framework.version>6.0.13</spring.framework.version>
         <google.truth.version>1.1.5</google.truth.version>
     </properties>
 
@@ -32,7 +32,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>32.0.1-jre</version>
+            <version>32.1.3-jre</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -47,7 +47,7 @@
         <dependency>
             <groupId>commons-cli</groupId>
             <artifactId>commons-cli</artifactId>
-            <version>1.5.0</version>
+            <version>1.6.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -69,19 +69,19 @@
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <version>8.0.33</version>
+            <version>8.2.0</version>
         </dependency>
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
-            <version>6.2.7.Final</version>
+            <version>6.3.1.Final</version>
         </dependency>
 
         <!-- Google's java formatter. -->
         <dependency>
             <groupId>com.google.googlejavaformat</groupId>
             <artifactId>google-java-format</artifactId>
-            <version>1.17.0</version>
+            <version>1.18.1</version>
             <scope>compile</scope>
         </dependency>
 
@@ -97,7 +97,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.10.0-M1</version>
+            <version>5.10.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -135,12 +135,12 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.4.8</version>
+            <version>1.4.11</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.7</version>
+            <version>2.0.9</version>
         </dependency>
     </dependencies>
 
@@ -153,7 +153,8 @@
                 <version>3.2.0</version>
                 <configuration>
                     <filesets>
-                        <fileset erroronmissingdir="false" followsymlinks="false" defaultexcludes="false">
+                        <fileset erroronmissingdir="false" followsymlinks="false"
+                                defaultexcludes="false">
                             <directory>${basedir}</directory>
                             <includes>
                                 <include>bin/git-hooks/**/*.tmp/</include>
@@ -179,7 +180,9 @@
                         <phase>initialize</phase>
                         <configuration>
                             <target>
-                                <apply executable="java" failonerror="true" failifexecutionfails="true" parallel="true" skipemptyfilesets="true" force="true" verbose="true">
+                                <apply executable="java" failonerror="true"
+                                        failifexecutionfails="true" parallel="true"
+                                        skipemptyfilesets="true" force="true" verbose="true">
                                     <arg value="-classpath"/>
                                     <arg pathref="maven.compile.classpath"/>
                                     <arg line="--add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED"/>
@@ -189,9 +192,12 @@
                                     <arg line="--add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"/>
                                     <arg value="com.google.googlejavaformat.java.Main"/>
                                     <arg value="--replace"/>
-                                    <fileset dir="${project.build.sourceDirectory}" includes="**/*.java" erroronmissingdir="false"/>
-                                    <fileset dir="${project.build.testSourceDirectory}" includes="**/*.java" erroronmissingdir="false"/>
-                                    <fileset dir="${project.build.directory}" includes="**/*.java" erroronmissingdir="false"/>
+                                    <fileset dir="${project.build.sourceDirectory}"
+                                            includes="**/*.java" erroronmissingdir="false"/>
+                                    <fileset dir="${project.build.testSourceDirectory}"
+                                            includes="**/*.java" erroronmissingdir="false"/>
+                                    <fileset dir="${project.build.directory}" includes="**/*.java"
+                                            erroronmissingdir="false"/>
                                 </apply>
                             </target>
                         </configuration>
