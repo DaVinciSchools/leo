@@ -10,11 +10,12 @@ CREATE TABLE user_x
     -- https://www.rfc-editor.org/errata_search.php?rfc=3696&eid=1690
     email_address                 VARCHAR(254) UNIQUE NOT NULL,
     INDEX                         user_x__email_address USING HASH (email_address),
+    email_address_verified        BOOLEAN,
 
     -- From org.springframework.security.crypto.factory.PasswordEncoderFactories.
     encoded_password              TEXT                NOT NULL,
 
-    -- This is for a one time password recovery or a one time QR code sign in.
+    -- This is for a one time password recovery or a one time QR code sign in, etc.
     temporary_password_good_until DATETIME,
     temporary_encoded_password    TEXT,
 
