@@ -293,8 +293,8 @@
                                 <apply executable="${npm.binary.directory}/node/npx" dir="${clients.directory}/web-browser" failonerror="true" parallel="true" skipemptyfilesets="true">
                                     <env key="PATH" path="${npm.binary.directory}/node:${env.PATH}"/>
                                     <env key="CI" value="true"/>
-                                    <arg value="gts"/>
-                                    <arg value="fix"/>
+                                    <arg value="eslint"/>
+                                    <arg value="--fix"/>
                                     <fileset dir="${clients.directory}" erroronmissingdir="false">
                                         <include name="**/*.js"/>
                                         <include name="**/*.jsx"/>
