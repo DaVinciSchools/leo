@@ -8,7 +8,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpClient.Redirect;
+import java.net.http.HttpClient.Version;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Optional;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.server.utils.HttpServletProxy;
@@ -59,6 +68,7 @@ public class ReactResourceController {
     "/demos/**",
     "/docs/**",
     "/favicon.*",
+    "/gtag.js",
     "/images/**",
     "/index.html",
     "/manifest.json",
@@ -87,7 +97,30 @@ public class ReactResourceController {
             (request, log) -> {
               URI uri = getUri(request);
               Optional<MediaType> mediaType = getResponseMimeType(uri);
-              if (reactPort > 0) {
+              if (uri.getPath().equals("/gtag.js")) {
+                // Forward the request to the Google Analytics server.
+                HttpRequest.Builder gtagRequest =
+                    HttpRequest.newBuilder()
+                        .uri(URI.create("https://www.googletagmanager.com/gtag/js?id=G-NLHRTMZB65"))
+                        .version(Version.HTTP_2)
+                        .timeout(Duration.ofSeconds(5))
+                        .GET();
+                HttpResponse<String> gtagResponse =
+                    HttpClient.newBuilder()
+                        .followRedirects(Redirect.ALWAYS)
+                        .build()
+                        .send(gtagRequest.build(), BodyHandlers.ofString(StandardCharsets.UTF_8));
+                // Handle the status. Return if there was an error.
+                if (gtagResponse.statusCode() != HttpURLConnection.HTTP_OK) {
+                  response.sendError(gtagResponse.statusCode(), uri.getPath());
+                } else {
+                  response.setStatus(gtagResponse.statusCode());
+                  HttpServletProxy.copyHeaders(gtagResponse, response);
+                  response.getOutputStream().write(gtagResponse.body().getBytes());
+                  response.getOutputStream().flush();
+                  response.getOutputStream().close();
+                }
+              } else if (reactPort > 0) {
                 // Forward the request to the React server running locally.
                 HttpServletProxy.sendExternalRequest(uri, reactPort, mediaType, request, response);
               } else {

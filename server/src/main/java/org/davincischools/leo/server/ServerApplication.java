@@ -120,6 +120,7 @@ public class ServerApplication {
             new AntPathRequestMatcher("/docs/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/error**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/favicon.*", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/gtag.js", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/images/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/index.html", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/manifest.json", HttpMethod.GET.name()),

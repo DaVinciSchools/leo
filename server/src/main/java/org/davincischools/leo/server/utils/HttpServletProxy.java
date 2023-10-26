@@ -20,6 +20,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpClient.Redirect;
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
@@ -82,19 +83,7 @@ public class HttpServletProxy {
               .timeout(Duration.ofSeconds(5))
               .GET();
 
-      // Copy over headers.
-      if (request.getHeaderNames() != null) {
-        for (String name : Lists.newArrayList(request.getHeaderNames().asIterator())) {
-          if (HEADERS_THAT_WILL_BE_AUTO_POPULATED.contains(name.toLowerCase())) {
-            continue;
-          }
-          if (request.getHeaders(name) != null) {
-            for (String value : Lists.newArrayList(request.getHeaders(name).asIterator())) {
-              externalRequest.header(name, uriRewriter.rewriteForClient(value));
-            }
-          }
-        }
-      }
+      copyHeaders(request, externalRequest, uriRewriter);
 
       callAndProcessExternalResponse(
           uri, mediaType, uriRewriter, request, response, externalRequest.build());
@@ -102,6 +91,55 @@ public class HttpServletProxy {
       throw e;
     } catch (Exception e) {
       throw new IOException(e);
+    }
+  }
+
+  public static void copyHeaders(HttpServletRequest fromRequest, Builder toRequest) {
+    copyHeaders(fromRequest, toRequest, null);
+  }
+
+  public static void copyHeaders(
+      HttpServletRequest fromRequest, Builder toRequest, URIRewriter uriRewriter) {
+    if (fromRequest.getHeaderNames() != null) {
+      for (String name : Lists.newArrayList(fromRequest.getHeaderNames().asIterator())) {
+        if (HEADERS_THAT_WILL_BE_AUTO_POPULATED.contains(name.toLowerCase())) {
+          continue;
+        }
+        if (fromRequest.getHeaders(name) != null) {
+          for (String value : Lists.newArrayList(fromRequest.getHeaders(name).asIterator())) {
+            toRequest.header(
+                name, uriRewriter != null ? uriRewriter.rewriteForClient(value) : value);
+          }
+        }
+      }
+    }
+  }
+
+  public static <T> void copyHeaders(HttpResponse<T> fromResponse, HttpServletResponse toResponse) {
+    copyHeaders(fromResponse, toResponse, null);
+  }
+
+  public static <T> void copyHeaders(
+      HttpResponse<T> fromResponse, HttpServletResponse toResponse, URIRewriter uriRewriter) {
+    for (Entry<String, List<String>> header : fromResponse.headers().map().entrySet()) {
+      String name = header.getKey();
+      if (HEADERS_THAT_WILL_BE_AUTO_POPULATED.contains(name.toLowerCase())) {
+        continue;
+      } else if (COOKIE_HEADERS.contains(name.toLowerCase())) {
+        for (String value : header.getValue()) {
+          for (HttpCookie externalCookie :
+              HttpCookie.parse(uriRewriter != null ? uriRewriter.rewriteForSpring(value) : value)) {
+            toResponse.addCookie(convertCookie(externalCookie));
+          }
+        }
+      } else {
+        header
+            .getValue()
+            .forEach(
+                value ->
+                    toResponse.addHeader(
+                        name, uriRewriter != null ? uriRewriter.rewriteForSpring(value) : value));
+      }
     }
   }
 
@@ -131,24 +169,7 @@ public class HttpServletProxy {
       }
       response.setStatus(externalResponse.statusCode());
 
-      // Convert the headers and cookies.
-      for (Entry<String, List<String>> header : externalResponse.headers().map().entrySet()) {
-        String name = header.getKey();
-        if (HEADERS_THAT_WILL_BE_AUTO_POPULATED.contains(name.toLowerCase())) {
-          continue;
-        } else if (COOKIE_HEADERS.contains(name.toLowerCase())) {
-          for (String value : header.getValue()) {
-            for (HttpCookie externalCookie :
-                HttpCookie.parse(uriRewriter.rewriteForSpring(value))) {
-              response.addCookie(convertCookie(externalCookie));
-            }
-          }
-        } else {
-          header
-              .getValue()
-              .forEach(value -> response.addHeader(name, uriRewriter.rewriteForSpring(value)));
-        }
-      }
+      copyHeaders(externalResponse, response, uriRewriter);
 
       // If the response is in text format, replace externalHostPort with originalHostPort.
       byte[] externalBody = externalResponse.body();

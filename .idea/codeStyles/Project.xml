@@ -59,6 +59,9 @@
         </value>
       </option>
     </AndroidXmlCodeStyleSettings>
+    <HTMLCodeStyleSettings>
+      <option name="HTML_DO_NOT_INDENT_CHILDREN_OF" value="" />
+    </HTMLCodeStyleSettings>
     <JSCodeStyleSettings version="0">
       <option name="INDENT_CHAINED_CALLS" value="false" />
     </JSCodeStyleSettings>
