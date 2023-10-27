@@ -8,6 +8,7 @@
 
 .global-form-first-label {
   @extend .global-form-label;
+
   padding-top: 0;
 }
 
@@ -62,7 +63,7 @@
 .global-tags {
   margin: 3px;
   border-radius: 0;
-  background-color: rgba(255, 255, 255);
+  background-color: rgb(255 255 255);
   white-space: nowrap;
 }
 

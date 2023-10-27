@@ -3,7 +3,7 @@
 @mixin ikigai-project-builder-chip-values {
   margin: 3px;
   border-radius: 0;
-  background-color: rgba(255, 255, 255);
+  background-color: rgb(255 255 255);
 }
 
 .ikigai-project-builder {
@@ -23,9 +23,6 @@
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: clip;
-    }
-
-    .ikigai-project-builder-hint {
     }
   }
 

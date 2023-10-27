@@ -287,10 +287,10 @@
                         </configuration>
                     </execution>
 
-                    <!-- Format JavaScript/TypeScript using the Google TypeScript formatter. -->
+                    <!-- Format & Lint web files. -->
                     <execution>
                         <?m2e ignore?>
-                        <id>format-javascript-files</id>
+                        <id>format-lint-web-files</id>
                         <goals>
                             <goal>run</goal>
                         </goals>
@@ -300,7 +300,8 @@
                                 <property environment="env"/>
                                 <apply executable="${npm.binary.directory}/node/npx"
                                         dir="${clients.directory}/web-browser" failonerror="true"
-                                        parallel="true" skipemptyfilesets="true">
+                                        parallel="true" skipemptyfilesets="true"
+                                        output="${project.build.directory}/eslint-output.txt">
                                     <env key="PATH"
                                             path="${npm.binary.directory}/node:${env.PATH}"/>
                                     <env key="CI" value="true"/>
@@ -322,6 +323,29 @@
                                         <exclude name="*/.prettierrc.js"/>
                                     </fileset>
                                 </apply>
+                                <loadfile property="eslint.output"
+                                        srcFile="${project.build.directory}/eslint-output.txt"/>
+                                <echo message="ESLint:${line.separator}${eslint.output}"/>
+
+                                <apply executable="${npm.binary.directory}/node/npx"
+                                        dir="${clients.directory}/web-browser" failonerror="true"
+                                        parallel="true" skipemptyfilesets="true"
+                                        output="${project.build.directory}/stylelint-output.txt">
+                                    <env key="PATH"
+                                            path="${npm.binary.directory}/node:${env.PATH}"/>
+                                    <env key="CI" value="true"/>
+                                    <arg value="stylelint"/>
+                                    <arg value="--fix"/>
+                                    <fileset dir="${clients.directory}" erroronmissingdir="false">
+                                        <include name="**/*.css"/>
+                                        <include name="**/*.scss"/>
+                                        <exclude name="*/node_modules/**/*"/>
+                                        <exclude name="*/build/**/*"/>
+                                    </fileset>
+                                </apply>
+                                <loadfile property="stylelint.output"
+                                        srcFile="${project.build.directory}/stylelint-output.txt"/>
+                                <echo message="Stylelint:${line.separator}${stylelint.output}"/>
                             </target>
                         </configuration>
                     </execution>

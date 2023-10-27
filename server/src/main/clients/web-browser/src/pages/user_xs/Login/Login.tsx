@@ -1,5 +1,3 @@
-import './Login.scss';
-
 import {FORWARD_PARAM} from '../../../libs/authentication';
 import {LoginForm} from '../../../libs/LoginForm/LoginForm';
 import {useNavigate} from 'react-router';

@@ -6,7 +6,6 @@ $primary-500: #f5ac76;
 $primary-600: #f4a062;
 $primary-700: #f3954f;
 $primary-800: #f0781f;
-
 $secondary-100: #fef9ed;
 $secondary-200: #fdf4dc;
 $secondary-300: #fdefca;
@@ -15,7 +14,6 @@ $secondary-500: #fadb84;
 $secondary-600: #f9d673;
 $secondary-700: #f9d162;
 $secondary-800: #f7c331;
-
 $tertiary-100: #eef8f5;
 $tertiary-200: #def2eb;
 $tertiary-300: #cdece1;
@@ -24,7 +22,6 @@ $tertiary-500: #8bd2b9;
 $tertiary-600: #7bccaf;
 $tertiary-700: #6bc6a5;
 $tertiary-800: #47b78e;
-
 $accent-50: #f1f5f8;
 $accent-100: #e3ecf1;
 $accent-200: #c8d9e4;
@@ -34,8 +31,7 @@ $accent-500: #407ba2;
 $accent-600: #256895;
 $accent-700: #0a5688;
 $accent-800: #074269;
-
-$neutral-0: #ffffff;
+$neutral-0: #fff;
 $neutral-50: #fafafa;
 $neutral-100: #f5f5f5;
 $neutral-150: #ececeb;
@@ -51,18 +47,16 @@ $neutral-600: #4b4b4b;
 $neutral-650: #383838;
 $neutral-700: #252525;
 $neutral-750: #121212;
-$neutral-800: #000000;
-
+$neutral-800: #000;
 $info: $accent-700;
 $info-active: $accent-800;
 $warning-active: $secondary-700;
 $error-active: #b64a4a;
 $destructive: #eb6060;
 $destructive-active: #b64a4a;
-
-$error-background: #ffaacc;
-$error-border: #990000;
-$error-color: #990000;
+$error-background: #fac;
+$error-border: #900;
+$error-color: #900;
 
 @mixin error {
   background-color: $error-background;
@@ -73,7 +67,7 @@ $error-color: #990000;
 $like-background: #eaf5ff;
 $like-border: #002077;
 $like-color: #002077;
-$like-shadow: #bbbbdd;
+$like-shadow: #bbd;
 
 @mixin like {
   background-color: $like-background;
@@ -81,10 +75,10 @@ $like-shadow: #bbbbdd;
   color: $like-color;
 }
 
-$dislike-background: #ffffff;
-$dislike-border: #bbbbbb;
-$dislike-color: #bbbbbb;
-$dislike-shadow: #dddddd;
+$dislike-background: #fff;
+$dislike-border: #bbb;
+$dislike-color: #bbb;
+$dislike-shadow: #ddd;
 
 @mixin dislike {
   background-color: $dislike-background;
@@ -93,9 +87,9 @@ $dislike-shadow: #dddddd;
 }
 
 $active-background: #f5fff5;
-$active-border: #007700;
-$active-color: #007700;
-$active-shadow: #bbddbb;
+$active-border: #070;
+$active-color: #070;
+$active-shadow: #bdb;
 
 @mixin active {
   background-color: $active-background;
@@ -103,9 +97,9 @@ $active-shadow: #bbddbb;
   color: $active-color;
 }
 
-$success-background: #cceecc;
-$success-border: #006600;
-$success-color: #006600;
+$success-background: #cec;
+$success-border: #060;
+$success-color: #060;
 
 @mixin success {
   background-color: $success-background;

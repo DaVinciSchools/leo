@@ -2,6 +2,7 @@
 
 .post-in-feed {
   @extend .global-flex-column;
+
   border: 1px solid lightgrey;
   padding: 1rem;
   margin: 1rem 0;
@@ -9,11 +10,13 @@
 
   .post-in-feed-header {
     @extend .global-flex-row;
+
     align-items: flex-start;
   }
 
   .post-in-feed-avatar {
     @extend .global-avatar;
+
     align-self: flex-start;
   }
 
@@ -67,12 +70,14 @@
 
   .post-in-feed-footer {
     @extend .global-flex-row;
+
     border-top: 1px solid lightgrey;
     padding-top: 1rem;
     gap: 0;
 
     .post-in-feed-footer-group {
       @extend .global-flex-row;
+
       align-items: flex-start;
       border-right: 1px solid lightgrey;
       padding: 0 1.5rem;
@@ -91,6 +96,7 @@
 
   .post-in-feed-comments {
     @extend .global-flex-column;
+
     border-top: 1px solid lightgrey;
     padding-top: 1rem;
     gap: 1rem;
@@ -98,6 +104,7 @@
 
   .post-in-feed-ratings {
     @extend .global-flex-column;
+
     border-top: 1px solid lightgrey;
     padding-top: 1rem;
     gap: 1rem;

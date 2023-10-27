@@ -1,7 +1,7 @@
 @use '../color';
 
 .ant-card {
-  box-shadow: 2px 2px 4px #cccccc;
+  box-shadow: 2px 2px 4px #ccc;
   border-color: gray;
   margin: 1em;
   color: color.$neutral-800;
@@ -13,16 +13,19 @@
 
   &.like {
     @include color.like;
+
     box-shadow: 2px 2px 4px color.$like-shadow;
   }
 
   &.dislike {
     @include color.dislike;
+
     box-shadow: 2px 2px 4px color.$dislike-shadow;
   }
 
   &.active {
     @include color.active;
+
     box-shadow: 2px 2px 4px color.$active-shadow;
   }
 
@@ -62,7 +65,7 @@
   }
 
   .ant-card-body {
-    padding: 0.5em 1em 0.5em 1em;
+    padding: 0.5em 1em;
   }
 
   .ant-card-actions {

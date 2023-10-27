@@ -2,8 +2,7 @@
   height: 100%;
   max-height: inherit;
   position: relative;
-  overflow-x: clip;
-  overflow-y: auto;
+  overflow: clip auto;
 }
 
 .persisted-react-grid-layout {
@@ -11,8 +10,5 @@
 }
 
 .persisted-react-grid-layout-draggable {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   user-select: none;
 }

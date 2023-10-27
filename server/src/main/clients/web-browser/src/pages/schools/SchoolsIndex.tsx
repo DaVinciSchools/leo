@@ -1,5 +1,3 @@
-import './SchoolsIndex.scss';
-
 export function SchoolsIndex() {
   return (
     <>

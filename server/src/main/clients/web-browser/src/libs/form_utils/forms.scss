@@ -57,6 +57,7 @@
 
   &:focus-visible {
     @include focus;
+
     outline: none;
   }
 
@@ -67,11 +68,9 @@
 
 .space-filler {
   height: 15%;
-
   display: flex;
   flex-flow: column nowrap;
-  justify-content: center;
-  align-content: center;
+  place-content: center center;
 
   .error-notice {
     @include color.error;
@@ -172,7 +171,7 @@ button.ant-btn.ant-btn-default {
   @include project-leo-actions;
 
   border-radius: 6px;
-  border: rgb(217, 217, 217) solid 1px;
+  border: rgb(217 217 217) solid 1px;
   display: flex;
   flex-flow: row nowrap;
   padding: 4px 11px;

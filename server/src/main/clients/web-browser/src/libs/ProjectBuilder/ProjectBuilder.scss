@@ -8,7 +8,7 @@
 }
 
 .project-builder-stepper {
-  margin: 0 auto 0 auto;
+  margin: 0 auto;
   width: 100%;
 }
 
@@ -19,7 +19,7 @@
 
 .project-builder-content {
   height: 100%;
-  margin: 0 auto 0 auto;
+  margin: 0 auto;
   width: 100%;
 }
 
@@ -44,7 +44,7 @@
   flex-flow: row nowrap;
   gap: 1em;
   justify-content: space-around;
-  margin: 0 auto 0 auto;
+  margin: 0 auto;
   width: 100%;
 }
 
@@ -64,9 +64,6 @@
 
 .project-builder-project-details-description {
   text-align: left;
-}
-
-.project-builder-project-details-widget {
 }
 
 .project-builder-register {
@@ -109,7 +106,7 @@
   flex-flow: row nowrap;
   gap: 1em;
   justify-content: space-around;
-  margin: 0 auto 0 auto;
+  margin: 0 auto;
 }
 
 .project-builder-congratulations {
@@ -126,5 +123,5 @@
   flex-flow: row nowrap;
   gap: 1em;
   justify-content: space-around;
-  margin: 0 auto 0 auto;
+  margin: 0 auto;
 }

@@ -44,15 +44,15 @@
   }
 
   .login-form-fields {
-    align-content: center;
+    place-content: center center;
     display: flex;
     flex-flow: column nowrap;
     gap: 3em;
-    justify-content: center;
     width: 100%;
 
     .login-form-failure {
       @include color.error;
+
       align-self: center;
       border-style: solid;
       border-width: 1px;

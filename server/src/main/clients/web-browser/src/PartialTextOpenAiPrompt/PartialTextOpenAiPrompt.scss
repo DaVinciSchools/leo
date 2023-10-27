@@ -3,10 +3,12 @@
   flex-direction: row;
   align-items: flex-end;
 }
+
 .partial-text-input {
   flex-grow: 1;
   width: 0%;
 }
+
 .partial-text-button {
   flex-shrink: 1;
 }

@@ -1,9 +1,8 @@
 @use 'libs/color';
+@import 'https://fonts.googleapis.com/css2?family=Hind:wght@400;600;700&family=Montserrat:wght@400;700&display=swap';
 
-@import url('https://fonts.googleapis.com/css2?family=Hind:wght@400;600;700&family=Montserrat:wght@400;700&display=swap');
-
-$heading-font-family: Montserrat;
-$body-font-family: Hind;
+$heading-font-family: montserrat;
+$body-font-family: hind;
 
 * {
   box-sizing: border-box;
@@ -15,12 +14,15 @@ ol, ul {
   margin: 1em;
   padding-left: 2.5em;
 }
+
 dl {
   margin: 1em;
 }
+
 dd {
   margin-left: 2.5em;
 }
+
 p {
   margin: 1em;
 }
@@ -126,9 +128,11 @@ body {
 button {
     border-radius: 0.5em;
     border: none;
-    padding: 0.7em 2.4em 0.7em 2.4em;
+    padding: 0.7em 2.4em;
     background-color: color.$neutral-200;
+
     --hover-bg-color: #{color.$neutral-250};
+
     color: color.$neutral-750;
     font-weight: 600;
     cursor: pointer;
@@ -150,18 +154,21 @@ button {
     &.primary {
         background-color: color.$primary-800;
         color: color.$neutral-0;
+
         --hover-bg-color: #{color.$primary-700};
     }
 
     &.info {
         background-color: color.$info;
         color: color.$neutral-0;
+
         --hover-bg-color: #{color.$info-active};
     }
 
     &.delete {
         background-color: color.$destructive;
         color: color.$neutral-0;
+
         --hover-bg-color: #{color.$destructive-active};
     }
 

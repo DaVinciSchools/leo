@@ -2,7 +2,8 @@
   "//": [
     "The following node versions need to be kept in sync with the /server/pom.xml 'nodeVersion' property.",
     "  - $['dependencies']['@types/node']",
-    "  - $['engines']['node']"
+    "  - $['engines']['node']",
+    "@babel/plugin-proposal-private-property-in-object is needed for a react-scripts dependency."
   ],
   "name": "project_leo_website",
   "version": "0.0.1",
@@ -75,6 +76,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/types": "^7.22.5",
     "@types/jest": "^29.5.2",
     "@types/js-cookie": "^3.0.3",
@@ -88,7 +90,9 @@
     "long": "^5.2.3",
     "npm-check-updates": "^16.10.12",
     "protobufjs-cli": "~1.1.2",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "stylelint": "^15.11.0",
+    "stylelint-config-standard-scss": "^11.0.0"
   },
   "engines": {
     "node": "v18.18.2"
