@@ -10,7 +10,7 @@ import {
   post_service,
   project_management,
   tag_service,
-} from '../../../generated/protobuf-js';
+} from 'pl-pb';
 import {useContext, useEffect, useRef, useState} from 'react';
 
 import IProject = pl_types.IProject;

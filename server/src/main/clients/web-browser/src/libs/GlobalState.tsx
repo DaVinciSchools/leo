@@ -1,7 +1,7 @@
 import {HandleError, HandleErrorType} from './HandleError/HandleError';
 import {createContext, PropsWithChildren, useEffect, useState} from 'react';
 import {createService} from './protos';
-import {pl_types, user_x_management} from '../generated/protobuf-js';
+import {pl_types, user_x_management} from 'pl-pb';
 import {useNavigate} from 'react-router';
 
 import UserXManagementService = user_x_management.UserXManagementService;

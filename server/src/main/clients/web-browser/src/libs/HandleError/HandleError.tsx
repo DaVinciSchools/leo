@@ -6,7 +6,7 @@ import React, {useContext, useEffect, useState} from 'react';
 import Typography from '@mui/material/Typography';
 import {GlobalStateContext} from '../GlobalState';
 import {createService} from '../protos';
-import {error_service} from '../../generated/protobuf-js';
+import {error_service} from 'pl-pb';
 
 export const REPORT_ERROR_REQUEST_PROP_NAME = 'projectLeoReportErrorRequest';
 

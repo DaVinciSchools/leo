@@ -1,6 +1,6 @@
 import {Checkbox, FormControlLabel, Grid, TextField} from '@mui/material';
 import {StandardModal} from '../StandardModal/StandardModal';
-import {pl_types} from '../../generated/protobuf-js';
+import {pl_types} from 'pl-pb';
 import {useEffect} from 'react';
 import {useFormFields} from '../form_utils/forms';
 

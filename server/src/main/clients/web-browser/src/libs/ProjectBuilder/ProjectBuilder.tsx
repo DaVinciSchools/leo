@@ -10,11 +10,7 @@ import {ModalLoginForm} from '../LoginForm/ModalLoginForm';
 import {ModalRegistrationForm} from '../RegistrationForm/ModalRegistrationForm';
 import {createService} from '../protos';
 import {login} from '../authentication';
-import {
-  pl_types,
-  project_management,
-  user_x_management,
-} from '../../generated/protobuf-js';
+import {pl_types, project_management, user_x_management} from 'pl-pb';
 import {useNavigate} from 'react-router';
 
 import ProjectManagementService = project_management.ProjectManagementService;

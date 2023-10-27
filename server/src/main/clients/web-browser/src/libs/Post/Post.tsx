@@ -1,6 +1,6 @@
 import './Post.scss';
 
-import {pl_types, post_service} from '../../generated/protobuf-js';
+import {pl_types, post_service} from 'pl-pb';
 import {
   AccountCircle,
   AddCommentTwoTone,

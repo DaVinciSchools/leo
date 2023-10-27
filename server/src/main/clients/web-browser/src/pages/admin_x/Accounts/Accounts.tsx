@@ -10,7 +10,7 @@ import {
   ProfileEditor,
 } from '../../../libs/ProfileEditor/ProfileEditor';
 import {createService} from '../../../libs/protos';
-import {user_x_management} from '../../../generated/protobuf-js';
+import {user_x_management} from 'pl-pb';
 import {Button} from '@mui/material';
 import {Form, Input, InputRef, Modal, Pagination, Table} from 'antd';
 import {

@@ -1,6 +1,6 @@
 import {Autocomplete, TextField} from '@mui/material';
 import {FormField} from '../form_utils/forms';
-import {pl_types} from '../../generated/protobuf-js';
+import {pl_types} from 'pl-pb';
 import {CSSProperties, useEffect, useState} from 'react';
 
 import IProject = pl_types.IProject;

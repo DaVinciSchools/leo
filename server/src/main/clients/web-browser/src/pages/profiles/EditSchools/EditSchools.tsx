@@ -10,11 +10,7 @@ import {
 } from '../../../SelectMultipleFromList/SelectMultipleFromList';
 import {SelectDistrictFromList} from '../EditDistricts/EditDistricts';
 import {createService} from '../../../libs/protos';
-import {
-  district_management,
-  pl_types,
-  school_management,
-} from '../../../generated/protobuf-js';
+import {district_management, pl_types, school_management} from 'pl-pb';
 
 import DistrictManagementService = district_management.DistrictManagementService;
 import IDistrict = pl_types.IDistrict;

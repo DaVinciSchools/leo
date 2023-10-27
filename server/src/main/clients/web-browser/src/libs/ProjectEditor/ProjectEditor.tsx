@@ -3,7 +3,7 @@ import '../global.scss';
 import {AssignmentAutocomplete} from '../common_fields/AssignmentAutocomplete';
 import {TextField} from '@mui/material';
 import {FormFields} from '../form_utils/forms';
-import {pl_types} from '../../generated/protobuf-js';
+import {pl_types} from 'pl-pb';
 import IAssignment = pl_types.IAssignment;
 import ReactQuill from 'react-quill';
 

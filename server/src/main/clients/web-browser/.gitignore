@@ -12,6 +12,8 @@ coverage
 
 # production
 build
+modules/pl-pb/src
+modules/pl-pb/types
 
 # misc
 .DS_Store

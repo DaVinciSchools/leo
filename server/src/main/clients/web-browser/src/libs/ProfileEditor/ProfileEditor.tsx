@@ -7,7 +7,7 @@ import {
   pl_types,
   school_management,
   user_x_management,
-} from '../../generated/protobuf-js';
+} from 'pl-pb';
 import IClassX = pl_types.IClassX;
 import IUserX = pl_types.IUserX;
 import ISchool = pl_types.ISchool;

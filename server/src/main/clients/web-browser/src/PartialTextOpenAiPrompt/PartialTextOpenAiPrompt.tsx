@@ -3,7 +3,7 @@ import './PartialTextOpenAiPrompt.scss';
 import {CgSearch, CgSearchLoading} from 'react-icons/cg';
 import {GlobalStateContext} from '../libs/GlobalState';
 import {createService} from '../libs/protos';
-import {partial_text_openai_prompt} from '../generated/protobuf-js';
+import {partial_text_openai_prompt} from 'pl-pb';
 import {useContext, useState} from 'react';
 
 import GetSuggestionsRequest = partial_text_openai_prompt.GetSuggestionsRequest;

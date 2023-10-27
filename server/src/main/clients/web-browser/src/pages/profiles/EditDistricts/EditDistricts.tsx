@@ -5,7 +5,7 @@ import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {Display, SelectFromList} from '../../../SelectFromList/SelectFromList';
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {createService} from '../../../libs/protos';
-import {district_management, pl_types} from '../../../generated/protobuf-js';
+import {district_management, pl_types} from 'pl-pb';
 
 import DistrictInformationResponse = district_management.DistrictInformationResponse;
 import DistrictManagementService = district_management.DistrictManagementService;

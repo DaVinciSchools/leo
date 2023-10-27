@@ -1,4 +1,4 @@
-import {pl_types} from '../generated/protobuf-js';
+import {pl_types} from 'pl-pb';
 import IOption = pl_types.ProjectInputCategory.IOption;
 import IClassX = pl_types.IClassX;
 import IAssignment = pl_types.IAssignment;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>project-leo-server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
@@ -19,7 +19,8 @@
 
     <properties>
         <clients.directory>${basedir}/src/main/clients</clients.directory>
-        <npm.binary.directory>${project.build.directory}/org.davincischools.leo/npm</npm.binary.directory>
+        <npm.binary.directory>${project.build.directory}/org.davincischools.leo/npm
+        </npm.binary.directory>
         <proto.version>3.23.2</proto.version>
         <surefire.version>3.1.2</surefire.version>
     </properties>
@@ -135,7 +136,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Add java-protos to the source folders. -->
+            <!-- Add generated source folders. -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
@@ -152,7 +153,7 @@
                             <sources>
                                 <!-- See note in 'generate-protobuf-java' for
                                      why we add this folder. -->
-                                <source>${project.build.sourceDirectory}/../java-protos</source>
+                                <source>${project.build.sourceDirectory}/../generated/java</source>
                                 <source>${project.build.sourceDirectory}/../resources</source>
                             </sources>
                         </configuration>
@@ -234,11 +235,12 @@
                         <goals>
                             <goal>run</goal>
                         </goals>
-                        <phase>generate-sources</phase>
+                        <phase>initialize</phase>
                         <configuration>
                             <target>
-                                <mkdir dir="${clients.directory}/web-browser/src/generated"/>
-                                <mkdir dir="${project.build.sourceDirectory}/../java-protos"/>
+                                <mkdir dir="${clients.directory}/web-browser/modules/pl-pb/src"/>
+                                <mkdir dir="${clients.directory}/web-browser/modules/pl-pb/types"/>
+                                <mkdir dir="${project.build.sourceDirectory}/../generated/java"/>
                             </target>
                         </configuration>
                     </execution>
@@ -254,8 +256,11 @@
                             <target>
                                 <!-- Compile Protocol Buffers to JavaScript. -->
                                 <property environment="env"/>
-                                <apply executable="${npm.binary.directory}/node/npx" dir="${clients.directory}/web-browser" failonerror="true" parallel="true" skipemptyfilesets="true">
-                                    <env key="PATH" path="${npm.binary.directory}/node:${env.PATH}"/>
+                                <apply executable="${npm.binary.directory}/node/npx"
+                                        dir="${clients.directory}/web-browser" failonerror="true"
+                                        parallel="true" skipemptyfilesets="true">
+                                    <env key="PATH"
+                                            path="${npm.binary.directory}/node:${env.PATH}"/>
                                     <env key="CI" value="true"/>
                                     <arg value="pbjs"/>
                                     <arg line="--target static-module"/>
@@ -263,17 +268,20 @@
                                     <arg value="--force-long"/>
                                     <arg value="--null-defaults"/>
                                     <arg value="--out"/>
-                                    <arg file="${clients.directory}/web-browser/src/generated/protobuf-js.js"/>
-                                    <fileset dir="${project.build.sourceDirectory}/../protos" includes="**/*.proto"/>
+                                    <arg file="${clients.directory}/web-browser/modules/pl-pb/src/protobuf-js.js"/>
+                                    <fileset dir="${project.build.sourceDirectory}/../protos"
+                                            includes="**/*.proto"/>
                                 </apply>
                                 <!-- Create TypeScript from JavaScript. -->
-                                <exec executable="${npm.binary.directory}/node/npx" dir="${clients.directory}/web-browser" failonerror="true">
-                                    <env key="PATH" path="${npm.binary.directory}/node:${env.PATH}"/>
+                                <exec executable="${npm.binary.directory}/node/npx"
+                                        dir="${clients.directory}/web-browser" failonerror="true">
+                                    <env key="PATH"
+                                            path="${npm.binary.directory}/node:${env.PATH}"/>
                                     <env key="CI" value="true"/>
                                     <arg value="pbts"/>
                                     <arg value="--out"/>
-                                    <arg file="${clients.directory}/web-browser/src/generated/protobuf-js.d.ts"/>
-                                    <arg file="${clients.directory}/web-browser/src/generated/protobuf-js.js"/>
+                                    <arg file="${clients.directory}/web-browser/modules/pl-pb/types/protobuf-js.d.ts"/>
+                                    <arg file="${clients.directory}/web-browser/modules/pl-pb/src/protobuf-js.js"/>
                                 </exec>
                             </target>
                         </configuration>
@@ -290,8 +298,11 @@
                         <configuration>
                             <target>
                                 <property environment="env"/>
-                                <apply executable="${npm.binary.directory}/node/npx" dir="${clients.directory}/web-browser" failonerror="true" parallel="true" skipemptyfilesets="true">
-                                    <env key="PATH" path="${npm.binary.directory}/node:${env.PATH}"/>
+                                <apply executable="${npm.binary.directory}/node/npx"
+                                        dir="${clients.directory}/web-browser" failonerror="true"
+                                        parallel="true" skipemptyfilesets="true">
+                                    <env key="PATH"
+                                            path="${npm.binary.directory}/node:${env.PATH}"/>
                                     <env key="CI" value="true"/>
                                     <arg value="eslint"/>
                                     <arg value="--fix"/>
@@ -305,7 +316,8 @@
                                         <include name="**/.*.ts"/>
                                         <include name="**/.*.tsx"/>
                                         <exclude name="*/node_modules/**/*"/>
-                                        <exclude name="*/src/generated/**/*"/>
+                                        <exclude name="*/modules/pl-pb/src/**/*"/>
+                                        <exclude name="*/modules/pl-pb/types/**/*"/>
                                         <exclude name="*/build/**/*"/>
                                         <exclude name="*/.prettierrc.js"/>
                                     </fileset>
@@ -325,8 +337,10 @@
                         <configuration>
                             <target>
                                 <property environment="env"/>
-                                <exec executable="${npm.binary.directory}/node/npm" dir="${clients.directory}/web-browser" failonerror="true">
-                                    <env key="PATH" path="${npm.binary.directory}/node:${env.PATH}"/>
+                                <exec executable="${npm.binary.directory}/node/npm"
+                                        dir="${clients.directory}/web-browser" failonerror="true">
+                                    <env key="PATH"
+                                            path="${npm.binary.directory}/node:${env.PATH}"/>
                                     <env key="CI" value="true"/>
                                     <arg value="run"/>
                                     <arg value="build"/>
@@ -359,7 +373,7 @@
                  Unfortunately, VS Code seems to delete
                  target/generated-sources/java when we don't want it to, which
                  breaks the build. So, we store the generated java code in
-                 src/main/java-protos and mark that directory as ignored by
+                 src/main/generated/java and mark that directory as ignored by
                  git. -->
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
@@ -375,9 +389,13 @@
                         </goals>
                         <phase>generate-sources</phase>
                         <configuration>
-                            <protocArtifact>com.google.protobuf:protoc:${proto.version}:exe:${os.detected.classifier}</protocArtifact>
-                            <protoSourceRoot>${project.build.sourceDirectory}/../protos</protoSourceRoot>
-                            <outputDirectory>${project.build.sourceDirectory}/../java-protos</outputDirectory>
+                            <protocArtifact>
+                                com.google.protobuf:protoc:${proto.version}:exe:${os.detected.classifier}
+                            </protocArtifact>
+                            <protoSourceRoot>${project.build.sourceDirectory}/../protos
+                            </protoSourceRoot>
+                            <outputDirectory>${project.build.sourceDirectory}/../generated/java
+                            </outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
@@ -404,20 +422,23 @@
                 <version>3.2.0</version>
                 <configuration>
                     <filesets>
-                        <fileset erroronmissingdir="false" followsymlinks="false" defaultexcludes="false">
+                        <fileset erroronmissingdir="false" followsymlinks="false"
+                                defaultexcludes="false">
                             <directory>${clients.directory}</directory>
                             <includes>
-                                <include>*/build/</include>
-                                <include>*/coverage/</include>
-                                <include>*/node_modules/</include>
+                                <include>*/build/**/*</include>
+                                <include>*/coverage/**/*</include>
+                                <include>*/node_modules/**/*</include>
                                 <include>*/package-lock.json</include>
-                                <include>*/src/generated/</include>
+                                <include>*/modules/pl-pb/src/**/*</include>
+                                <include>*/modules/pl-pb/types/**/*</include>
                             </includes>
                         </fileset>
-                        <fileset erroronmissingdir="false" followsymlinks="false" defaultexcludes="false">
+                        <fileset erroronmissingdir="false" followsymlinks="false"
+                                defaultexcludes="false">
                             <directory>${project.build.sourceDirectory}/..</directory>
                             <includes>
-                                <include>java-protos/</include>
+                                <include>generated/**/*</include>
                             </includes>
                         </fileset>
                     </filesets>

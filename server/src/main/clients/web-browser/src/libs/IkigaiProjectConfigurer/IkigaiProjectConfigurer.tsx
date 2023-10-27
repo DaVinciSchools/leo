@@ -5,7 +5,7 @@ import {Layout} from 'react-grid-layout';
 import {PersistedReactGridLayout} from '../PersistedReactGridLayout/PersistedReactGridLayout';
 import {TitledPaper} from '../TitledPaper/TitledPaper';
 import {VISIBLE_ALPHA} from '../../Ikigai/Ikigai';
-import {pl_types} from '../../generated/protobuf-js';
+import {pl_types} from 'pl-pb';
 import Markdown from 'react-markdown';
 
 interface Category {

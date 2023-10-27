@@ -1,7 +1,7 @@
 import {Message, Method, rpc, RPCImpl, RPCImplCallback} from 'protobufjs';
 import {REPORT_ERROR_REQUEST_PROP_NAME} from './HandleError/HandleError';
 import {addXsrfHeader} from './authentication';
-import {error_service} from '../generated/protobuf-js';
+import {error_service} from 'pl-pb';
 
 import IReportErrorRequest = error_service.IReportErrorRequest;
 

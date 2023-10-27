@@ -1,7 +1,7 @@
 import Cookies from 'js-cookie';
 import {HandleErrorType} from './HandleError/HandleError';
 import {IGlobalState} from './GlobalState';
-import {pl_types} from '../generated/protobuf-js';
+import {pl_types} from 'pl-pb';
 
 export const FORWARD_PARAM = 'returnTo';
 export const USERNAME_PARAM = 'username';

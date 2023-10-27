@@ -1,2 +1,3 @@
 build/
-src/generated/
+modules/pl-pb/src
+modules/pl-pb/types

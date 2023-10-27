@@ -8,7 +8,7 @@ import {
   TextField,
 } from '@mui/material';
 import {FormField} from '../form_utils/forms';
-import {pl_types} from '../../generated/protobuf-js';
+import {pl_types} from 'pl-pb';
 import ISchool = pl_types.ISchool;
 import {addClassName} from '../tags';
 

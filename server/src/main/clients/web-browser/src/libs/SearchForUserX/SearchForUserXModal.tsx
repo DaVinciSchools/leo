@@ -1,5 +1,5 @@
 import {Modal} from '@mui/material';
-import {user_x_management} from '../../generated/protobuf-js';
+import {user_x_management} from 'pl-pb';
 import IFullUserXDetails = user_x_management.IFullUserXDetails;
 import {SearchForUserX} from './SearchForUserX';
 import {DeepReadonly} from '../misc';

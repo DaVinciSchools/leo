@@ -1,4 +1,4 @@
-import {user_x_management} from '../../generated/protobuf-js';
+import {user_x_management} from 'pl-pb';
 import {useFormFields} from '../form_utils/forms';
 import {
   Paper,

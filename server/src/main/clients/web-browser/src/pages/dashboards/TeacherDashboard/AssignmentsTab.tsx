@@ -25,7 +25,7 @@ import {
   class_x_management_service,
   pl_types,
   project_management,
-} from '../../../generated/protobuf-js';
+} from 'pl-pb';
 import {createService} from '../../../libs/protos';
 import {useContext, useEffect, useRef, useState} from 'react';
 import {useFormFields} from '../../../libs/form_utils/forms';

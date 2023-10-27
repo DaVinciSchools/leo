@@ -1,6 +1,6 @@
 import './Post.scss';
 
-import {pl_types} from '../../generated/protobuf-js';
+import {pl_types} from 'pl-pb';
 import {RemoveCircleTwoTone, EditTwoTone} from '@mui/icons-material';
 import IUserX = pl_types.IUserX;
 import Long from 'long';

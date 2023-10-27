@@ -6,7 +6,7 @@ import {Modal} from 'antd';
 import {ProjectCard} from '../../../libs/ProjectCard/ProjectCard';
 import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
 import {createService} from '../../../libs/protos';
-import {pl_types, project_management} from '../../../generated/protobuf-js';
+import {pl_types, project_management} from 'pl-pb';
 import {useContext, useEffect, useState} from 'react';
 import {
   PROJECT_DEFINITION_SORTER,

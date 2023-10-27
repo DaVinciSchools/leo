@@ -3,8 +3,8 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/database/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/database/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/server/src/main/generated" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/server/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/server/src/main/java-protos" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/server/src/main/protos" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/server/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/server/target/generated-sources/java" charset="UTF-8" />

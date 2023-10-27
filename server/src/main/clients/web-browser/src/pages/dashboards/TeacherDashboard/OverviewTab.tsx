@@ -9,7 +9,7 @@ import {
   pl_types,
   school_management,
   user_x_management,
-} from '../../../generated/protobuf-js';
+} from 'pl-pb';
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {
   filterAutocompleteFormField,

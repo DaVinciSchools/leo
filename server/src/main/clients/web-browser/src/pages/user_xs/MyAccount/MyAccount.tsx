@@ -11,7 +11,7 @@ import {
   ProfileEditor,
 } from '../../../libs/ProfileEditor/ProfileEditor';
 import {createService} from '../../../libs/protos';
-import {user_x_management} from '../../../generated/protobuf-js';
+import {user_x_management} from 'pl-pb';
 import UserXManagementService = user_x_management.UserXManagementService;
 import IFullUserXDetails = user_x_management.IFullUserXDetails;
 

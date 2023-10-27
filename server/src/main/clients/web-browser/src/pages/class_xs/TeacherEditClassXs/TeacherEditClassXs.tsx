@@ -23,7 +23,7 @@ import {
   pl_types,
   project_management,
   school_management,
-} from '../../../generated/protobuf-js';
+} from 'pl-pb';
 import {createService} from '../../../libs/protos';
 import {useContext, useEffect, useState} from 'react';
 import {useDelayedAction} from '../../../libs/delayed_action';

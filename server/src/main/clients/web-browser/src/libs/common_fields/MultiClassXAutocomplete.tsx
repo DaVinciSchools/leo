@@ -1,5 +1,5 @@
 import '../global.scss';
-import {pl_types} from '../../generated/protobuf-js';
+import {pl_types} from 'pl-pb';
 import IClassX = pl_types.IClassX;
 import {
   Autocomplete,

@@ -3,7 +3,7 @@ import './RegistrationForm.scss';
 import Modal from '@mui/material/Modal';
 import {Backdrop, Box} from '@mui/material';
 import {RegistrationForm} from './RegistrationForm';
-import {user_x_management} from '../../generated/protobuf-js';
+import {user_x_management} from 'pl-pb';
 
 import IRegisterUserXRequest = user_x_management.IRegisterUserXRequest;
 
