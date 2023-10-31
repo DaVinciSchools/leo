@@ -191,4 +191,13 @@ docker run -e OPENAI_API_KEY=<OPENAI_API_KEY> -p 8080:8080 project_leo
 
 Then, open a browser to http://localhost:8080.
 
+### Jenkins CI
+
+Jenkins uses the follow plugins that must be installed manually:
+
+* Analysis Model API
+* AnsiColor
+* Pipeline Maven Integration
+* Warnings
+
 [^1]: Oxford English Dictionary
