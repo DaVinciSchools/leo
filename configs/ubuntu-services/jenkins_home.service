@@ -1,0 +1,12 @@
+# Enable with: sudo systemctl enable jenkins_home.service
+
+[Unit]
+Description=Jenkins Server
+
+[Service]
+ExecStart=/root/bin/services/jenkins_home-ExecStart.sh
+ExecStopPost=/root/bin/services/jenkins_home-ExecStopPost.sh
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

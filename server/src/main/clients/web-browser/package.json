@@ -92,6 +92,7 @@
     "protobufjs-cli": "~1.1.2",
     "react-scripts": "5.0.1",
     "stylelint": "^15.11.0",
+    "stylelint-checkstyle-formatter": "^0.1.2",
     "stylelint-config-standard-scss": "^11.0.0"
   },
   "engines": {

@@ -1,0 +1,12 @@
+# Enable with: sudo systemctl enable project_leo.service
+
+[Unit]
+Description=Project Leo Server
+
+[Service]
+ExecStart=/root/bin/services/project_leo-ExecStart.sh
+ExecStopPost=/root/bin/services/project_leo-ExecStopPost.sh
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

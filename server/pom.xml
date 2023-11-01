@@ -301,12 +301,15 @@
                                 <apply executable="${npm.binary.directory}/node/npx"
                                         dir="${clients.directory}/web-browser" failonerror="true"
                                         parallel="true" skipemptyfilesets="true"
-                                        output="${project.build.directory}/eslint-output.txt">
+                                        output="${project.build.directory}/eslint-output.xml"
+                                        error="${project.build.directory}/eslint-output.xml.error.txt">
                                     <env key="PATH"
                                             path="${npm.binary.directory}/node:${env.PATH}"/>
                                     <env key="CI" value="true"/>
                                     <arg value="eslint"/>
                                     <arg value="--fix"/>
+                                    <arg value="--format"/>
+                                    <arg value="checkstyle"/>
                                     <fileset dir="${clients.directory}" erroronmissingdir="false">
                                         <include name="**/*.js"/>
                                         <include name="**/*.jsx"/>
@@ -323,19 +326,19 @@
                                         <exclude name="*/.prettierrc.js"/>
                                     </fileset>
                                 </apply>
-                                <loadfile property="eslint.output"
-                                        srcFile="${project.build.directory}/eslint-output.txt"/>
-                                <echo message="ESLint:${line.separator}${eslint.output}"/>
 
                                 <apply executable="${npm.binary.directory}/node/npx"
                                         dir="${clients.directory}/web-browser" failonerror="true"
                                         parallel="true" skipemptyfilesets="true"
-                                        output="${project.build.directory}/stylelint-output.txt">
+                                        output="${project.build.directory}/stylelint-output.xml"
+                                        error="${project.build.directory}/stylelint-output.xml.error.txt">
                                     <env key="PATH"
                                             path="${npm.binary.directory}/node:${env.PATH}"/>
                                     <env key="CI" value="true"/>
                                     <arg value="stylelint"/>
                                     <arg value="--fix"/>
+                                    <arg value="--custom-formatter"/>
+                                    <arg value="./node_modules/stylelint-checkstyle-formatter"/>
                                     <fileset dir="${clients.directory}" erroronmissingdir="false">
                                         <include name="**/*.css"/>
                                         <include name="**/*.scss"/>
@@ -343,9 +346,6 @@
                                         <exclude name="*/build/**/*"/>
                                     </fileset>
                                 </apply>
-                                <loadfile property="stylelint.output"
-                                        srcFile="${project.build.directory}/stylelint-output.txt"/>
-                                <echo message="Stylelint:${line.separator}${stylelint.output}"/>
                             </target>
                         </configuration>
                     </execution>

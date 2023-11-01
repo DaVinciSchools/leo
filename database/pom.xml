@@ -100,7 +100,8 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${build.outputDirectory}/generted-sources/annotations
+                                <source>
+                                    ${project.build.outputDirectory}/generted-sources/annotations
                                 </source>
                             </sources>
                         </configuration>
