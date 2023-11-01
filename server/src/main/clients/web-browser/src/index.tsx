@@ -111,15 +111,14 @@ const router = createBrowserRouter([
   },
   {
     path: '/demos',
-    element: (
-      <GaTags title="Demos">
-        <DefaultPageNav />
-      </GaTags>
-    ),
     children: [
       {
         path: 'project-builder.html',
-        element: <DemoProjectBuilder />,
+        element: (
+          <GaTags title="Demo Project Builder">
+            <DemoProjectBuilder />
+          </GaTags>
+        ),
       },
     ],
   },
