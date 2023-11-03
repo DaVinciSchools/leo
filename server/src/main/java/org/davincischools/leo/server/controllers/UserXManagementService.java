@@ -447,12 +447,13 @@ public class UserXManagementService {
               if (request.getOfSelf()) {
                 request =
                     request.toBuilder()
+                        .clearInUserXIds()
                         .addInUserXIds(checkNotNull(userX.getUserXIdOrNull()))
                         .build();
               }
 
               if (!userX.isAdminX() && !userX.isTeacher()) {
-                if (request
+                if (!request
                     .getInUserXIdsList()
                     .equals(List.of(checkNotNull(userX.getUserXIdOrNull())))) {
                   return userX.returnForbidden(GetUserXsResponse.getDefaultInstance());
