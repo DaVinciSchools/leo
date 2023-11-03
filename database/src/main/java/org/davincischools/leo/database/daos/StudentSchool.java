@@ -11,12 +11,14 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -24,14 +26,14 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = StudentSchool.ENTITY_NAME)
-@Table(name = StudentSchool.TABLE_NAME, schema = "leo_temp")
+@Table(name = StudentSchool.TABLE_NAME, schema = "leo_test")
 public class StudentSchool implements Serializable {
 
   public static final String ENTITY_NAME = "StudentSchool";
   public static final String TABLE_NAME = "student__school";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = -7555174095124472855L;
+  private static final long serialVersionUID = -2020150566091002487L;
 
   private StudentSchoolId id;
 

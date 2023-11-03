@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,6 +27,7 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -35,7 +37,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @Entity(name = UserX.ENTITY_NAME)
 @Table(
     name = UserX.TABLE_NAME,
-    schema = "leo_temp",
+    schema = "leo_test",
     indexes = {
       @Index(name = "email_address", columnList = "email_address", unique = true),
       @Index(name = "admin_x_id", columnList = "admin_x_id", unique = true),
@@ -58,7 +60,8 @@ public class UserX implements Serializable {
   public static final String COLUMN_TEMPORARYPASSWORDGOODUNTIL_NAME =
       "temporary_password_good_until";
   public static final String COLUMN_TEMPORARYENCODEDPASSWORD_NAME = "temporary_encoded_password";
-  private static final long serialVersionUID = 5380317292648741721L;
+  public static final String COLUMN_EMAILADDRESSVERIFIED_NAME = "email_address_verified";
+  private static final long serialVersionUID = -4295007479038222673L;
 
   private Integer id;
 
@@ -87,6 +90,8 @@ public class UserX implements Serializable {
   private Student student;
 
   private Interest interest;
+
+  private Boolean emailAddressVerified;
 
   private Set<FileX> fileXES = new LinkedHashSet<>();
 
@@ -184,6 +189,11 @@ public class UserX implements Serializable {
   @JoinColumn(name = "interest_id")
   public Interest getInterest() {
     return interest;
+  }
+
+  @Column(name = COLUMN_EMAILADDRESSVERIFIED_NAME)
+  public Boolean getEmailAddressVerified() {
+    return emailAddressVerified;
   }
 
   @OneToMany(mappedBy = "userX")

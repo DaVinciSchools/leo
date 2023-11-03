@@ -7,12 +7,14 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -23,21 +25,21 @@ import lombok.experimental.Accessors;
 public class ProjectImageId implements Serializable {
 
   public static final String COLUMN_PROJECTID_NAME = "project_id";
-  public static final String COLUMN_IMAGEID_NAME = "image_id";
-  private static final long serialVersionUID = 5644425560298181751L;
+  public static final String COLUMN_FILEXID_NAME = "file_x_id";
+  private static final long serialVersionUID = 5427885553131037338L;
 
   private Integer projectId;
 
-  private Integer imageId;
+  private Integer fileXId;
 
   @Column(name = COLUMN_PROJECTID_NAME, nullable = false)
   public Integer getProjectId() {
     return projectId;
   }
 
-  @Column(name = COLUMN_IMAGEID_NAME, nullable = false)
-  public Integer getImageId() {
-    return imageId;
+  @Column(name = COLUMN_FILEXID_NAME, nullable = false)
+  public Integer getFileXId() {
+    return fileXId;
   }
 
   @Override
@@ -45,12 +47,12 @@ public class ProjectImageId implements Serializable {
     if (this == o) return true;
     if (o == null || getDaoClass(this) != getDaoClass(o)) return false;
     ProjectImageId entity = (ProjectImageId) o;
-    return Objects.equals(this.imageId, entity.imageId)
-        && Objects.equals(this.projectId, entity.projectId);
+    return Objects.equals(this.projectId, entity.projectId)
+        && Objects.equals(this.fileXId, entity.fileXId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(imageId, projectId);
+    return Objects.hash(projectId, fileXId);
   }
 }

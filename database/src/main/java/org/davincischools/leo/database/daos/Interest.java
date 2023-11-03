@@ -11,12 +11,14 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -24,7 +26,7 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = Interest.ENTITY_NAME)
-@Table(name = Interest.TABLE_NAME, schema = "leo_temp")
+@Table(name = Interest.TABLE_NAME, schema = "leo_test")
 public class Interest implements Serializable {
 
   public static final String ENTITY_NAME = "Interest";
@@ -46,7 +48,7 @@ public class Interest implements Serializable {
   public static final String COLUMN_ZIPCODE_NAME = "zip_code";
   public static final String COLUMN_NUMTEACHERS_NAME = "num_teachers";
   public static final String COLUMN_NUMSTUDENTS_NAME = "num_students";
-  private static final long serialVersionUID = -3437386722541594101L;
+  private static final long serialVersionUID = 8280275395261051174L;
 
   private Integer id;
 

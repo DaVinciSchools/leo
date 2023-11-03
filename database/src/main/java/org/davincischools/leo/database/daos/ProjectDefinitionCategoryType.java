@@ -13,12 +13,14 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -26,7 +28,7 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = ProjectDefinitionCategoryType.ENTITY_NAME)
-@Table(name = ProjectDefinitionCategoryType.TABLE_NAME, schema = "leo_temp")
+@Table(name = ProjectDefinitionCategoryType.TABLE_NAME, schema = "leo_test")
 public class ProjectDefinitionCategoryType implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectDefinitionCategoryType";
@@ -42,7 +44,7 @@ public class ProjectDefinitionCategoryType implements Serializable {
   public static final String COLUMN_INPUTPLACEHOLDER_NAME = "input_placeholder";
   public static final String COLUMN_QUERYPREFIX_NAME = "query_prefix";
   public static final String COLUMN_VALUETYPE_NAME = "value_type";
-  private static final long serialVersionUID = -3808291522036685427L;
+  private static final long serialVersionUID = -6672582400449927685L;
 
   private Integer id;
 

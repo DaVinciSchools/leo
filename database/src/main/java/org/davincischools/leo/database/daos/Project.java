@@ -16,12 +16,14 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -29,7 +31,7 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = Project.ENTITY_NAME)
-@Table(name = Project.TABLE_NAME, schema = "leo_temp")
+@Table(name = Project.TABLE_NAME, schema = "leo_test")
 public class Project implements Serializable {
 
   public static final String ENTITY_NAME = "Project";
@@ -46,7 +48,7 @@ public class Project implements Serializable {
   public static final String COLUMN_THUMBSSTATEREASON_NAME = "thumbs_state_reason";
   public static final String COLUMN_ARCHIVED_NAME = "archived";
   public static final String COLUMN_ACTIVE_NAME = "active";
-  private static final long serialVersionUID = -7223523477430368322L;
+  private static final long serialVersionUID = -4790642321537533031L;
 
   private Integer id;
 
@@ -79,6 +81,8 @@ public class Project implements Serializable {
   private Set<LogReference> logReferences = new LinkedHashSet<>();
 
   private Set<ProjectImage> projectImages = new LinkedHashSet<>();
+
+  private Set<ProjectInputFulfillment> projectInputFulfillments = new LinkedHashSet<>();
 
   private Set<ProjectMilestone> projectMilestones = new LinkedHashSet<>();
 
@@ -173,6 +177,11 @@ public class Project implements Serializable {
   @OneToMany(mappedBy = "project")
   public Set<ProjectImage> getProjectImages() {
     return projectImages;
+  }
+
+  @OneToMany(mappedBy = "project")
+  public Set<ProjectInputFulfillment> getProjectInputFulfillments() {
+    return projectInputFulfillments;
   }
 
   @OneToMany(mappedBy = "project")

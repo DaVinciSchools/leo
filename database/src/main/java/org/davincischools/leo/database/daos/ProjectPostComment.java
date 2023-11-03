@@ -16,12 +16,14 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -29,7 +31,7 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = ProjectPostComment.ENTITY_NAME)
-@Table(name = ProjectPostComment.TABLE_NAME, schema = "leo_temp")
+@Table(name = ProjectPostComment.TABLE_NAME, schema = "leo_test")
 public class ProjectPostComment implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectPostComment";
@@ -41,7 +43,7 @@ public class ProjectPostComment implements Serializable {
   public static final String COLUMN_COMMENTHTML_NAME = "comment_html";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_BEINGEDITED_NAME = "being_edited";
-  private static final long serialVersionUID = 6374941674193246369L;
+  private static final long serialVersionUID = -5534382728911383883L;
 
   private Integer id;
 

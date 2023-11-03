@@ -11,12 +11,14 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -24,7 +26,7 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = ProjectImage.ENTITY_NAME)
-@Table(name = ProjectImage.TABLE_NAME, schema = "leo_temp")
+@Table(name = ProjectImage.TABLE_NAME, schema = "leo_test")
 public class ProjectImage implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectImage";
@@ -32,13 +34,13 @@ public class ProjectImage implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_SELECTED_NAME = "selected";
-  private static final long serialVersionUID = 1666360494323671126L;
+  private static final long serialVersionUID = -5689642528296133733L;
 
   private ProjectImageId id;
 
   private Project project;
 
-  private FileX image;
+  private FileX fileX;
 
   private Instant creationTime;
 
@@ -58,11 +60,11 @@ public class ProjectImage implements Serializable {
     return project;
   }
 
-  @MapsId("imageId")
+  @MapsId("fileXId")
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "image_id", nullable = false)
-  public FileX getImage() {
-    return image;
+  @JoinColumn(name = "file_x_id", nullable = false)
+  public FileX getFileX() {
+    return fileX;
   }
 
   @Column(name = COLUMN_CREATIONTIME_NAME, nullable = false)

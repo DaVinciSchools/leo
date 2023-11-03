@@ -11,12 +11,14 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -24,7 +26,7 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = AssignmentProjectDefinition.ENTITY_NAME)
-@Table(name = AssignmentProjectDefinition.TABLE_NAME, schema = "leo_temp")
+@Table(name = AssignmentProjectDefinition.TABLE_NAME, schema = "leo_test")
 public class AssignmentProjectDefinition implements Serializable {
 
   public static final String ENTITY_NAME = "AssignmentProjectDefinition";
@@ -32,7 +34,7 @@ public class AssignmentProjectDefinition implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_SELECTED_NAME = "selected";
-  private static final long serialVersionUID = 2125745232494094485L;
+  private static final long serialVersionUID = -4706522112826940998L;
 
   private AssignmentProjectDefinitionId id;
 

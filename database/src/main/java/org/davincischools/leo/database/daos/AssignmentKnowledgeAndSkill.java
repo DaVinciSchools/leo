@@ -11,12 +11,14 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -24,14 +26,14 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = AssignmentKnowledgeAndSkill.ENTITY_NAME)
-@Table(name = AssignmentKnowledgeAndSkill.TABLE_NAME, schema = "leo_temp")
+@Table(name = AssignmentKnowledgeAndSkill.TABLE_NAME, schema = "leo_test")
 public class AssignmentKnowledgeAndSkill implements Serializable {
 
   public static final String ENTITY_NAME = "AssignmentKnowledgeAndSkill";
   public static final String TABLE_NAME = "assignment__knowledge_and_skill";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = -5507269156356802536L;
+  private static final long serialVersionUID = 2918139869670355781L;
 
   private AssignmentKnowledgeAndSkillId id;
 

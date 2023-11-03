@@ -7,12 +7,14 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -24,7 +26,7 @@ public class ClassXKnowledgeAndSkillId implements Serializable {
 
   public static final String COLUMN_CLASSXID_NAME = "class_x_id";
   public static final String COLUMN_KNOWLEDGEANDSKILLID_NAME = "knowledge_and_skill_id";
-  private static final long serialVersionUID = 232035048223313029L;
+  private static final long serialVersionUID = -2204584561480220248L;
 
   private Integer classXId;
 

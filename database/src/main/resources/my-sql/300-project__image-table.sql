@@ -14,13 +14,13 @@ CREATE TABLE project__image
             ON DELETE RESTRICT
             ON UPDATE RESTRICT,
 
-    image_id      INT      NOT NULL,
-    CONSTRAINT project__image__image_id
-        FOREIGN KEY (image_id)
+    file_x_id      INT      NOT NULL,
+    CONSTRAINT project__image__file_x_id
+        FOREIGN KEY (file_x_id)
             REFERENCES file_x (id)
             ON DELETE RESTRICT
             ON UPDATE RESTRICT,
 
-    PRIMARY KEY (project_id, image_id)
+    PRIMARY KEY (project_id, file_x_id)
 ) ENGINE InnoDB
   CHAR SET UTF8MB4;

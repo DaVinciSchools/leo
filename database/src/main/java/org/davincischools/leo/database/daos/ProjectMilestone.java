@@ -16,12 +16,14 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -29,7 +31,7 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = ProjectMilestone.ENTITY_NAME)
-@Table(name = ProjectMilestone.TABLE_NAME, schema = "leo_temp")
+@Table(name = ProjectMilestone.TABLE_NAME, schema = "leo_test")
 public class ProjectMilestone implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectMilestone";
@@ -41,7 +43,7 @@ public class ProjectMilestone implements Serializable {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = -6353858186622734095L;
+  private static final long serialVersionUID = 5826149288515102487L;
 
   private Integer id;
 

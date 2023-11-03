@@ -1,5 +1,6 @@
 package org.davincischools.leo.database.utils;
 
+import lombok.Getter;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.repos.AdminXRepository;
 import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
@@ -19,6 +20,7 @@ import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryRepo
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository;
 import org.davincischools.leo.database.utils.repos.ProjectImageRepository;
+import org.davincischools.leo.database.utils.repos.ProjectInputFulfillmentRepository;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository;
 import org.davincischools.leo.database.utils.repos.ProjectInputValueRepository;
 import org.davincischools.leo.database.utils.repos.ProjectMilestoneRepository;
@@ -42,7 +44,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 
 @Component
-@EnableJpaRepositories(basePackageClasses = {Database.class})
+@Getter
+@EnableJpaRepositories(basePackageClasses = {UserXRepository.class})
 @EntityScan(basePackageClasses = {UserX.class})
 public class Database {
 
@@ -67,6 +70,7 @@ public class Database {
 
   @Autowired private ProjectDefinitionRepository projectDefinitionRepository;
   @Autowired private ProjectImageRepository projectImageRepository;
+  @Autowired private ProjectInputFulfillmentRepository projectInputFulfillmentRepository;
   @Autowired private ProjectInputRepository projectInputRepository;
   @Autowired private ProjectInputValueRepository projectInputValueRepository;
   @Autowired private ProjectMilestoneRepository projectMilestoneRepository;
@@ -84,144 +88,4 @@ public class Database {
   @Autowired private TeacherRepository teacherRepository;
   @Autowired private TeacherSchoolRepository teacherSchoolRepository;
   @Autowired private UserXRepository userXRepository;
-
-  public AdminXRepository getAdminXRepository() {
-    return adminXRepository;
-  }
-
-  public AssignmentKnowledgeAndSkillRepository getAssignmentKnowledgeAndSkillRepository() {
-    return assignmentKnowledgeAndSkillRepository;
-  }
-
-  public AssignmentProjectDefinitionRepository getAssignmentProjectDefinitionRepository() {
-    return assignmentProjectDefinitionRepository;
-  }
-
-  public AssignmentRepository getAssignmentRepository() {
-    return assignmentRepository;
-  }
-
-  public ClassXKnowledgeAndSkillRepository getClassXKnowledgeAndSkillRepository() {
-    return classXKnowledgeAndSkillRepository;
-  }
-
-  public ClassXRepository getClassXRepository() {
-    return classXRepository;
-  }
-
-  public DistrictRepository getDistrictRepository() {
-    return districtRepository;
-  }
-
-  public FileXRepository getFileXRepository() {
-    return fileXRepository;
-  }
-
-  public InterestRepository getInterestRepository() {
-    return interestRepository;
-  }
-
-  public KnowledgeAndSkillRepository getKnowledgeAndSkillRepository() {
-    return knowledgeAndSkillRepository;
-  }
-
-  public LogReferenceRepository getLogReferenceRepository() {
-    return logReferenceRepository;
-  }
-
-  public LogRepository getLogRepository() {
-    return logRepository;
-  }
-
-  public MotivationRepository getMotivationRepository() {
-    return motivationRepository;
-  }
-
-  public PortfolioRepository getPortfolioRepository() {
-    return portfolioRepository;
-  }
-
-  public ProjectDefinitionCategoryRepository getProjectDefinitionCategoryRepository() {
-    return projectDefinitionCategoryRepository;
-  }
-
-  public ProjectDefinitionCategoryTypeRepository getProjectDefinitionCategoryTypeRepository() {
-    return projectDefinitionCategoryTypeRepository;
-  }
-
-  public ProjectDefinitionRepository getProjectDefinitionRepository() {
-    return projectDefinitionRepository;
-  }
-
-  public ProjectImageRepository getProjectImageRepository() {
-    return projectImageRepository;
-  }
-
-  public ProjectInputRepository getProjectInputRepository() {
-    return projectInputRepository;
-  }
-
-  public ProjectInputValueRepository getProjectInputValueRepository() {
-    return projectInputValueRepository;
-  }
-
-  public ProjectMilestoneRepository getProjectMilestoneRepository() {
-    return projectMilestoneRepository;
-  }
-
-  public ProjectMilestoneStepRepository getProjectMilestoneStepRepository() {
-    return projectMilestoneStepRepository;
-  }
-
-  public ProjectPostCommentRepository getProjectPostCommentRepository() {
-    return projectPostCommentRepository;
-  }
-
-  public ProjectPostRatingRepository getProjectPostRatingRepository() {
-    return projectPostRatingRepository;
-  }
-
-  public ProjectPostRepository getProjectPostRepository() {
-    return projectPostRepository;
-  }
-
-  public ProjectRepository getProjectRepository() {
-    return projectRepository;
-  }
-
-  public SchoolRepository getSchoolRepository() {
-    return schoolRepository;
-  }
-
-  public StudentClassXRepository getStudentClassXRepository() {
-    return studentClassXRepository;
-  }
-
-  public StudentRepository getStudentRepository() {
-    return studentRepository;
-  }
-
-  public StudentSchoolRepository getStudentSchoolRepository() {
-    return studentSchoolRepository;
-  }
-
-  public TagRepository getTagRepository() {
-    return tagRepository;
-  }
-
-  public TeacherClassXRepository getTeacherClassXRepository() {
-    return teacherClassXRepository;
-  }
-
-  public TeacherRepository getTeacherRepository() {
-    return teacherRepository;
-  }
-
-  public TeacherSchoolRepository getTeacherSchoolRepository() {
-    return teacherSchoolRepository;
-  }
-
-  public UserXRepository getUserXRepository() {
-    return userXRepository;
-  }
 }

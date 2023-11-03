@@ -8,16 +8,21 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -25,7 +30,7 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = FileX.ENTITY_NAME)
-@Table(name = FileX.TABLE_NAME, schema = "leo_temp")
+@Table(name = FileX.TABLE_NAME, schema = "leo_test")
 public class FileX implements Serializable {
 
   public static final String ENTITY_NAME = "FileX";
@@ -35,7 +40,7 @@ public class FileX implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_FILECONTENT_NAME = "file_content";
   public static final String COLUMN_MIMETYPE_NAME = "mime_type";
-  private static final long serialVersionUID = -2571688387510419161L;
+  private static final long serialVersionUID = -5866672706510362714L;
 
   private Integer id;
 
@@ -48,6 +53,8 @@ public class FileX implements Serializable {
   private String mimeType;
 
   private UserX userX;
+
+  private Set<ProjectImage> projectImages = new LinkedHashSet<>();
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -80,5 +87,10 @@ public class FileX implements Serializable {
   @JoinColumn(name = "user_x_id", nullable = false)
   public UserX getUserX() {
     return userX;
+  }
+
+  @OneToMany(mappedBy = "fileX")
+  public Set<ProjectImage> getProjectImages() {
+    return projectImages;
   }
 }

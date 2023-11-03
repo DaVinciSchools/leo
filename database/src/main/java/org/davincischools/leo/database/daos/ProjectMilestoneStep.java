@@ -13,12 +13,14 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -26,7 +28,7 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = ProjectMilestoneStep.ENTITY_NAME)
-@Table(name = ProjectMilestoneStep.TABLE_NAME, schema = "leo_temp")
+@Table(name = ProjectMilestoneStep.TABLE_NAME, schema = "leo_test")
 public class ProjectMilestoneStep implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectMilestoneStep";
@@ -38,7 +40,7 @@ public class ProjectMilestoneStep implements Serializable {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = -28844873347505601L;
+  private static final long serialVersionUID = 3934422234624109348L;
 
   private Integer id;
 

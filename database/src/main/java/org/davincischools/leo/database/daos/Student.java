@@ -13,12 +13,14 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -26,7 +28,7 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = Student.ENTITY_NAME)
-@Table(name = Student.TABLE_NAME, schema = "leo_temp")
+@Table(name = Student.TABLE_NAME, schema = "leo_test")
 public class Student implements Serializable {
 
   public static final String ENTITY_NAME = "Student";
@@ -36,7 +38,7 @@ public class Student implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_DISTRICTSTUDENTID_NAME = "district_student_id";
   public static final String COLUMN_GRADE_NAME = "grade";
-  private static final long serialVersionUID = -8061619706580471625L;
+  private static final long serialVersionUID = 1803359943249217738L;
 
   private Integer id;
 

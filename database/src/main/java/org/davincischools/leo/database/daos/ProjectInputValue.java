@@ -9,16 +9,21 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -26,7 +31,7 @@ import lombok.experimental.Accessors;
 @ToString
 @Accessors(chain = true)
 @Entity(name = ProjectInputValue.ENTITY_NAME)
-@Table(name = ProjectInputValue.TABLE_NAME, schema = "leo_temp")
+@Table(name = ProjectInputValue.TABLE_NAME, schema = "leo_test")
 public class ProjectInputValue implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectInputValue";
@@ -36,7 +41,7 @@ public class ProjectInputValue implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_FREETEXTVALUE_NAME = "free_text_value";
-  private static final long serialVersionUID = -6786715408885853606L;
+  private static final long serialVersionUID = 5005258628859973638L;
 
   private Integer id;
 
@@ -55,6 +60,8 @@ public class ProjectInputValue implements Serializable {
   private KnowledgeAndSkill knowledgeAndSkillValue;
 
   private Motivation motivationValue;
+
+  private Set<ProjectInputFulfillment> projectInputFulfillments = new LinkedHashSet<>();
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -106,5 +113,10 @@ public class ProjectInputValue implements Serializable {
   @JoinColumn(name = "motivation_value_id")
   public Motivation getMotivationValue() {
     return motivationValue;
+  }
+
+  @OneToMany(mappedBy = "projectInputValue")
+  public Set<ProjectInputFulfillment> getProjectInputFulfillments() {
+    return projectInputFulfillments;
   }
 }

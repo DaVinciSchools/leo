@@ -16,12 +16,14 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -31,7 +33,7 @@ import lombok.experimental.Accessors;
 @Entity(name = School.ENTITY_NAME)
 @Table(
     name = School.TABLE_NAME,
-    schema = "leo_temp",
+    schema = "leo_test",
     indexes = {
       @Index(
           name = "school__district__unique_name",
@@ -52,7 +54,7 @@ public class School implements Serializable {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_NICKNAME_NAME = "nickname";
   public static final String COLUMN_ADDRESS_NAME = "address";
-  private static final long serialVersionUID = -6726246873093964L;
+  private static final long serialVersionUID = 4147549771007920763L;
 
   private Integer id;
 
