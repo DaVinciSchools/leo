@@ -47,12 +47,12 @@ EOF
 
   while true; do
     umask 077
-    sudo -H -u "${LEO_USER}" \
-        "$(which java)" \
-        "-jar" \
-        "$(realpath "${BRANCH_DIR}"/latest/project-leo-server-*.jar)" \
-        "--server.port=$(cat "${LEO_HOME_DIR}/server.port")" 2>&1 \
-        | sudo -u "${LEO_USER}" tee -a "${LEO_HOME_DIR}/server.log" || true
+    cat <<EOF | sudo -u "${LEO_USER}" bash -x -s
+      $(which java) \
+      -jar "$(realpath "${BRANCH_DIR}"/latest/project-leo-server-*.jar)" \
+      --server.port="$(cat "${LEO_HOME_DIR}/server.port")" \
+      >> "${LEO_HOME_DIR}/server.log" 2>&1 || true
+EOF
     echo Restarting Project Leo for user "${LEO_USER}".
     sleep 5
   done &
