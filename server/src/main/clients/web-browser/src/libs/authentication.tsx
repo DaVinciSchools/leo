@@ -43,48 +43,55 @@ export function login(
   params.append(USERNAME_PARAM, username);
   params.append(PASSWORD_PARAM, password);
 
-  logout(global).finally(() => {
-    try {
-      fetch('/api/login.html', {
-        method: 'POST',
-        headers: addXsrfHeader({
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }),
-        body: params,
-        cache: 'no-cache',
-        redirect: 'follow',
-      })
-        .then(response => {
-          if (!response.ok) {
-            onError(response);
-          } else if (response.redirected) {
-            if (new URL(response.url).searchParams.get('failed') != null) {
-              onFailure();
-            } else {
-              onError(response);
-            }
-          } else if (response.body == null) {
-            onError('Response had no body.');
-          } else {
-            response.body
-              .getReader()
-              .read()
-              .then(result => {
-                try {
-                  global.setUserX(pl_types.UserX.decode(result.value!));
-                  onSuccess();
-                } catch (e) {
-                  onError(e);
-                }
-              })
-              .catch(onError);
-          }
+  logout(global)
+    .catch(reason => {
+      console.error('Failed to logout before login.', reason);
+    })
+    .finally(() => {
+      try {
+        fetch('/api/login.html', {
+          method: 'POST',
+          headers: addXsrfHeader({
+            'Content-Type': 'application/x-www-form-urlencoded',
+          }),
+          body: params,
+          cache: 'no-cache',
+          redirect: 'follow',
         })
-        .catch(onError);
-    } catch (e) {
-      onError(e);
-    }
-  });
+          .then(response => {
+            if (!response.ok) {
+              console.error('Failed to login.', response);
+              onError(response);
+            } else if (response.redirected) {
+              if (new URL(response.url).searchParams.get('failed') != null) {
+                onFailure();
+              } else {
+                console.error('Failed to login.', response);
+                onError(response);
+              }
+            } else if (response.body == null) {
+              console.error('Failed to login.', response);
+              onError('Response had no body.');
+            } else {
+              response.body
+                .getReader()
+                .read()
+                .then(result => {
+                  try {
+                    global.setUserX(pl_types.UserX.decode(result.value!));
+                    onSuccess();
+                  } catch (e) {
+                    onError(e);
+                  }
+                })
+                .catch(onError);
+            }
+          })
+          .catch(onError);
+      } catch (e) {
+        onError(e);
+      }
+    });
 }
 
 export function logout(global: IGlobalState) {
