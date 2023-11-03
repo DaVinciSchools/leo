@@ -28,6 +28,7 @@ for HOME_DIR in /home/*; do
   HTTPS="$([ "$(hostname -f)" = projectleo.net ] && echo https || echo http)"
   PORT="$(/root/bin/get-open-port)"
 
+  # shellcheck disable=SC2211
   HTTPS="${HTTPS}" \
   PORT="${PORT}" \
   SUBDOMAIN="${SUBDOMAIN}" \
@@ -50,8 +51,8 @@ EOF
         "$(which java)" \
         "-jar" \
         "$(realpath "${BRANCH_DIR}"/latest/project-leo-server-*.jar)" \
-        "--server.port=$(cat "${LEO_HOME_DIR}/server.port")" \
-        >> "${LEO_HOME_DIR}/server.log" 2>&1 || true
+        "--server.port=$(cat "${LEO_HOME_DIR}/server.port")" 2>&1 \
+        | sudo -u "${LEO_USER}" tee -a "${LEO_HOME_DIR}/server.log" || true
     echo Restarting Project Leo for user "${LEO_USER}".
     sleep 5
   done &
@@ -61,5 +62,6 @@ done
 # Restart Apache with the new configurations.
 service apache2 reload
 
+# shellcheck disable=SC2064
 trap "pkill -P ${PIDS:1}; exit 0" TERM
 wait ${PIDS//,/ }

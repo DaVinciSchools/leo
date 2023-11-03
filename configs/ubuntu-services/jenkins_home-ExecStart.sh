@@ -23,6 +23,7 @@ for HOME_DIR in /home/*; do
   PORT="$(/root/bin/get-open-port)"
   SUBDOMAIN=www
 
+  # shellcheck disable=SC2211
   HTTPS="${HTTPS}" \
   PORT="${PORT}" \
   USER="${USER}" \
@@ -55,5 +56,6 @@ done
 # Restart Apache with the new configurations.
 service apache2 reload
 
+# shellcheck disable=SC2064
 trap "pkill -P ${PIDS:1}; exit 0" TERM
 wait ${PIDS//,/ }
