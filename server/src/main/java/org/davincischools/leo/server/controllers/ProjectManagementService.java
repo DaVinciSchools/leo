@@ -61,7 +61,7 @@ import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
 import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillRequest;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillResponse;
-import org.davincischools.leo.server.controllers.project_generators.OpenAi3V2ProjectGenerator;
+import org.davincischools.leo.server.controllers.project_generators.OpenAi3V3ProjectGenerator;
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
@@ -91,7 +91,7 @@ public class ProjectManagementService {
   private static final AtomicInteger POSITION_COUNTER = new AtomicInteger(0);
 
   @Autowired Database db;
-  @Autowired OpenAi3V2ProjectGenerator openAi3V2ProjectGenerator;
+  @Autowired OpenAi3V3ProjectGenerator openAi3V3ProjectGenerator;
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetKnowledgeAndSkills")
   @ResponseBody
@@ -278,7 +278,7 @@ public class ProjectManagementService {
               new Thread(
                       () -> {
                         var failed = new AtomicBoolean(false);
-                        ImmutableList.of(openAi3V2ProjectGenerator).parallelStream()
+                        ImmutableList.of(openAi3V3ProjectGenerator).parallelStream()
                             .forEach(
                                 generator -> {
                                   try {

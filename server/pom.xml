@@ -111,6 +111,19 @@
             <artifactId>mailjet-client</artifactId>
             <version>5.2.4</version>
         </dependency>
+
+        <!-- OpenAI API. -->
+        <dependency>
+            <groupId>com.theokanning.openai-gpt3-java</groupId>
+            <artifactId>service</artifactId>
+            <version>0.16.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.theokanning.openai-gpt3-java</groupId>
+            <artifactId>api</artifactId>
+            <version>0.16.1</version>
+        </dependency>
+
     </dependencies>
 
     <build>
