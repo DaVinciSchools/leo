@@ -4,14 +4,15 @@
     "rootDir": ".",
     "outDir": "build",
     "lib": [
-      "dom",
+      "dom"
     ],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
     "allowJs": true,
     "module": "commonjs",
-    "moduleResolution": "Node"
+    "moduleResolution": "Node",
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*.js",
