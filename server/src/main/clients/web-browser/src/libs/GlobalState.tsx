@@ -31,12 +31,17 @@ export function GlobalState(props: PropsWithChildren<{}>) {
   const [error, setError] = useState<HandleErrorType>();
   const [loaded, setLoaded] = useState(false);
 
+  function setErrorIntercept(error: HandleErrorType) {
+    console.error('Error occurred. ', error);
+    setError(error);
+  }
+
   const global = {
     userX,
     error,
     loaded,
     setUserX,
-    setError,
+    setError: setErrorIntercept,
     requireUserX: (
       userXReq: (userX: pl_types.IUserX) => boolean,
       forwardUrl?: string
