@@ -1,6 +1,6 @@
 package org.davincischools.leo.server.controllers.project_generators;
 
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static org.davincischools.leo.server.controllers.project_generators.OpenAi3V1ProjectGenerator.saveAndGetProjects;
 
 import com.theokanning.openai.client.OpenAiApi;
 import com.theokanning.openai.completion.chat.ChatCompletionChoice;
@@ -12,25 +12,18 @@ import com.theokanning.openai.completion.chat.ChatMessageRole;
 import com.theokanning.openai.service.FunctionExecutor;
 import com.theokanning.openai.service.OpenAiService;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.daos.Project;
-import org.davincischools.leo.database.daos.ProjectInput;
-import org.davincischools.leo.database.daos.ProjectMilestone;
-import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.server.controllers.ProjectManagementService.GenerateProjectsState;
-import org.davincischools.leo.server.controllers.project_generators.OpenAi3V1ProjectGenerator.AiProject;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V1ProjectGenerator.AiProjects;
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
@@ -66,16 +59,19 @@ public class OpenAi3V3ProjectGenerator implements ProjectGenerator {
     var retrofit = OpenAiService.defaultRetrofit(okHttpClient, OpenAiService.defaultObjectMapper());
     OpenAiService openAiService = new OpenAiService(retrofit.create(OpenAiApi.class));
 
+    var initialState = OpenAi3V1ProjectGenerator.getInitialState(state);
+    state.criteriaToInputValue().putAll(initialState.criteriaToInputValue());
+
     var describeProjectFn =
         ChatFunction.builder()
             .name("describe_projects")
-            .description("Describe projects that a student can do that meets the given criteria.")
+            .description("Describe projects that a student can do that meet the given criteria.")
             .executor(AiProjects.class, a -> a)
             .build();
     var functionExecutor = new FunctionExecutor(List.of(describeProjectFn));
 
     var messages = new ArrayList<ChatMessage>();
-    messages.add(OpenAi3V1ProjectGenerator.getInitialChatMessage(state));
+    messages.add(initialState.chatMessage());
     messages.add(
         new ChatMessage(
             ChatMessageRole.USER.value(),
@@ -84,7 +80,7 @@ public class OpenAi3V3ProjectGenerator implements ProjectGenerator {
 
     ChatCompletionRequest chatCompletionRequest =
         ChatCompletionRequest.builder()
-            .model(OpenAiUtils.GPT_3_5_TURBO_MODEL)
+            .model(OpenAiUtils.GPT_3_5_TURBO_16K_MODEL)
             .messages(messages)
             .functions(functionExecutor.getFunctions())
             .functionCall(new ChatCompletionRequestFunctionCall(describeProjectFn.getName()))
@@ -92,9 +88,18 @@ public class OpenAi3V3ProjectGenerator implements ProjectGenerator {
 
     return httpExecutors
         .start(chatCompletionRequest)
-        .retryNextStep(3, 1000)
         .andThen(
             (request, log) -> {
+              log.addNote("OpenAI Request Messages:");
+              request
+                  .getMessages()
+                  .forEach(m -> log.addNote("%s: %s", m.getRole(), m.getContent()));
+              return request;
+            })
+        .retryNextStep(3, (int) Duration.ofMinutes(20).toMillis())
+        .andThen(
+            (request, log) -> {
+              long startTime = System.currentTimeMillis();
               try {
                 return openAiService.createChatCompletion(request).getChoices().stream()
                     .map(ChatCompletionChoice::getMessage)
@@ -103,35 +108,22 @@ public class OpenAi3V3ProjectGenerator implements ProjectGenerator {
                     .map(AiProjects.class::cast)
                     .flatMap(p -> p.projects.stream())
                     .toList();
+              } catch (Throwable e) {
+                log.addNote(
+                    "Failed to generate projects with OpenAI after "
+                        + Duration.ofMillis(System.currentTimeMillis() - startTime).toSeconds()
+                        + " seconds.");
+                throw e;
               } finally {
                 try {
                   openAiService.shutdownExecutor();
-                } catch (Throwable t) {
-                  logger.atWarn().withThrowable(t).log("Failed to shutdown OpenAI executor.");
+                } catch (NullPointerException npe) {
+                  // This exception seems to always be thrown despite successful execution.
+                  logger.atWarn().withThrowable(npe).log("Failed to shutdown OpenAI executor.");
                 }
               }
             })
-        .andThen(
-            (aiProjects, log) -> {
-              var projects =
-                  db.getProjectRepository()
-                      .saveAll(
-                          aiProjects.stream()
-                              .map(p -> convertToProject(p, state.input()))
-                              .toList());
-              var milestones =
-                  db.getProjectMilestoneRepository()
-                      .saveAll(
-                          projects.stream()
-                              .flatMap(p -> p.getProjectMilestones().stream())
-                              .collect(toImmutableSet()));
-              db.getProjectMilestoneStepRepository()
-                  .saveAll(
-                      milestones.stream()
-                          .flatMap(m -> m.getProjectMilestoneSteps().stream())
-                          .collect(toImmutableSet()));
-              return projects;
-            })
+        .andThen((aiProjects, log) -> saveAndGetProjects(db, state, aiProjects))
         .onError(
             (error, log) -> {
               logger
@@ -143,42 +135,5 @@ public class OpenAi3V3ProjectGenerator implements ProjectGenerator {
               return Optional.empty();
             })
         .finish();
-  }
-
-  @NotNull
-  private static Project convertToProject(AiProject aiProject, ProjectInput projectInput) {
-    AtomicInteger position = new AtomicInteger(0);
-    var project =
-        new Project()
-            .setGenerator(OpenAi3V3ProjectGenerator.class.getName())
-            .setCreationTime(Instant.now())
-            .setProjectInput(projectInput)
-            .setName(aiProject.name)
-            .setShortDescr(aiProject.shortDescr)
-            .setLongDescrHtml(aiProject.longDescrHtml);
-    project.setProjectMilestones(
-        aiProject.milestones.stream()
-            .map(
-                m -> {
-                  var milestone =
-                      new ProjectMilestone()
-                          .setCreationTime(Instant.now())
-                          .setPosition((float) position.incrementAndGet())
-                          .setName(m.name)
-                          .setProject(project);
-                  milestone.setProjectMilestoneSteps(
-                      m.steps.stream()
-                          .map(
-                              s ->
-                                  new ProjectMilestoneStep()
-                                      .setCreationTime(Instant.now())
-                                      .setPosition((float) position.incrementAndGet())
-                                      .setName(s)
-                                      .setProjectMilestone(milestone))
-                          .collect(toImmutableSet()));
-                  return milestone;
-                })
-            .collect(toImmutableSet()));
-    return project;
   }
 }

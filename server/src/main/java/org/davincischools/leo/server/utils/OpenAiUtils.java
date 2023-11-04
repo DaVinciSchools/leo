@@ -44,7 +44,10 @@ public class OpenAiUtils {
   public static final String OPENAI_API_KEY_ENV_NAME =
       OPENAI_API_KEY_PROP_NAME.toUpperCase().replaceAll("\\.", "_");
   public static final String GPT_3_5_TURBO_MODEL = "gpt-3.5-turbo";
+  public static final String GPT_3_5_TURBO_16K_MODEL = "gpt-3.5-turbo-16k";
   public static final String GPT_4_MODEL = "gpt-4";
+  public static final String GPT_4_32K_MODEL = "gpt-4-32k";
+
   public static final int TIMEOUT_MIN = 15;
 
   private final String openAiKey;

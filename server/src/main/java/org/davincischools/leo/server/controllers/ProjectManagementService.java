@@ -16,7 +16,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -83,6 +85,7 @@ public class ProjectManagementService {
       FullProjectDefinition definition,
       ProjectInput input,
       List<ImmutableList<ProjectInputValue>> values,
+      Map<Integer, Integer> criteriaToInputValue,
       GenerateProjectsResponse.Builder response) {}
 
   public record GenerateAnonymousProjectInput(
@@ -209,6 +212,7 @@ public class ProjectManagementService {
                               ? new Assignment().setId(request.getAssignmentId())
                               : null),
                   new ArrayList<>(),
+                  new HashMap<>(),
                   GenerateProjectsResponse.newBuilder());
             })
         .andThen(
