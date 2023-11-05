@@ -48,7 +48,6 @@ public class ProtoDaoUtilsTest {
   }
 
   @Autowired EntityManager entityManager;
-  @Autowired Database db;
 
   @Test
   public void toAssignmentConvertersNull() throws ParseException {
@@ -690,32 +689,6 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toMilestoneWithStepsConverters() throws ParseException {
-    Project.Milestone proto =
-        TextFormat.parse(
-            """
-                id: 1
-                name: "name"
-                steps {
-                  id: 2
-                  name: "step name 2"
-                }
-                steps {
-                  id: 3
-                  name: "step name 3"
-                }
-                """,
-            Project.Milestone.class);
-
-    assertThat(
-            ProtoDaoUtils.toMilestoneProto(
-                    ProtoDaoUtils.toMilestoneWithStepsRecord(proto), Milestone::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
-  }
-
-  @Test
   public void toProjectConvertersNull() throws ParseException {
     assertThat(ProtoDaoUtils.toProjectProto(null, true, Project::newBuilder)).isEmpty();
   }
@@ -848,7 +821,7 @@ public class ProtoDaoUtilsTest {
 
     assertThat(
             ProtoDaoUtils.toProjectProto(
-                    ProtoDaoUtils.toProjectWithMilestonesRecord(proto), Project::newBuilder)
+                    ProtoDaoUtils.toProjectDao(proto), true, Project::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);

@@ -16,6 +16,7 @@ import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -223,11 +224,10 @@ public class DaoUtils {
   }
 
   public static <T, E> void ifInitialized(
-      Iterable<T> entities, Function<T, E> transform, Consumer<E> processFn) {
+      Iterable<T> entities, Comparator<T> comparator, Consumer<T> processFn) {
     isInitialized(entities)
         .ifPresent(
-            initialiedEntities ->
-                Streams.stream(initialiedEntities).map(transform).forEach(processFn));
+            initializedEntities -> Streams.stream(entities).sorted(comparator).forEach(processFn));
   }
 
   public static <T, R> List<T> getJoinTableDaos(

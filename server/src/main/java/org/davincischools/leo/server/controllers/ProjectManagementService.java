@@ -629,7 +629,9 @@ public class ProjectManagementService {
               ProtoDaoUtils.toProjectProto(
                   db.getProjectRepository()
                       .findFullProjectById(request.getProject().getId())
-                      .orElseThrow(),
+                      .orElseThrow()
+                      .project(),
+                  true,
                   response::getProjectBuilder);
               return response.build();
             })

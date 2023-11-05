@@ -23,16 +23,17 @@ import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.davincischools.leo.database.daos.Assignment;
-import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
@@ -46,11 +47,7 @@ import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.ProjectPostComment;
 import org.davincischools.leo.database.daos.ProjectPostRating;
 import org.davincischools.leo.database.daos.School;
-import org.davincischools.leo.database.daos.StudentClassX;
-import org.davincischools.leo.database.daos.StudentSchool;
 import org.davincischools.leo.database.daos.Tag;
-import org.davincischools.leo.database.daos.TeacherClassX;
-import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillRepository;
@@ -58,8 +55,6 @@ import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.F
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.FullProjectInput;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
-import org.davincischools.leo.database.utils.repos.ProjectRepository.MilestoneWithSteps;
-import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.ClassX.Builder;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition.State;
@@ -70,6 +65,8 @@ import org.hibernate.Hibernate;
 import org.hibernate.LazyInitializationException;
 
 public class ProtoDaoUtils {
+
+  private static final AtomicInteger positionCounter = new AtomicInteger(0);
 
   @SuppressWarnings("unchecked")
   public static <T> T valueOrNull(Message request, int fieldNumber) {
@@ -211,7 +208,11 @@ public class ProtoDaoUtils {
   public static ProjectMilestoneStep toProjectMilestoneStepDao(
       org.davincischools.leo.protos.pl_types.Project.Milestone.StepOrBuilder step) {
     ProjectMilestoneStep dao =
-        translateToDao(step, new ProjectMilestoneStep().setCreationTime(Instant.now()));
+        translateToDao(
+            step,
+            new ProjectMilestoneStep()
+                .setCreationTime(Instant.now())
+                .setPosition((float) positionCounter.incrementAndGet()));
     return dao;
   }
 
@@ -225,36 +226,26 @@ public class ProtoDaoUtils {
         builder -> {
           ifInitialized(
               projectMilestone.getProjectMilestoneSteps(),
+              Comparator.comparing(ProjectMilestoneStep::getPosition),
               step -> toMilestoneStepProto(step, builder::addStepsBuilder));
         },
         org.davincischools.leo.protos.pl_types.Project.Milestone.STEPS_FIELD_NUMBER);
   }
 
   public static ProjectMilestone toProjectMilestoneDao(
-      org.davincischools.leo.protos.pl_types.Project.MilestoneOrBuilder step) {
-    ProjectMilestone dao =
-        translateToDao(
-            step,
-            new ProjectMilestone().setCreationTime(Instant.now()),
-            org.davincischools.leo.protos.pl_types.Project.Milestone.STEPS_FIELD_NUMBER);
-    return dao;
-  }
-
-  public static Optional<org.davincischools.leo.protos.pl_types.Project.Milestone.Builder>
-      toMilestoneProto(
-          MilestoneWithSteps milestone,
-          Supplier<org.davincischools.leo.protos.pl_types.Project.Milestone.Builder> newBuilder) {
-    var builder = toMilestoneProto(milestone.milestone(), newBuilder);
-    builder.ifPresent(
-        b -> milestone.steps().forEach(s -> toMilestoneStepProto(s, b::addStepsBuilder)));
-    return builder;
-  }
-
-  public static MilestoneWithSteps toMilestoneWithStepsRecord(
       org.davincischools.leo.protos.pl_types.Project.MilestoneOrBuilder milestone) {
-    return new MilestoneWithSteps(
-        toProjectMilestoneDao(milestone),
-        milestone.getStepsList().stream().map(ProtoDaoUtils::toProjectMilestoneStepDao).toList());
+    var dao =
+        translateToDao(
+            milestone,
+            new ProjectMilestone()
+                .setCreationTime(Instant.now())
+                .setPosition((float) positionCounter.incrementAndGet()),
+            org.davincischools.leo.protos.pl_types.Project.Milestone.STEPS_FIELD_NUMBER);
+    dao.setProjectMilestoneSteps(
+        milestone.getStepsList().stream()
+            .map(ProtoDaoUtils::toProjectMilestoneStepDao)
+            .collect(toSet()));
+    return dao;
   }
 
   public static Project toProjectDao(
@@ -268,6 +259,10 @@ public class ProtoDaoUtils {
     if (project.hasAssignment()) {
       dao.setAssignment(toAssignmentDao(project.getAssignment()));
     }
+    dao.setProjectMilestones(
+        project.getMilestonesList().stream()
+            .map(ProtoDaoUtils::toProjectMilestoneDao)
+            .collect(toSet()));
     return dao;
   }
 
@@ -284,31 +279,11 @@ public class ProtoDaoUtils {
           }
           ifInitialized(
               project.getProjectMilestones(),
+              Comparator.comparing(ProjectMilestone::getPosition),
               milestone -> toMilestoneProto(milestone, builder::addMilestonesBuilder));
         },
         org.davincischools.leo.protos.pl_types.Project.ASSIGNMENT_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER);
-  }
-
-  public static Optional<org.davincischools.leo.protos.pl_types.Project.Builder> toProjectProto(
-      ProjectWithMilestones projectWithMilestones,
-      Supplier<org.davincischools.leo.protos.pl_types.Project.Builder> newBuilder) {
-    var builder = toProjectProto(projectWithMilestones.project(), true, newBuilder);
-    builder.ifPresent(
-        b ->
-            projectWithMilestones
-                .milestones()
-                .forEach(m -> toMilestoneProto(m, b::addMilestonesBuilder)));
-    return builder;
-  }
-
-  public static ProjectWithMilestones toProjectWithMilestonesRecord(
-      org.davincischools.leo.protos.pl_types.ProjectOrBuilder project) {
-    return new ProjectWithMilestones(
-        toProjectDao(project),
-        project.getMilestonesList().stream()
-            .map(ProtoDaoUtils::toMilestoneWithStepsRecord)
-            .toList());
   }
 
   public static ProjectPost toProjectPostDao(
@@ -528,22 +503,22 @@ public class ProtoDaoUtils {
       if (userX.getTeacher() != null) {
         ifInitialized(
             userX.getTeacher().getTeacherSchools(),
-            TeacherSchool::getSchool,
-            school -> schools.put(school.getId(), school));
+            teacherSchool ->
+                schools.put(teacherSchool.getSchool().getId(), teacherSchool.getSchool()));
         ifInitialized(
             userX.getTeacher().getTeacherClassXES(),
-            TeacherClassX::getClassX,
-            classX -> classXs.put(classX.getId(), classX));
+            teacherClassX ->
+                classXs.put(teacherClassX.getClassX().getId(), teacherClassX.getClassX()));
       }
       if (userX.getStudent() != null) {
         ifInitialized(
             userX.getStudent().getStudentSchools(),
-            StudentSchool::getSchool,
-            school -> schools.put(school.getId(), school));
+            studentSchool ->
+                schools.put(studentSchool.getSchool().getId(), studentSchool.getSchool()));
         ifInitialized(
             userX.getStudent().getStudentClassXES(),
-            StudentClassX::getClassX,
-            classX -> classXs.put(classX.getId(), classX));
+            studentClassX ->
+                classXs.put(studentClassX.getClassX().getId(), studentClassX.getClassX()));
       }
 
       schools.values().forEach(school -> toSchoolProto(school, builder::addSchoolsBuilder));
@@ -587,10 +562,10 @@ public class ProtoDaoUtils {
           toClassXProto(assignment.getClassX(), recursive, builder::getClassXBuilder);
           ifInitialized(
               assignment.getAssignmentKnowledgeAndSkills(),
-              AssignmentKnowledgeAndSkill::getKnowledgeAndSkill,
-              knowledgeAndSkill ->
+              assignmentKnowledgeAndSkill ->
                   toKnowledgeAndSkillProto(
-                      knowledgeAndSkill, builder::addKnowledgeAndSkillsBuilder));
+                      assignmentKnowledgeAndSkill.getKnowledgeAndSkill(),
+                      builder::addKnowledgeAndSkillsBuilder));
         },
         org.davincischools.leo.protos.pl_types.Assignment.CLASS_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.Assignment.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
