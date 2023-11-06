@@ -7,7 +7,7 @@ pipeline {
   }
   environment {
     BRANCH_DIR="${HOME}/.project_leo/branches/${BRANCH_NAME}"
-    RUN_DIR="${BRANCH_DIR}/targets/${BUILD_NUMBER}-${GIT_COMMIT}"
+    RUN_DIR="${BRANCH_DIR}/targets/${GIT_COMMIT}"
     MVN_REPO="${BRANCH_DIR}/.m2/repository"
     USER="${BRANCH_NAME}"
   }
