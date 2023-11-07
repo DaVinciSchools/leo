@@ -40,6 +40,10 @@ import SchoolManagementService = school_management.SchoolManagementService;
 
 export function TeacherEditClassXs() {
   const global = useContext(GlobalStateContext);
+  const userX = global.requireUserX(
+    'You must be a teacher for this overview.',
+    userX => userX.isAdminX || userX.isTeacher
+  );
 
   const [sortedClasses, setSortedClasses] = useState<readonly IClassX[]>([]);
   const [haveMultipleSchools, setHaveMultipleSchools] = useState(false);
@@ -127,7 +131,7 @@ export function TeacherEditClassXs() {
   // --- Effects ---
 
   useEffect(() => {
-    if (global.userX == null) {
+    if (userX == null) {
       setSelectedClass(null);
       setHaveMultipleSchools(false);
       setSortedSchools([]);
@@ -136,12 +140,12 @@ export function TeacherEditClassXs() {
       return;
     }
     createService(SchoolManagementService, 'SchoolManagementService')
-      .getSchools({districtId: global.userX?.districtId})
+      .getSchools({districtId: userX.districtId})
       .then(response => setSortedSchools(response.schools.sort(SCHOOL_SORTER)))
       .catch(global.setError);
     createService(ClassXManagementService, 'ClassXManagementService')
       .getClassXs({
-        teacherIds: [global.userX.teacherId ?? 0],
+        teacherIds: [userX.teacherId ?? 0],
         includeKnowledgeAndSkills: true,
       })
       .then(response => {
@@ -157,7 +161,7 @@ export function TeacherEditClassXs() {
         )
       )
       .catch(global.setError);
-  }, [global.userX]);
+  }, [userX]);
 
   useEffect(() => {
     setHaveMultipleSchools(
@@ -169,16 +173,16 @@ export function TeacherEditClassXs() {
     classFormFields.setValuesObject(selectedClass ?? {});
   }, [selectedClass]);
 
-  if (!global.requireUserX(userX => userX?.isTeacher || userX?.isAdminX)) {
-    return <></>;
-  }
-
   function createNewClass() {
+    if (!userX) {
+      return;
+    }
+
     createService(ClassXManagementService, 'ClassXManagementService')
       .upsertClassX({
         classX: {
           name: 'New Class',
-          number: (global?.userX?.lastName ?? 'CLASS').toUpperCase() + ' 101',
+          number: (userX.lastName ?? 'CLASS').toUpperCase() + ' 101',
         },
       })
       .then(response => {
@@ -188,6 +192,10 @@ export function TeacherEditClassXs() {
         setSelectedClass(response.classX!);
       })
       .catch(global.setError);
+  }
+
+  if (!userX) {
+    return <></>;
   }
 
   return (
@@ -324,8 +332,8 @@ export function TeacherEditClassXs() {
                     {option.name}:&nbsp;
                     <i>{option.shortDescr ?? 'undefined'}</i>{' '}
                     {((option.userX?.id != null &&
-                      option.userX?.id === global.userX?.id) ||
-                      global.userX?.isAdminX) && (
+                      option.userX?.id === userX.id) ||
+                      userX.isAdminX) && (
                       <>
                         &nbsp;
                         <Edit

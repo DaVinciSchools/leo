@@ -49,6 +49,10 @@ import AssignmentManagementService = assignment_management.AssignmentManagementS
 
 export function AssignmentsTab(props: {userX: IUserX | undefined}) {
   const global = useContext(GlobalStateContext);
+  const userX = global.requireUserX(
+    'You must be a teacher to edit assignments.',
+    userX => userX.isAdminX || userX.isTeacher
+  );
 
   const [classXs, setClassXs] = useState<readonly IClassX[]>([]);
   const [assignments, setAssignments] = useState<readonly IAssignment[] | null>(
@@ -190,10 +194,6 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
     setCategories(projectDefinition.inputs);
   }, [projectDefinition]);
 
-  if (!global.requireUserX(userX => userX?.isTeacher)) {
-    return <></>;
-  }
-
   function setAssignment(newAssignment: IAssignment | null) {
     if (assignment != null) {
       saveAssignment();
@@ -243,6 +243,10 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
         );
       })
       .catch(reason => global.setError({error: reason, reload: false}));
+  }
+
+  if (!userX) {
+    return <></>;
   }
 
   return (

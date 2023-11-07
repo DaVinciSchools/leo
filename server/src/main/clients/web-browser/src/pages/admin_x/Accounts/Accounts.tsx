@@ -24,6 +24,10 @@ import {toLong} from '../../../libs/misc';
 
 export function Accounts() {
   const global = useContext(GlobalStateContext);
+  const userX = global.requireUserX(
+    'You must be an administrator to edit profiles.',
+    userX => userX.isAdminX
+  );
 
   const [showSearchForAccount, setShowSearchForAccount] = useState(false);
   const [searchForm] = Form.useForm();
@@ -131,7 +135,7 @@ export function Accounts() {
     }
   }, [searchTextRef.current]);
 
-  if (!global.requireUserX(userX => userX.isAdminX)) {
+  if (!userX) {
     return <></>;
   }
 

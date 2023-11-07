@@ -52,6 +52,9 @@ export function Post(props: {
   showComments?: boolean | null | undefined;
   showRatings?: boolean | null | undefined;
 }) {
+  const userX = useContext(GlobalStateContext).requireUserX(
+    'You must be logged in to view posts.'
+  );
   const global = useContext(GlobalStateContext);
 
   const [sortedAssignmentKs, setSortedAssignmentKs] = useState<
@@ -92,9 +95,9 @@ export function Post(props: {
         rating.userX ?? {},
       ])
     );
-    users.delete(global.userX?.id ?? 0);
+    users.delete(userX?.id ?? 0);
     setSortedRatingUsers([
-      global.userX ?? {},
+      userX ?? {},
       ...[...users.values()].sort(USER_X_SORTER),
     ]);
 
@@ -292,9 +295,7 @@ export function Post(props: {
                 style={{
                   cursor: 'pointer',
                   display:
-                    global.userX?.isAdminX || global.userX?.isTeacher
-                      ? undefined
-                      : 'none',
+                    userX?.isAdminX || userX?.isTeacher ? undefined : 'none',
                 }}
               >
                 {expandRatings ? <South /> : <North />}
@@ -330,8 +331,8 @@ export function Post(props: {
                     >
                       {ks.name}
                     </th>
-                    {sortedRatingUsers.map(userX => (
-                      <td key={userX.id ?? 0}>
+                    {sortedRatingUsers.map(ratingUserX => (
+                      <td key={ratingUserX.id ?? 0}>
                         <FormControl fullWidth>
                           <InputLabel
                             id="demo-simple-select-label"
@@ -344,12 +345,12 @@ export function Post(props: {
                             id="demo-simple-select"
                             size="small"
                             disabled={
-                              (userX.id ?? 0) !== (global.userX?.id ?? 0)
+                              (ratingUserX.id ?? 0) !== (userX?.id ?? 0)
                             }
                             value={
                               ratings.get(
                                 JSON.stringify({
-                                  userXId: userX.id ?? 0,
+                                  userXId: ratingUserX.id ?? 0,
                                   ratingType:
                                     ProjectPostRating.RatingType.INITIAL_1_TO_5,
                                   knowledgeAndSkillId: ks.id ?? 0,
@@ -363,7 +364,7 @@ export function Post(props: {
                                   ? 0
                                   : parseInt(String(e.target.value));
                               const key = JSON.stringify({
-                                userXId: userX.id ?? 0,
+                                userXId: ratingUserX.id ?? 0,
                                 ratingType:
                                   ProjectPostRating.RatingType.INITIAL_1_TO_5,
                                 knowledgeAndSkillId: ks.id ?? 0,
@@ -372,7 +373,7 @@ export function Post(props: {
                               let oldRating = ratings.get(key);
                               if (oldRating == null) {
                                 oldRating = {
-                                  userX: {id: userX.id},
+                                  userX: {id: ratingUserX.id},
                                   rating: value,
                                   ratingType:
                                     ProjectPostRating.RatingType.INITIAL_1_TO_5,

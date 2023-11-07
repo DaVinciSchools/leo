@@ -5,7 +5,11 @@ import {GlobalStateContext} from '../../../libs/GlobalState';
 
 export function Overview() {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
+  const userX = global.requireUserX(
+    'You must be signed in to view the overview page.'
+  );
+
+  if (!userX) {
     return <></>;
   }
 

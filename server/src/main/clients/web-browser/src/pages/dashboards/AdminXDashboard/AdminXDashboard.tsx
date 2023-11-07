@@ -5,7 +5,12 @@ import {GlobalStateContext} from '../../../libs/GlobalState';
 
 export function AdminXDashboard() {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUserX(userX => userX?.isAdminX)) {
+  const userX = global.requireUserX(
+    'You must be an administrator to view this dashboard.',
+    userX => userX.isAdminX
+  );
+
+  if (!userX) {
     return <></>;
   }
 

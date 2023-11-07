@@ -42,6 +42,9 @@ enum TabValue {
 
 export function MyProjects() {
   const global = useContext(GlobalStateContext);
+  const userX = global.requireUserX(
+    'You must be signed in to view your projects.'
+  );
 
   const [activeTab, setActiveTab] = useState<TabValue>(TabValue.OVERVIEW);
 
@@ -115,7 +118,7 @@ export function MyProjects() {
         projectPost.tags = (projectPost.tags as string[])?.map(e => {
           return {
             text: e,
-            userXId: global.userX?.id,
+            userXId: userX?.id,
           } as ITag;
         });
         projectPost.name = projectPost.name ?? '';
@@ -150,9 +153,17 @@ export function MyProjects() {
   // Initialize the data.
 
   useEffect(() => {
+    if (!userX) {
+      setSortedProjects([]);
+      setSelectedProject(null);
+      setSortedAssignments([]);
+      setSortedTags([]);
+      return;
+    }
+
     // Projects
     createService(ProjectManagementService, 'ProjectManagementService')
-      .getProjects({userXId: global.userX?.id, activeOnly: true})
+      .getProjects({userXId: userX.id, activeOnly: true})
       .then(response => {
         setSortedProjects(response.projects.sort(PROJECT_SORTER));
         setSelectedProject(null);
@@ -162,8 +173,8 @@ export function MyProjects() {
     // Assignments
     createService(AssignmentManagementService, 'AssignmentManagementService')
       .getAssignments({
-        teacherId: global.userX?.teacherId,
-        studentId: global.userX?.studentId,
+        teacherId: userX.teacherId,
+        studentId: userX.studentId,
       })
       .then(response => {
         setSortedAssignments(response.assignments.sort(ASSIGNMENT_SORTER));
@@ -171,14 +182,14 @@ export function MyProjects() {
 
     // Previously used tags.
     createService(TagService, 'TagService')
-      .getAllPreviousTags({userXId: global.userX?.id})
+      .getAllPreviousTags({userXId: userX.id})
       .then(response => {
         setSortedTags(
           [...new Set(response.tags.map(e => e.text ?? ''))].sort()
         );
       })
       .catch(global.setError);
-  }, [global.userX]);
+  }, [userX]);
 
   useEffect(() => {
     if (selectedProject == null) {
@@ -214,10 +225,6 @@ export function MyProjects() {
         .catch(global.setError);
     }
   }, [selectedProject]);
-
-  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
-    return <></>;
-  }
 
   return (
     <>

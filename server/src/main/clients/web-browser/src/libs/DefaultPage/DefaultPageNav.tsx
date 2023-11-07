@@ -36,14 +36,10 @@ enum MenuKeys {
 }
 
 export function DefaultPageNav() {
+  const global = useContext(GlobalStateContext);
+  const userX = global.optionalUserX();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
-
-  // This has to be AFTER the useState() call above, otherwise it will fail.
-  const global = useContext(GlobalStateContext);
-  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
-    return <></>;
-  }
 
   const topMenuItems: MenuProps['items'] = [
     {
@@ -51,34 +47,31 @@ export function DefaultPageNav() {
       key: MenuKeys.DASHBOARD_ADMIN,
       icon: <HomeOutlined />,
       style: {
-        display: global.userX?.isAdminX ? 'block' : 'none',
+        display: userX?.isAdminX ? 'block' : 'none',
       },
     },
     {
-      label: (global.userX?.isAdminX ? 'Student ' : '') + 'Dashboard',
+      label: (userX?.isAdminX ? 'Student ' : '') + 'Dashboard',
       key: MenuKeys.DASHBOARD_STUDENT,
       icon: <HomeOutlined />,
       style: {
-        display:
-          global.userX?.isAdminX || global.userX?.isStudent ? 'block' : 'none',
+        display: userX?.isAdminX || userX?.isStudent ? 'block' : 'none',
       },
     },
     {
-      label: (global.userX?.isAdminX ? 'Teacher ' : '') + 'Dashboard',
+      label: (userX?.isAdminX ? 'Teacher ' : '') + 'Dashboard',
       key: MenuKeys.DASHBOARD_TEACHER,
       icon: <HomeOutlined />,
       style: {
-        display:
-          global.userX?.isAdminX || global.userX?.isTeacher ? 'block' : 'none',
+        display: userX?.isAdminX || userX?.isTeacher ? 'block' : 'none',
       },
     },
     {
-      label: (global.userX?.isAdminX ? 'Teacher ' : '') + 'Classes',
+      label: (userX?.isAdminX ? 'Teacher ' : '') + 'Classes',
       key: MenuKeys.CLASSES,
       icon: <UserOutlined />,
       style: {
-        display:
-          global.userX?.isAdminX || global.userX?.isTeacher ? 'block' : 'none',
+        display: userX?.isAdminX || userX?.isTeacher ? 'block' : 'none',
       },
       children: [
         {
@@ -115,8 +108,7 @@ export function DefaultPageNav() {
       key: MenuKeys.PORTFOLIOS,
       icon: <BookOutlined />,
       style: {
-        display:
-          global.userX?.isAdminX || global.userX?.isStudent ? 'block' : 'none',
+        display: userX?.isAdminX || userX?.isStudent ? 'block' : 'none',
       },
     },
     {
@@ -124,7 +116,7 @@ export function DefaultPageNav() {
       key: MenuKeys.ADMIN,
       icon: <SettingOutlined />,
       style: {
-        display: global.userX?.isAdminX ? 'block' : 'none',
+        display: userX?.isAdminX ? 'block' : 'none',
       },
       children: [
         {

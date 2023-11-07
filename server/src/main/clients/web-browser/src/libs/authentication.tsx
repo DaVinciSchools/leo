@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie';
 import {HandleErrorType} from './HandleError/HandleError';
-import {IGlobalState} from './GlobalState';
+import {IGlobalState, LoadedState} from './GlobalState';
 import {pl_types} from 'pl-pb';
 
 export const FORWARD_PARAM = 'returnTo';
@@ -39,9 +39,9 @@ export function login(
   onFailure: () => void,
   onError: (error?: HandleErrorType) => void
 ) {
-  const params = new URLSearchParams();
-  params.append(USERNAME_PARAM, username);
-  params.append(PASSWORD_PARAM, password);
+  const loginUrl = new URLSearchParams();
+  loginUrl.append(USERNAME_PARAM, username);
+  loginUrl.append(PASSWORD_PARAM, password);
 
   logout(global)
     .catch(reason => {
@@ -54,7 +54,7 @@ export function login(
           headers: addXsrfHeader({
             'Content-Type': 'application/x-www-form-urlencoded',
           }),
-          body: params,
+          body: loginUrl,
           cache: 'no-cache',
           redirect: 'follow',
         })
@@ -95,6 +95,13 @@ export function login(
 }
 
 export function logout(global: IGlobalState) {
+  if (
+    global.optionalUserX() == null &&
+    global.loaded === LoadedState.NOT_LOADED
+  ) {
+    return Promise.resolve();
+  }
+
   global.setUserX(undefined);
   return fetch('/api/logout.html', {
     method: 'POST',

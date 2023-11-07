@@ -7,10 +7,13 @@ import Typography from '@mui/material/Typography';
 import {GlobalStateContext} from '../GlobalState';
 import {createService} from '../protos';
 import {error_service} from 'pl-pb';
+import {asObject} from '../misc';
+import ErrorService = error_service.ErrorService;
 
 export const REPORT_ERROR_REQUEST_PROP_NAME = 'projectLeoReportErrorRequest';
 
 enum LogErrorStatus {
+  IDLE,
   LOGGING,
   LOGGED,
   FAILED,
@@ -28,162 +31,113 @@ const style = {
   p: 4,
 };
 
-const baseMailToLink =
-  'mailto:seno@davincischools.org?cc=sahendrickson@gmail.com';
+const baseMailToLink = 'mailto:support@projectleo.net';
 
 // See the following for why this number:
 // https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers
 const maximumEmailUrlLength = 2000;
 
-export type HandleErrorType =
-  | {error?: Error | unknown | null | undefined; reload: boolean}
-  | Error
-  | unknown
-  | undefined
-  | null;
+export type HandleErrorType = Error | unknown | undefined | null;
 
-export function HandleError(props: {
-  error: HandleErrorType;
-  setError: (error: HandleErrorType) => void;
-}) {
+export function HandleError() {
   const global = useContext(GlobalStateContext);
 
-  const [reportErrorRequest, setReportErrorRequest] =
-    useState<error_service.IReportErrorRequest>({});
-  const [errorReload, setErrorReload] = useState(true);
-
-  const [subject, setSubject] = useState('');
-  const [logErrorStatus, setLogErrorStatus] = useState(LogErrorStatus.LOGGING);
-  const [issueLink, setIssueLink] = useState('');
-  const [logErrorBody, setLogErrorBody] = useState('');
-  const [errorBody, setErrorBody] = useState('');
+  const [logErrorStatus, setLogErrorStatus] = useState(LogErrorStatus.IDLE);
   const [mailToLink, setMailToLink] = useState(baseMailToLink);
+  const [issueLink, setIssueLink] = useState<string>();
 
   useEffect(() => {
-    setMailToLink(baseMailToLink);
-
-    if (!props.error || !subject) {
+    if (global.error == null) {
+      setLogErrorStatus(LogErrorStatus.IDLE);
+      setMailToLink('');
+      setIssueLink(undefined);
       return;
     }
 
-    const assembledMailToLink =
-      baseMailToLink +
-      '&subject=' +
-      encodeURIComponent(subject) +
-      '&body=' +
-      encodeURIComponent(`Add any details you think might be useful. Or, just click send.
+    const error = asObject(global.error);
 
---- Error ---
+    const name =
+      (error?.name ?? 'Unknown') +
+      ' from ' +
+      window.location.href +
+      ' on ' +
+      new Date().toUTCString();
 
-${issueLink + logErrorBody + errorBody}`);
+    const message = `
+  Error: ${error?.name ?? 'Unknown'}    
+   From: ${window.location.href}
+     To: ${error?.request?.url ?? 'Unknown'}
+    Via: ${error?.response?.url ?? 'Unknown'}
+User Id: ${global.optionalUserX()?.id ?? 'Unknown'}
 
-    setMailToLink(
-      assembledMailToLink.length > maximumEmailUrlLength
-        ? assembledMailToLink
-            .substring(0, maximumEmailUrlLength - 3)
-            .replace(/%.?$/, '') + '...'
-        : assembledMailToLink
-    );
-  }, [subject, issueLink, logErrorBody, errorBody]);
+${error ?? 'No more information.'}
+`.trim();
 
-  useEffect(() => {
-    setSubject(
-      `Project Leo Website Error: '${
-        reportErrorRequest.name ?? 'Unknown'
-      }' on ${new Date().toUTCString()}`
-    );
+    const stack = (error?.stack ?? 'Unavailable')
+      .replace(error?.message ?? '', '[message]')
+      .replace(error?.name ?? '', '[name]');
 
-    setErrorBody(`User Id: ${global.userX?.id ?? 'none'}
-
-Error: ${reportErrorRequest.name ?? 'Unknown'}
-From: ${window.location.href}
-  To: ${reportErrorRequest?.request?.url ?? 'Unknown'}
- Via: ${reportErrorRequest?.response?.url ?? 'Unknown'}
-
-Message:
-${reportErrorRequest.message ?? 'Unknown'}
-
-Stack Trace:
-${reportErrorRequest.stack ?? 'Unknown'}`);
-  }, [reportErrorRequest]);
-
-  useEffect(() => {
-    setLogErrorStatus(LogErrorStatus.LOGGING);
-    setReportErrorRequest({});
-    setIssueLink('');
-    setLogErrorBody('');
-    setErrorReload(true);
-
-    if (props.error != null) {
-      let reportErrorRequest: error_service.IReportErrorRequest = {};
-      let error = props.error;
-      if (
-        error != null &&
-        typeof error === 'object' &&
-        'error' in error &&
-        error.error != null
-      ) {
-        error = error.error;
-      }
-      if (error != null && typeof error === 'object') {
-        const embeddedReportErrorRequest:
-          | error_service.IReportErrorRequest
-          | undefined = (
-          error as {[k: string]: error_service.IReportErrorRequest}
-        )[REPORT_ERROR_REQUEST_PROP_NAME];
-        if (embeddedReportErrorRequest != null) {
-          reportErrorRequest = embeddedReportErrorRequest;
-        } else {
-          let name = '';
-          if ('name' in error) {
-            reportErrorRequest.name = name = String(error.name);
-          }
-          let message = '';
-          if ('message' in error!) {
-            reportErrorRequest.message = message = String(error.message);
-          }
-          if ('stack' in error) {
-            reportErrorRequest.stack = String(error.stack)
-              .replace(name, '[name]')
-              .replace(message, '[message]');
-          }
-        }
-        if ('reload' in error) {
-          setErrorReload(error.reload === true);
-        }
-      } else {
-        reportErrorRequest.name = 'Unknown';
-        reportErrorRequest.message = JSON.stringify(error);
-        setErrorReload(true);
-      }
-      setReportErrorRequest(reportErrorRequest);
-
-      createService(error_service.ErrorService, 'ErrorService')
-        .reportError(reportErrorRequest)
-        .then(response => {
-          if (response.issueLink) {
-            setIssueLink(`Issue Link: ${response.issueLink}\n\n`);
-          }
-          if (!response.failureReason) {
-            setLogErrorStatus(LogErrorStatus.LOGGED);
-          } else {
-            setLogErrorBody(`Log Error: ${response.failureReason}.\n\n`);
-            setLogErrorStatus(LogErrorStatus.FAILED);
-          }
+    if (logErrorStatus === LogErrorStatus.IDLE) {
+      setLogErrorStatus(LogErrorStatus.LOGGING);
+      createService(ErrorService, 'ErrorService')
+        .reportError({
+          name,
+          message,
+          stack,
+          request: {
+            url: error?.request?.url ?? 'Unknown',
+            body: error?.request ?? 'Unknown',
+          },
+          response: {
+            url: error?.response?.url ?? 'Unknown',
+            body: error?.response ?? 'Unknown',
+          },
         })
-        .catch(reason => {
-          if (reason instanceof Error) {
-            setLogErrorBody(`Log Error: ${reason.name}.\n\n`);
-          } else {
-            setLogErrorBody(`Log Error: ${JSON.stringify(reason)}\n\n`);
-          }
+        .then(response => {
+          setLogErrorStatus(LogErrorStatus.LOGGED);
+          setIssueLink(response?.issueLink ?? undefined);
+        })
+        .catch(e => {
           setLogErrorStatus(LogErrorStatus.FAILED);
+          // This request was best effort. So, ignore any errors.
+          console.error(e);
         });
     }
-  }, [props.error]);
+
+    const mailBody = `
+  Issue: ${issueLink ?? 'Link is not available.'}
+  Error: ${name}    
+   From: ${window.location.href}
+     To: ${error?.request?.url ?? 'Unknown'}
+    Via: ${error?.response?.url ?? 'Unknown'}
+User Id: ${global.optionalUserX()?.id ?? 'Unknown'}
+
+Message:
+${error.message ?? 'Unknown'}
+
+Stack Trace:
+${error.stack ?? 'Unknown'}`.trim();
+
+    const mailUrl = new URL(baseMailToLink);
+    mailUrl.searchParams.set('subject', name);
+    mailUrl.searchParams.set('body', mailBody);
+
+    let mailUrlString = mailUrl.href;
+    mailUrlString =
+      mailUrlString.length > maximumEmailUrlLength
+        ? mailUrlString
+            .substring(0, maximumEmailUrlLength - /* room for ellipse= */ 3)
+            // Remove any partial encodings that may be clipped, e.g., from %20.
+            .replace(/%.?$/, '') + '...'
+        : mailUrlString;
+
+    if (mailToLink !== mailUrlString) {
+      setMailToLink(mailUrlString);
+    }
+  }, [global.error, global.optionalUserX(), issueLink]);
 
   function closeWarning() {
-    props.setError(undefined);
+    global.setError(undefined);
   }
 
   function reloadPage() {
@@ -196,8 +150,8 @@ ${reportErrorRequest.stack ?? 'Unknown'}`);
 
   return (
     <Modal
-      open={props.error != null}
-      onClose={() => (errorReload ? reloadPage() : closeWarning())}
+      open={global.error != null}
+      onClose={() => closeWarning}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
     >
@@ -215,15 +169,12 @@ ${reportErrorRequest.stack ?? 'Unknown'}`);
             <>
               <p>We've logged this error and are going to look into it.</p>
               <p>
-                If this is urgent please send an e-mail to{' '}
+                If this is urgent, please send us an e-mail using the following
+                link:{' '}
                 <a href={mailToLink} target="_blank" rel="noopener noreferrer">
-                  Steve Eno (seno@davincischools.org)
+                  Contact Project Leo Support
                 </a>
-                . Use{' '}
-                <a href={mailToLink} target="_blank" rel="noopener noreferrer">
-                  this link
-                </a>{' '}
-                to pre-populate your e-mail with error details.
+                .
               </p>
               <p>We'll try to respond as soon as possible. Thank you!</p>
             </>
@@ -231,24 +182,17 @@ ${reportErrorRequest.stack ?? 'Unknown'}`);
             <>
               <p>Unfortunately, we were unable to log the error.</p>
               <p>
-                Please let us know about it by sending an e-mail to{' '}
+                Please let us know about it by sending us an e-mail using the
+                following link:{' '}
                 <a href={mailToLink} target="_blank" rel="noopener noreferrer">
-                  Steve Eno (seno@davincischools.org)
+                  Contact Project Leo Support
                 </a>
-                . Use{' '}
-                <a href={mailToLink} target="_blank" rel="noopener noreferrer">
-                  this link
-                </a>{' '}
-                to pre-populate your e-mail with error details.
+                .
               </p>
-              <p>
-                We really appreciate your feedback and we'll try to respond as
-                soon as possible. Thank you!
-              </p>
+              <p>We'll try to respond as soon as possible. Thank you!</p>
             </>
           )}
           <div className="error-action-links">
-            {!errorReload && <span onClick={closeWarning}>Close</span>}
             <span onClick={reloadPage}>Reload</span>
             <span onClick={goHome}>Go Home</span>
           </div>

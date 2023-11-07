@@ -37,9 +37,10 @@ export function SelectDistrictFromList(props: {
 
 export function EditDistricts() {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUserX(userX => userX?.isAdminX)) {
-    return <></>;
-  }
+  const userX = global.requireUserX(
+    'You must be an administrator to edit districts.',
+    userX => userX.isAdminX
+  );
 
   const [districts, setDistricts] = useState(new Map<number, IDistrict>());
   const [districtId, setDistrictId] = useState(-1);
@@ -86,6 +87,10 @@ export function EditDistricts() {
       .then(processDistrictInformationResponse)
       .catch(global.setError);
   }, []);
+
+  if (!userX) {
+    return <></>;
+  }
 
   return (
     <>

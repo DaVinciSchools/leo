@@ -90,9 +90,10 @@ export function SelectMultipleSchoolsFromList(props: {
 
 export function EditSchools() {
   const global = useContext(GlobalStateContext);
-  if (!global.requireUserX(userX => userX?.isAdminX)) {
-    return <></>;
-  }
+  const userX = global.requireUserX(
+    'You must be an administrator to edit schools.',
+    userX => userX.isAdminX
+  );
 
   const [districts, setDistricts] = useState(new Map<number, IDistrict>());
   const [districtId, setDistrictId] = useState(-1);
@@ -163,6 +164,10 @@ export function EditSchools() {
     setDistrictId(response.districtId!);
     setSchools(new Map(response.schools!.map(v => [v.id!, v!])));
     setSchoolId(response.nextSchoolId!);
+  }
+
+  if (!userX) {
+    return <></>;
   }
 
   return (

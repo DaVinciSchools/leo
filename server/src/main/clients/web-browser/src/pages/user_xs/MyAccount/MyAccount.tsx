@@ -17,6 +17,9 @@ import IFullUserXDetails = user_x_management.IFullUserXDetails;
 
 export function MyAccount() {
   const global = useContext(GlobalStateContext);
+  const userX = global.requireUserX(
+    'You must be signed in to view your account information.'
+  );
 
   const profileForm = useFormFields({
     onChange: () => autoSave.trigger(),
@@ -71,6 +74,10 @@ export function MyAccount() {
     1500
   );
 
+  if (!userX) {
+    return <></>;
+  }
+
   return (
     <>
       <div className="global-flex-column">
@@ -85,7 +92,7 @@ export function MyAccount() {
           </div>
           <form>
             <ProfileEditor
-              userXId={global?.userX?.id ?? null}
+              userXId={userX?.id ?? null}
               profileForm={profileForm}
               profileSaveStatus={profileSaveStatus}
             />

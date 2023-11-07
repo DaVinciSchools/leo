@@ -10,9 +10,7 @@ export function Logout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setTimeout(() => {
-      logout(global).finally(() => navigate('/'));
-    }, 250);
+    logout(global).finally(() => navigate('/'));
   }, []);
 
   return (

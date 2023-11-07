@@ -45,6 +45,7 @@ export function ProfileEditor(props: {
   profileSaveStatus: string;
 }) {
   const global = useContext(GlobalStateContext);
+  const userX = global.requireUserX('You must be logged in to edit a profile.');
 
   const [sortedDistricts, setSortedDistricts] = useState<readonly IDistrict[]>(
     []
@@ -68,7 +69,7 @@ export function ProfileEditor(props: {
       maxLength: 254,
       isEmail: true,
       startIcon: <Email />,
-      disabled: global?.userX?.isAdminX !== true,
+      disabled: userX?.isAdminX !== true,
     }
   );
 
@@ -114,7 +115,7 @@ export function ProfileEditor(props: {
     props.profileForm.useAutocompleteFormField<IDistrict | null>('district', {
       isAutocomplete: {},
       onChange: refreshClassXs,
-      disabled: global?.userX?.isAdminX !== true,
+      disabled: userX?.isAdminX !== true,
     });
   const profileSchools = props.profileForm.useAutocompleteFormField<
     readonly ISchool[]
@@ -188,7 +189,7 @@ export function ProfileEditor(props: {
     }
   }, [props.userXId]);
 
-  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
+  if (!userX) {
     return <></>;
   }
 
@@ -237,11 +238,7 @@ export function ProfileEditor(props: {
           <Grid item xs={12} className="global-section-heading">
             <div className="global-section-title">Password</div>
           </Grid>
-          <Grid
-            item
-            xs={12}
-            display={global?.userX?.isAdminX ? 'none' : undefined}
-          >
+          <Grid item xs={12} display={userX?.isAdminX ? 'none' : undefined}>
             <TextField
               autoComplete="current-password"
               label="Current Password"
@@ -284,7 +281,7 @@ export function ProfileEditor(props: {
               formField={profileSchools}
               InputLabelProps={{shrink: true}}
               placeholder={() =>
-                global?.userX?.isAdminX === true
+                userX?.isAdminX === true
                   ? 'Select a district to select from its available schools'
                   : 'Select schools from the district'
               }
@@ -304,31 +301,19 @@ export function ProfileEditor(props: {
             item
             xs={12}
             className="global-section-heading"
-            display={global?.userX?.isAdminX ? undefined : 'none'}
+            display={userX?.isAdminX ? undefined : 'none'}
           >
             <div className="global-section-title">Roles</div>
           </Grid>
-          <Grid
-            item
-            xs={12}
-            display={global?.userX?.isAdminX ? undefined : 'none'}
-          >
+          <Grid item xs={12} display={userX?.isAdminX ? undefined : 'none'}>
             <Checkbox {...profileIsAdminX.checkboxParams()} />
             Is Administrator
           </Grid>
-          <Grid
-            item
-            xs={12}
-            display={global?.userX?.isAdminX ? undefined : 'none'}
-          >
+          <Grid item xs={12} display={userX?.isAdminX ? undefined : 'none'}>
             <Checkbox {...profileIsTeacher.checkboxParams()} />
             Is Teacher
           </Grid>
-          <Grid
-            item
-            xs={12}
-            display={global?.userX?.isAdminX ? undefined : 'none'}
-          >
+          <Grid item xs={12} display={userX?.isAdminX ? undefined : 'none'}>
             <Checkbox {...profileIsStudent.checkboxParams()} />
             Is Student
           </Grid>

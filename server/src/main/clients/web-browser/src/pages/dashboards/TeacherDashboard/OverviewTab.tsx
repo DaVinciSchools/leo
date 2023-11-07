@@ -32,6 +32,10 @@ import IFullUserXDetails = user_x_management.IFullUserXDetails;
 
 export function OverviewTab() {
   const global = useContext(GlobalStateContext);
+  const userX = global.requireUserX(
+    'You must be a teacher for this overview.',
+    userX => userX.isAdminX || userX.isTeacher
+  );
 
   const filterForm = useFormFields();
 
@@ -44,12 +48,12 @@ export function OverviewTab() {
       isAutocomplete: {
         isMultiple: true,
       },
-      disabled: !global.userX,
+      disabled: !userX,
     }
   );
 
   useEffect(() => {
-    if (!global.userX) {
+    if (!userX) {
       setSchoolOptions([]);
       setClassXOptions([]);
       filterForm.setValuesObject({});
@@ -57,14 +61,14 @@ export function OverviewTab() {
     }
 
     createService(SchoolManagementService, 'SchoolManagementService')
-      .getSchools({districtId: global.userX.districtId})
+      .getSchools({districtId: userX.districtId})
       .then(response => {
         const options = response.schools.sort(SCHOOL_SORTER);
         setSchoolOptions(options);
         filterAutocompleteFormField(schoolFilter, school => school.id, options);
       })
       .catch(global.setError);
-  }, [global.userX]);
+  }, [userX]);
 
   // Maintain classX filters.
 
@@ -102,7 +106,7 @@ export function OverviewTab() {
   const [showSearchForStudent, setShowSearchForStudent] =
     useState<boolean>(false);
 
-  if (!global.requireUserX(userX => userX?.isAdminX || userX?.isTeacher)) {
+  if (!userX) {
     return <></>;
   }
 

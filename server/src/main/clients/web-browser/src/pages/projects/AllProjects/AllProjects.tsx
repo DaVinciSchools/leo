@@ -21,6 +21,9 @@ import State = pl_types.ProjectDefinition.State;
 
 export function AllProjects() {
   const global = useContext(GlobalStateContext);
+  const userX = global.requireUserX(
+    'You must be signed in to view all projects.'
+  );
 
   const [projects, setProjects] = useState<readonly IProject[]>([]);
   const [unsuccessfulProjects, setUnsuccessfulProjects] = useState<
@@ -30,30 +33,27 @@ export function AllProjects() {
   const [projectDetails, setProjectDetails] = useState<IProject | undefined>();
 
   useEffect(() => {
-    if (global.userX != null) {
-      createService(ProjectManagementService, 'ProjectManagementService')
-        .getProjects({
-          userXId: global.userX?.id ?? 0,
-          includeUnsuccessful: true,
-        })
-        .then(response => {
-          setProjects(response.projects.sort(REVERSE_DATE_THEN_PROJECT_SORTER));
-          setUnsuccessfulProjects(
-            (response.unsuccessfulInputs ?? [])
-              .filter(p => p.state === State.PROCESSING)
-              .sort(PROJECT_DEFINITION_SORTER)
-          );
-        })
-        .catch(global.setError);
-    } else {
+    if (userX == null) {
       setProjects([]);
       setUnsuccessfulProjects([]);
+      return;
     }
-  }, [global.userX]);
 
-  if (!global.requireUserX(userX => userX?.isAuthenticated)) {
-    return <></>;
-  }
+    createService(ProjectManagementService, 'ProjectManagementService')
+      .getProjects({
+        userXId: userX.id ?? 0,
+        includeUnsuccessful: true,
+      })
+      .then(response => {
+        setProjects(response.projects.sort(REVERSE_DATE_THEN_PROJECT_SORTER));
+        setUnsuccessfulProjects(
+          (response.unsuccessfulInputs ?? [])
+            .filter(p => p.state === State.PROCESSING)
+            .sort(PROJECT_DEFINITION_SORTER)
+        );
+      })
+      .catch(global.setError);
+  }, [userX]);
 
   function updateProject(project: IProject, modifications: IProject) {
     Object.assign(project, modifications);
@@ -72,6 +72,10 @@ export function AllProjects() {
       .catch(reason => {
         global.setError({error: reason, reload: false});
       });
+  }
+
+  if (!userX) {
+    return <></>;
   }
 
   return (

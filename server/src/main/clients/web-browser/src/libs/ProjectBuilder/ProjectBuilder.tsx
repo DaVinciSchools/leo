@@ -35,6 +35,7 @@ export function ProjectBuilder(props: {
   style?: Partial<CSSProperties>;
 }) {
   const global = useContext(GlobalStateContext);
+  const userX = global.optionalUserX();
   const navigate = useNavigate();
 
   const [allInputValues, setAllInputValues] = useState<
@@ -53,7 +54,7 @@ export function ProjectBuilder(props: {
   // All states. But, filter out REGISTER depending on whether a user is already logged in.
   const steps: State[] = Object.values(State)
     .filter(i => typeof i === 'number')
-    .filter(i => !global.userX?.isAuthenticated || i !== State.REGISTER)
+    .filter(i => !userX?.isAuthenticated || i !== State.REGISTER)
     .map(i => i as State);
   const [activeStep, setActiveStep] = useState(State.GETTING_STARTED);
 

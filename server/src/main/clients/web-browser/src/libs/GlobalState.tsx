@@ -1,5 +1,5 @@
 import {HandleError, HandleErrorType} from './HandleError/HandleError';
-import {createContext, PropsWithChildren, useEffect, useState} from 'react';
+import {createContext, PropsWithChildren, useState} from 'react';
 import {createService} from './protos';
 import {pl_types, user_x_management} from 'pl-pb';
 import {useNavigate} from 'react-router';
@@ -7,93 +7,113 @@ import {useNavigate} from 'react-router';
 import UserXManagementService = user_x_management.UserXManagementService;
 import {FORWARD_PARAM, logout} from './authentication';
 
+export enum LoadedState {
+  NOT_LOADED,
+  LOADING,
+  LOADED,
+}
+
 export interface IGlobalState {
-  readonly userX?: pl_types.IUserX;
   readonly error?: HandleErrorType;
-  readonly loaded: boolean;
-  setUserX: (userX?: pl_types.IUserX | null) => void;
+  readonly loaded: LoadedState;
   setError: (error?: HandleErrorType) => void;
+  optionalUserX: () => pl_types.IUserX | undefined;
   requireUserX: (
-    userXReq: (userX: pl_types.IUserX) => boolean | null | undefined,
+    loginPrompt?: string,
+    userXReq?: (userX: pl_types.IUserX) => boolean | null | undefined,
     forwardUrl?: string
-  ) => boolean;
+  ) => pl_types.IUserX | undefined;
+  setUserX: (userX: pl_types.IUserX | null | undefined) => void;
 }
 
 export const GlobalStateContext = createContext<IGlobalState>({
-  loaded: false,
-  setUserX: throwUnimplementedError,
+  loaded: LoadedState.NOT_LOADED,
   setError: throwUnimplementedError,
+  optionalUserX: throwUnimplementedError,
   requireUserX: throwUnimplementedError,
+  setUserX: throwUnimplementedError,
 });
 
 export function GlobalState(props: PropsWithChildren<{}>) {
   const [userX, setUserX] = useState<pl_types.IUserX | undefined>();
   const [error, setError] = useState<HandleErrorType>();
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(LoadedState.NOT_LOADED);
 
   function setErrorIntercept(error: HandleErrorType) {
     console.error('Error occurred. ', error);
     setError(error);
   }
 
+  function loadUserX() {
+    if (loaded === LoadedState.NOT_LOADED) {
+      setLoaded(LoadedState.LOADING);
+      createService(UserXManagementService, 'UserXManagementService')
+        .getUserXs({ofSelf: true})
+        .then(response => {
+          if (response?.userXs?.length === 1 && response.userXs[0]?.userX) {
+            setUserX(response.userXs[0].userX);
+          } else {
+            logout(global);
+          }
+        })
+        .catch(error => {
+          setError(error);
+          logout(global);
+        })
+        .finally(() => setLoaded(LoadedState.LOADED));
+    }
+  }
+
+  function requireUserX(
+    loginPrompt?: string,
+    userXReq?: (userX: pl_types.IUserX) => boolean | null | undefined,
+    forwardUrl?: string
+  ) {
+    if (loaded !== LoadedState.LOADED) {
+      loadUserX();
+      return undefined;
+    }
+
+    if (userXReq) {
+      if (userX == null || !userXReq(userX)) {
+        const navigate = useNavigate();
+        if (forwardUrl) {
+          navigate(forwardUrl);
+        } else {
+          navigate(
+            `/users/login.html?${FORWARD_PARAM}=${encodeURIComponent(
+              window.location.href
+            )}`
+          );
+        }
+        return undefined;
+      }
+    }
+
+    return userX;
+  }
+
+  function setSetUserXIntercept(userX: pl_types.IUserX | null | undefined) {
+    if (userX) {
+      setUserX(userX);
+    } else {
+      setUserX(undefined);
+    }
+    setLoaded(LoadedState.LOADED);
+  }
+
   const global = {
-    userX,
     error,
     loaded,
-    setUserX,
     setError: setErrorIntercept,
-    requireUserX: (
-      userXReq: (userX: pl_types.IUserX) => boolean,
-      forwardUrl?: string
-    ) => {
-      const navigate = useNavigate();
-      const [doForwardUrl, setDoForwardUrl] = useState(false);
-
-      useEffect(() => {
-        if (doForwardUrl) {
-          if (forwardUrl) {
-            navigate(forwardUrl);
-          } else {
-            const url = new URL(window.location.href);
-            navigate(
-              `/users/login.html?${FORWARD_PARAM}=${encodeURIComponent(
-                url.pathname + url.search
-              )}`
-            );
-          }
-        }
-      }, [doForwardUrl]);
-
-      if (doForwardUrl) {
-        return false;
-      } else if (!loaded) {
-        return false;
-      } else if (userX == null || !userXReq(userX)) {
-        setDoForwardUrl(true);
-        return false;
-      }
-
-      return true;
-    },
+    requireUserX,
+    optionalUserX: () => userX,
+    setUserX: setSetUserXIntercept,
   } as IGlobalState;
-
-  useEffect(() => {
-    createService(UserXManagementService, 'UserXManagementService')
-      .getUserXs({ofSelf: true})
-      .then(response => {
-        if (response?.userXs?.length === 1 && response.userXs[0]?.userX) {
-          setUserX(response.userXs[0].userX);
-          setLoaded(true);
-        } else {
-          logout(global).finally(() => setLoaded(true));
-        }
-      })
-      .catch(() => logout(global).finally(() => setLoaded(true)));
-  }, []);
 
   return (
     <GlobalStateContext.Provider value={global}>
-      <HandleError error={error} setError={setError} />
+      <HandleError />
       {props.children}
     </GlobalStateContext.Provider>
   );
