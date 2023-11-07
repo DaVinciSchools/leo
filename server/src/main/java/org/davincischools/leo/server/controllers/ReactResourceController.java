@@ -114,11 +114,15 @@ public class ReactResourceController {
                 if (gtagResponse.statusCode() != HttpURLConnection.HTTP_OK) {
                   response.sendError(gtagResponse.statusCode(), uri.getPath());
                 } else {
-                  response.setStatus(gtagResponse.statusCode());
-                  HttpServletProxy.copyHeaders(gtagResponse, response);
+                  response.setContentType(
+                      gtagResponse
+                          .headers()
+                          .firstValue("content-type")
+                          .orElse(MediaType.JAVASCRIPT_UTF_8.toString()));
                   response.getOutputStream().write(gtagResponse.body().getBytes());
                   response.getOutputStream().flush();
                   response.getOutputStream().close();
+                  response.setStatus(gtagResponse.statusCode());
                 }
               } else if (reactPort > 0) {
                 // Forward the request to the React server running locally.
