@@ -16,6 +16,7 @@ import org.davincischools.leo.database.post_environment_processors.LoadCustomPro
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.server.controllers.project_generators.ProjectGenerator;
+import org.davincischools.leo.server.utils.ApplicationExceptionConsoleLogger;
 import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.QueryWithNullsToRecordConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutor;
@@ -58,7 +59,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
       HttpUserXService.class,
       ProjectGenerator.class,
       TestDatabase.class,
-      UserX.class
+      UserX.class,
+      ApplicationExceptionConsoleLogger.class
     })
 public class ServerApplication {
 

@@ -160,6 +160,7 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
           lastSuccessfulInputTime = Instant.now();
           break;
         } catch (Throwable t) {
+          logger.atError().withThrowable(t).log("Server processing failed.");
           if (retry > retries
               || Instant.now().isAfter(startTime.plusMillis(retriesWithinMilliseconds))) {
             throwables.add(t);
