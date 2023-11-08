@@ -5,7 +5,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 unalias -a
 
 # Remove all of Apache's configurations and restart Apache.
-rm -f /etc/apache2/sites-enabled/*.project_leo.conf.subdomain
+rm -f /etc/apache2/sites-enabled/*-project_leo.template.sh.conf.subdomain
 service apache2 reload || true
 
 # Iterate over the home directories and see if they have a file
@@ -27,23 +27,28 @@ for HOME_DIR in /home/*; do
   SUBDOMAIN="${LEO_USER}"
   HTTPS="$([ "$(hostname -f)" = projectleo.net ] && echo https || echo http)"
   PORT="$(/root/bin/get-open-port)"
+  DEBUG_PORT="$(/root/bin/get-open-port)"
 
-  # shellcheck disable=SC2211
+  FILE=(/etc/apache2/sites-available/??-project_leo.template.sh)
   HTTPS="${HTTPS}" \
   PORT="${PORT}" \
   SUBDOMAIN="${SUBDOMAIN}" \
-      /etc/apache2/sites-available/??-project_leo.template.sh \
-      > "/etc/apache2/sites-enabled/${SUBDOMAIN}.project_leo.conf.subdomain"
+      "${FILE[0]}" \
+      > "/etc/apache2/sites-enabled/${SUBDOMAIN}.$(basename "${FILE[0]}").conf.subdomain"
 
   HTTPS="${HTTPS}" \
   SUBDOMAIN="${SUBDOMAIN}" \
       /etc/apache2/sites-available/virtual_host.template.sh \
       > "/etc/apache2/sites-enabled/${SUBDOMAIN}.virtual_host.conf"
 
-  cat <<EOF | sudo -u "${LEO_USER}" bash -x -s
+  cat <<EOF | sudo -u "${LEO_USER}" bash -s
     mkdir -p "${LEO_HOME_DIR}"
     echo "${PORT}" >"${LEO_HOME_DIR}/server.port"
+    echo "${DEBUG_PORT}" >"${LEO_HOME_DIR}/server.debug.port"
 EOF
+
+  # For debugging, add the following line to the executable statement below.
+  # -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=localhost:"$(cat "${LEO_HOME_DIR}/server.debug.port")" \
 
   while true; do
     umask 077

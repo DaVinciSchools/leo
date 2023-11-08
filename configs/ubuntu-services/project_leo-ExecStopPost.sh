@@ -5,5 +5,5 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 unalias -a
 
 # Remove all of Apache's configurations and restart Apache.
-rm -f /etc/apache2/sites-enabled/*.project_leo.conf.subdomain
+rm -f /etc/apache2/sites-enabled/*-project_leo.template.sh.conf.subdomain
 service apache2 reload || true

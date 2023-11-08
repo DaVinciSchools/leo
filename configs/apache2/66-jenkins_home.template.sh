@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 set -o nounset -o errexit
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
@@ -14,9 +14,12 @@ DOMAIN=$([ "${HTTPS}" = 'https' ] && hostname -f || echo localhost)
 
 cat <<EOF
 
-# Jenkins requires the following directive to be set.
+# Jenkins requirements for running as a proxy are at:
+# https://www.jenkins.io/doc/book/system-administration/reverse-proxy-configuration-troubleshooting/
+
+# Jenkins requirement for running a reverse proxy.
+ProxyRequests Off
 AllowEncodedSlashes NoDecode
-# ProxyRequests Off
 
 # This is the localhost port and path that Jenkins is listening at.
 <Proxy "http://localhost:${PORT}/~${USER}/jenkins*">
@@ -28,17 +31,18 @@ AllowEncodedSlashes NoDecode
   # Jenkins will handle authentication. Apache allows anyone.
   Require all granted
 
-  # This tells Apache to translate ${HTTPS}://$([ "${HTTPS}" = 'https' ] && echo "${SUBDOMAIN}".)${DOMAIN}/~${USER}/jenkins
-  # URLs to and from Jenkins' http://localhost:${PORT}/~${USER}/jenkins URLs.
-  ProxyPass "http://localhost:${PORT}/~${USER}/jenkins" retry=0 nocanon
+  # Jenkins requirement for running a reverse proxy.
+  ProxyPass        "http://localhost:${PORT}/~${USER}/jenkins" nocanon retry=0
   ProxyPassReverse "http://localhost:${PORT}/~${USER}/jenkins"
-  ProxyPassReverse "${HTTPS}://%{HTTP_HOST}/~${USER}/jenkins"
+  ProxyPassReverse "${HTTPS}://${SUBDOMAIN}.${DOMAIN}/~${USER}/jenkins"
 
-  # Jenkins requirements for running as a proxy. See:
-  # https://www.jenkins.io/doc/book/system-administration/reverse-proxy-configuration-troubleshooting/
-  RequestHeader set X-Forwarded-User %{RU}e
-  RequestHeader set X-Forwarded-Proto "${HTTPS}"
+  # Jenkins requirement for running a reverse proxy.
+  # This seems to be set by ProxyPass.
+  # RequestHeader set X-Forwarded-Proto "${HTTPS}"
+  RequestHeader set X-Forwarded-Host "${SUBDOMAIN}.${DOMAIN}"
   RequestHeader set X-Forwarded-Port "${HTTPS_PORT}"
+  # RequestHeader set X-Forwarded-User %{RU}e
+
 </Location>
 
 EOF

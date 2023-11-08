@@ -5,7 +5,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 unalias -a
 
 # Remove all of Apache's configurations and restart Apache.
-rm -f /etc/apache2/sites-enabled/*.jenkins_home.conf.subdomain
+rm -f /etc/apache2/sites-enabled/*-jenkins_home.template.sh.conf.subdomain
 service apache2 reload || true
 
 # Require jenkins to be installed.
@@ -23,13 +23,13 @@ for HOME_DIR in /home/*; do
   PORT="$(/root/bin/get-open-port)"
   SUBDOMAIN=www
 
-  # shellcheck disable=SC2211
+  FILE=(/etc/apache2/sites-available/??-jenkins_home.template.sh)
   HTTPS="${HTTPS}" \
   PORT="${PORT}" \
   USER="${USER}" \
   SUBDOMAIN="${SUBDOMAIN}" \
-      /etc/apache2/sites-available/??-jenkins_home.template.sh \
-      > "/etc/apache2/sites-enabled/${SUBDOMAIN}.jenkins_home.conf.subdomain"
+      "${FILE[0]}" \
+      > "/etc/apache2/sites-enabled/${SUBDOMAIN}.$(basename "${FILE[0]}").conf.subdomain"
 
   HTTPS="${HTTPS}" \
   SUBDOMAIN="${SUBDOMAIN}" \
@@ -45,9 +45,9 @@ for HOME_DIR in /home/*; do
       -Djava.awt.headless=true \
       -Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true \
       -jar /usr/share/java/jenkins.war \
-      --httpPort="${PORT}" \
-      --prefix=/~"${USER}"/jenkins
-    echo Restarting Jenkins for user '${USER}'.
+      "--httpPort=${PORT}" \
+      "--prefix=/~${USER}/jenkins"
+    echo Restarting Jenkins for user "${USER}".
     sleep 5
   done &
   PIDS="${PIDS},$!"

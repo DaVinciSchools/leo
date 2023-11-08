@@ -12,21 +12,25 @@ DOMAIN=$([ "${HTTPS}" = 'https' ] && hostname -f || echo localhost)
 
 cat <<EOF
 
+# The ProxyRequests directive should usually be set off when using ProxyPass.
+# See: https://httpd.apache.org/docs/2.4/mod/mod_proxy.html#proxypass
+ProxyRequests Off
+
 # This is the localhost port and path that Project Leo is listening at.
 <Proxy http://localhost:${PORT}*>
   Require all granted
 </Proxy>
 
 # This is the public-facing web address that Project Leo will be available at.
-<LocationMatch "^/(?!\~).*">
+<Location "/">
   # Project Leo will handle authentication. Apache allows anyone.
   Require all granted
 
-  # This tells Apache to translate ${HTTPS}://$([ "${HTTPS}" = 'https' ] && echo "${SUBDOMAIN}".)${DOMAIN}
-  # URLs to and from Project Leo's http://localhost:${PORT} URLs.
-  ProxyPass http://localhost:${PORT} retry=0 nocanon
-  ProxyPassReverse http://localhost:${PORT}
-  ProxyPassReverse ${HTTPS}://%{HTTP_HOST}
-</LocationMatch>
+  ProxyPass        "http://localhost:${PORT}/" nocanon retry=0
+  ProxyPassReverse "http://localhost:${PORT}/"
+  ProxyPassReverse "${HTTPS}://${SUBDOMAIN}.${DOMAIN}/"
+
+  # Header edit Location "^http://localhost:${PORT}(.*)" "${HTTPS}://${SUBDOMAIN}.${DOMAIN}/\$1"
+</Location>
 
 EOF
