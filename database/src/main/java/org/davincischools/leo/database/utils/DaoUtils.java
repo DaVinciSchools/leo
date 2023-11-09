@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.davincischools.leo.database.dao_interfaces.DaoWithPosition;
 import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
@@ -42,7 +44,7 @@ public class DaoUtils {
   private static final Logger logger = LogManager.getLogger();
 
   private static final Map<Class<?>, Optional<DaoShallowCopyMethods>> daoShallowCopyMethods =
-      Collections.synchronizedMap(new HashMap<>());
+      new HashMap<>();
 
   private static Optional<DaoShallowCopyMethods> getDaoShallowCopyMethods(Object dao) {
     checkNotNull(dao);
@@ -311,4 +313,14 @@ public class DaoUtils {
       Function<Object, Object> getId,
       BiConsumer<Object, Object> setId,
       ImmutableList<BiConsumer<Object, Object>> copyFields) {}
+
+  public static <T extends DaoWithPosition> List<T> sortByPosition(Iterable<T> daos) {
+    if (Iterables.isEmpty(daos)) {
+      return Collections.emptyList();
+    }
+
+    return Streams.stream(daos)
+        .sorted(Comparator.comparing(DaoWithPosition::getPosition))
+        .collect(Collectors.toList());
+  }
 }

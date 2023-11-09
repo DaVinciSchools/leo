@@ -22,6 +22,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.davincischools.leo.database.dao_interfaces.DaoWithPosition;
 
 @Builder
 @AllArgsConstructor
@@ -32,7 +33,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @Entity(name = ProjectInputValue.ENTITY_NAME)
 @Table(name = ProjectInputValue.TABLE_NAME, schema = "leo_test")
-public class ProjectInputValue implements Serializable {
+public class ProjectInputValue implements Serializable, DaoWithPosition {
 
   public static final String ENTITY_NAME = "ProjectInputValue";
   public static final String TABLE_NAME = "project_input_value";
@@ -80,6 +81,7 @@ public class ProjectInputValue implements Serializable {
     return deleted;
   }
 
+  @Override
   @Column(name = COLUMN_POSITION_NAME, nullable = false)
   public Float getPosition() {
     return position;

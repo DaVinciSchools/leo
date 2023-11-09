@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.davincischools.leo.database.dao_interfaces.DaoWithPosition;
 
 @Builder
 @AllArgsConstructor
@@ -29,7 +30,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @Entity(name = ProjectMilestoneStep.ENTITY_NAME)
 @Table(name = ProjectMilestoneStep.TABLE_NAME, schema = "leo_test")
-public class ProjectMilestoneStep implements Serializable {
+public class ProjectMilestoneStep implements Serializable, DaoWithPosition {
 
   public static final String ENTITY_NAME = "ProjectMilestoneStep";
   public static final String TABLE_NAME = "project_milestone_step";
@@ -75,6 +76,7 @@ public class ProjectMilestoneStep implements Serializable {
     return deleted;
   }
 
+  @Override
   @Column(name = COLUMN_POSITION_NAME, nullable = false)
   public Float getPosition() {
     return position;
