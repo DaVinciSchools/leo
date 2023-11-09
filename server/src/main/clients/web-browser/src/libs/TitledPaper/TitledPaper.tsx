@@ -61,6 +61,7 @@ export const TitledPaper = forwardRef(
           >
             <span>{props.title}</span>
             <span
+              className={NOT_DRAGGABLE_CLASS_NAME}
               style={{
                 color: props.highlightColor,
                 display: props.icon ? 'block' : 'none',
