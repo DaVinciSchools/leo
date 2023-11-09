@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS log_reference;
 DROP TABLE IF EXISTS log;
 DROP TABLE IF EXISTS tag;
 DROP TABLE IF EXISTS project_post_rating;
+DROP TABLE IF EXISTS project_input_fulfillment;
 DROP TABLE IF EXISTS project_post_comment;
 DROP TABLE IF EXISTS project_input_value;
 DROP TABLE IF EXISTS portfolio;
