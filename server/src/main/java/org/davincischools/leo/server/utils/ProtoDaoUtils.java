@@ -7,11 +7,13 @@ import static org.davincischools.leo.database.utils.DaoUtils.createJoinTableRows
 import static org.davincischools.leo.database.utils.DaoUtils.getDaoClass;
 import static org.davincischools.leo.database.utils.DaoUtils.ifInitialized;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
+import com.google.common.collect.Streams;
 import com.google.protobuf.Descriptors.Descriptor;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
@@ -32,6 +34,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
@@ -40,7 +43,6 @@ import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.Project;
-import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectMilestone;
@@ -52,9 +54,10 @@ import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
+import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillRepository;
-import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
+import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.FullProjectInput;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
@@ -62,6 +65,7 @@ import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.ClassX.Builder;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition.State;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
+import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategoryOrBuilder;
 import org.davincischools.leo.protos.pl_types.ProjectInputValue;
 import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
@@ -109,29 +113,6 @@ public class ProtoDaoUtils {
           ProtoDaoFields,
           Map<Integer, BiConsumer</* dao= */ Object, /* message= */ Message.Builder>>>
       daoToProtoSetters = Collections.synchronizedMap(new HashMap<>());
-
-  public static Optional<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder>
-      toProjectDefinition(
-          FullProjectDefinition fullProjectDefinition,
-          Supplier<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder> newBuilder) {
-    return translateToProto(
-        fullProjectDefinition.definition(),
-        newBuilder,
-        builder -> {
-          fullProjectDefinition
-              .categories()
-              .forEach(
-                  categoryDao -> {
-                    var type = categoryDao.getProjectDefinitionCategoryType();
-                    createProjectInputValueProto(
-                        categoryDao.getId(), type, builder.addInputsBuilder());
-                  });
-        },
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUT_ID_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER);
-  }
 
   public static Optional<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder>
       toProjectDefinition(
@@ -204,7 +185,7 @@ public class ProtoDaoUtils {
 
   public static Optional<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder>
       toProjectDefinitionProto(
-          ProjectDefinition projectDefinition,
+          org.davincischools.leo.database.daos.ProjectDefinition projectDefinition,
           Supplier<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder> newBuilder) {
     return translateToProto(
         projectDefinition,
@@ -224,12 +205,13 @@ public class ProtoDaoUtils {
         org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER);
   }
 
-  public static ProjectDefinition toProjectDefinitionDao(
+  public static org.davincischools.leo.database.daos.ProjectDefinition toProjectDefinitionDao(
       org.davincischools.leo.protos.pl_types.ProjectDefinitionOrBuilder projectDefinition) {
     var dao =
         translateToDao(
             projectDefinition,
-            new ProjectDefinition().setCreationTime(Instant.now()),
+            new org.davincischools.leo.database.daos.ProjectDefinition()
+                .setCreationTime(Instant.now()),
             org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUT_ID_FIELD_NUMBER,
             org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
             org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
@@ -288,6 +270,59 @@ public class ProtoDaoUtils {
                             ProjectInputCategory.OPTIONS_FIELD_NUMBER)));
 
     return proto;
+  }
+
+  public static Optional<org.davincischools.leo.protos.pl_types.ProjectInputCategory.Builder>
+      addProjectInputCategoryProtoValues(
+          ProjectDefinitionCategory projectDefinitionCategory,
+          Database db,
+          Optional<org.davincischools.leo.protos.pl_types.ProjectInputCategory.Builder> builder) {
+    if (builder.isEmpty()) {
+      return builder;
+    }
+
+    switch (ProjectDefinitionCategoryTypeRepository.ValueType.valueOf(
+        projectDefinitionCategory.getProjectDefinitionCategoryType().getValueType())) {
+      case MOTIVATION -> populateOptions(
+          db.getMotivationRepository().findAll(),
+          i ->
+              Option.newBuilder()
+                  .setId(i.getId())
+                  .setName(i.getName())
+                  .setShortDescr(i.getShortDescr()),
+          builder.get());
+      case FREE_TEXT -> {
+        // No options to populate.
+      }
+      default -> populateOptions(
+          db.getKnowledgeAndSkillRepository()
+              .findAll(projectDefinitionCategory.getProjectDefinitionCategoryType().getValueType()),
+          i -> {
+            var option =
+                Option.newBuilder()
+                    .setId(i.getId())
+                    .setName(i.getName())
+                    .setShortDescr(Strings.nullToEmpty(i.getShortDescr()))
+                    .setUserXId(i.getUserX().getId());
+            if (i.getCategory() != null) {
+              option.setCategory(i.getCategory());
+            }
+            return option;
+          },
+          builder.get());
+    }
+
+    return builder;
+  }
+
+  private static <T> void populateOptions(
+      Iterable<T> values,
+      Function<T, Option.Builder> toOption,
+      ProjectInputCategory.Builder inputCategory) {
+    Streams.stream(values)
+        .map(toOption)
+        .sorted(Comparator.comparing(Option.Builder::getName))
+        .forEach(inputCategory::addOptions);
   }
 
   public static ProjectDefinitionCategory toProjectDefinitionCategoryDao(

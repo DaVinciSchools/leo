@@ -80,6 +80,7 @@ message GetProjectDefinitionResponse {
 
 message GetAssignmentProjectDefinitionsRequest {
   optional int32 assignment_id = 1;
+  optional bool only_selected = 2;
 }
 
 message GetAssignmentProjectDefinitionsResponse {

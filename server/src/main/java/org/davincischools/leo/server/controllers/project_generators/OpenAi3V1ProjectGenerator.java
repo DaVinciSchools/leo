@@ -18,12 +18,12 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import org.davincischools.leo.database.daos.Project;
-import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectInputFulfillment;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
+import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.server.controllers.ProjectManagementService;
@@ -118,8 +118,10 @@ public class OpenAi3V1ProjectGenerator {
     Map<Integer, Integer> criteriaToInputValue = new HashMap<>();
 
     List<String> requirements = new ArrayList<>();
-    for (int i = 0; i < state.definition().categories().size(); ++i) {
-      ProjectDefinitionCategory category = state.definition().categories().get(i);
+    int i = -1;
+    for (var category :
+        DaoUtils.sortByPosition(state.definition().getProjectDefinitionCategories())) {
+      ++i;
       ProjectDefinitionCategoryType type = category.getProjectDefinitionCategoryType();
       ImmutableList<ProjectInputValue> values = state.values().get(i);
 

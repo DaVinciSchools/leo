@@ -4,18 +4,16 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.ImmutableList;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
-import javax.annotation.Nullable;
-import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
+import org.davincischools.leo.database.daos.AssignmentProjectDefinition_;
+import org.davincischools.leo.database.daos.Assignment_;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory_;
@@ -33,23 +31,19 @@ import org.springframework.transaction.annotation.Transactional;
 public interface ProjectDefinitionRepository
     extends JpaRepository<ProjectDefinition, Integer>, AutowiredRepositoryValues {
 
-  record FullProjectDefinition(
-      ProjectDefinition definition,
-      Optional<Instant> selected,
-      List<ProjectDefinitionCategory> categories) {}
-
-  record FullProjectDefinitionRow(
-      @Nullable AssignmentProjectDefinition assignment,
-      ProjectDefinition definition,
-      ProjectDefinitionCategory category) {}
-
-  default ProjectDefinition upsert(String name, UserX userX, Consumer<ProjectDefinition> modifier) {
+  default org.davincischools.leo.database.daos.ProjectDefinition upsert(
+      String name,
+      UserX userX,
+      Consumer<org.davincischools.leo.database.daos.ProjectDefinition> modifier) {
     checkArgument(!Strings.isNullOrEmpty(name));
     checkNotNull(modifier);
 
-    ProjectDefinition projectDefinition =
+    org.davincischools.leo.database.daos.ProjectDefinition projectDefinition =
         findByName(name)
-            .orElseGet(() -> new ProjectDefinition().setCreationTime(Instant.now()))
+            .orElseGet(
+                () ->
+                    new org.davincischools.leo.database.daos.ProjectDefinition()
+                        .setCreationTime(Instant.now()))
             .setUserX(userX)
             .setName(name);
 
@@ -59,68 +53,7 @@ public interface ProjectDefinitionRepository
   }
 
   // TODO: For development, remove.
-  Optional<ProjectDefinition> findByName(String name);
-
-  @Query(
-      """
-      SELECT NULL, d, c
-      FROM ProjectDefinition d
-      LEFT JOIN FETCH d.userX
-      LEFT JOIN FETCH ProjectDefinitionCategory c
-      ON d.id = c.projectDefinition.id
-      LEFT JOIN FETCH c.projectDefinitionCategoryType
-      WHERE d.id = (:projectDefinitionId)
-      ORDER BY d.id, c.position, c.id""")
-  List<FullProjectDefinitionRow> findFullProjectDefinitionRows(
-      @Param("projectDefinitionId") int projectDefinitionId);
-
-  default Optional<FullProjectDefinition> findFullProjectDefinitionById(int projectDefinitionId) {
-    return Optional.ofNullable(
-        Iterables.getOnlyElement(
-            toFullProjectDefinitions(findFullProjectDefinitionRows(projectDefinitionId)), null));
-  }
-
-  @Query(
-      """
-      SELECT apd, d, c
-      FROM AssignmentProjectDefinition apd
-      LEFT JOIN FETCH apd.projectDefinition d
-      LEFT JOIN FETCH d.userX
-      LEFT JOIN ProjectDefinitionCategory c
-      ON d.id = c.projectDefinition.id
-      LEFT JOIN FETCH c.projectDefinitionCategoryType
-      WHERE apd.assignment.id = (:assignmentId)
-      ORDER BY apd.selected DESC, d.id, c.position, c.id""")
-  List<FullProjectDefinitionRow> findFullProjectDefinitionRowsByAssignmentId(
-      @Param("assignmentId") int assignmentId);
-
-  default List<FullProjectDefinition> findFullProjectDefinitionsByAssignmentId(int assignmentId) {
-    return toFullProjectDefinitions(findFullProjectDefinitionRowsByAssignmentId(assignmentId));
-  }
-
-  private List<FullProjectDefinition> toFullProjectDefinitions(
-      Iterable<FullProjectDefinitionRow> rows) {
-    List<FullProjectDefinition> allDefinitions = new ArrayList<>();
-    FullProjectDefinition definition = null;
-
-    for (FullProjectDefinitionRow row : rows) {
-      if (definition == null
-          || !Objects.equals(definition.definition.getId(), row.definition().getId())) {
-        allDefinitions.add(
-            definition =
-                new FullProjectDefinition(
-                    checkNotNull(row.definition()),
-                    Optional.ofNullable(row.assignment())
-                        .map(AssignmentProjectDefinition::getSelected),
-                    new ArrayList<>()));
-      }
-      if (row.category() != null) {
-        definition.categories.add(checkNotNull(row.category()));
-      }
-    }
-
-    return allDefinitions;
-  }
+  Optional<org.davincischools.leo.database.daos.ProjectDefinition> findByName(String name);
 
   @Modifying
   @Transactional
@@ -129,19 +62,20 @@ public interface ProjectDefinitionRepository
           + " NULL")
   void updateUserX(@Param("id") int id, @Param("userXId") int userXId);
 
-  default List<ProjectDefinition> getProjectDefinitions(GetProjectDefinitionsParams params) {
+  default List<org.davincischools.leo.database.daos.ProjectDefinition> getProjectDefinitions(
+      GetProjectDefinitionsParams params) {
     checkNotNull(params);
 
     return getQueryHelper()
         .query(
-            ProjectDefinition.class,
+            org.davincischools.leo.database.daos.ProjectDefinition.class,
             (u, projectDefinition, builder) ->
                 configureQuery(u, projectDefinition, builder, params));
   }
 
-  public static void configureQuery(
+  static void configureQuery(
       QueryHelperUtils u,
-      From<?, ProjectDefinition> projectDefinition,
+      From<?, org.davincischools.leo.database.daos.ProjectDefinition> projectDefinition,
       CriteriaBuilder builder,
       GetProjectDefinitionsParams params) {
     checkNotNull(u);
@@ -159,11 +93,28 @@ public interface ProjectDefinitionRepository
             ProjectDefinition_.projectDefinitionCategories,
             JoinType.LEFT,
             ProjectDefinitionCategory::getProjectDefinition,
-            ProjectDefinition::setProjectDefinitionCategories);
+            org.davincischools.leo.database.daos.ProjectDefinition::setProjectDefinitionCategories);
 
     u.fetch(
         projectDefinitionCategory,
         ProjectDefinitionCategory_.projectDefinitionCategoryType,
         JoinType.LEFT);
+
+    if (params.getProjectDefinitionIds().isPresent()) {
+      u.where(
+          projectDefinition
+              .get(ProjectDefinition_.id)
+              .in(ImmutableList.copyOf(params.getProjectDefinitionIds().get())));
+    }
+
+    if (params.getAssignmentIds().isPresent()) {
+      var assignmentProjectDefinition =
+          projectDefinition.join(ProjectDefinition_.assignmentProjectDefinitions, JoinType.LEFT);
+      u.where(
+          assignmentProjectDefinition
+              .get(AssignmentProjectDefinition_.assignment)
+              .get(Assignment_.id)
+              .in(ImmutableList.copyOf(params.getAssignmentIds().get())));
+    }
   }
 }

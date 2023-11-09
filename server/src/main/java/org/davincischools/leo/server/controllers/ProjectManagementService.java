@@ -3,6 +3,7 @@ package org.davincischools.leo.server.controllers;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.davincischools.leo.database.utils.DaoUtils.ifInitialized;
 import static org.davincischools.leo.database.utils.DaoUtils.isInitialized;
+import static org.davincischools.leo.database.utils.DaoUtils.sortByPosition;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toMilestoneProto;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toMilestoneStepProto;
 
@@ -27,16 +28,17 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import org.apache.commons.text.StringEscapeUtils;
 import org.davincischools.leo.database.daos.Assignment;
+import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
-import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.GetAssignmentsParams;
+import org.davincischools.leo.database.utils.repos.GetProjectDefinitionsParams;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
-import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
@@ -82,7 +84,7 @@ public class ProjectManagementService {
 
   public record GenerateProjectsState(
       GenerateProjectsRequest request,
-      FullProjectDefinition definition,
+      ProjectDefinition definition,
       ProjectInput input,
       List<ImmutableList<ProjectInputValue>> values,
       Map<Integer, Integer> criteriaToInputValue,
@@ -91,7 +93,7 @@ public class ProjectManagementService {
   public record GenerateAnonymousProjectInput(
       ProjectInputCategory input, ProjectDefinitionCategory inputDefinition) {}
 
-  private static final AtomicInteger POSITION_COUNTER = new AtomicInteger(0);
+  private static final AtomicInteger positionCounter = new AtomicInteger(0);
 
   @Autowired Database db;
   @Autowired OpenAi3V3ProjectGenerator openAi3V3ProjectGenerator;
@@ -189,21 +191,23 @@ public class ProjectManagementService {
         .andThen(
             (request, log) -> {
               // Generate initial GenerateProjectsState state with definition.
-              FullProjectDefinition definition =
+              List<ProjectDefinition> definitions =
                   db.getProjectDefinitionRepository()
-                      .findFullProjectDefinitionById(request.getDefinition().getId())
-                      .orElseThrow(
-                          () ->
-                              new IllegalArgumentException(
-                                  "Project definition does not exist: "
-                                      + request.getDefinition().getId()));
+                      .getProjectDefinitions(
+                          new GetProjectDefinitionsParams()
+                              .setProjectDefinitionIds(List.of(request.getDefinition().getId())));
+              if (definitions.size() != 1) {
+                throw new IllegalArgumentException(
+                    "Project definition does not exist: " + request.getDefinition().getId());
+              }
+              ProjectDefinition definition = definitions.get(0);
 
               return new GenerateProjectsState(
                   request,
                   definition,
                   new ProjectInput()
                       .setCreationTime(Instant.now())
-                      .setProjectDefinition(definition.definition())
+                      .setProjectDefinition(definition)
                       .setUserX(userX.get().orElse(null))
                       .setState(State.PROCESSING.name())
                       .setTimeout(Instant.now().plus(Duration.ofMinutes(OpenAiUtils.TIMEOUT_MIN)))
@@ -218,16 +222,17 @@ public class ProjectManagementService {
         .andThen(
             (state, log) -> {
               // Save project values and input.
-              if (state.definition.categories().size()
+              if (state.definition.getProjectDefinitionCategories().size()
                   != state.request.getDefinition().getInputsList().size()) {
                 throw new IllegalArgumentException(
                     "Incorrect number of inputs: "
                         + state.request.getDefinition().getInputsList().size());
               }
 
-              for (int i = 0; i < state.definition.categories().size(); ++i) {
-                ProjectDefinitionCategory category = state.definition.categories().get(i);
-                var inputProto = state.request.getDefinition().getInputsList().get(i);
+              int i = 0;
+              for (ProjectDefinitionCategory category :
+                  sortByPosition(state.definition.getProjectDefinitionCategories())) {
+                var inputProto = state.request.getDefinition().getInputsList().get(i++);
 
                 Supplier<ProjectInputValue> newProjectInputValue =
                     () ->
@@ -235,7 +240,7 @@ public class ProjectManagementService {
                             .setCreationTime(Instant.now())
                             .setProjectInput(state.input)
                             .setProjectDefinitionCategory(category)
-                            .setPosition((float) POSITION_COUNTER.incrementAndGet());
+                            .setPosition((float) positionCounter.incrementAndGet());
 
                 Builder<ProjectInputValue> projectInputValues = ImmutableList.builder();
                 switch (ValueType.valueOf(
@@ -433,6 +438,7 @@ public class ProjectManagementService {
         .finish();
   }
 
+  // TODO: Replace this with only GetAssignmentProjectDefinitions.
   @PostMapping(value = "/api/protos/ProjectManagementService/GetAssignmentProjectDefinition")
   @ResponseBody
   public GetAssignmentProjectDefinitionResponse getAssignmentProjectDefinition(
@@ -448,31 +454,35 @@ public class ProjectManagementService {
         .start(optionalRequest.orElse(GetAssignmentProjectDefinitionRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              GetAssignmentProjectDefinitionResponse.Builder response =
-                  GetAssignmentProjectDefinitionResponse.newBuilder();
+              var response = GetAssignmentProjectDefinitionResponse.newBuilder();
 
-              List<FullProjectDefinition> fullDefinitions =
-                  db.getProjectDefinitionRepository()
-                      .findFullProjectDefinitionsByAssignmentId(request.getAssignmentId());
+              var assignment =
+                  Iterables.getOnlyElement(
+                      db.getAssignmentRepository()
+                          .getAssignments(
+                              new GetAssignmentsParams()
+                                  .setAssignmentIds(List.of(request.getAssignmentId()))
+                                  .setIncludeProjectDefinitions(true)));
 
-              FullProjectDefinition definition =
-                  fullDefinitions.stream()
-                      .max(
+              var projectDefinitions =
+                  assignment.getAssignmentProjectDefinitions().stream()
+                      .sorted(
                           Comparator.comparing(
-                                  (FullProjectDefinition def) -> def.selected().orElse(Instant.MIN))
+                                  (AssignmentProjectDefinition a) ->
+                                      Optional.ofNullable(a.getSelected()).orElse(Instant.MIN))
                               .reversed()
-                              .thenComparing(def -> def.definition().getId()))
-                      .orElse(null);
+                              .thenComparing(a -> a.getId().getProjectDefinitionId())
+                              .reversed())
+                      .limit(1)
+                      .map(AssignmentProjectDefinition::getProjectDefinition)
+                      .toList();
 
-              if (definition == null) {
-                return response.build();
-              }
-
-              response.getDefinitionBuilder().setId(definition.definition().getId());
-              for (ProjectDefinitionCategory category : definition.categories()) {
-                extractProjectInputCategory(
-                    category,
-                    response.getDefinitionBuilder().addInputsBuilder().getCategoryBuilder());
+              if (!projectDefinitions.isEmpty()) {
+                projectDefinitions.forEach(
+                    projectDefinition ->
+                        ProtoDaoUtils.toProjectDefinitionProto(
+                            projectDefinition, response::getDefinitionBuilder));
+                response.getDefinitionBuilder().setSelected(true);
               }
 
               return response.build();
@@ -483,19 +493,7 @@ public class ProjectManagementService {
   // TODO: Merge this with DataAccess.createProjectInputValueProto.
   private void extractProjectInputCategory(
       ProjectDefinitionCategory category, ProjectInputCategory.Builder input) {
-    ProjectDefinitionCategoryType type = category.getProjectDefinitionCategoryType();
-    if (category.getId() != null) {
-      input.setId(category.getId());
-    }
-    input
-        .setTypeId(type.getId())
-        .setShortDescr(type.getShortDescr())
-        .setInputDescr(type.getInputDescr())
-        .setName(type.getName())
-        .setHint(type.getHint())
-        .setPlaceholder(type.getInputPlaceholder())
-        .setValueType(ProjectInputCategory.ValueType.valueOf(type.getValueType()))
-        .setMaxNumValues(category.getMaxNumValues());
+    ProtoDaoUtils.toProjectInputCategoryProto(category, () -> input);
 
     switch (input.getValueType()) {
       case MOTIVATION -> populateOptions(
@@ -539,24 +537,35 @@ public class ProjectManagementService {
         .start(optionalRequest.orElse(GetAssignmentProjectDefinitionsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              GetAssignmentProjectDefinitionsResponse.Builder response =
-                  GetAssignmentProjectDefinitionsResponse.newBuilder();
+              var response = GetAssignmentProjectDefinitionsResponse.newBuilder();
 
-              List<FullProjectDefinition> fullDefinitions =
-                  db.getProjectDefinitionRepository()
-                      .findFullProjectDefinitionsByAssignmentId(request.getAssignmentId());
+              var assignment =
+                  Iterables.getOnlyElement(
+                      db.getAssignmentRepository()
+                          .getAssignments(
+                              new GetAssignmentsParams()
+                                  .setAssignmentIds(List.of(request.getAssignmentId()))
+                                  .setIncludeProjectDefinitions(true)));
 
-              FullProjectDefinition selectedFullDefinition =
-                  fullDefinitions.stream()
-                      .max(
+              var projectDefinitions =
+                  assignment.getAssignmentProjectDefinitions().stream()
+                      .sorted(
                           Comparator.comparing(
-                              (FullProjectDefinition def) -> def.selected().orElse(Instant.MIN)))
-                      .orElse(null);
+                                  (AssignmentProjectDefinition a) ->
+                                      Optional.ofNullable(a.getSelected()).orElse(Instant.MIN))
+                              .reversed()
+                              .thenComparing(a -> a.getId().getProjectDefinitionId())
+                              .reversed())
+                      .limit(request.getOnlySelected() ? 1 : Long.MAX_VALUE)
+                      .map(AssignmentProjectDefinition::getProjectDefinition)
+                      .toList();
 
-              for (FullProjectDefinition fullDefinition : fullDefinitions) {
-                ProtoDaoUtils.toProjectDefinition(fullDefinition, response::addDefinitionsBuilder)
-                    .ifPresent(
-                        builder -> builder.setSelected(fullDefinition == selectedFullDefinition));
+              if (!projectDefinitions.isEmpty()) {
+                projectDefinitions.forEach(
+                    projectDefinition ->
+                        ProtoDaoUtils.toProjectDefinitionProto(
+                            projectDefinition, response::addDefinitionsBuilder));
+                response.getDefinitionsBuilder(0).setSelected(true);
               }
 
               return response.build();
@@ -688,8 +697,8 @@ public class ProjectManagementService {
               var generateRequest = GenerateProjectsRequest.newBuilder();
 
               // Create the definition and GenerateProjectRequest.
-              ProjectDefinition definition =
-                  new ProjectDefinition()
+              org.davincischools.leo.database.daos.ProjectDefinition definition =
+                  new org.davincischools.leo.database.daos.ProjectDefinition()
                       .setCreationTime(Instant.now())
                       .setName("Anonymously Created Project Definition");
               if (userX.isAuthenticated()) {
@@ -711,7 +720,7 @@ public class ProjectManagementService {
                                     .orElseThrow(),
                                 e ->
                                     e.setMaxNumValues(input.getCategory().getMaxNumValues())
-                                        .setPosition((float) POSITION_COUNTER.incrementAndGet()));
+                                        .setPosition((float) positionCounter.incrementAndGet()));
                         generateRequest
                             .getDefinitionBuilder()
                             .addInputsBuilder()
