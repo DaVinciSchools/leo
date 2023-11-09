@@ -5,6 +5,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.JoinType;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +18,10 @@ import javax.annotation.Nullable;
 import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategory_;
+import org.davincischools.leo.database.daos.ProjectDefinition_;
 import org.davincischools.leo.database.daos.UserX;
+import org.davincischools.leo.database.utils.QueryHelper.QueryHelperUtils;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -24,7 +30,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-public interface ProjectDefinitionRepository extends JpaRepository<ProjectDefinition, Integer> {
+public interface ProjectDefinitionRepository
+    extends JpaRepository<ProjectDefinition, Integer>, AutowiredRepositoryValues {
 
   record FullProjectDefinition(
       ProjectDefinition definition,
@@ -121,4 +128,42 @@ public interface ProjectDefinitionRepository extends JpaRepository<ProjectDefini
       "UPDATE ProjectDefinition p SET p.userX.id = (:userXId) WHERE p.id = (:id) AND p.userX.id IS"
           + " NULL")
   void updateUserX(@Param("id") int id, @Param("userXId") int userXId);
+
+  default List<ProjectDefinition> getProjectDefinitions(GetProjectDefinitionsParams params) {
+    checkNotNull(params);
+
+    return getQueryHelper()
+        .query(
+            ProjectDefinition.class,
+            (u, projectDefinition, builder) ->
+                configureQuery(u, projectDefinition, builder, params));
+  }
+
+  public static void configureQuery(
+      QueryHelperUtils u,
+      From<?, ProjectDefinition> projectDefinition,
+      CriteriaBuilder builder,
+      GetProjectDefinitionsParams params) {
+    checkNotNull(u);
+    checkNotNull(projectDefinition);
+    checkNotNull(builder);
+    checkNotNull(params);
+
+    u.notDeleted(projectDefinition);
+
+    u.notDeleted(u.fetch(projectDefinition, ProjectDefinition_.userX, JoinType.LEFT));
+
+    var projectDefinitionCategory =
+        u.fetch(
+            projectDefinition,
+            ProjectDefinition_.projectDefinitionCategories,
+            JoinType.LEFT,
+            ProjectDefinitionCategory::getProjectDefinition,
+            ProjectDefinition::setProjectDefinitionCategories);
+
+    u.fetch(
+        projectDefinitionCategory,
+        ProjectDefinitionCategory_.projectDefinitionCategoryType,
+        JoinType.LEFT);
+  }
 }

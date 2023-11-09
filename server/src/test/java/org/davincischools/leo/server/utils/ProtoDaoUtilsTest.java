@@ -14,6 +14,8 @@ import org.davincischools.leo.protos.pl_types.District;
 import org.davincischools.leo.protos.pl_types.KnowledgeAndSkill;
 import org.davincischools.leo.protos.pl_types.Project;
 import org.davincischools.leo.protos.pl_types.Project.Milestone;
+import org.davincischools.leo.protos.pl_types.ProjectDefinition;
+import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectPost;
 import org.davincischools.leo.protos.pl_types.ProjectPostComment;
 import org.davincischools.leo.protos.pl_types.ProjectPostRating;
@@ -1023,6 +1025,136 @@ public class ProtoDaoUtilsTest {
     assertThat(
             ProtoDaoUtils.toProjectPostRatingProto(
                     ProtoDaoUtils.toProjectPostRatingDao(proto), ProjectPostRating::newBuilder)
+                .orElseThrow()
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectInputCategoryConvertersNull() {
+    assertThat(ProtoDaoUtils.toProjectInputCategoryProto(null, ProjectInputCategory::newBuilder))
+        .isEmpty();
+  }
+
+  @Test
+  public void toProjectInputCategoryConvertersUninitialized() {
+    assertThat(
+            ProtoDaoUtils.toProjectInputCategoryProto(
+                newUninitialized(
+                    org.davincischools.leo.database.daos.ProjectDefinitionCategory.class),
+                ProjectInputCategory::newBuilder))
+        .isEmpty();
+  }
+
+  @Test
+  public void toProjectInputCategoryConvertersEmpty() {
+    ProjectInputCategory proto = ProjectInputCategory.getDefaultInstance();
+
+    assertThat(
+            ProtoDaoUtils.toProjectInputCategoryProto(
+                    ProtoDaoUtils.toProjectDefinitionCategoryDao(proto),
+                    ProjectInputCategory::newBuilder)
+                .orElseThrow()
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectInputCategoryConvertersAll() throws ParseException {
+    // Options are pulled in separately from the trqnslation.
+    ProjectInputCategory proto =
+        TextFormat.parse(
+            """
+                id: 1
+                type_id: 2
+                name: 'name'
+                short_descr: 'short_descr'
+                input_descr: 'input_descr'
+                hint: 'hint'
+                placeholder: 'placeholder'
+                value_type: EKS
+                max_num_values: 3
+
+                """,
+            ProjectInputCategory.class);
+
+    assertThat(
+            ProtoDaoUtils.toProjectInputCategoryProto(
+                    ProtoDaoUtils.toProjectDefinitionCategoryDao(proto),
+                    ProjectInputCategory::newBuilder)
+                .orElseThrow()
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectDefinitionConvertersNull() {
+    assertThat(ProtoDaoUtils.toProjectDefinitionProto(null, ProjectDefinition::newBuilder))
+        .isEmpty();
+  }
+
+  @Test
+  public void toProjectDefinitionConvertersUninitialized() {
+    assertThat(
+            ProtoDaoUtils.toProjectDefinitionProto(
+                newUninitialized(org.davincischools.leo.database.daos.ProjectDefinition.class),
+                ProjectDefinition::newBuilder))
+        .isEmpty();
+  }
+
+  @Test
+  public void toProjectDefinitionConvertersEmpty() {
+    ProjectDefinition proto = ProjectDefinition.getDefaultInstance();
+
+    assertThat(
+            ProtoDaoUtils.toProjectDefinitionProto(
+                    ProtoDaoUtils.toProjectDefinitionDao(proto), ProjectDefinition::newBuilder)
+                .orElseThrow()
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectDefinitionConvertersAll() throws ParseException {
+    // Options are pulled in separately from the trqnslation.
+    ProjectDefinition proto =
+        TextFormat.parse(
+            """
+                id: 1
+                name: 'name'
+                template: true
+                inputs {
+                  category {
+                    id: 4
+                    type_id: 5
+                    name: 'name'
+                    short_descr: 'short_descr'
+                    input_descr: 'input_descr'
+                    hint: 'hint'
+                    placeholder: 'placeholder'
+                    value_type: EKS
+                    max_num_values: 6
+                  }
+                }
+                inputs {
+                  category {
+                    id: 8
+                    type_id: 9
+                    name: '7_name'
+                    short_descr: '7_short_descr'
+                    input_descr: '7_input_descr'
+                    hint: '7_hint'
+                    placeholder: '7_placeholder'
+                    value_type: FREE_TEXT
+                    max_num_values: 10
+                  }
+                }
+                """,
+            ProjectDefinition.class);
+
+    assertThat(
+            ProtoDaoUtils.toProjectDefinitionProto(
+                    ProtoDaoUtils.toProjectDefinitionDao(proto), ProjectDefinition::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);

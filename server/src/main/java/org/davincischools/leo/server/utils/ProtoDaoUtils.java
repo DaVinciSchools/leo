@@ -40,6 +40,8 @@ import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.Project;
+import org.davincischools.leo.database.daos.ProjectDefinition;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
@@ -49,6 +51,7 @@ import org.davincischools.leo.database.daos.ProjectPostRating;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.daos.UserX;
+import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionRepository.FullProjectDefinition;
@@ -58,6 +61,8 @@ import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.ClassX.Builder;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition.State;
+import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
+import org.davincischools.leo.protos.pl_types.ProjectInputCategoryOrBuilder;
 import org.davincischools.leo.protos.pl_types.ProjectInputValue;
 import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
@@ -196,6 +201,134 @@ public class ProtoDaoUtils {
   //
   // ---- Automated and tested converters. ----
   //
+
+  public static Optional<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder>
+      toProjectDefinitionProto(
+          ProjectDefinition projectDefinition,
+          Supplier<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder> newBuilder) {
+    return translateToProto(
+        projectDefinition,
+        newBuilder,
+        builder -> {
+          ifInitialized(
+              projectDefinition.getProjectDefinitionCategories(),
+              Comparator.comparing(ProjectDefinitionCategory::getPosition),
+              projectDefinitionCategory ->
+                  toProjectInputCategoryProto(
+                      projectDefinitionCategory,
+                      () -> builder.addInputsBuilder().getCategoryBuilder()));
+        },
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUT_ID_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER);
+  }
+
+  public static ProjectDefinition toProjectDefinitionDao(
+      org.davincischools.leo.protos.pl_types.ProjectDefinitionOrBuilder projectDefinition) {
+    var dao =
+        translateToDao(
+            projectDefinition,
+            new ProjectDefinition().setCreationTime(Instant.now()),
+            org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUT_ID_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER);
+    dao.setProjectDefinitionCategories(
+        projectDefinition.getInputsList().stream()
+            .map(ProjectInputValue::getCategory)
+            .map(ProtoDaoUtils::toProjectDefinitionCategoryDao)
+            .collect(toSet()));
+    return dao;
+  }
+
+  public static Optional<org.davincischools.leo.protos.pl_types.ProjectInputCategory.Builder>
+      toProjectInputCategoryProto(
+          ProjectDefinitionCategory projectDefinitionCategory,
+          Supplier<org.davincischools.leo.protos.pl_types.ProjectInputCategory.Builder>
+              newBuilder) {
+
+    if (DaoUtils.isInitialized(projectDefinitionCategory).isEmpty()) {
+      return Optional.empty();
+    }
+
+    var proto =
+        translateToProto(
+            projectDefinitionCategory,
+            newBuilder,
+            ProjectInputCategory.TYPE_ID_FIELD_NUMBER,
+            ProjectInputCategory.NAME_FIELD_NUMBER,
+            ProjectInputCategory.SHORT_DESCR_FIELD_NUMBER,
+            ProjectInputCategory.INPUT_DESCR_FIELD_NUMBER,
+            ProjectInputCategory.HINT_FIELD_NUMBER,
+            ProjectInputCategory.PLACEHOLDER_FIELD_NUMBER,
+            ProjectInputCategory.VALUE_TYPE_FIELD_NUMBER,
+            ProjectInputCategory.OPTIONS_FIELD_NUMBER);
+
+    proto.ifPresent(
+        p ->
+            DaoUtils.isInitialized(projectDefinitionCategory.getProjectDefinitionCategoryType())
+                .ifPresent(
+                    type ->
+                        translateToProto(
+                            type,
+                            () -> p,
+                            builder -> {
+                              if (type.getInputPlaceholder() != null) {
+                                builder.setPlaceholder(type.getInputPlaceholder());
+                              }
+                              if (type.getId() != null) {
+                                builder.setTypeId(type.getId());
+                              }
+                            },
+                            ProjectInputCategory.ID_FIELD_NUMBER,
+                            ProjectInputCategory.TYPE_ID_FIELD_NUMBER,
+                            ProjectInputCategory.PLACEHOLDER_FIELD_NUMBER,
+                            ProjectInputCategory.MAX_NUM_VALUES_FIELD_NUMBER,
+                            ProjectInputCategory.OPTIONS_FIELD_NUMBER)));
+
+    return proto;
+  }
+
+  public static ProjectDefinitionCategory toProjectDefinitionCategoryDao(
+      ProjectInputCategoryOrBuilder projectInputCategory) {
+    var dao =
+        new ProjectDefinitionCategory()
+            .setCreationTime(Instant.now())
+            .setPosition((float) positionCounter.incrementAndGet())
+            .setProjectDefinitionCategoryType(
+                new ProjectDefinitionCategoryType().setCreationTime(Instant.now()));
+    var type = dao.getProjectDefinitionCategoryType();
+
+    translateToDao(
+        projectInputCategory,
+        type,
+        ProjectInputCategory.ID_FIELD_NUMBER,
+        ProjectInputCategory.TYPE_ID_FIELD_NUMBER,
+        ProjectInputCategory.PLACEHOLDER_FIELD_NUMBER,
+        ProjectInputCategory.MAX_NUM_VALUES_FIELD_NUMBER,
+        ProjectInputCategory.OPTIONS_FIELD_NUMBER);
+    if (projectInputCategory.hasTypeId()) {
+      type.setId(projectInputCategory.getTypeId());
+    }
+    if (projectInputCategory.hasPlaceholder()) {
+      type.setInputPlaceholder(projectInputCategory.getPlaceholder());
+    }
+
+    translateToDao(
+        projectInputCategory,
+        dao,
+        ProjectInputCategory.TYPE_ID_FIELD_NUMBER,
+        ProjectInputCategory.NAME_FIELD_NUMBER,
+        ProjectInputCategory.SHORT_DESCR_FIELD_NUMBER,
+        ProjectInputCategory.INPUT_DESCR_FIELD_NUMBER,
+        ProjectInputCategory.HINT_FIELD_NUMBER,
+        ProjectInputCategory.PLACEHOLDER_FIELD_NUMBER,
+        ProjectInputCategory.VALUE_TYPE_FIELD_NUMBER,
+        ProjectInputCategory.OPTIONS_FIELD_NUMBER);
+
+    return dao;
+  }
 
   public static Optional<org.davincischools.leo.protos.pl_types.Project.Milestone.Step.Builder>
       toMilestoneStepProto(
