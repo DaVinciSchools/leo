@@ -12,6 +12,8 @@ import java.util.List;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill_;
+import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
+import org.davincischools.leo.database.daos.AssignmentProjectDefinition_;
 import org.davincischools.leo.database.daos.Assignment_;
 import org.davincischools.leo.database.daos.ClassX_;
 import org.davincischools.leo.database.daos.StudentClassX_;
@@ -85,6 +87,25 @@ public interface AssignmentRepository
               assignmentKnowledgeAndSkills,
               AssignmentKnowledgeAndSkill_.knowledgeAndSkill,
               JoinType.LEFT));
+    }
+
+    if (params.getIncludeProjectDefinitions().orElse(false)) {
+      var assignmentProjectDefinition =
+          u.notDeleted(
+              u.fetch(
+                  assignment,
+                  Assignment_.assignmentProjectDefinitions,
+                  JoinType.LEFT,
+                  AssignmentProjectDefinition::getAssignment,
+                  Assignment::setAssignmentProjectDefinitions));
+      var projectDefinition =
+          u.notDeleted(
+              u.fetch(
+                  assignmentProjectDefinition,
+                  AssignmentProjectDefinition_.projectDefinition,
+                  JoinType.LEFT));
+      ProjectDefinitionRepository.configureQuery(
+          u, projectDefinition, builder, new GetProjectDefinitionsParams());
     }
 
     if (params.getAssignmentIds().isPresent()) {

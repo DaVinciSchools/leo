@@ -15,6 +15,7 @@ public class GetAssignmentsParams {
 
   @Nullable private Boolean includeClassXs;
   @Nullable private Boolean includeKnowledgeAndSkills;
+  @Nullable private Boolean includeProjectDefinitions;
 
   @Nullable private Iterable<Integer> assignmentIds;
   @Nullable private Iterable<Integer> classXIds;
@@ -27,6 +28,10 @@ public class GetAssignmentsParams {
 
   public Optional<Boolean> getIncludeKnowledgeAndSkills() {
     return Optional.ofNullable(includeKnowledgeAndSkills);
+  }
+
+  public Optional<Boolean> getIncludeProjectDefinitions() {
+    return Optional.ofNullable(includeProjectDefinitions);
   }
 
   public Optional<Iterable<Integer>> getAssignmentIds() {
