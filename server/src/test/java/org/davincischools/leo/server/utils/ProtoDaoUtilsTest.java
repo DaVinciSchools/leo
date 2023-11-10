@@ -99,6 +99,23 @@ public class ProtoDaoUtilsTest {
               id: 4
               name: "ks 4 name"
             }
+            project_definitions {
+              name: "pd 5 name"
+              inputs {
+                category {
+                  id: 6
+                }
+              }
+            }
+            project_definitions {
+              name: "pd 7 name"
+              selected: true
+              inputs {
+                category {
+                  id: 8
+                }
+              }
+            }
             """,
             Assignment.class);
 
@@ -107,6 +124,7 @@ public class ProtoDaoUtilsTest {
                     ProtoDaoUtils.toAssignmentDao(proto), true, Assignment::newBuilder)
                 .orElseThrow()
                 .build())
+        .ignoringRepeatedFieldOrderOfFields(Assignment.PROJECT_DEFINITIONS_FIELD_NUMBER)
         .ignoringRepeatedFieldOrder()
         .isEqualTo(proto);
   }

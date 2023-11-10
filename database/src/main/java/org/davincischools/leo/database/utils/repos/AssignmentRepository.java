@@ -64,13 +64,12 @@ public interface AssignmentRepository
 
     u.notDeleted(assignment);
 
-    if (params.getIncludeClassXs().orElse(false)) {
+    if (params.getIncludeClassXs().isPresent()) {
       ClassXRepository.configureQuery(
           u,
           u.notDeleted(u.fetch(assignment, Assignment_.classX, JoinType.LEFT)),
           builder,
-          new GetClassXsParams()
-              .setIncludeKnowledgeAndSkills(params.getIncludeKnowledgeAndSkills().orElse(false)));
+          params.getIncludeClassXs().get());
     }
 
     if (params.getIncludeKnowledgeAndSkills().orElse(false)) {
@@ -89,7 +88,7 @@ public interface AssignmentRepository
               JoinType.LEFT));
     }
 
-    if (params.getIncludeProjectDefinitions().orElse(false)) {
+    if (params.getIncludeProjectDefinitions().isPresent()) {
       var assignmentProjectDefinition =
           u.notDeleted(
               u.fetch(
@@ -98,6 +97,7 @@ public interface AssignmentRepository
                   JoinType.LEFT,
                   AssignmentProjectDefinition::getAssignment,
                   Assignment::setAssignmentProjectDefinitions));
+
       var projectDefinition =
           u.notDeleted(
               u.fetch(
@@ -105,7 +105,7 @@ public interface AssignmentRepository
                   AssignmentProjectDefinition_.projectDefinition,
                   JoinType.LEFT));
       ProjectDefinitionRepository.configureQuery(
-          u, projectDefinition, builder, new GetProjectDefinitionsParams());
+          u, projectDefinition, builder, params.getIncludeProjectDefinitions().get());
     }
 
     if (params.getAssignmentIds().isPresent()) {

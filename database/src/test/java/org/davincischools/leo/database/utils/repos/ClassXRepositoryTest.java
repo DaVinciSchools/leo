@@ -68,7 +68,8 @@ public class ClassXRepositoryTest {
   @Test
   public void getClassXsIncludeAssignmentsTest() {
     var classXs =
-        db.getClassXRepository().getClassXs(new GetClassXsParams().setIncludeAssignments(true));
+        db.getClassXRepository()
+            .getClassXs(new GetClassXsParams().setIncludeAssignments(new GetAssignmentsParams()));
 
     assertThat(
             classXs.stream()
@@ -139,7 +140,8 @@ public class ClassXRepositoryTest {
         db.getClassXRepository()
             .getClassXs(
                 new GetClassXsParams()
-                    .setIncludeAssignments(true)
+                    .setIncludeAssignments(
+                        new GetAssignmentsParams().setIncludeKnowledgeAndSkills(true))
                     .setIncludeKnowledgeAndSkills(true));
 
     assertThat(

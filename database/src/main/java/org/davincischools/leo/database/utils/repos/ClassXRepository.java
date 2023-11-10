@@ -89,7 +89,7 @@ public interface ClassXRepository
       u.notDeleted(u.fetch(school, School_.district, JoinType.LEFT));
     }
 
-    if (params.getIncludeAssignments().orElse(false)) {
+    if (params.getIncludeAssignments().isPresent()) {
       var assignment =
           u.notDeleted(
               u.fetch(
@@ -99,11 +99,7 @@ public interface ClassXRepository
                   Assignment::getClassX,
                   ClassX::setAssignments));
       AssignmentRepository.configureQuery(
-          u,
-          assignment,
-          builder,
-          new GetAssignmentsParams()
-              .setIncludeKnowledgeAndSkills(params.getIncludeKnowledgeAndSkills().orElse(false)));
+          u, assignment, builder, params.getIncludeAssignments().get());
     }
 
     if (params.getIncludeKnowledgeAndSkills().orElse(false)) {

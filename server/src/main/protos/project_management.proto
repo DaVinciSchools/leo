@@ -11,18 +11,16 @@ service ProjectManagementService {
   rpc GetMotivations (GetMotivationsRequest) returns (GetMotivationsResponse) {}
   rpc GetKnowledgeAndSkills (GetKnowledgeAndSkillsRequest) returns (GetKnowledgeAndSkillsResponse) {}
   rpc UpsertKnowledgeAndSkill (UpsertKnowledgeAndSkillRequest) returns (UpsertKnowledgeAndSkillResponse) {}
+
   rpc GenerateProjects (GenerateProjectsRequest) returns (GenerateProjectsResponse) {}
   rpc GenerateAnonymousProjects (GenerateAnonymousProjectsRequest) returns (GenerateAnonymousProjectsResponse) {}
   rpc RegisterAnonymousProjects (RegisterAnonymousProjectsRequest) returns (RegisterAnonymousProjectsResponse) {}
 
+  rpc GetProjectDefinitions (GetProjectDefinitionsRequest) returns (GetProjectDefinitionsResponse) {}
   rpc GetProjectDefinitionCategoryTypes (GetProjectDefinitionCategoryTypesRequest) returns (GetProjectDefinitionCategoryTypesResponse) {}
   rpc GetProjectDetails (GetProjectDetailsRequest) returns (GetProjectDetailsResponse) {}
   rpc GetProjects (GetProjectsRequest) returns (GetProjectsResponse) {}
   rpc UpdateProject (UpdateProjectRequest) returns (UpdateProjectResponse) {}
-
-  rpc GetProjectDefinition (GetProjectDefinitionRequest) returns (GetProjectDefinitionResponse) {}
-  rpc GetAssignmentProjectDefinitions (GetAssignmentProjectDefinitionsRequest) returns (GetAssignmentProjectDefinitionsResponse) {}
-  rpc GetAssignmentProjectDefinition (GetAssignmentProjectDefinitionRequest) returns (GetAssignmentProjectDefinitionResponse) {}
 }
 
 message GetMotivationsRequest {
@@ -70,29 +68,13 @@ message UpdateProjectResponse {
   optional pl_types.Project project = 1;
 }
 
-message GetProjectDefinitionRequest {
-  optional int32 assignment_id = 1;
+message GetProjectDefinitionsRequest {
+  repeated int32 project_definition_ids = 1;
+  repeated int32 assignment_ids = 2;
 }
 
-message GetProjectDefinitionResponse {
-  optional pl_types.ProjectDefinition definition = 1;
-}
-
-message GetAssignmentProjectDefinitionsRequest {
-  optional int32 assignment_id = 1;
-  optional bool only_selected = 2;
-}
-
-message GetAssignmentProjectDefinitionsResponse {
+message GetProjectDefinitionsResponse {
   repeated pl_types.ProjectDefinition definitions = 1;
-}
-
-message GetAssignmentProjectDefinitionRequest {
-  optional int32 assignment_id = 1;
-}
-
-message GetAssignmentProjectDefinitionResponse {
-  optional pl_types.ProjectDefinition definition = 1;
 }
 
 message GetProjectDefinitionCategoryTypesRequest {

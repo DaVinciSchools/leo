@@ -13,16 +13,16 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 public class GetAssignmentsParams {
 
-  @Nullable private Boolean includeClassXs;
+  @Nullable private GetClassXsParams includeClassXs;
   @Nullable private Boolean includeKnowledgeAndSkills;
-  @Nullable private Boolean includeProjectDefinitions;
+  @Nullable private GetProjectDefinitionsParams includeProjectDefinitions;
 
   @Nullable private Iterable<Integer> assignmentIds;
   @Nullable private Iterable<Integer> classXIds;
-  @Nullable private Iterable<Integer> studentIds;
   @Nullable private Iterable<Integer> teacherIds;
+  @Nullable private Iterable<Integer> studentIds;
 
-  public Optional<Boolean> getIncludeClassXs() {
+  public Optional<GetClassXsParams> getIncludeClassXs() {
     return Optional.ofNullable(includeClassXs);
   }
 
@@ -30,7 +30,7 @@ public class GetAssignmentsParams {
     return Optional.ofNullable(includeKnowledgeAndSkills);
   }
 
-  public Optional<Boolean> getIncludeProjectDefinitions() {
+  public Optional<GetProjectDefinitionsParams> getIncludeProjectDefinitions() {
     return Optional.ofNullable(includeProjectDefinitions);
   }
 
@@ -42,11 +42,11 @@ public class GetAssignmentsParams {
     return Optional.ofNullable(classXIds);
   }
 
-  public Optional<Iterable<Integer>> getStudentIds() {
-    return Optional.ofNullable(studentIds);
-  }
-
   public Optional<Iterable<Integer>> getTeacherIds() {
     return Optional.ofNullable(teacherIds);
+  }
+
+  public Optional<Iterable<Integer>> getStudentIds() {
+    return Optional.ofNullable(studentIds);
   }
 }

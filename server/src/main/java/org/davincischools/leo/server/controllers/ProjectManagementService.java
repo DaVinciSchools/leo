@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.davincischools.leo.database.utils.DaoUtils.ifInitialized;
 import static org.davincischools.leo.database.utils.DaoUtils.isInitialized;
 import static org.davincischools.leo.database.utils.DaoUtils.sortByPosition;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toMilestoneProto;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toMilestoneStepProto;
 
@@ -28,7 +29,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import org.apache.commons.text.StringEscapeUtils;
 import org.davincischools.leo.database.daos.Assignment;
-import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
@@ -36,7 +36,6 @@ import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.repos.GetAssignmentsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectDefinitionsParams;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
@@ -47,14 +46,12 @@ import org.davincischools.leo.protos.project_management.GenerateAnonymousProject
 import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsResponse;
 import org.davincischools.leo.protos.project_management.GenerateProjectsRequest;
 import org.davincischools.leo.protos.project_management.GenerateProjectsResponse;
-import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionRequest;
-import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionResponse;
-import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionsRequest;
-import org.davincischools.leo.protos.project_management.GetAssignmentProjectDefinitionsResponse;
 import org.davincischools.leo.protos.project_management.GetKnowledgeAndSkillsRequest;
 import org.davincischools.leo.protos.project_management.GetKnowledgeAndSkillsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionCategoryTypesRequest;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionCategoryTypesResponse;
+import org.davincischools.leo.protos.project_management.GetProjectDefinitionsRequest;
+import org.davincischools.leo.protos.project_management.GetProjectDefinitionsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectDetailsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectDetailsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectsRequest;
@@ -438,58 +435,6 @@ public class ProjectManagementService {
         .finish();
   }
 
-  // TODO: Replace this with only GetAssignmentProjectDefinitions.
-  @PostMapping(value = "/api/protos/ProjectManagementService/GetAssignmentProjectDefinition")
-  @ResponseBody
-  public GetAssignmentProjectDefinitionResponse getAssignmentProjectDefinition(
-      @Authenticated HttpUserX userX,
-      @RequestBody Optional<GetAssignmentProjectDefinitionRequest> optionalRequest,
-      HttpExecutors httpExecutors)
-      throws HttpExecutorException {
-    if (userX.isNotAuthorized()) {
-      return userX.returnForbidden(GetAssignmentProjectDefinitionResponse.getDefaultInstance());
-    }
-
-    return httpExecutors
-        .start(optionalRequest.orElse(GetAssignmentProjectDefinitionRequest.getDefaultInstance()))
-        .andThen(
-            (request, log) -> {
-              var response = GetAssignmentProjectDefinitionResponse.newBuilder();
-
-              var assignment =
-                  Iterables.getOnlyElement(
-                      db.getAssignmentRepository()
-                          .getAssignments(
-                              new GetAssignmentsParams()
-                                  .setAssignmentIds(List.of(request.getAssignmentId()))
-                                  .setIncludeProjectDefinitions(true)));
-
-              var projectDefinitions =
-                  assignment.getAssignmentProjectDefinitions().stream()
-                      .sorted(
-                          Comparator.comparing(
-                                  (AssignmentProjectDefinition a) ->
-                                      Optional.ofNullable(a.getSelected()).orElse(Instant.MIN))
-                              .reversed()
-                              .thenComparing(a -> a.getId().getProjectDefinitionId())
-                              .reversed())
-                      .limit(1)
-                      .map(AssignmentProjectDefinition::getProjectDefinition)
-                      .toList();
-
-              if (!projectDefinitions.isEmpty()) {
-                projectDefinitions.forEach(
-                    projectDefinition ->
-                        ProtoDaoUtils.toProjectDefinitionProto(
-                            projectDefinition, response::getDefinitionBuilder));
-                response.getDefinitionBuilder().setSelected(true);
-              }
-
-              return response.build();
-            })
-        .finish();
-  }
-
   // TODO: Merge this with DataAccess.createProjectInputValueProto.
   private void extractProjectInputCategory(
       ProjectDefinitionCategory category, ProjectInputCategory.Builder input) {
@@ -522,51 +467,38 @@ public class ProjectManagementService {
     }
   }
 
-  @PostMapping(value = "/api/protos/ProjectManagementService/GetAssignmentProjectDefinitions")
+  @PostMapping(value = "/api/protos/ProjectManagementService/GetProjectDefinitions")
   @ResponseBody
-  public GetAssignmentProjectDefinitionsResponse getAssignmentProjectDefinitions(
+  public GetProjectDefinitionsResponse getProjectDefinitions(
       @Authenticated HttpUserX userX,
-      @RequestBody Optional<GetAssignmentProjectDefinitionsRequest> optionalRequest,
+      @RequestBody Optional<GetProjectDefinitionsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
     if (userX.isNotAuthorized()) {
-      return userX.returnForbidden(GetAssignmentProjectDefinitionsResponse.getDefaultInstance());
+      return userX.returnForbidden(GetProjectDefinitionsResponse.getDefaultInstance());
     }
 
     return httpExecutors
-        .start(optionalRequest.orElse(GetAssignmentProjectDefinitionsRequest.getDefaultInstance()))
+        .start(optionalRequest.orElse(GetProjectDefinitionsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              var response = GetAssignmentProjectDefinitionsResponse.newBuilder();
+              var response = GetProjectDefinitionsResponse.newBuilder();
 
-              var assignment =
-                  Iterables.getOnlyElement(
-                      db.getAssignmentRepository()
-                          .getAssignments(
-                              new GetAssignmentsParams()
-                                  .setAssignmentIds(List.of(request.getAssignmentId()))
-                                  .setIncludeProjectDefinitions(true)));
-
-              var projectDefinitions =
-                  assignment.getAssignmentProjectDefinitions().stream()
-                      .sorted(
-                          Comparator.comparing(
-                                  (AssignmentProjectDefinition a) ->
-                                      Optional.ofNullable(a.getSelected()).orElse(Instant.MIN))
-                              .reversed()
-                              .thenComparing(a -> a.getId().getProjectDefinitionId())
-                              .reversed())
-                      .limit(request.getOnlySelected() ? 1 : Long.MAX_VALUE)
-                      .map(AssignmentProjectDefinition::getProjectDefinition)
-                      .toList();
-
-              if (!projectDefinitions.isEmpty()) {
-                projectDefinitions.forEach(
-                    projectDefinition ->
-                        ProtoDaoUtils.toProjectDefinitionProto(
-                            projectDefinition, response::addDefinitionsBuilder));
-                response.getDefinitionsBuilder(0).setSelected(true);
-              }
+              db.getProjectDefinitionRepository()
+                  .getProjectDefinitions(
+                      new GetProjectDefinitionsParams()
+                          .setProjectDefinitionIds(
+                              listOrNull(
+                                  request,
+                                  GetProjectDefinitionsRequest.PROJECT_DEFINITION_IDS_FIELD_NUMBER))
+                          .setAssignmentIds(
+                              listOrNull(
+                                  request,
+                                  GetProjectDefinitionsRequest.ASSIGNMENT_IDS_FIELD_NUMBER)))
+                  .forEach(
+                      projectDefinition ->
+                          ProtoDaoUtils.toProjectDefinitionProto(
+                              projectDefinition, response::addDefinitionsBuilder));
 
               return response.build();
             })

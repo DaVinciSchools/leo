@@ -1,10 +1,10 @@
 package org.davincischools.leo.server.controllers;
 
 import static org.davincischools.leo.database.utils.DaoUtils.createJoinTableRows;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
 
 import com.google.common.collect.Lists;
 import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.Assignment;
@@ -12,7 +12,9 @@ import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.TeacherClassXId;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
+import org.davincischools.leo.database.utils.repos.GetAssignmentsParams;
 import org.davincischools.leo.database.utils.repos.GetClassXsParams;
+import org.davincischools.leo.database.utils.repos.GetProjectDefinitionsParams;
 import org.davincischools.leo.protos.assignment_management.CreateAssignmentRequest;
 import org.davincischools.leo.protos.assignment_management.CreateAssignmentResponse;
 import org.davincischools.leo.protos.assignment_management.DeleteAssignmentRequest;
@@ -74,12 +76,21 @@ public class AssignmentManagementService {
               db.getClassXRepository()
                   .getClassXs(
                       new GetClassXsParams()
-                          .setIncludeAssignments(true)
+                          .setIncludeAssignments(
+                              new GetAssignmentsParams()
+                                  .setAssignmentIds(
+                                      listOrNull(
+                                          request,
+                                          GetAssignmentsRequest.ASSIGNMENT_IDS_FIELD_NUMBER))
+                                  .setIncludeKnowledgeAndSkills(true)
+                                  .setIncludeProjectDefinitions(
+                                      request.getIncludeProjectDefinitions()
+                                          ? new GetProjectDefinitionsParams()
+                                          : null))
                           .setTeacherIds(
-                              request.hasTeacherId() ? List.of(request.getTeacherId()) : null)
+                              listOrNull(request, GetAssignmentsRequest.TEACHER_ID_FIELD_NUMBER))
                           .setStudentIds(
-                              request.hasStudentId() ? List.of(request.getStudentId()) : null)
-                          .setIncludeKnowledgeAndSkills(true))
+                              listOrNull(request, GetAssignmentsRequest.STUDENT_ID_FIELD_NUMBER)))
                   .forEach(
                       classX -> {
                         ProtoDaoUtils.toClassXProto(classX, true, response::addClassXsBuilder);

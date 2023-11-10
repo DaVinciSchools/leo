@@ -171,12 +171,18 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
             KNOWLEDGE_AND_SKILL_SORTER(a, b)
         )
     );
-    createService(ProjectManagementService, 'ProjectManagementService')
-      .getAssignmentProjectDefinitions({assignmentId: assignment.id!})
+    createService(AssignmentManagementService, 'AssignmentManagementService')
+      .getAssignments({
+        assignmentIds: [assignment.id!],
+        includeProjectDefinitions: true,
+      })
       .then(response => {
-        setProjectDefinitions(response.definitions);
+        const definitions = response.assignments.flatMap(
+          a => a.projectDefinitions ?? []
+        );
+        setProjectDefinitions(definitions);
         setProjectDefinition(null);
-        for (const definition of response.definitions) {
+        for (const definition of definitions) {
           if (definition.selected) {
             setProjectDefinition(definition);
             break;

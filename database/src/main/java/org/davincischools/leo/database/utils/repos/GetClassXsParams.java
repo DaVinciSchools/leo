@@ -14,7 +14,7 @@ import lombok.experimental.Accessors;
 public class GetClassXsParams {
 
   @Nullable private Boolean includeSchool;
-  @Nullable private Boolean includeAssignments;
+  @Nullable private GetAssignmentsParams includeAssignments;
   @Nullable private Boolean includeKnowledgeAndSkills;
 
   @Nullable private Iterable<Integer> schoolIds;
@@ -26,7 +26,7 @@ public class GetClassXsParams {
     return Optional.ofNullable(includeSchool);
   }
 
-  Optional<Boolean> getIncludeAssignments() {
+  Optional<GetAssignmentsParams> getIncludeAssignments() {
     return Optional.ofNullable(includeAssignments);
   }
 

@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +38,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import org.davincischools.leo.database.daos.Assignment;
+import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
@@ -92,10 +94,16 @@ public class ProtoDaoUtils {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> T listOrNull(Message request, int fieldNumber) {
+  public static <T> List<T> listOrNull(Message request, int fieldNumber) {
     FieldDescriptor descriptor = request.getDescriptorForType().findFieldByNumber(fieldNumber);
-    if (request.getRepeatedFieldCount(descriptor) > 0) {
-      return (T) request.getField(descriptor);
+    if (descriptor.isRepeated()) {
+      if (request.getRepeatedFieldCount(descriptor) > 0) {
+        return (List<T>) request.getField(descriptor);
+      }
+    } else {
+      if (request.hasField(descriptor)) {
+        return List.of((T) request.getField(descriptor));
+      }
     }
     return null;
   }
@@ -705,16 +713,31 @@ public class ProtoDaoUtils {
             assignment,
             new Assignment().setCreationTime(Instant.now()),
             org.davincischools.leo.protos.pl_types.Assignment.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER,
-            org.davincischools.leo.protos.pl_types.Assignment.CLASS_X_FIELD_NUMBER);
+            org.davincischools.leo.protos.pl_types.Assignment.CLASS_X_FIELD_NUMBER,
+            org.davincischools.leo.protos.pl_types.Assignment.PROJECT_DEFINITIONS_FIELD_NUMBER);
+
     if (assignment.hasClassX()) {
       dao.setClassX(toClassXDao(assignment.getClassX()));
     }
+
     dao.setAssignmentKnowledgeAndSkills(
         createJoinTableRows(
             dao,
             Lists.transform(
                 assignment.getKnowledgeAndSkillsList(), ProtoDaoUtils::toKnowledgeAndSkillDao),
             AssignmentKnowledgeAndSkillRepository::create));
+
+    dao.setAssignmentProjectDefinitions(
+        assignment.getProjectDefinitionsList().stream()
+            .map(
+                projectDefinition ->
+                    new AssignmentProjectDefinition()
+                        .setAssignment(dao)
+                        .setSelected(projectDefinition.getSelected() ? Instant.now() : Instant.MIN)
+                        .setProjectDefinition(
+                            ProtoDaoUtils.toProjectDefinitionDao(projectDefinition)))
+            .collect(toSet()));
+
     return dao;
   }
 
@@ -734,9 +757,23 @@ public class ProtoDaoUtils {
                   toKnowledgeAndSkillProto(
                       assignmentKnowledgeAndSkill.getKnowledgeAndSkill(),
                       builder::addKnowledgeAndSkillsBuilder));
+          ifInitialized(
+              assignment.getAssignmentProjectDefinitions(),
+              Comparator.comparing(
+                      (AssignmentProjectDefinition a) ->
+                          Optional.ofNullable(a.getSelected()).orElse(Instant.MIN))
+                  .reversed(),
+              assignmentProjectDefinition ->
+                  toProjectDefinitionProto(
+                      assignmentProjectDefinition.getProjectDefinition(),
+                      builder::addProjectDefinitionsBuilder));
+          if (builder.getProjectDefinitionsCount() > 0) {
+            builder.getProjectDefinitionsBuilder(0).setSelected(true);
+          }
         },
         org.davincischools.leo.protos.pl_types.Assignment.CLASS_X_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.Assignment.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.Assignment.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.Assignment.PROJECT_DEFINITIONS_FIELD_NUMBER);
   }
 
   public static ClassX toClassXDao(org.davincischools.leo.protos.pl_types.ClassXOrBuilder classX) {
