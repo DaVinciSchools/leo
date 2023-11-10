@@ -80,29 +80,28 @@ public class ProtoDaoUtils {
   private static final AtomicInteger positionCounter = new AtomicInteger(0);
 
   @SuppressWarnings("unchecked")
-  public static <T> T valueOrNull(Message request, int fieldNumber) {
-    FieldDescriptor descriptor = request.getDescriptorForType().findFieldByNumber(fieldNumber);
-    if (request.hasField(descriptor)) {
-      return (T) request.getField(descriptor);
+  public static <T> T valueOrNull(MessageOrBuilder message, int fieldNumber) {
+    FieldDescriptor descriptor = message.getDescriptorForType().findFieldByNumber(fieldNumber);
+    if (message.hasField(descriptor)) {
+      return (T) message.getField(descriptor);
     }
     return null;
   }
 
-  @SuppressWarnings("unchecked")
-  public static <T> T valueOrNull(Message request, int fieldNumber, boolean condition) {
-    return condition ? valueOrNull(request, fieldNumber) : null;
+  public static <T> T valueOrNull(MessageOrBuilder message, int fieldNumber, boolean condition) {
+    return condition ? valueOrNull(message, fieldNumber) : null;
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> List<T> listOrNull(Message request, int fieldNumber) {
-    FieldDescriptor descriptor = request.getDescriptorForType().findFieldByNumber(fieldNumber);
+  public static <T> List<T> listOrNull(MessageOrBuilder message, int fieldNumber) {
+    FieldDescriptor descriptor = message.getDescriptorForType().findFieldByNumber(fieldNumber);
     if (descriptor.isRepeated()) {
-      if (request.getRepeatedFieldCount(descriptor) > 0) {
-        return (List<T>) request.getField(descriptor);
+      if (message.getRepeatedFieldCount(descriptor) > 0) {
+        return (List<T>) message.getField(descriptor);
       }
     } else {
-      if (request.hasField(descriptor)) {
-        return List.of((T) request.getField(descriptor));
+      if (message.hasField(descriptor)) {
+        return List.of((T) message.getField(descriptor));
       }
     }
     return null;
@@ -1366,16 +1365,5 @@ public class ProtoDaoUtils {
     }
 
     return value.substring(0, 1).toUpperCase(Locale.US) + value.substring(1);
-  }
-
-  @SuppressWarnings("unchecked")
-  private static <T> T valueOrNull(MessageOrBuilder message, int fieldNumber) {
-    checkNotNull(message);
-
-    FieldDescriptor descriptor = message.getDescriptorForType().findFieldByNumber(fieldNumber);
-    if (message.hasField(descriptor)) {
-      return (T) message.getField(descriptor);
-    }
-    return null;
   }
 }
