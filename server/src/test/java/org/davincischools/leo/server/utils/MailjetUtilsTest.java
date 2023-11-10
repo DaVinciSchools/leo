@@ -39,8 +39,9 @@ public class MailjetUtilsTest {
 
   @Test
   public void sendEmailTest() throws Exception {
-    // Only run the test if the MailJet API key is available.
-    if (isNullOrEmpty(System.getProperty(MailjetUtils.MAILJET_API_KEY))) {
+    // Only run the test if the MailJet API key is available and you are online.
+    if (isNullOrEmpty(System.getProperty(MailjetUtils.MAILJET_API_KEY)) || !TestUtils.isOnline()) {
+      logger.atWarn().log("Skipping MailJet test due to missing key or being offline.");
       return;
     }
 
