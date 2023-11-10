@@ -8,10 +8,7 @@ import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
 import {createService} from '../../../libs/protos';
 import {pl_types, project_management} from 'pl-pb';
 import {useContext, useEffect, useState} from 'react';
-import {
-  PROJECT_DEFINITION_SORTER,
-  REVERSE_DATE_THEN_PROJECT_SORTER,
-} from '../../../libs/sorters';
+import {REVERSE_DATE_THEN_PROJECT_SORTER} from '../../../libs/sorters';
 import {TitledPaper} from '../../../libs/TitledPaper/TitledPaper';
 import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
@@ -29,8 +26,7 @@ export function AllProjects() {
   const [unsuccessfulProjects, setUnsuccessfulProjects] = useState<
     readonly IProjectDefinition[]
   >([]);
-
-  const [projectDetails, setProjectDetails] = useState<IProject | undefined>();
+  const [projectDetails, setProjectDetails] = useState<IProject>();
 
   useEffect(() => {
     if (userX == null) {
@@ -41,18 +37,30 @@ export function AllProjects() {
 
     createService(ProjectManagementService, 'ProjectManagementService')
       .getProjects({
-        userXId: userX.id ?? 0,
-        includeUnsuccessful: true,
+        userXIds: [userX.id ?? 0],
+        includeAssignment: true,
+        includeInactive: true,
       })
       .then(response => {
         setProjects(response.projects.sort(REVERSE_DATE_THEN_PROJECT_SORTER));
-        setUnsuccessfulProjects(
-          (response.unsuccessfulInputs ?? [])
-            .filter(p => p.state === State.PROCESSING)
-            .sort(PROJECT_DEFINITION_SORTER)
-        );
       })
       .catch(global.setError);
+
+    // // TODO: Get pending projects.
+    // createService(ProjectManagementService, 'ProjectManagementService')
+    // .getProjects({
+    // userXIds: [userX.id ?? 0],
+    // includePending: true,
+    // })
+    // .then(response => {
+    // setProjects(response.projects.sort(REVERSE_DATE_THEN_PROJECT_SORTER));
+    // setUnsuccessfulProjects(
+    // (response.unsuccessfulInputs ?? [])
+    // .filter(p => p.state === State.PROCESSING)
+    // .sort(PROJECT_DEFINITION_SORTER)
+    // );
+    // })
+    // .catch(global.setError);
   }, [userX]);
 
   function updateProject(project: IProject, modifications: IProject) {
@@ -67,8 +75,12 @@ export function AllProjects() {
 
   function showProjectDetails(project: pl_types.IProject) {
     createService(ProjectManagementService, 'ProjectManagementService')
-      .getProjectDetails({projectId: project.id})
-      .then(response => setProjectDetails(response.project!))
+      .getProjects({
+        projectIds: [project.id ?? 0],
+        includeInactive: true,
+        includeMilestones: true,
+      })
+      .then(response => setProjectDetails(response.projects[0]!))
       .catch(reason => {
         global.setError({error: reason, reload: false});
       });

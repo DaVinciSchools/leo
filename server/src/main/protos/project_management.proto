@@ -17,9 +17,9 @@ service ProjectManagementService {
   rpc RegisterAnonymousProjects (RegisterAnonymousProjectsRequest) returns (RegisterAnonymousProjectsResponse) {}
 
   rpc GetProjectDefinitions (GetProjectDefinitionsRequest) returns (GetProjectDefinitionsResponse) {}
-  rpc GetProjectDefinitionCategoryTypes (GetProjectDefinitionCategoryTypesRequest) returns (GetProjectDefinitionCategoryTypesResponse) {}
-  rpc GetProjectDetails (GetProjectDetailsRequest) returns (GetProjectDetailsResponse) {}
   rpc GetProjects (GetProjectsRequest) returns (GetProjectsResponse) {}
+
+  rpc GetProjectDefinitionCategoryTypes (GetProjectDefinitionCategoryTypesRequest) returns (GetProjectDefinitionCategoryTypesResponse) {}
   rpc UpdateProject (UpdateProjectRequest) returns (UpdateProjectResponse) {}
 }
 
@@ -38,23 +38,19 @@ message GenerateProjectsResponse {
   optional int32 project_input_id = 1;
 }
 
-message GetProjectDetailsRequest {
-  optional int32 project_id = 1;
-}
-
-message GetProjectDetailsResponse {
-  optional pl_types.Project project = 1;
-}
-
 message GetProjectsRequest {
-  optional int32 user_x_id = 1;
-  optional bool active_only = 2;
-  optional bool include_unsuccessful = 3;
+  repeated int32 user_x_ids = 1;
+  repeated int32 project_ids = 2;
+  optional bool include_inactive = 3;
+  optional bool include_tags = 4;
+  optional bool include_inputs = 5;
+  optional bool include_fulfillments = 6;
+  optional bool include_assignment = 7;
+  optional bool include_milestones = 8;
 }
 
 message GetProjectsResponse {
   repeated pl_types.Project projects = 1;
-  repeated pl_types.ProjectDefinition unsuccessful_inputs = 2;
 }
 
 message UpdateProjectRequest {

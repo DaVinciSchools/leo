@@ -1,12 +1,8 @@
 package org.davincischools.leo.server.controllers;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static org.davincischools.leo.database.utils.DaoUtils.ifInitialized;
-import static org.davincischools.leo.database.utils.DaoUtils.isInitialized;
 import static org.davincischools.leo.database.utils.DaoUtils.sortByPosition;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
-import static org.davincischools.leo.server.utils.ProtoDaoUtils.toMilestoneProto;
-import static org.davincischools.leo.server.utils.ProtoDaoUtils.toMilestoneStepProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -21,7 +17,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,12 +29,14 @@ import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputValue;
+import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.GetAssignmentsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectDefinitionsParams;
+import org.davincischools.leo.database.utils.repos.GetProjectsParams;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
-import org.davincischools.leo.database.utils.repos.ProjectRepository.ProjectWithMilestones;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsRequest;
@@ -52,8 +49,6 @@ import org.davincischools.leo.protos.project_management.GetProjectDefinitionCate
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionCategoryTypesResponse;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionsResponse;
-import org.davincischools.leo.protos.project_management.GetProjectDetailsRequest;
-import org.davincischools.leo.protos.project_management.GetProjectDetailsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectsResponse;
 import org.davincischools.leo.protos.project_management.RegisterAnonymousProjectsRequest;
@@ -324,70 +319,6 @@ public class ProjectManagementService {
     return "\"" + StringEscapeUtils.escapeJava(s) + "\"";
   }
 
-  @PostMapping(value = "/api/protos/ProjectManagementService/GetProjectDetails")
-  @ResponseBody
-  public GetProjectDetailsResponse getProjectDetails(
-      @Authenticated HttpUserX userX,
-      @RequestBody Optional<GetProjectDetailsRequest> optionalRequest,
-      HttpExecutors httpExecutors)
-      throws HttpExecutorException {
-    if (userX.isNotAuthorized()) {
-      return userX.returnForbidden(GetProjectDetailsResponse.getDefaultInstance());
-    }
-
-    return httpExecutors
-        .start(optionalRequest.orElse(GetProjectDetailsRequest.getDefaultInstance()))
-        .andThen(
-            (request, log) -> {
-              checkArgument(request.hasProjectId());
-
-              ProjectWithMilestones project =
-                  db.getProjectRepository()
-                      .findFullProjectById(request.getProjectId())
-                      .orElse(null);
-              if (project == null) {
-                return userX.returnNotFound(GetProjectDetailsResponse.getDefaultInstance());
-              }
-
-              if (!userX.isAdminX()) {
-                if (userX.isTeacher()) {
-                  // TODO: Verify the requested project's user is in their class.
-                } else if (userX.isStudent()) {
-                  // Make sure the student is only querying their own projects.
-                  if (!Objects.equals(
-                      userX.get().orElseThrow().getId(),
-                      project.project().getProjectInput().getUserX().getId())) {
-                    return userX.returnForbidden(GetProjectDetailsResponse.getDefaultInstance());
-                  }
-                }
-              }
-
-              var response = GetProjectDetailsResponse.newBuilder();
-              ProtoDaoUtils.toProjectProto(project.project(), true, response::getProjectBuilder);
-              project
-                  .milestones()
-                  .forEach(
-                      fullMilestone -> {
-                        isInitialized(fullMilestone.milestone())
-                            .ifPresent(
-                                milestone -> {
-                                  var milestoneProto =
-                                      toMilestoneProto(
-                                              milestone,
-                                              response.getProjectBuilder()::addMilestonesBuilder)
-                                          .orElseThrow();
-                                  ifInitialized(
-                                      fullMilestone.steps(),
-                                      step ->
-                                          toMilestoneStepProto(
-                                              step, milestoneProto::addStepsBuilder));
-                                });
-                      });
-              return response.build();
-            })
-        .finish();
-  }
-
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjects")
   @ResponseBody
   public GetProjectsResponse getProjects(
@@ -402,33 +333,41 @@ public class ProjectManagementService {
     return httpExecutors
         .start(optionalRequest.orElse(GetProjectsRequest.getDefaultInstance()))
         .andThen(
-            (request, log) -> {
-              int userXId = request.getUserXId();
-              if (userX.isAdminX()) {
-                // Do nothing.
-              } else if (userX.isTeacher()) {
-                // TODO: Verify the requested user is in their class.
-              } else if (userX.isStudent()) {
-                // Make sure the student is only querying about their own projects.
-                if (userXId != userX.get().orElseThrow().getId()) {
-                  return userX.returnForbidden(GetProjectsResponse.getDefaultInstance());
-                }
+            (initialRequest, log) -> {
+              var request = initialRequest.toBuilder();
+              if (!userX.isAdminX() && !userX.isTeacher()) {
+                request.clearUserXIds();
+                request.addUserXIds(userX.get().map(UserX::getId).orElse(0));
               }
+
               var response = GetProjectsResponse.newBuilder();
 
               db.getProjectRepository()
-                  .findProjectsByUserXId(userXId, request.getActiveOnly())
+                  .getProjects(
+                      new GetProjectsParams()
+                          .setUserXIds(
+                              listOrNull(request, GetProjectsRequest.USER_X_IDS_FIELD_NUMBER))
+                          .setProjectIds(
+                              listOrNull(request, GetProjectsRequest.PROJECT_IDS_FIELD_NUMBER))
+                          .setIncludeInactive(
+                              valueOrNull(
+                                  request, GetProjectsRequest.INCLUDE_INACTIVE_FIELD_NUMBER))
+                          .setIncludeTags(
+                              valueOrNull(request, GetProjectsRequest.INCLUDE_TAGS_FIELD_NUMBER))
+                          .setIncludeInputs(
+                              valueOrNull(request, GetProjectsRequest.INCLUDE_INPUTS_FIELD_NUMBER))
+                          .setIncludeFulfillments(
+                              valueOrNull(
+                                  request, GetProjectsRequest.INCLUDE_FULFILLMENTS_FIELD_NUMBER))
+                          .setIncludeAssignment(
+                              request.getIncludeAssignment() ? new GetAssignmentsParams() : null)
+                          .setIncludeMilestones(
+                              valueOrNull(
+                                  request, GetProjectsRequest.INCLUDE_MILESTONES_FIELD_NUMBER)))
                   .forEach(
-                      e -> ProtoDaoUtils.toProjectProto(e, true, response::addProjectsBuilder));
-
-              if (request.getIncludeUnsuccessful()) {
-                db.getProjectInputRepository()
-                    .findFullProjectInputByUserXAndUnsuccessful(userXId)
-                    .forEach(
-                        e ->
-                            ProtoDaoUtils.toProjectDefinition(
-                                e, response::addUnsuccessfulInputsBuilder));
-              }
+                      project ->
+                          ProtoDaoUtils.toProjectProto(
+                              project, true, response::addProjectsBuilder));
 
               return response.build();
             })
@@ -530,30 +469,27 @@ public class ProjectManagementService {
         .start(optionalRequest.orElse(UpdateProjectRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              ProjectWithMilestones existingFullProject =
-                  db.getProjectRepository()
-                      .findFullProjectById(request.getProject().getId())
-                      .orElse(null);
-              if (existingFullProject == null) {
+              List<Integer> userXIds = null;
+              if (!userX.isAdminX() && !userX.isTeacher()) {
+                // Make sure the user is only updating their own projects.
+                userXIds = List.of(userX.get().orElseThrow().getId());
+              }
+
+              Project project =
+                  Iterables.getOnlyElement(
+                      db.getProjectRepository()
+                          .getProjects(
+                              new GetProjectsParams()
+                                  .setProjectIds(List.of(request.getProject().getId()))
+                                  .setUserXIds(userXIds)
+                                  .setIncludeInactive(true)),
+                      null);
+              if (project == null) {
                 return userX.returnNotFound(UpdateProjectResponse.getDefaultInstance());
               }
 
-              if (userX.isAdminX()) {
-                // Do nothing.
-              } else if (userX.isTeacher()) {
-                // TODO: Verify the project is for a student in their class.
-              } else if (userX.isStudent()) {
-                // Make sure the student is only updating their own projects.
-                if (!Objects.equals(
-                    existingFullProject.project().getProjectInput().getUserX().getId(),
-                    userX.get().orElseThrow().getId())) {
-                  return userX.returnForbidden(UpdateProjectResponse.getDefaultInstance());
-                }
-              }
-
               Project reqProject = ProtoDaoUtils.toProjectDao(request.getProject());
-              existingFullProject
-                  .project()
+              project
                   .setName(reqProject.getName())
                   .setShortDescr(reqProject.getShortDescr())
                   .setLongDescrHtml(reqProject.getLongDescrHtml())
@@ -563,17 +499,10 @@ public class ProjectManagementService {
                   .setActive(reqProject.getActive())
                   .setAssignment(reqProject.getAssignment());
 
-              DaoUtils.removeTransientValues(
-                  existingFullProject.project(), db.getProjectRepository()::save);
+              DaoUtils.removeTransientValues(project, db.getProjectRepository()::save);
 
               var response = UpdateProjectResponse.newBuilder();
-              ProtoDaoUtils.toProjectProto(
-                  db.getProjectRepository()
-                      .findFullProjectById(request.getProject().getId())
-                      .orElseThrow()
-                      .project(),
-                  true,
-                  response::getProjectBuilder);
+              ProtoDaoUtils.toProjectProto(project, true, response::getProjectBuilder);
               return response.build();
             })
         .finish();

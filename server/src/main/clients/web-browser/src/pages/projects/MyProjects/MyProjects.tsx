@@ -163,7 +163,7 @@ export function MyProjects() {
 
     // Projects
     createService(ProjectManagementService, 'ProjectManagementService')
-      .getProjects({userXId: userX.id, activeOnly: true})
+      .getProjects({userXIds: [userX.id ?? 0], includeAssignment: true})
       .then(response => {
         setSortedProjects(response.projects.sort(PROJECT_SORTER));
         setSelectedProject(null);

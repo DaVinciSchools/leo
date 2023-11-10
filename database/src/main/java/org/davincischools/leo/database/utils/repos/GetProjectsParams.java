@@ -11,45 +11,42 @@ import lombok.experimental.Accessors;
 @Getter
 @Accessors(chain = true)
 @NoArgsConstructor
-public
-class FindProjectsParams {
+public class GetProjectsParams {
 
-  @Nullable
-  private Integer userXId;
-
-  @Nullable private Integer projectId;
-
+  @Nullable private Iterable<Integer> userXIds;
+  @Nullable private Iterable<Integer> projectIds;
   @Nullable private Boolean includeInactive;
-
-  @Nullable private Boolean includeUnsuccessful;
-
   @Nullable private Boolean includeTags;
-
-  @Nullable private Boolean includeAssignment;
-
+  @Nullable private Boolean includeInputs;
+  @Nullable private Boolean includeFulfillments;
+  @Nullable private GetAssignmentsParams includeAssignment;
   @Nullable private Boolean includeMilestones;
 
-  public Optional<Integer> getUserXId() {
-    return Optional.ofNullable(userXId);
+  public Optional<Iterable<Integer>> getUserXIds() {
+    return Optional.ofNullable(userXIds);
   }
 
-  public Optional<Integer> getProjectId() {
-    return Optional.ofNullable(projectId);
+  public Optional<Iterable<Integer>> getProjectIds() {
+    return Optional.ofNullable(projectIds);
   }
 
   public Optional<Boolean> getIncludeInactive() {
     return Optional.ofNullable(includeInactive);
   }
 
-  public Optional<Boolean> getIncludeUnsuccessful() {
-    return Optional.ofNullable(includeUnsuccessful);
-  }
-
   public Optional<Boolean> getIncludeTags() {
     return Optional.ofNullable(includeTags);
   }
 
-  public Optional<Boolean> getIncludeAssignment() {
+  public Optional<Boolean> getIncludeInputs() {
+    return Optional.ofNullable(includeInputs);
+  }
+
+  public Optional<Boolean> getIncludeFulfillments() {
+    return Optional.ofNullable(includeFulfillments);
+  }
+
+  public Optional<GetAssignmentsParams> getIncludeAssignment() {
     return Optional.ofNullable(includeAssignment);
   }
 

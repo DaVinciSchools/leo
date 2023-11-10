@@ -1,173 +1,123 @@
 package org.davincischools.leo.database.utils.repos;
 
-import com.google.common.collect.Iterables;
-import java.util.ArrayList;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.collect.ImmutableList;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.JoinType;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.SortedMap;
-import javax.annotation.Nullable;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 import org.davincischools.leo.database.daos.Project;
+import org.davincischools.leo.database.daos.ProjectInput;
+import org.davincischools.leo.database.daos.ProjectInputFulfillment;
+import org.davincischools.leo.database.daos.ProjectInputFulfillment_;
+import org.davincischools.leo.database.daos.ProjectInputValue;
+import org.davincischools.leo.database.daos.ProjectInputValue_;
+import org.davincischools.leo.database.daos.ProjectInput_;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
+import org.davincischools.leo.database.daos.ProjectMilestone_;
+import org.davincischools.leo.database.daos.Project_;
+import org.davincischools.leo.database.daos.Tag;
+import org.davincischools.leo.database.utils.QueryHelper.QueryHelperUtils;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ProjectRepository extends JpaRepository<Project, Integer> {
+public interface ProjectRepository
+    extends JpaRepository<Project, Integer>, AutowiredRepositoryValues {
 
-  @Setter
-  @Getter
-  @Builder
-  @Accessors(chain = true)
-  @NoArgsConstructor
-  @AllArgsConstructor
-  class FullProjectMilestone {
-    private ProjectMilestone milestone;
-    private SortedMap<Integer, ProjectMilestoneStep> steps;
+  default List<Project> getProjects(GetProjectsParams params) {
+    checkNotNull(params);
+
+    return getQueryHelper()
+        .query(Project.class, (u, project, builder) -> configureQuery(u, project, builder, params));
   }
 
-  @Setter
-  @Getter
-  @Accessors(chain = true)
-  @NoArgsConstructor
-  @AllArgsConstructor
-  class FullProject {
-    private Project project;
-    private Set<String> tags;
-    private SortedMap<Integer, FullProjectMilestone> fullMilestones;
-  }
+  public static void configureQuery(
+      QueryHelperUtils u,
+      From<?, Project> project,
+      CriteriaBuilder builder,
+      GetProjectsParams params) {
+    checkNotNull(u);
+    checkNotNull(project);
+    checkNotNull(builder);
+    checkNotNull(params);
 
-  @Setter
-  @Getter
-  @Accessors(chain = true)
-  @NoArgsConstructor
-  class FindProjectsParams {
+    u.notDeleted(project);
 
-    @Nullable private Integer userXId;
+    var projectInput = u.notDeleted(u.fetch(project, Project_.projectInput, JoinType.LEFT));
+    var userX = u.notDeleted(u.fetch(projectInput, ProjectInput_.userX, JoinType.LEFT));
 
-    @Nullable private Integer projectId;
-
-    @Nullable private Boolean includeInactive;
-
-    @Nullable private Boolean includeUnsuccessful;
-
-    @Nullable private Boolean includeTags;
-
-    @Nullable private Boolean includeAssignment;
-
-    @Nullable private Boolean includeMilestones;
-
-    public Optional<Integer> getUserXId() {
-      return Optional.ofNullable(userXId);
+    if (params.getUserXIds().isPresent()) {
+      u.where(userX.get("id").in(ImmutableList.of(params.getUserXIds().get())));
     }
 
-    public Optional<Integer> getProjectId() {
-      return Optional.ofNullable(projectId);
+    if (params.getProjectIds().isPresent()) {
+      u.where(project.get(Project_.id).in(ImmutableList.of(params.getProjectIds().get())));
     }
 
-    public Optional<Boolean> getIncludeInactive() {
-      return Optional.ofNullable(includeInactive);
+    if (!params.getIncludeInactive().orElse(false)) {
+      u.where(builder.isTrue(project.get(Project_.active)));
     }
 
-    public Optional<Boolean> getIncludeUnsuccessful() {
-      return Optional.ofNullable(includeUnsuccessful);
+    if (params.getIncludeTags().orElse(false)) {
+      u.notDeleted(
+          u.fetch(project, Project_.tags, JoinType.LEFT, Tag::getProject, Project::setTags));
     }
 
-    public Optional<Boolean> getIncludeTags() {
-      return Optional.ofNullable(includeTags);
-    }
+    if (params.getIncludeInputs().orElse(false) || params.getIncludeFulfillments().orElse(false)) {
+      var projectInputValue =
+          u.notDeleted(
+              u.fetch(
+                  projectInput,
+                  ProjectInput_.projectInputValues,
+                  JoinType.LEFT,
+                  ProjectInputValue::getProjectInput,
+                  ProjectInput::setProjectInputValues));
 
-    public Optional<Boolean> getIncludeAssignment() {
-      return Optional.ofNullable(includeAssignment);
-    }
+      var projectDefinition =
+          u.notDeleted(u.fetch(projectInput, ProjectInput_.projectDefinition, JoinType.LEFT));
+      ProjectDefinitionRepository.configureQuery(
+          u, projectDefinition, builder, new GetProjectDefinitionsParams());
 
-    public Optional<Boolean> getIncludeMilestones() {
-      return Optional.ofNullable(includeMilestones);
-    }
-  }
-
-  record MilestoneWithSteps(ProjectMilestone milestone, List<ProjectMilestoneStep> steps) {}
-
-  record ProjectWithMilestones(Project project, List<MilestoneWithSteps> milestones) {}
-
-  record ProjectMilestoneStepRow(
-      Project project, ProjectMilestone milestone, ProjectMilestoneStep step) {}
-
-  @Query(
-      """
-          SELECT p, m, s
-          FROM Project p
-          LEFT JOIN FETCH p.projectInput pi
-          LEFT JOIN FETCH p.projectInput.userX
-          LEFT JOIN ProjectMilestone m
-          ON p.id = m.project.id
-          LEFT JOIN ProjectMilestoneStep s
-          ON m.id = s.projectMilestone.id
-          WHERE p.id = :projectId
-          ORDER BY p.creationTime DESC, m.position, s.position
-          """)
-  List<ProjectMilestoneStepRow> findFullProjectRowsByProjectId(@Param("projectId") int projectId);
-
-  @Query(
-      """
-          SELECT p
-          FROM Project p
-          LEFT JOIN FETCH p.assignment a1
-          LEFT JOIN FETCH p.projectInput pi
-          LEFT JOIN FETCH p.projectInput.userX
-          LEFT JOIN FETCH pi.assignment a2
-          WHERE pi.userX.id = :userXId
-          AND ((:activeOnly <> TRUE) OR p.active)
-          ORDER BY p.creationTime DESC
-          """)
-  List<Project> findProjectsByUserXId(
-      @Param("userXId") int userXId, @Param("activeOnly") boolean activeOnly);
-
-  default Optional<ProjectWithMilestones> findFullProjectById(int projectId) {
-    return Optional.ofNullable(
-        Iterables.getOnlyElement(
-            splitIntoProjectsWithMilestones(findFullProjectRowsByProjectId(projectId)), null));
-  }
-
-  private List<ProjectWithMilestones> splitIntoProjectsWithMilestones(
-      List<ProjectMilestoneStepRow> rows) {
-    ProjectWithMilestones projectWithMilestones = null;
-    MilestoneWithSteps milestoneWithSteps = null;
-
-    List<ProjectWithMilestones> projectsWithMilestones = new ArrayList<>();
-
-    for (ProjectMilestoneStepRow row : rows) {
-      if (projectWithMilestones == null
-          || !Objects.equals(row.project().getId(), projectWithMilestones.project().getId())) {
-        milestoneWithSteps = null;
-        projectsWithMilestones.add(
-            projectWithMilestones = new ProjectWithMilestones(row.project(), new ArrayList<>()));
+      if (params.getIncludeFulfillments().orElse(false)) {
+        var projectInputFulfillment =
+            u.notDeleted(
+                u.fetch(
+                    projectInputValue,
+                    ProjectInputValue_.projectInputFulfillments,
+                    JoinType.LEFT,
+                    ProjectInputFulfillment::getProjectInputValue,
+                    ProjectInputValue::setProjectInputFulfillments));
+        u.where(
+            builder.equal(projectInputFulfillment.get(ProjectInputFulfillment_.project), project));
       }
-      if (row.milestone() == null) {
-        continue;
-      }
-      if (milestoneWithSteps == null
-          || !Objects.equals(row.milestone().getId(), milestoneWithSteps.milestone().getId())) {
-        projectWithMilestones
-            .milestones()
-            .add(milestoneWithSteps = new MilestoneWithSteps(row.milestone(), new ArrayList<>()));
-      }
-      if (row.step() == null) {
-        continue;
-      }
-      milestoneWithSteps.steps().add(row.step());
     }
 
-    return projectsWithMilestones;
+    if (params.getIncludeAssignment().isPresent()) {
+      var assignment = u.notDeleted(u.fetch(project, Project_.assignment, JoinType.LEFT));
+      AssignmentRepository.configureQuery(
+          u, assignment, builder, params.getIncludeAssignment().get());
+    }
+
+    if (params.getIncludeMilestones().orElse(false)) {
+      var milestone =
+          u.notDeleted(
+              u.fetch(
+                  project,
+                  Project_.projectMilestones,
+                  JoinType.LEFT,
+                  ProjectMilestone::getProject,
+                  Project::setProjectMilestones));
+
+      u.notDeleted(
+          u.fetch(
+              milestone,
+              ProjectMilestone_.projectMilestoneSteps,
+              JoinType.LEFT,
+              ProjectMilestoneStep::getProjectMilestone,
+              ProjectMilestone::setProjectMilestoneSteps));
+    }
   }
 }
