@@ -43,7 +43,6 @@ import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
-import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
@@ -60,12 +59,9 @@ import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository;
-import org.davincischools.leo.database.utils.repos.ProjectInputRepository;
-import org.davincischools.leo.database.utils.repos.ProjectInputRepository.FullProjectInput;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.ClassX.Builder;
-import org.davincischools.leo.protos.pl_types.ProjectDefinition.State;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategoryOrBuilder;
@@ -120,75 +116,6 @@ public class ProtoDaoUtils {
           ProtoDaoFields,
           Map<Integer, BiConsumer</* dao= */ Object, /* message= */ Message.Builder>>>
       daoToProtoSetters = Collections.synchronizedMap(new HashMap<>());
-
-  public static Optional<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder>
-      toProjectDefinition(
-          FullProjectInput fullProjectInput,
-          Supplier<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder> newBuilder) {
-    var projectDefinitionProto =
-        newBuilder
-            .get()
-            .setId(fullProjectInput.definition().getId())
-            .setName(fullProjectInput.definition().getName())
-            .setInputId(fullProjectInput.input().getId())
-            .setState(
-                switch (ProjectInputRepository.State.valueOf(fullProjectInput.input().getState())) {
-                  case COMPLETED -> State.COMPLETED;
-                  case PROCESSING -> fullProjectInput.input().getTimeout().isBefore(Instant.now())
-                      ? State.FAILED
-                      : State.PROCESSING;
-                  case FAILED -> State.FAILED;
-                })
-            .setTemplate(Boolean.TRUE.equals(fullProjectInput.definition().getTemplate()));
-    for (var categoryValues : fullProjectInput.values()) {
-      var type = categoryValues.type();
-      var inputValueProto =
-          createProjectInputValueProto(
-              categoryValues.category().getId(), type, projectDefinitionProto.addInputsBuilder());
-      switch (inputValueProto.getCategory().getValueType()) {
-        case FREE_TEXT -> inputValueProto.addAllFreeTexts(
-            categoryValues.values().stream()
-                .map(org.davincischools.leo.database.daos.ProjectInputValue::getFreeTextValue)
-                .toList());
-        case MOTIVATION -> inputValueProto.addAllSelectedIds(
-            categoryValues.values().stream()
-                .map(org.davincischools.leo.database.daos.ProjectInputValue::getMotivationValue)
-                .map(Motivation::getId)
-                .toList());
-        case UNSET -> throw new IllegalStateException("Unset value type");
-        default -> inputValueProto.addAllSelectedIds(
-            categoryValues.values().stream()
-                .map(
-                    org.davincischools.leo.database.daos.ProjectInputValue
-                        ::getKnowledgeAndSkillValue)
-                .map(KnowledgeAndSkill::getId)
-                .toList());
-      }
-    }
-    return Optional.of(projectDefinitionProto);
-  }
-
-  private static ProjectInputValue.Builder createProjectInputValueProto(
-      int categoryId,
-      ProjectDefinitionCategoryType type,
-      ProjectInputValue.Builder projectInputValueProto) {
-    projectInputValueProto
-        .getCategoryBuilder()
-        .setId(categoryId)
-        .setShortDescr(type.getShortDescr())
-        .setInputDescr(type.getInputDescr())
-        .setName(type.getName())
-        .setHint(type.getHint())
-        .setPlaceholder(type.getInputPlaceholder())
-        .setValueType(
-            org.davincischools.leo.protos.pl_types.ProjectInputCategory.ValueType.valueOf(
-                type.getValueType()));
-    return projectInputValueProto;
-  }
-
-  //
-  // ---- Automated and tested converters. ----
-  //
 
   public static Optional<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder>
       toProjectDefinitionProto(
