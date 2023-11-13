@@ -164,7 +164,7 @@ public class ProtoDaoUtils {
           Supplier<org.davincischools.leo.protos.pl_types.ProjectInputCategory.Builder>
               newBuilder) {
 
-    if (DaoUtils.isInitialized(projectDefinitionCategory).isEmpty()) {
+    if (!DaoUtils.isInitialized(projectDefinitionCategory)) {
       return Optional.empty();
     }
 
@@ -183,7 +183,7 @@ public class ProtoDaoUtils {
 
     proto.ifPresent(
         p ->
-            DaoUtils.isInitialized(projectDefinitionCategory.getProjectDefinitionCategoryType())
+            ifInitialized(projectDefinitionCategory.getProjectDefinitionCategoryType())
                 .ifPresent(
                     type ->
                         translateToProto(

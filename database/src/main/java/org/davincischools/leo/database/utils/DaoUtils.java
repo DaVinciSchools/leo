@@ -217,28 +217,34 @@ public class DaoUtils {
     saveAll.accept(Streams.stream(newValues).filter(e -> !oldIds.contains(toId.apply(e))).toList());
   }
 
-  public static <T> Optional<T> isInitialized(@Nullable T entity) {
-    return Optional.ofNullable(entity).filter(Hibernate::isInitialized);
+  public static <T> boolean isInitialized(@Nullable T entity) {
+    return entity != null && Hibernate.isInitialized(entity);
   }
 
-  public static <T> void ifInitialized(Iterable<T> entities, Consumer<T> processFn) {
-    isInitialized(entities).ifPresent(initialiedEntities -> initialiedEntities.forEach(processFn));
+  public static <T> Optional<T> ifInitialized(@Nullable T entity) {
+    return isInitialized(entity) ? Optional.of(entity) : Optional.empty();
+  }
+
+  public static <T> void ifInitialized(@Nullable Iterable<T> entities, Consumer<T> processFn) {
+    if (isInitialized(entities)) {
+      entities.forEach(processFn);
+    }
   }
 
   public static <T, E> void ifInitialized(
-      Iterable<T> entities, Comparator<T> comparator, Consumer<T> processFn) {
-    isInitialized(entities)
-        .ifPresent(
-            initializedEntities -> Streams.stream(entities).sorted(comparator).forEach(processFn));
+      @Nullable Iterable<T> entities, Comparator<T> comparator, Consumer<T> processFn) {
+    if (isInitialized(entities)) {
+      Streams.stream(entities).sorted(comparator).forEach(processFn);
+    }
   }
 
   public static <T, R> List<T> getJoinTableDaos(
-      @Nullable Set<R> sourceTableRow, Function<R, T> getTargetFn) {
+      @Nullable Set<R> sourceTableRows, Function<R, T> getTargetFn) {
     checkNotNull(getTargetFn);
 
-    return isInitialized(sourceTableRow)
-        .map(set -> set.stream().map(getTargetFn).filter(Objects::nonNull).toList())
-        .orElse(Collections.emptyList());
+    return isInitialized(sourceTableRows)
+        ? sourceTableRows.stream().map(getTargetFn).filter(Objects::nonNull).toList()
+        : Collections.emptyList();
   }
 
   public static <F, T, R> Set<R> createJoinTableRows(
@@ -266,9 +272,9 @@ public class DaoUtils {
     checkNotNull(getTargetFn);
     checkNotNull(saveTargetFn);
     checkNotNull(setTargetsFn);
-    checkArgument(isInitialized(entity).isPresent());
+    checkArgument(isInitialized(entity));
 
-    isInitialized(toRowsFn.apply(entity))
+    ifInitialized(toRowsFn.apply(entity))
         .ifPresent(
             rows -> {
               List<T> targets = Streams.stream(rows).map(getTargetFn).toList();
