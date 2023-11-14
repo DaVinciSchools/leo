@@ -136,15 +136,17 @@ message ProjectDefinition {
   optional State state = 5;
   // Sorted by position already.
   repeated ProjectInputValue inputs = 6;
+  optional Assignment assignment = 8;
 }
 
 message ProjectInputValue {
-  optional int32 id = 1;
   optional ProjectInputCategory category = 2;
 
   // Sorted by position already.
   repeated string free_texts = 3;
   repeated int32 selected_ids = 4;
+
+  reserved 1;
 }
 
 message ProjectInputCategory {
@@ -165,8 +167,12 @@ message ProjectInputCategory {
     optional int32 user_x_id = 5;
   }
 
+  // ProjectDefinitionCategory.id
   optional int32 id = 1;
+
+  // ProjectDefinitionCategoryType.id
   optional int32 type_id = 2;
+
   optional string name = 3;
   optional string short_descr = 4;
   optional string input_descr = 10;

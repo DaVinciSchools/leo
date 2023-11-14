@@ -1,6 +1,7 @@
 package org.davincischools.leo.server.controllers;
 
 import static org.davincischools.leo.database.utils.DaoUtils.sortByPosition;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.enumNameOrNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toAssignmentDao;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toKnowledgeAndSkillDao;
@@ -40,6 +41,7 @@ import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetAssignmentsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectDefinitionsParams;
+import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectsParams;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
@@ -55,6 +57,8 @@ import org.davincischools.leo.protos.project_management.GetProjectDefinitionCate
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionCategoryTypesResponse;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionsResponse;
+import org.davincischools.leo.protos.project_management.GetProjectInputsRequest;
+import org.davincischools.leo.protos.project_management.GetProjectInputsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectsResponse;
 import org.davincischools.leo.protos.project_management.RegisterAnonymousProjectsRequest;
@@ -372,7 +376,50 @@ public class ProjectManagementService {
         .finish();
   }
 
-  // TODO: Merge this with DataAccess.createProjectInputValueProto.
+  @PostMapping(value = "/api/protos/ProjectManagementService/GetProjectInputs")
+  @ResponseBody
+  public GetProjectInputsResponse getProjectInputs(
+      @Authenticated HttpUserX userX,
+      @RequestBody Optional<GetProjectInputsRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    if (userX.isNotAuthorized()) {
+      return userX.returnForbidden(GetProjectInputsResponse.getDefaultInstance());
+    }
+
+    return httpExecutors
+        .start(optionalRequest.orElse(GetProjectInputsRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              var response = GetProjectInputsResponse.newBuilder();
+
+              db.getProjectInputRepository()
+                  .getProjectInputs(
+                      new GetProjectInputsParams()
+                          .setUserXIds(
+                              listOrNull(request, GetProjectInputsRequest.USER_X_IDS_FIELD_NUMBER))
+                          .setProjectInputIds(
+                              listOrNull(
+                                  request, GetProjectInputsRequest.PROJECT_INPUT_IDS_FIELD_NUMBER))
+                          .setIncludeComplete(
+                              valueOrNull(
+                                  request, GetProjectInputsRequest.INCLUDE_COMPLETE_FIELD_NUMBER))
+                          .setIncludeProcessing(
+                              valueOrNull(
+                                  request, GetProjectInputsRequest.INCLUDE_PROCESSING_FIELD_NUMBER))
+                          .setIncludeAssignment(
+                              valueOrNull(
+                                  request,
+                                  GetProjectInputsRequest.INCLUDE_ASSIGNMENT_FIELD_NUMBER)))
+                  .forEach(
+                      projectInput ->
+                          toProjectDefinitionProto(projectInput, response::addProjectsBuilder));
+
+              return response.build();
+            })
+        .finish();
+  }
+
   private void extractProjectInputCategory(
       ProjectDefinitionCategory category, ProjectInputCategory.Builder input) {
     toProjectInputCategoryProto(category, () -> input);
@@ -492,7 +539,7 @@ public class ProjectManagementService {
                   .setShortDescr(reqProject.getShortDescr())
                   .setLongDescrHtml(reqProject.getLongDescrHtml())
                   .setFavorite(reqProject.getFavorite())
-                  .setThumbsState(reqProject.getThumbsState().name())
+                  .setThumbsState(enumNameOrNull(reqProject.getThumbsState()))
                   .setThumbsStateReason(reqProject.getThumbsStateReason())
                   .setActive(reqProject.getActive());
               toAssignmentDao(reqProject.getAssignment()).ifPresent(project::setAssignment);

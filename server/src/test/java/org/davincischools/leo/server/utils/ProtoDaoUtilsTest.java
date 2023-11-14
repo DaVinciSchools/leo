@@ -18,6 +18,7 @@ import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectDefinit
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectDefinitionDao;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectDefinitionProto;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectInputCategoryProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectInputDao;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectMilestoneDao;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectMilestoneStepDao;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectPostCommentDao;
@@ -995,7 +996,11 @@ public class ProtoDaoUtilsTest {
 
   @Test
   public void toProjectDefinitionProtoNull() {
-    assertThat(toProjectDefinitionProto(null, ProjectDefinition::newBuilder)).isEmpty();
+    assertThat(
+            toProjectDefinitionProto(
+                (org.davincischools.leo.database.daos.ProjectDefinition) null,
+                ProjectDefinition::newBuilder))
+        .isEmpty();
   }
 
   @Test
@@ -1058,6 +1063,109 @@ public class ProtoDaoUtilsTest {
     assertThat(
             toProjectDefinitionProto(
                     toProjectDefinitionDao(proto).orElseThrow(), ProjectDefinition::newBuilder)
+                .orElseThrow()
+                .build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toProjectDefinitionProtoFromInputNull() {
+    assertThat(
+            toProjectDefinitionProto(
+                (org.davincischools.leo.database.daos.ProjectInput) null,
+                ProjectDefinition::newBuilder))
+        .isEmpty();
+  }
+
+  @Test
+  public void toProjectDefinitionDaoFromInputNull() {
+    assertThat(
+            toProjectDefinitionProto(
+                (org.davincischools.leo.database.daos.ProjectInput) null,
+                ProjectDefinition::newBuilder))
+        .isEmpty();
+  }
+
+  @Test
+  public void toProjectDefinitionProtoFromInputUninitialized() {
+    assertThat(
+            toProjectDefinitionProto(
+                newUninitialized(org.davincischools.leo.database.daos.ProjectInput.class),
+                ProjectDefinition::newBuilder))
+        .isEmpty();
+  }
+
+  @Test
+  public void toProjectDefinitionDaoFromInputUninitialized() {
+    assertThat(toProjectDefinitionDao(ProjectDefinition.getDefaultInstance())).isEmpty();
+  }
+
+  @Test
+  public void toProjectDefinitionFromInputRoundTript() throws ParseException {
+    // Options are pulled in separately from the translation.
+    ProjectDefinition proto =
+        TextFormat.parse(
+            """
+                id: 1
+                input_id: -1
+                state: COMPLETED
+                inputs {
+                  category {
+                    id: 3
+                    type_id: 4
+                    name: 'nameA'
+                    short_descr: 'short_descrA'
+                    input_descr: 'input_descrA'
+                    hint: 'hintA'
+                    placeholder: 'placeholderA'
+                    value_type: EKS
+                    max_num_values: 5
+                  }
+                  selected_ids: 6
+                  selected_ids: 7
+                }
+                inputs {
+                  category {
+                    id: 9
+                    type_id: 10
+                    name: 'nameB'
+                    short_descr: 'short_descrB'
+                    input_descr: 'input_descrB'
+                    hint: 'hintB'
+                    placeholder: 'placeholderB'
+                    value_type: MOTIVATION
+                    max_num_values: 11
+                  }
+                  selected_ids: 12
+                  selected_ids: 13
+                }
+                inputs {
+                  category {
+                    id: 15
+                    type_id: 16
+                    name: 'nameC'
+                    short_descr: 'short_descrC'
+                    input_descr: 'input_descrC'
+                    hint: 'hintC'
+                    placeholder: 'placeholderC'
+                    value_type: FREE_TEXT
+                    max_num_values: 17
+                  }
+                  free_texts: "free_textA"
+                  free_texts: "free_textB"
+                }
+                assignment: {
+                  id: 18
+                  name: "assignment name"
+                  short_descr: "assignment short"
+                  long_descr_html: "assignment long"
+                }
+                """,
+            ProjectDefinition.class);
+
+    assertThat(
+            toProjectDefinitionProto(
+                    toProjectInputDao(proto).orElseThrow(), ProjectDefinition::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);

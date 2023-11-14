@@ -8,7 +8,10 @@ import {ProjectPage} from '../../../libs/ProjectPage/ProjectPage';
 import {createService} from '../../../libs/protos';
 import {pl_types, project_management} from 'pl-pb';
 import {useContext, useEffect, useState} from 'react';
-import {REVERSE_DATE_THEN_PROJECT_SORTER} from '../../../libs/sorters';
+import {
+  PROJECT_DEFINITION_SORTER,
+  REVERSE_DATE_THEN_PROJECT_SORTER,
+} from '../../../libs/sorters';
 import {TitledPaper} from '../../../libs/TitledPaper/TitledPaper';
 import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
@@ -46,21 +49,17 @@ export function AllProjects() {
       })
       .catch(global.setError);
 
-    // // TODO: Get pending projects.
-    // createService(ProjectManagementService, 'ProjectManagementService')
-    // .getProjects({
-    // userXIds: [userX.id ?? 0],
-    // includePending: true,
-    // })
-    // .then(response => {
-    // setProjects(response.projects.sort(REVERSE_DATE_THEN_PROJECT_SORTER));
-    // setUnsuccessfulProjects(
-    // (response.unsuccessfulInputs ?? [])
-    // .filter(p => p.state === State.PROCESSING)
-    // .sort(PROJECT_DEFINITION_SORTER)
-    // );
-    // })
-    // .catch(global.setError);
+    createService(ProjectManagementService, 'ProjectManagementService')
+      .getProjectInputs({
+        userXIds: [userX.id ?? 0],
+        includeProcessing: true,
+      })
+      .then(response => {
+        setUnsuccessfulProjects(
+          (response.projects ?? []).sort(PROJECT_DEFINITION_SORTER)
+        );
+      })
+      .catch(global.setError);
   }, [userX]);
 
   function updateProject(project: IProject, modifications: IProject) {

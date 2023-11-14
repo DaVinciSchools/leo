@@ -372,8 +372,6 @@ export function IkigaiProjectBuilder(props: {
         htmlId:
           props.id +
           '.' +
-          (category?.id ?? 'undefined') +
-          '.' +
           (category?.category?.id ?? 'undefined') +
           '.' +
           (category?.category?.typeId ?? 'undefined'),

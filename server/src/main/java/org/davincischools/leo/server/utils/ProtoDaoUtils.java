@@ -22,10 +22,12 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -43,9 +45,11 @@ import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
+import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
+import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.daos.ProjectPost;
@@ -58,13 +62,14 @@ import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository;
+import org.davincischools.leo.database.utils.repos.ProjectInputRepository;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.ClassX.Builder;
+import org.davincischools.leo.protos.pl_types.ProjectDefinition;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategoryOrBuilder;
-import org.davincischools.leo.protos.pl_types.ProjectInputValue;
 import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
 import org.hibernate.Hibernate;
@@ -102,6 +107,10 @@ public class ProtoDaoUtils {
     return null;
   }
 
+  public static <T extends Enum<?>> String enumNameOrNull(T enumValue) {
+    return enumValue != null && enumValue.ordinal() != 0 ? enumValue.name() : null;
+  }
+
   private record ProtoDaoFields(
       Class<? extends MessageOrBuilder> messageOrBuilderClass,
       Class<?> daoClass,
@@ -111,6 +120,7 @@ public class ProtoDaoUtils {
           ProtoDaoFields,
           Map<Integer, BiConsumer</* message= */ MessageOrBuilder, /* dao= */ Object>>>
       protoToDaoSetters = Collections.synchronizedMap(new HashMap<>());
+
   private static final Map<
           ProtoDaoFields,
           Map<Integer, BiConsumer</* dao= */ Object, /* message= */ Message.Builder>>>
@@ -124,18 +134,93 @@ public class ProtoDaoUtils {
         projectDefinition,
         newBuilder,
         builder -> {
+          AtomicInteger index = new AtomicInteger(0);
           ifInitialized(
               projectDefinition.getProjectDefinitionCategories(),
               Comparator.comparing(ProjectDefinitionCategory::getPosition),
-              projectDefinitionCategory ->
+              projectDefinitionCategory -> {
+                int actualIndex = index.getAndIncrement();
+                if (actualIndex < builder.getInputsCount()) {
                   toProjectInputCategoryProto(
                       projectDefinitionCategory,
-                      () -> builder.addInputsBuilder().getCategoryBuilder()));
+                      () -> builder.getInputsBuilder(actualIndex).getCategoryBuilder());
+                } else {
+                  toProjectInputCategoryProto(
+                      projectDefinitionCategory,
+                      () -> builder.addInputsBuilder().getCategoryBuilder());
+                }
+              });
         },
         org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUT_ID_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER);
+  }
+
+  public static Optional<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder>
+      toProjectDefinitionProto(
+          org.davincischools.leo.database.daos.ProjectInput projectInput,
+          Supplier<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder> newBuilder) {
+    return translateToProto(
+        projectInput,
+        newBuilder,
+        builder -> {
+          builder.setInputId(projectInput.getId());
+          toProjectDefinitionProto(projectInput.getProjectDefinition(), () -> builder);
+          toAssignmentProto(projectInput.getAssignment(), false, builder::getAssignmentBuilder);
+
+          if (projectInput.getState() != null) {
+            builder.setState(
+                switch (ProjectInputRepository.State.valueOf(projectInput.getState())) {
+                  case FAILED -> ProjectDefinition.State.FAILED;
+                  case COMPLETED -> ProjectDefinition.State.COMPLETED;
+                  case PROCESSING -> Instant.now().isAfter(projectInput.getTimeout())
+                      ? ProjectDefinition.State.FAILED
+                      : ProjectDefinition.State.PROCESSING;
+                });
+          }
+
+          Map<Integer, org.davincischools.leo.protos.pl_types.ProjectInputValue.Builder>
+              categoryIdToProjectInputValue = new HashMap<>();
+          builder
+              .getInputsBuilderList()
+              .forEach(
+                  input -> categoryIdToProjectInputValue.put(input.getCategory().getId(), input));
+
+          ifInitialized(
+              projectInput.getProjectInputValues(),
+              Comparator.comparing(ProjectInputValue::getPosition),
+              projectInputValue -> {
+                var projectInputValueProto =
+                    Optional.ofNullable(
+                            categoryIdToProjectInputValue.get(
+                                projectInputValue.getProjectDefinitionCategory().getId()))
+                        .orElseThrow(
+                            () ->
+                                new IllegalArgumentException(
+                                    "No category found for project_input_value "
+                                        + projectInputValue.getId()
+                                        + "."));
+
+                switch (projectInputValueProto.getCategory().getValueType()) {
+                  case FREE_TEXT -> projectInputValueProto.addFreeTexts(
+                      projectInputValue.getFreeTextValue());
+                  case MOTIVATION -> projectInputValueProto.addSelectedIds(
+                      projectInputValue.getMotivationValue().getId());
+                  default -> projectInputValueProto.addSelectedIds(
+                      projectInputValue.getKnowledgeAndSkillValue().getId());
+                }
+              });
+        },
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.ID_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.NAME_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUT_ID_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.TEMPLATE_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER);
   }
 
   public static Optional<org.davincischools.leo.database.daos.ProjectDefinition>
@@ -146,19 +231,87 @@ public class ProtoDaoUtils {
         () ->
             new org.davincischools.leo.database.daos.ProjectDefinition()
                 .setCreationTime(Instant.now()),
-        dao -> {
-          dao.setProjectDefinitionCategories(
-              projectDefinition.getInputsList().stream()
-                  .map(ProjectInputValue::getCategory)
-                  .map(ProtoDaoUtils::toProjectDefinitionCategoryDao)
-                  .filter(Optional::isPresent)
-                  .map(Optional::get)
-                  .collect(toSet()));
-        },
+        dao ->
+            dao.setProjectDefinitionCategories(
+                projectDefinition.getInputsList().stream()
+                    .map(org.davincischools.leo.protos.pl_types.ProjectInputValue::getCategory)
+                    .map(ProtoDaoUtils::toProjectDefinitionCategoryDao)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(toSet())),
         org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUT_ID_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER);
+  }
+
+  public static Optional<org.davincischools.leo.database.daos.ProjectInput> toProjectInputDao(
+      org.davincischools.leo.protos.pl_types.ProjectDefinitionOrBuilder projectDefinition) {
+    return translateToDao(
+        projectDefinition,
+        () ->
+            new org.davincischools.leo.database.daos.ProjectInput().setCreationTime(Instant.now()),
+        dao -> {
+          dao.setId(projectDefinition.getInputId());
+          toProjectDefinitionDao(projectDefinition).ifPresent(dao::setProjectDefinition);
+          toAssignmentDao(projectDefinition.getAssignment()).ifPresent(dao::setAssignment);
+
+          Map<Integer, ProjectDefinitionCategory> idToProjectDefinitionCategory =
+              Maps.uniqueIndex(
+                  dao.getProjectDefinition().getProjectDefinitionCategories(),
+                  ProjectDefinitionCategory::getId);
+
+          List<ProjectInputValue> projectInputValues = new ArrayList<>();
+          projectDefinition
+              .getInputsList()
+              .forEach(
+                  input -> {
+                    Supplier<ProjectInputValue> newProjectInputValue =
+                        () ->
+                            new ProjectInputValue()
+                                .setCreationTime(Instant.now())
+                                .setProjectInput(dao)
+                                .setPosition((float) positionCounter.incrementAndGet())
+                                .setProjectDefinitionCategory(
+                                    checkNotNull(
+                                        idToProjectDefinitionCategory.get(
+                                            input.getCategory().getId())));
+
+                    switch (input.getCategory().getValueType()) {
+                      case FREE_TEXT -> projectInputValues.addAll(
+                          input.getFreeTextsList().stream()
+                              .map(
+                                  freeText -> newProjectInputValue.get().setFreeTextValue(freeText))
+                              .toList());
+                      case MOTIVATION -> projectInputValues.addAll(
+                          input.getSelectedIdsList().stream()
+                              .map(
+                                  motivationId ->
+                                      newProjectInputValue
+                                          .get()
+                                          .setMotivationValue(new Motivation().setId(motivationId)))
+                              .toList());
+                      default -> projectInputValues.addAll(
+                          input.getSelectedIdsList().stream()
+                              .map(
+                                  selectedId ->
+                                      newProjectInputValue
+                                          .get()
+                                          .setKnowledgeAndSkillValue(
+                                              new KnowledgeAndSkill().setId(selectedId)))
+                              .toList());
+                    }
+                  });
+          dao.setProjectInputValues(new HashSet<>(projectInputValues));
+        },
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.ID_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.NAME_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUT_ID_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.TEMPLATE_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER);
   }
 
   public static Optional<org.davincischools.leo.protos.pl_types.ProjectInputCategory.Builder>
@@ -173,7 +326,6 @@ public class ProtoDaoUtils {
             ifInitialized(projectDefinitionCategory.getProjectDefinitionCategoryType())
                 .ifPresent(
                     type ->
-                        // TODO: Extract
                         translateToProto(
                             type,
                             () -> builder,
@@ -260,23 +412,22 @@ public class ProtoDaoUtils {
                 .setPosition((float) positionCounter.incrementAndGet())
                 .setProjectDefinitionCategoryType(
                     new ProjectDefinitionCategoryType().setCreationTime(Instant.now())),
-        dao -> {
-          translateToDao(
-              projectInputCategory,
-              () -> dao.getProjectDefinitionCategoryType(),
-              typeDao -> {
-                typeDao.setId(
-                    valueOrNull(projectInputCategory, ProjectInputCategory.TYPE_ID_FIELD_NUMBER));
-                typeDao.setInputPlaceholder(
-                    valueOrNull(
-                        projectInputCategory, ProjectInputCategory.PLACEHOLDER_FIELD_NUMBER));
-              },
-              ProjectInputCategory.ID_FIELD_NUMBER,
-              ProjectInputCategory.TYPE_ID_FIELD_NUMBER,
-              ProjectInputCategory.PLACEHOLDER_FIELD_NUMBER,
-              ProjectInputCategory.MAX_NUM_VALUES_FIELD_NUMBER,
-              ProjectInputCategory.OPTIONS_FIELD_NUMBER);
-        },
+        dao ->
+            translateToDao(
+                projectInputCategory,
+                dao::getProjectDefinitionCategoryType,
+                typeDao -> {
+                  typeDao.setId(
+                      valueOrNull(projectInputCategory, ProjectInputCategory.TYPE_ID_FIELD_NUMBER));
+                  typeDao.setInputPlaceholder(
+                      valueOrNull(
+                          projectInputCategory, ProjectInputCategory.PLACEHOLDER_FIELD_NUMBER));
+                },
+                ProjectInputCategory.ID_FIELD_NUMBER,
+                ProjectInputCategory.TYPE_ID_FIELD_NUMBER,
+                ProjectInputCategory.PLACEHOLDER_FIELD_NUMBER,
+                ProjectInputCategory.MAX_NUM_VALUES_FIELD_NUMBER,
+                ProjectInputCategory.OPTIONS_FIELD_NUMBER),
         ProjectInputCategory.TYPE_ID_FIELD_NUMBER,
         ProjectInputCategory.NAME_FIELD_NUMBER,
         ProjectInputCategory.SHORT_DESCR_FIELD_NUMBER,
@@ -313,12 +464,11 @@ public class ProtoDaoUtils {
     return translateToProto(
         projectMilestone,
         newBuilder,
-        builder -> {
-          ifInitialized(
-              projectMilestone.getProjectMilestoneSteps(),
-              Comparator.comparing(ProjectMilestoneStep::getPosition),
-              step -> toMilestoneStepProto(step, builder::addStepsBuilder));
-        },
+        builder ->
+            ifInitialized(
+                projectMilestone.getProjectMilestoneSteps(),
+                Comparator.comparing(ProjectMilestoneStep::getPosition),
+                step -> toMilestoneStepProto(step, builder::addStepsBuilder)),
         org.davincischools.leo.protos.pl_types.Project.Milestone.STEPS_FIELD_NUMBER);
   }
 
@@ -553,14 +703,13 @@ public class ProtoDaoUtils {
     return translateToProto(
         userX,
         newBuilder,
-        builder -> {
-          builder
-              .setIsAdminX(UserXRepository.isAdminX(userX))
-              .setIsTeacher(UserXRepository.isTeacher(userX))
-              .setIsStudent(UserXRepository.isStudent(userX))
-              .setIsDemo(UserXRepository.isDemo(userX))
-              .setIsAuthenticated(UserXRepository.isAuthenticated(userX));
-        },
+        builder ->
+            builder
+                .setIsAdminX(UserXRepository.isAdminX(userX))
+                .setIsTeacher(UserXRepository.isTeacher(userX))
+                .setIsStudent(UserXRepository.isStudent(userX))
+                .setIsDemo(UserXRepository.isDemo(userX))
+                .setIsAuthenticated(UserXRepository.isAuthenticated(userX)),
         org.davincischools.leo.protos.pl_types.UserX.IS_ADMIN_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.UserX.IS_TEACHER_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.UserX.IS_STUDENT_FIELD_NUMBER,
@@ -749,9 +898,7 @@ public class ProtoDaoUtils {
     return translateToDao(
         knowledgeAndSkill,
         () -> new KnowledgeAndSkill().setCreationTime(Instant.now()),
-        dao -> {
-          toUserXDao(knowledgeAndSkill.getUserX()).ifPresent(dao::setUserX);
-        },
+        dao -> toUserXDao(knowledgeAndSkill.getUserX()).ifPresent(dao::setUserX),
         org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.USER_X_FIELD_NUMBER);
   }
 
@@ -762,9 +909,7 @@ public class ProtoDaoUtils {
     return translateToProto(
         knowledgeAndSkill,
         newBuilder,
-        builder -> {
-          toUserXProto(knowledgeAndSkill.getUserX(), builder::getUserXBuilder);
-        },
+        builder -> toUserXProto(knowledgeAndSkill.getUserX(), builder::getUserXBuilder),
         org.davincischools.leo.protos.pl_types.KnowledgeAndSkill.USER_X_FIELD_NUMBER);
   }
 
@@ -773,9 +918,7 @@ public class ProtoDaoUtils {
     return translateToDao(
         school,
         () -> new School().setCreationTime(Instant.now()),
-        dao -> {
-          toDistrictDao(school.getDistrict()).ifPresent(dao::setDistrict);
-        },
+        dao -> toDistrictDao(school.getDistrict()).ifPresent(dao::setDistrict),
         org.davincischools.leo.protos.pl_types.School.DISTRICT_FIELD_NUMBER);
   }
 
@@ -784,9 +927,7 @@ public class ProtoDaoUtils {
     return translateToProto(
         school,
         newBuilder,
-        builder -> {
-          toDistrictProto(school.getDistrict(), builder::getDistrictBuilder);
-        },
+        builder -> toDistrictProto(school.getDistrict(), builder::getDistrictBuilder),
         org.davincischools.leo.protos.pl_types.School.DISTRICT_FIELD_NUMBER);
   }
 
@@ -892,7 +1033,7 @@ public class ProtoDaoUtils {
                                 Object innerDao = finalConstructor.newInstance();
                                 getDaoClass(innerDao)
                                     .getMethod("setId", Integer.class)
-                                    .invoke(innerDao, (Integer) message.getField(field));
+                                    .invoke(innerDao, message.getField(field));
                                 setDaoMethod.get().invoke(dao, innerDao);
                               }
                             } catch (Exception e) {
@@ -1095,8 +1236,7 @@ public class ProtoDaoUtils {
                       Class<?> daoType = getDaoMethod.get().getReturnType();
                       Method getDaoId = daoType.getMethod("getId");
                       if (getDaoId.getReturnType() != Integer.class) {
-                        throw new IOException(
-                            "Id field is not an intereger: " + field.getFullName());
+                        throw new IOException("Id field is not an integer: " + field.getFullName());
                       }
 
                       // Add translator to set the inner dao object.
@@ -1227,6 +1367,7 @@ public class ProtoDaoUtils {
     }
 
     customTranslations.accept(toMessage);
+
     return Optional.of(toMessage);
   }
 
