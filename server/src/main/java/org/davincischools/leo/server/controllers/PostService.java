@@ -2,6 +2,11 @@ package org.davincischools.leo.server.controllers;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectPostCommentProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectPostDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectPostProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectPostRatingDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toUserXDao;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
 import java.time.Instant;
@@ -25,7 +30,6 @@ import org.davincischools.leo.protos.post_service.UpsertProjectPostRatingRequest
 import org.davincischools.leo.protos.post_service.UpsertProjectPostRatingResponse;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostRequest;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostResponse;
-import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.Authenticated;
@@ -111,8 +115,7 @@ public class PostService {
                                       request, GetProjectPostsRequest.PAGE_SIZE_FIELD_NUMBER)));
               projectPosts.forEach(
                   fullProjectPost ->
-                      ProtoDaoUtils.toProjectPostProto(
-                          fullProjectPost, true, response::addProjectPostsBuilder));
+                      toProjectPostProto(fullProjectPost, true, response::addProjectPostsBuilder));
 
               if (request.hasPage()) {
                 response
@@ -141,7 +144,7 @@ public class PostService {
             (request, log) -> {
               UserX postUserX =
                   request.getProjectPost().getUserX().hasId()
-                      ? ProtoDaoUtils.toUserXDao(request.getProjectPost().getUserX())
+                      ? toUserXDao(request.getProjectPost().getUserX()).orElseThrow()
                       : checkNotNull(userX.getUserXOrNull());
 
               if (!userX.isAdminX() && request.getProjectPost().getUserX().hasId()) {
@@ -154,7 +157,7 @@ public class PostService {
                 }
               }
 
-              var projectPost = ProtoDaoUtils.toProjectPostDao(request.getProjectPost());
+              var projectPost = toProjectPostDao(request.getProjectPost()).orElseThrow();
               projectPost.setUserX(postUserX);
               projectPost.setPostTime(Instant.now());
 
@@ -181,7 +184,7 @@ public class PostService {
             (request, log) -> {
               UserX postUserX =
                   request.getProjectPostComment().getUserX().hasId()
-                      ? ProtoDaoUtils.toUserXDao(request.getProjectPostComment().getUserX())
+                      ? toUserXDao(request.getProjectPostComment().getUserX()).orElseThrow()
                       : checkNotNull(userX.getUserXOrNull());
 
               ProjectPostComment comment =
@@ -211,8 +214,7 @@ public class PostService {
 
               DaoUtils.removeTransientValues(comment, db.getProjectPostCommentRepository()::save);
 
-              ProtoDaoUtils.toProjectPostCommentProto(
-                  comment, response::getProjectPostCommentBuilder);
+              toProjectPostCommentProto(comment, response::getProjectPostCommentBuilder);
 
               return response.build();
             })
@@ -301,7 +303,7 @@ public class PostService {
 
               ProjectPostRating savedRating =
                   DaoUtils.removeTransientValues(
-                      ProtoDaoUtils.toProjectPostRatingDao(request.getProjectPostRating()),
+                      toProjectPostRatingDao(request.getProjectPostRating()).orElseThrow(),
                       db.getProjectPostRatingRepository()::save);
 
               return UpsertProjectPostRatingResponse.newBuilder()

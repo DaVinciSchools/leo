@@ -2,6 +2,38 @@ package org.davincischools.leo.server.utils;
 
 import static com.google.common.truth.Truth8.assertThat;
 import static com.google.common.truth.extensions.proto.ProtoTruth.assertThat;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toAssignmentDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toAssignmentProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toClassXDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toClassXProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toDistrictDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toDistrictProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toInterestDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toKnowledgeAndSkillDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toKnowledgeAndSkillProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toMilestoneProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toMilestoneStepProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectDefinitionCategoryDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectDefinitionDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectDefinitionProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectInputCategoryProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectMilestoneDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectMilestoneStepDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectPostCommentDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectPostCommentProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectPostDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectPostProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectPostRatingDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectPostRatingProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toRegisterUserXRequestProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toSchoolDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toSchoolProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toTagDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toTagProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toUserXDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toUserXProto;
 
 import com.google.protobuf.TextFormat;
 import com.google.protobuf.TextFormat.ParseException;
@@ -52,14 +84,19 @@ public class ProtoDaoUtilsTest {
   @Autowired EntityManager entityManager;
 
   @Test
-  public void toAssignmentConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toAssignmentProto(null, true, Assignment::newBuilder)).isEmpty();
+  public void toAssignmentProtoNull() {
+    assertThat(toAssignmentProto(null, true, Assignment::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toAssignmentConvertersUninitialized() throws ParseException {
+  public void toAssignmentDaoNull() {
+    assertThat(toAssignmentDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toAssignmentProtoUninitialized() {
     assertThat(
-            ProtoDaoUtils.toAssignmentProto(
+            toAssignmentProto(
                 newUninitialized(org.davincischools.leo.database.daos.Assignment.class),
                 true,
                 Assignment::newBuilder))
@@ -67,18 +104,12 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toAssignmentConvertersEmpty() throws ParseException {
-    Assignment proto = Assignment.getDefaultInstance();
-    assertThat(
-            ProtoDaoUtils.toAssignmentProto(
-                    ProtoDaoUtils.toAssignmentDao(proto), true, Assignment::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toAssignmentDaoUninitialized() {
+    assertThat(toAssignmentDao(Assignment.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toAssignmentConvertersAll() throws ParseException {
+  public void toAssignmentRoundTrip() throws ParseException {
     Assignment proto =
         TextFormat.parse(
             """
@@ -120,41 +151,41 @@ public class ProtoDaoUtilsTest {
             Assignment.class);
 
     assertThat(
-            ProtoDaoUtils.toAssignmentProto(
-                    ProtoDaoUtils.toAssignmentDao(proto), true, Assignment::newBuilder)
+            toAssignmentProto(toAssignmentDao(proto).orElseThrow(), true, Assignment::newBuilder)
                 .orElseThrow()
                 .build())
-        .ignoringRepeatedFieldOrderOfFields(Assignment.PROJECT_DEFINITIONS_FIELD_NUMBER)
-        .ignoringRepeatedFieldOrder()
+        .ignoringRepeatedFieldOrderOfFields(
+            Assignment.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER,
+            Assignment.PROJECT_DEFINITIONS_FIELD_NUMBER)
         .isEqualTo(proto);
   }
 
   @Test
-  public void toDistrictConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toDistrictProto(null, District::newBuilder)).isEmpty();
+  public void toDistrictProtoNull() throws ParseException {
+    assertThat(toDistrictProto(null, District::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toDistrictConvertersUninitialized() throws ParseException {
+  public void toDistrictDaoNull() throws ParseException {
+    assertThat(toDistrictDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toDistrictProtoUninitialized() throws ParseException {
     assertThat(
-            ProtoDaoUtils.toDistrictProto(
+            toDistrictProto(
                 newUninitialized(org.davincischools.leo.database.daos.District.class),
                 District::newBuilder))
         .isEmpty();
   }
 
   @Test
-  public void toDistrictConvertersEmpty() throws ParseException {
-    District proto = District.getDefaultInstance();
-    assertThat(
-            ProtoDaoUtils.toDistrictProto(ProtoDaoUtils.toDistrictDao(proto), District::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toDistrictDaoUninitialized() throws ParseException {
+    assertThat(toDistrictDao(District.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toDistrictConvertersAll() throws ParseException {
+  public void toDistrictRoundTrip() throws ParseException {
     District proto =
         TextFormat.parse(
             """
@@ -163,21 +194,26 @@ public class ProtoDaoUtilsTest {
             """, District.class);
 
     assertThat(
-            ProtoDaoUtils.toDistrictProto(ProtoDaoUtils.toDistrictDao(proto), District::newBuilder)
+            toDistrictProto(toDistrictDao(proto).orElseThrow(), District::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);
   }
 
   @Test
-  public void toClassXConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toClassXProto(null, true, ClassX::newBuilder)).isEmpty();
+  public void toClassXProtoNull() {
+    assertThat(toClassXProto(null, true, ClassX::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toClassXConvertersUninitialized() throws ParseException {
+  public void toClassXDaoNull() {
+    assertThat(toClassXDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toClassXProtoUninitialized() {
     assertThat(
-            ProtoDaoUtils.toClassXProto(
+            toClassXProto(
                 newUninitialized(org.davincischools.leo.database.daos.ClassX.class),
                 true,
                 ClassX::newBuilder))
@@ -185,18 +221,12 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toClassXConvertersEmpty() throws ParseException {
-    ClassX proto = ClassX.getDefaultInstance();
-    assertThat(
-            ProtoDaoUtils.toClassXProto(ProtoDaoUtils.toClassXDao(proto), true, ClassX::newBuilder)
-                .orElseThrow()
-                .build())
-        .ignoringRepeatedFieldOrder()
-        .isEqualTo(proto);
+  public void toClassXDaoUninitialized() {
+    assertThat(toClassXDao(ClassX.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toClassXConvertersAll() throws ParseException {
+  public void toClassXRoundTrip() throws ParseException {
     ClassX proto =
         TextFormat.parse(
             """
@@ -239,7 +269,7 @@ public class ProtoDaoUtilsTest {
             ClassX.class);
 
     assertThat(
-            ProtoDaoUtils.toClassXProto(ProtoDaoUtils.toClassXDao(proto), true, ClassX::newBuilder)
+            toClassXProto(toClassXDao(proto).orElseThrow(), true, ClassX::newBuilder)
                 .orElseThrow()
                 .build())
         .ignoringRepeatedFieldOrder()
@@ -247,33 +277,31 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toKnowledgeAndSkillConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toKnowledgeAndSkillProto(null, KnowledgeAndSkill::newBuilder))
-        .isEmpty();
+  public void toKnowledgeAndSkillProtoNull() throws ParseException {
+    assertThat(toKnowledgeAndSkillProto(null, KnowledgeAndSkill::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toKnowledgeAndSkillConvertersUninitialized() throws ParseException {
+  public void toKnowledgeAndSkillDaoNull() throws ParseException {
+    assertThat(toKnowledgeAndSkillProto(null, KnowledgeAndSkill::newBuilder)).isEmpty();
+  }
+
+  @Test
+  public void toKnowledgeAndSkillProtoUninitialized() throws ParseException {
     assertThat(
-            ProtoDaoUtils.toKnowledgeAndSkillProto(
+            toKnowledgeAndSkillProto(
                 newUninitialized(org.davincischools.leo.database.daos.KnowledgeAndSkill.class),
                 KnowledgeAndSkill::newBuilder))
         .isEmpty();
   }
 
   @Test
-  public void toKnowledgeAndSkillConvertersEmpty() throws ParseException {
-    KnowledgeAndSkill proto = KnowledgeAndSkill.getDefaultInstance();
-    assertThat(
-            ProtoDaoUtils.toKnowledgeAndSkillProto(
-                    ProtoDaoUtils.toKnowledgeAndSkillDao(proto), KnowledgeAndSkill::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toKnowledgeAndSkillDaoUninitialized() throws ParseException {
+    assertThat(toKnowledgeAndSkillDao(KnowledgeAndSkill.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toKnowledgeAndSkillConvertersAll() throws ParseException {
+  public void toKnowledgeAndSkillRoundTrip() throws ParseException {
     KnowledgeAndSkill proto =
         TextFormat.parse(
             """
@@ -286,6 +314,9 @@ public class ProtoDaoUtilsTest {
                 global: true
                 user_x {
                   id: 9
+                  is_admin_x: false
+                  is_teacher: false
+                  is_student: false
                   is_demo: true
                   is_authenticated: true
                 }
@@ -293,42 +324,39 @@ public class ProtoDaoUtilsTest {
             KnowledgeAndSkill.class);
 
     assertThat(
-            ProtoDaoUtils.toKnowledgeAndSkillProto(
-                    ProtoDaoUtils.toKnowledgeAndSkillDao(proto), KnowledgeAndSkill::newBuilder)
+            toKnowledgeAndSkillProto(
+                    toKnowledgeAndSkillDao(proto).orElseThrow(), KnowledgeAndSkill::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);
   }
 
   @Test
-  public void toSchoolConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toSchoolProto(null, School::newBuilder)).isEmpty();
+  public void toSchoolProtoNull() throws ParseException {
+    assertThat(toSchoolProto(null, School::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toSchoolConvertersUninitialized() throws ParseException {
+  public void toSchoolDaoNull() throws ParseException {
+    assertThat(toSchoolDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toSchoolProtoUninitialized() throws ParseException {
     assertThat(
-            ProtoDaoUtils.toSchoolProto(
+            toSchoolProto(
                 newUninitialized(org.davincischools.leo.database.daos.School.class),
                 School::newBuilder))
         .isEmpty();
   }
 
   @Test
-  public void toSchoolConvertersEmpty() throws ParseException {
-    School proto = TextFormat.parse("""
-                id: 1
-                """, School.class);
-
-    assertThat(
-            ProtoDaoUtils.toSchoolProto(ProtoDaoUtils.toSchoolDao(proto), School::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toSchoolDaoUninitialized() throws ParseException {
+    assertThat(toSchoolDao(School.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toSchoolConvertersAll() throws ParseException {
+  public void toSchoolRoundTrip() throws ParseException {
     School proto =
         TextFormat.parse(
             """
@@ -344,64 +372,38 @@ public class ProtoDaoUtilsTest {
             School.class);
 
     assertThat(
-            ProtoDaoUtils.toSchoolProto(ProtoDaoUtils.toSchoolDao(proto), School::newBuilder)
+            toSchoolProto(toSchoolDao(proto).orElseThrow(), School::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);
   }
 
   @Test
-  public void toUserXConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toUserXProto(null, UserX::newBuilder)).isEmpty();
+  public void toUserXProtoNull() throws ParseException {
+    assertThat(toUserXProto(null, UserX::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toUserXConvertersUninitialized() throws ParseException {
+  public void toUserXDaoNull() throws ParseException {
+    assertThat(toUserXDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toUserXProtoUninitialized() throws ParseException {
     assertThat(
-            ProtoDaoUtils.toUserXProto(
+            toUserXProto(
                 newUninitialized(org.davincischools.leo.database.daos.UserX.class),
                 UserX::newBuilder))
         .isEmpty();
   }
 
   @Test
-  public void toUserXConvertersJustId() throws ParseException {
-    UserX proto =
-        TextFormat.parse(
-            """
-                id: 1
-                is_demo: true
-                is_authenticated: true
-                """,
-            UserX.class);
-
-    assertThat(
-            ProtoDaoUtils.toUserXProto(ProtoDaoUtils.toUserXDao(proto), UserX::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toUserXDaoUninitialized() throws ParseException {
+    assertThat(toUserXDao(UserX.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toUserXConvertersEmpty() throws ParseException {
-    UserX proto =
-        TextFormat.parse(
-            """
-                is_demo: false
-                is_authenticated: false
-                """,
-            UserX.class);
-
-    assertThat(
-            ProtoDaoUtils.toUserXProto(
-                    ProtoDaoUtils.toUserXDao(UserX.getDefaultInstance()), UserX::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
-  }
-
-  @Test
-  public void toUserXConvertersAllNonDemo() throws ParseException {
+  public void toUserXRoundTrip() throws ParseException {
     UserX proto =
         TextFormat.parse(
             """
@@ -422,14 +424,12 @@ public class ProtoDaoUtilsTest {
             UserX.class);
 
     assertThat(
-            ProtoDaoUtils.toUserXProto(ProtoDaoUtils.toUserXDao(proto), UserX::newBuilder)
-                .orElseThrow()
-                .build())
+            toUserXProto(toUserXDao(proto).orElseThrow(), UserX::newBuilder).orElseThrow().build())
         .isEqualTo(proto);
   }
 
   @Test
-  public void toUserXConvertersAllDemo() throws ParseException {
+  public void toUserXRoundTripDemoOnly() throws ParseException {
     UserX proto =
         TextFormat.parse(
             """
@@ -438,32 +438,33 @@ public class ProtoDaoUtilsTest {
                 first_name: "first"
                 last_name: "last"
                 email_address: "email"
+                is_admin_x: false
+                is_teacher: false
+                is_student: false
                 is_demo: true
                 is_authenticated: true
                 """,
             UserX.class);
 
     assertThat(
-            ProtoDaoUtils.toUserXProto(ProtoDaoUtils.toUserXDao(proto), UserX::newBuilder)
-                .orElseThrow()
-                .build())
+            toUserXProto(toUserXDao(proto).orElseThrow(), UserX::newBuilder).orElseThrow().build())
         .isEqualTo(proto);
   }
 
   @Test
-  public void toProjectPostConvertersNull() throws ParseException {
-    assertThat(
-            ProtoDaoUtils.toProjectPostProto(
-                (org.davincischools.leo.database.daos.ProjectPost) null,
-                true,
-                ProjectPost::newBuilder))
-        .isEmpty();
+  public void toProjectPostProtoNull() throws ParseException {
+    assertThat(toProjectPostProto(null, true, ProjectPost::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toProjectPostConvertersUninitialized() throws ParseException {
+  public void toProjectPostDaoNull() throws ParseException {
+    assertThat(toProjectPostDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toProjectPostProtoUninitialized() throws ParseException {
     assertThat(
-            ProtoDaoUtils.toProjectPostProto(
+            toProjectPostProto(
                 newUninitialized(org.davincischools.leo.database.daos.ProjectPost.class),
                 true,
                 ProjectPost::newBuilder))
@@ -471,25 +472,21 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toProjectPostConvertersEmpty() throws ParseException {
-    ProjectPost proto = ProjectPost.getDefaultInstance();
-
-    assertThat(
-            ProtoDaoUtils.toProjectPostProto(
-                    ProtoDaoUtils.toProjectPostDao(proto), true, ProjectPost::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toProjectPostDaoUninitialized() throws ParseException {
+    assertThat(toProjectPostDao(ProjectPost.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toProjectPostConvertersAll() throws ParseException {
+  public void toProjectPostRoundTrip() throws ParseException {
     ProjectPost proto =
         TextFormat.parse(
             """
                 id: 1
                 user_x {
                   id: 2
+                  is_admin_x: false
+                  is_teacher: false
+                  is_student: false
                   is_demo: true
                   is_authenticated: true
                 }
@@ -515,6 +512,9 @@ public class ProtoDaoUtilsTest {
                   id: 11
                   user_x {
                     id: 12
+                    is_admin_x: false
+                    is_teacher: false
+                    is_student: false
                     is_demo: true
                     is_authenticated: true
                   }
@@ -526,6 +526,9 @@ public class ProtoDaoUtilsTest {
                   id: 7
                   user_x {
                     id: 8
+                    is_admin_x: false
+                    is_teacher: false
+                    is_student: false
                     is_demo: true
                     is_authenticated: true
                   }
@@ -539,8 +542,7 @@ public class ProtoDaoUtilsTest {
             ProjectPost.class);
 
     assertThat(
-            ProtoDaoUtils.toProjectPostProto(
-                    ProtoDaoUtils.toProjectPostDao(proto), true, ProjectPost::newBuilder)
+            toProjectPostProto(toProjectPostDao(proto).orElseThrow(), true, ProjectPost::newBuilder)
                 .orElseThrow()
                 .build())
         .ignoringRepeatedFieldOrder()
@@ -548,34 +550,31 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toInterestConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toRegisterUserXRequestProto(null, RegisterUserXRequest::newBuilder))
-        .isEmpty();
+  public void toInterestProtoNull() throws ParseException {
+    assertThat(toRegisterUserXRequestProto(null, RegisterUserXRequest::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toInterestConvertersUninitialized() throws ParseException {
+  public void toInterestDaoNull() throws ParseException {
+    assertThat(toInterestDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toInterestProtoUninitialized() throws ParseException {
     assertThat(
-            ProtoDaoUtils.toRegisterUserXRequestProto(
+            toRegisterUserXRequestProto(
                 newUninitialized(org.davincischools.leo.database.daos.Interest.class),
                 RegisterUserXRequest::newBuilder))
         .isEmpty();
   }
 
   @Test
-  public void toInterestConvertersEmpty() throws ParseException {
-    RegisterUserXRequest proto = RegisterUserXRequest.getDefaultInstance();
-
-    assertThat(
-            ProtoDaoUtils.toRegisterUserXRequestProto(
-                    ProtoDaoUtils.toInterestDao(proto), RegisterUserXRequest::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toInterestDaoUninitialized() throws ParseException {
+    assertThat(toInterestDao(RegisterUserXRequest.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toInterestConvertersAll() throws ParseException {
+  public void toInterestRoundTrip() throws ParseException {
     RegisterUserXRequest proto =
         TextFormat.parse(
             """
@@ -599,46 +598,42 @@ public class ProtoDaoUtilsTest {
             RegisterUserXRequest.class);
 
     assertThat(
-            ProtoDaoUtils.toRegisterUserXRequestProto(
-                    ProtoDaoUtils.toInterestDao(proto), RegisterUserXRequest::newBuilder)
+            toRegisterUserXRequestProto(
+                    toInterestDao(proto).orElseThrow(), RegisterUserXRequest::newBuilder)
                 .orElseThrow()
                 .build())
-        .ignoringFieldDescriptors(
-            RegisterUserXRequest.getDescriptor()
-                .findFieldByNumber(RegisterUserXRequest.PASSWORD_FIELD_NUMBER),
-            RegisterUserXRequest.getDescriptor()
-                .findFieldByNumber(RegisterUserXRequest.VERIFY_PASSWORD_FIELD_NUMBER))
+        .ignoringFields(
+            RegisterUserXRequest.PASSWORD_FIELD_NUMBER,
+            RegisterUserXRequest.VERIFY_PASSWORD_FIELD_NUMBER)
         .isEqualTo(proto);
   }
 
   @Test
-  public void toProjectMilestoneStepConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toMilestoneStepProto(null, Milestone.Step::newBuilder)).isEmpty();
+  public void toProjectMilestoneStepProtoNull() throws ParseException {
+    assertThat(toMilestoneStepProto(null, Milestone.Step::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toProjectMilestoneStepConvertersUninitialized() throws ParseException {
+  public void toProjectMilestoneStepDaoNull() throws ParseException {
+    assertThat(toProjectMilestoneStepDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toProjectMilestoneStepProtoUninitialized() throws ParseException {
     assertThat(
-            ProtoDaoUtils.toMilestoneStepProto(
+            toMilestoneStepProto(
                 newUninitialized(org.davincischools.leo.database.daos.ProjectMilestoneStep.class),
                 Milestone.Step::newBuilder))
         .isEmpty();
   }
 
   @Test
-  public void toProjectMilestoneStepConvertersEmpty() throws ParseException {
-    Project.Milestone.Step proto = Project.Milestone.Step.getDefaultInstance();
-
-    assertThat(
-            ProtoDaoUtils.toMilestoneStepProto(
-                    ProtoDaoUtils.toProjectMilestoneStepDao(proto), Milestone.Step::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toProjectMilestoneStepDaoUninitialized() throws ParseException {
+    assertThat(toProjectMilestoneStepDao(Milestone.Step.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toProjectMilestoneStepConvertersAll() throws ParseException {
+  public void toProjectMilestoneStepRoundTrip() throws ParseException {
     Project.Milestone.Step proto =
         TextFormat.parse(
             """
@@ -648,45 +643,39 @@ public class ProtoDaoUtilsTest {
             Project.Milestone.Step.class);
 
     assertThat(
-            ProtoDaoUtils.toMilestoneStepProto(
-                    ProtoDaoUtils.toProjectMilestoneStepDao(proto), Milestone.Step::newBuilder)
+            toMilestoneStepProto(
+                    toProjectMilestoneStepDao(proto).orElseThrow(), Milestone.Step::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);
   }
 
   @Test
-  public void toProjectMilestoneConvertersNull() throws ParseException {
-    assertThat(
-            ProtoDaoUtils.toMilestoneProto(
-                (org.davincischools.leo.database.daos.ProjectMilestone) null,
-                Milestone::newBuilder))
-        .isEmpty();
+  public void toProjectMilestoneProtoNull() throws ParseException {
+    assertThat(toMilestoneProto(null, Milestone::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toProjectMilestoneConvertersUninitialized() throws ParseException {
+  public void toProjectMilestoneDaoNull() throws ParseException {
+    assertThat(toProjectMilestoneDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toProjectMilestoneProtoUninitialized() throws ParseException {
     assertThat(
-            ProtoDaoUtils.toMilestoneProto(
+            toMilestoneProto(
                 newUninitialized(org.davincischools.leo.database.daos.ProjectMilestone.class),
                 Milestone::newBuilder))
         .isEmpty();
   }
 
   @Test
-  public void toProjectMilestoneConvertersEmpty() throws ParseException {
-    Project.Milestone proto = Project.Milestone.getDefaultInstance();
-
-    assertThat(
-            ProtoDaoUtils.toMilestoneProto(
-                    ProtoDaoUtils.toProjectMilestoneDao(proto), Milestone::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toProjectMilestoneDaoUninitialized() throws ParseException {
+    assertThat(toProjectMilestoneDao(Milestone.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toProjectMilestoneConvertersAll() throws ParseException {
+  public void toProjectMilestoneRoundTrip() throws ParseException {
     Project.Milestone proto =
         TextFormat.parse(
             """
@@ -700,8 +689,7 @@ public class ProtoDaoUtilsTest {
             Project.Milestone.class);
 
     assertThat(
-            ProtoDaoUtils.toMilestoneProto(
-                    ProtoDaoUtils.toProjectMilestoneDao(proto), Milestone::newBuilder)
+            toMilestoneProto(toProjectMilestoneDao(proto).orElseThrow(), Milestone::newBuilder)
                 .orElseThrow()
                 .build())
         .ignoringFields(Project.Milestone.STEPS_FIELD_NUMBER)
@@ -709,14 +697,19 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toProjectConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toProjectProto(null, true, Project::newBuilder)).isEmpty();
+  public void toProjectProtoNull() throws ParseException {
+    assertThat(toProjectProto(null, true, Project::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toProjectConvertersUninitialized() throws ParseException {
+  public void toProjectDaoNull() throws ParseException {
+    assertThat(toProjectDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toProjectProtoUninitialized() throws ParseException {
     assertThat(
-            ProtoDaoUtils.toProjectProto(
+            toProjectProto(
                 newUninitialized(org.davincischools.leo.database.daos.Project.class),
                 true,
                 Project::newBuilder))
@@ -724,19 +717,12 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toProjectConvertersEmpty() throws ParseException {
-    Project proto = Project.getDefaultInstance();
-
-    assertThat(
-            ProtoDaoUtils.toProjectProto(
-                    ProtoDaoUtils.toProjectDao(proto), true, Project::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toProjectDaoUninitialized() throws ParseException {
+    assertThat(toProjectDao(Project.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toProjectConvertersAll() throws ParseException {
+  public void toProjectRoundTrip() throws ParseException {
     Project proto =
         TextFormat.parse(
             """
@@ -775,104 +761,37 @@ public class ProtoDaoUtilsTest {
             Project.class);
 
     assertThat(
-            ProtoDaoUtils.toProjectProto(
-                    ProtoDaoUtils.toProjectDao(proto), true, Project::newBuilder)
-                .orElseThrow()
-                .build())
-        .ignoringFields(Project.MILESTONES_FIELD_NUMBER)
-        .isEqualTo(proto);
-  }
-
-  @Test
-  public void toProjectConvertersEnum() throws ParseException {
-    Project proto =
-        TextFormat.parse(
-            """
-                thumbs_state: UNSET
-                """, Project.class);
-
-    assertThat(
-            ProtoDaoUtils.toProjectProto(
-                    ProtoDaoUtils.toProjectDao(proto), true, Project::newBuilder)
-                .orElseThrow()
-                .build())
-        .ignoringFields(Project.MILESTONES_FIELD_NUMBER)
-        .isEqualTo(Project.getDefaultInstance());
-  }
-
-  @Test
-  public void toProjectWithMilestoneConvertersAll() throws ParseException {
-    Project proto =
-        TextFormat.parse(
-            """
-                id: 1
-                name: "name"
-                short_descr: "short"
-                long_descr_html: "long"
-                favorite: true
-                thumbs_state: THUMBS_UP
-                thumbs_state_reason: "reason"
-                archived: true
-                active: true
-                assignment {
-                  id: 2
-                  name: "assignment name"
-                  short_descr: "assignment short"
-                  long_descr_html: "assignment long"
-                }
-                milestones {
-                  id: 3
-                  name: "milestone name 3"
-                  steps {
-                    id: 4
-                    name: "step name 4"
-                  }
-                  steps {
-                    id: 5
-                    name: "step name 5"
-                  }
-                }
-                milestones {
-                  id: 6
-                  name: "milestone name 6"
-                }
-                """,
-            Project.class);
-
-    assertThat(
-            ProtoDaoUtils.toProjectProto(
-                    ProtoDaoUtils.toProjectDao(proto), true, Project::newBuilder)
+            toProjectProto(toProjectDao(proto).orElseThrow(), true, Project::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);
   }
 
   @Test
-  public void toTagConvertersNull() throws ParseException {
-    assertThat(ProtoDaoUtils.toTagProto(null, Tag::newBuilder)).isEmpty();
+  public void toTagProtoNull() throws ParseException {
+    assertThat(toTagProto(null, Tag::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toTagConvertersUninitialized() throws ParseException {
+  public void toTagDaoNull() throws ParseException {
+    assertThat(toTagDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toTagProtoUninitialized() throws ParseException {
     assertThat(
-            ProtoDaoUtils.toTagProto(
+            toTagProto(
                 newUninitialized(org.davincischools.leo.database.daos.Tag.class), Tag::newBuilder))
         .isEmpty();
   }
 
   @Test
-  public void toTagConvertersEmpty() throws ParseException {
-    Tag proto = Tag.getDefaultInstance();
-
-    assertThat(
-            ProtoDaoUtils.toTagProto(ProtoDaoUtils.toTagDao(proto), Tag::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toTagDaoUninitialized() throws ParseException {
+    assertThat(toTagDao(Tag.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toTagConvertersAll() throws ParseException {
+  public void toTagRoundTrip() throws ParseException {
     Tag proto =
         TextFormat.parse(
             """
@@ -881,87 +800,59 @@ public class ProtoDaoUtilsTest {
                 """,
             Tag.class);
 
-    assertThat(
-            ProtoDaoUtils.toTagProto(ProtoDaoUtils.toTagDao(proto), Tag::newBuilder)
-                .orElseThrow()
-                .build())
+    assertThat(toTagProto(toTagDao(proto).orElseThrow(), Tag::newBuilder).orElseThrow().build())
         .isEqualTo(proto);
   }
 
   @Test
-  public void toProjectPostCommentConvertersNull() throws ParseException {
+  public void toProjectPostCommentProtoNull() throws ParseException {
     assertThat(
-            ProtoDaoUtils.toProjectPostCommentProto(
+            toProjectPostCommentProto(
                 (org.davincischools.leo.database.daos.ProjectPostComment) null,
                 ProjectPostComment::newBuilder))
         .isEmpty();
   }
 
   @Test
-  public void toProjectPostCommentConvertersUninitialized() throws ParseException {
+  public void toProjectPostCommentDaoNull() throws ParseException {
+    assertThat(toProjectPostCommentDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toProjectPostCommentProtoUninitialized() throws ParseException {
     assertThat(
-            ProtoDaoUtils.toProjectPostCommentProto(
+            toProjectPostCommentProto(
                 newUninitialized(org.davincischools.leo.database.daos.ProjectPostComment.class),
                 ProjectPostComment::newBuilder))
         .isEmpty();
   }
 
   @Test
-  public void toProjectPostCommentConvertersEmpty() throws ParseException {
-    ProjectPostComment proto = ProjectPostComment.getDefaultInstance();
-
-    assertThat(
-            ProtoDaoUtils.toProjectPostCommentProto(
-                    ProtoDaoUtils.toProjectPostCommentDao(proto), ProjectPostComment::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toProjectPostCommentDaoUninitialized() throws ParseException {
+    assertThat(toProjectPostCommentDao(ProjectPostComment.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toProjectPostCommentConvertersAll() throws ParseException {
+  public void toProjectPostCommentRoundTrip() throws ParseException {
     ProjectPostComment proto =
         TextFormat.parse(
             """
                 id: 1
                 user_x {
                   id: 2
+                  is_admin_x: false
+                  is_teacher: false
+                  is_student: false
                   is_demo: true
                   is_authenticated: true
                 }
                 project_post {
                   id: 3
-                }
-                long_descr_html: "long_descr_html"
-                post_time_ms: 4
-                being_edited: true
-                """,
-            ProjectPostComment.class);
-
-    assertThat(
-            ProtoDaoUtils.toProjectPostCommentProto(
-                    ProtoDaoUtils.toProjectPostCommentDao(proto), ProjectPostComment::newBuilder)
-                .orElseThrow()
-                .build())
-        .ignoringFields(ProjectPostComment.PROJECT_POST_FIELD_NUMBER)
-        .isEqualTo(proto);
-  }
-
-  @Test
-  public void toFullProjectPostCommentConverter() throws ParseException {
-    ProjectPostComment proto =
-        TextFormat.parse(
-            """
-                id: 1
-                user_x {
-                  id: 2
-                  is_demo: true
-                  is_authenticated: true
-                }
-                project_post: {
-                  id: 3
                   user_x {
                     id: 4
+                    is_admin_x: false
+                    is_teacher: false
+                    is_student: false
                     is_demo: true
                     is_authenticated: true
                   }
@@ -973,49 +864,48 @@ public class ProtoDaoUtilsTest {
             ProjectPostComment.class);
 
     assertThat(
-            ProtoDaoUtils.toProjectPostCommentProto(
-                    ProtoDaoUtils.toFullProjectPostComment(proto), ProjectPostComment::newBuilder)
+            toProjectPostCommentProto(
+                    toProjectPostCommentDao(proto).orElseThrow(), ProjectPostComment::newBuilder)
                 .orElseThrow()
                 .build())
-        .ignoringFields(ProjectPostComment.PROJECT_POST_FIELD_NUMBER)
         .isEqualTo(proto);
   }
 
   @Test
-  public void toProjectPostRatingConvertersNull() {
-    assertThat(ProtoDaoUtils.toProjectPostRatingProto(null, ProjectPostRating::newBuilder))
-        .isEmpty();
+  public void toProjectPostRatingProtoNull() {
+    assertThat(toProjectPostRatingProto(null, ProjectPostRating::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toProjectPostRatingConvertersUninitialized() {
+  public void toProjectPostRatingDaoNull() {
+    assertThat(toProjectPostRatingDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toProjectPostRatingProtoUninitialized() {
     assertThat(
-            ProtoDaoUtils.toProjectPostRatingProto(
+            toProjectPostRatingProto(
                 newUninitialized(org.davincischools.leo.database.daos.ProjectPostRating.class),
                 ProjectPostRating::newBuilder))
         .isEmpty();
   }
 
   @Test
-  public void toProjectPostRatingConvertersEmpty() {
-    ProjectPostRating proto = ProjectPostRating.getDefaultInstance();
-
-    assertThat(
-            ProtoDaoUtils.toProjectPostRatingProto(
-                    ProtoDaoUtils.toProjectPostRatingDao(proto), ProjectPostRating::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toProjectPostRatingDaoUninitialized() {
+    assertThat(toProjectPostRatingDao(ProjectPostRating.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toProjectPostRatingConvertersAll() throws ParseException {
+  public void toProjectPostRatingRoundTrip() throws ParseException {
     ProjectPostRating proto =
         TextFormat.parse(
             """
                 id: 1
                 user_x {
                   id: 2
+                  is_admin_x: false
+                  is_teacher: false
+                  is_student: false
                   is_demo: true
                   is_authenticated: true
                 }
@@ -1023,6 +913,9 @@ public class ProtoDaoUtilsTest {
                   id: 3
                   user_x {
                     id: 4
+                    is_admin_x: false
+                    is_teacher: false
+                    is_student: false
                     is_demo: true
                     is_authenticated: true
                   }
@@ -1041,23 +934,27 @@ public class ProtoDaoUtilsTest {
             ProjectPostRating.class);
 
     assertThat(
-            ProtoDaoUtils.toProjectPostRatingProto(
-                    ProtoDaoUtils.toProjectPostRatingDao(proto), ProjectPostRating::newBuilder)
+            toProjectPostRatingProto(
+                    toProjectPostRatingDao(proto).orElseThrow(), ProjectPostRating::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);
   }
 
   @Test
-  public void toProjectInputCategoryConvertersNull() {
-    assertThat(ProtoDaoUtils.toProjectInputCategoryProto(null, ProjectInputCategory::newBuilder))
-        .isEmpty();
+  public void toProjectInputCategoryProtoNull() {
+    assertThat(toProjectInputCategoryProto(null, ProjectInputCategory::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toProjectInputCategoryConvertersUninitialized() {
+  public void toProjectInputCategoryDaoNull() {
+    assertThat(toProjectDefinitionCategoryDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toProjectInputCategoryProtoUninitialized() {
     assertThat(
-            ProtoDaoUtils.toProjectInputCategoryProto(
+            toProjectInputCategoryProto(
                 newUninitialized(
                     org.davincischools.leo.database.daos.ProjectDefinitionCategory.class),
                 ProjectInputCategory::newBuilder))
@@ -1065,21 +962,13 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toProjectInputCategoryConvertersEmpty() {
-    ProjectInputCategory proto = ProjectInputCategory.getDefaultInstance();
-
-    assertThat(
-            ProtoDaoUtils.toProjectInputCategoryProto(
-                    ProtoDaoUtils.toProjectDefinitionCategoryDao(proto),
-                    ProjectInputCategory::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toProjectInputCategoryDaoUninitialized() {
+    assertThat(toProjectDefinitionCategoryDao(ProjectInputCategory.getDefaultInstance())).isEmpty();
   }
 
   @Test
-  public void toProjectInputCategoryConvertersAll() throws ParseException {
-    // Options are pulled in separately from the trqnslation.
+  public void toProjectInputCategoryRoundTrip() throws ParseException {
+    // Options are pulled in separately from this translation.
     ProjectInputCategory proto =
         TextFormat.parse(
             """
@@ -1092,13 +981,12 @@ public class ProtoDaoUtilsTest {
                 placeholder: 'placeholder'
                 value_type: EKS
                 max_num_values: 3
-
                 """,
             ProjectInputCategory.class);
 
     assertThat(
-            ProtoDaoUtils.toProjectInputCategoryProto(
-                    ProtoDaoUtils.toProjectDefinitionCategoryDao(proto),
+            toProjectInputCategoryProto(
+                    toProjectDefinitionCategoryDao(proto).orElseThrow(),
                     ProjectInputCategory::newBuilder)
                 .orElseThrow()
                 .build())
@@ -1106,35 +994,32 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toProjectDefinitionConvertersNull() {
-    assertThat(ProtoDaoUtils.toProjectDefinitionProto(null, ProjectDefinition::newBuilder))
-        .isEmpty();
+  public void toProjectDefinitionProtoNull() {
+    assertThat(toProjectDefinitionProto(null, ProjectDefinition::newBuilder)).isEmpty();
   }
 
   @Test
-  public void toProjectDefinitionConvertersUninitialized() {
+  public void toProjectDefinitionDaoNull() {
+    assertThat(toProjectDefinitionDao(null)).isEmpty();
+  }
+
+  @Test
+  public void toProjectDefinitionProtoUninitialized() {
     assertThat(
-            ProtoDaoUtils.toProjectDefinitionProto(
+            toProjectDefinitionProto(
                 newUninitialized(org.davincischools.leo.database.daos.ProjectDefinition.class),
                 ProjectDefinition::newBuilder))
         .isEmpty();
   }
 
   @Test
-  public void toProjectDefinitionConvertersEmpty() {
-    ProjectDefinition proto = ProjectDefinition.getDefaultInstance();
-
-    assertThat(
-            ProtoDaoUtils.toProjectDefinitionProto(
-                    ProtoDaoUtils.toProjectDefinitionDao(proto), ProjectDefinition::newBuilder)
-                .orElseThrow()
-                .build())
-        .isEqualTo(proto);
+  public void toProjectDefinitionDaoUninitialized() {
+    assertThat(toProjectDefinitionDao(ProjectDefinition.getDefaultInstance()));
   }
 
   @Test
-  public void toProjectDefinitionConvertersAll() throws ParseException {
-    // Options are pulled in separately from the trqnslation.
+  public void toProjectDefinitionRoundTrip() throws ParseException {
+    // Options are pulled in separately from this translation.
     ProjectDefinition proto =
         TextFormat.parse(
             """
@@ -1171,8 +1056,8 @@ public class ProtoDaoUtilsTest {
             ProjectDefinition.class);
 
     assertThat(
-            ProtoDaoUtils.toProjectDefinitionProto(
-                    ProtoDaoUtils.toProjectDefinitionDao(proto), ProjectDefinition::newBuilder)
+            toProjectDefinitionProto(
+                    toProjectDefinitionDao(proto).orElseThrow(), ProjectDefinition::newBuilder)
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);

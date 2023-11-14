@@ -3,11 +3,11 @@ package org.davincischools.leo.server.controllers;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toFullUserXDetailsProto;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
@@ -215,13 +215,20 @@ public class UserXManagementService {
                       db,
                       newUserX.getTeacher(),
                       newUserX.getStudent(),
-                      Lists.transform(
-                          request.getUserX().getSchoolsList(), ProtoDaoUtils::toSchoolDao));
+                      request.getUserX().getSchoolsList().stream()
+                          .map(ProtoDaoUtils::toSchoolDao)
+                          .filter(Optional::isPresent)
+                          .map(Optional::get)
+                          .toList());
 
               // Update classes.
               // TODO: move this under admin requirements.
               List<ClassX> classXs =
-                  Lists.transform(request.getUserX().getClassXsList(), ProtoDaoUtils::toClassXDao);
+                  request.getUserX().getClassXsList().stream()
+                      .map(ProtoDaoUtils::toClassXDao)
+                      .filter(Optional::isPresent)
+                      .map(Optional::get)
+                      .toList();
               if (newUserX.getTeacher() != null) {
                 db.getTeacherClassXRepository().setTeacherClassXs(newUserX.getTeacher(), classXs);
               }
@@ -497,8 +504,7 @@ public class UserXManagementService {
                               .setPage(valueOrNull(request, GetUserXsRequest.PAGE_FIELD_NUMBER))
                               .setPageSize(
                                   valueOrNull(request, GetUserXsRequest.PAGE_SIZE_FIELD_NUMBER)));
-              userXs.forEach(
-                  e -> ProtoDaoUtils.toFullUserXDetailsProto(e, response::addUserXsBuilder));
+              userXs.forEach(e -> toFullUserXDetailsProto(e, response::addUserXsBuilder));
               response.setTotalUserXs(userXs.getTotalElements());
 
               return response.build();

@@ -1,6 +1,8 @@
 package org.davincischools.leo.server.controllers;
 
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toClassXDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toClassXProto;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
 import com.google.common.collect.Iterables;
@@ -15,7 +17,6 @@ import org.davincischools.leo.protos.class_x_management_service.GetClassXsReques
 import org.davincischools.leo.protos.class_x_management_service.GetClassXsResponse;
 import org.davincischools.leo.protos.class_x_management_service.UpsertClassXRequest;
 import org.davincischools.leo.protos.class_x_management_service.UpsertClassXResponse;
-import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.Authenticated;
@@ -83,9 +84,7 @@ public class ClassXManagementService {
                               valueOrNull(
                                   request,
                                   GetClassXsRequest.INCLUDE_KNOWLEDGE_AND_SKILLS_FIELD_NUMBER)))
-                  .forEach(
-                      classX ->
-                          ProtoDaoUtils.toClassXProto(classX, true, response::addClassXsBuilder));
+                  .forEach(classX -> toClassXProto(classX, true, response::addClassXsBuilder));
 
               return response.build();
             })
@@ -109,10 +108,10 @@ public class ClassXManagementService {
                 throw new UnauthorizedUserX();
               }
 
-              ClassX classX = ProtoDaoUtils.toClassXDao(request.getClassX());
+              ClassX classX = toClassXDao(request.getClassX()).orElseThrow();
               db.getClassXRepository()
                   .guardedUpsert(db, classX, userX.isAdminX() ? null : userX.getTeacherIdOrNull());
-              ProtoDaoUtils.toClassXProto(classX, true, response::getClassXBuilder);
+              toClassXProto(classX, true, response::getClassXBuilder);
 
               if (userX.getTeacherOrNull() != null) {
                 db.getTeacherClassXRepository().upsert(userX.getTeacherOrNull(), classX);

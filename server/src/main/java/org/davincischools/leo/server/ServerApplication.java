@@ -1,6 +1,7 @@
 package org.davincischools.leo.server;
 
 import static org.davincischools.leo.server.SpringConstants.LOCAL_SERVER_PORT_PROPERTY;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toUserXProto;
 
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,7 +18,6 @@ import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.server.controllers.project_generators.ProjectGenerator;
 import org.davincischools.leo.server.utils.ApplicationExceptionConsoleLogger;
-import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.QueryWithNullsToRecordConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutor;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorArgumentResolver;
@@ -190,7 +190,7 @@ public class ServerApplication {
                             // Return the user in the reply after authentication.
                             UserX userX = ((UserXDetails) authentication.getPrincipal()).getUserX();
                             org.davincischools.leo.protos.pl_types.UserX.Builder userXProto =
-                                ProtoDaoUtils.toUserXProto(
+                                toUserXProto(
                                         userX,
                                         org.davincischools.leo.protos.pl_types.UserX::newBuilder)
                                     .orElse(null);

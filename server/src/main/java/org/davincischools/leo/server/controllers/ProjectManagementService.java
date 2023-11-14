@@ -2,6 +2,12 @@ package org.davincischools.leo.server.controllers;
 
 import static org.davincischools.leo.database.utils.DaoUtils.sortByPosition;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toAssignmentDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toKnowledgeAndSkillDao;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toKnowledgeAndSkillProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectDefinitionProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectInputCategoryProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectProto;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
 import com.google.common.base.Strings;
@@ -59,7 +65,6 @@ import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillR
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillResponse;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V3ProjectGenerator;
 import org.davincischools.leo.server.utils.OpenAiUtils;
-import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.Anonymous;
@@ -115,9 +120,7 @@ public class ProjectManagementService {
                   .stream()
                   .filter(e -> e.getDeleted() == null)
                   .forEach(
-                      e ->
-                          ProtoDaoUtils.toKnowledgeAndSkillProto(
-                              e, response::addKnowledgeAndSkillsBuilder));
+                      e -> toKnowledgeAndSkillProto(e, response::addKnowledgeAndSkillsBuilder));
 
               return response.build();
             })
@@ -153,13 +156,11 @@ public class ProjectManagementService {
 
               db.getKnowledgeAndSkillRepository()
                   .guardedUpsert(
-                      ProtoDaoUtils.toKnowledgeAndSkillDao(request.getKnowledgeAndSkill())
-                          .setUserX(userX.get().orElseThrow()),
+                      toKnowledgeAndSkillDao(request.getKnowledgeAndSkill()).orElseThrow(),
                       userX.isAdminX() ? null : userX.getUserXIdOrNull())
                   .ifPresent(
                       ks -> {
-                        ProtoDaoUtils.toKnowledgeAndSkillProto(
-                            ks, response::getKnowledgeAndSkillBuilder);
+                        toKnowledgeAndSkillProto(ks, response::getKnowledgeAndSkillBuilder);
                       });
 
               return response.build();
@@ -364,10 +365,7 @@ public class ProjectManagementService {
                           .setIncludeMilestones(
                               valueOrNull(
                                   request, GetProjectsRequest.INCLUDE_MILESTONES_FIELD_NUMBER)))
-                  .forEach(
-                      project ->
-                          ProtoDaoUtils.toProjectProto(
-                              project, true, response::addProjectsBuilder));
+                  .forEach(project -> toProjectProto(project, true, response::addProjectsBuilder));
 
               return response.build();
             })
@@ -377,7 +375,7 @@ public class ProjectManagementService {
   // TODO: Merge this with DataAccess.createProjectInputValueProto.
   private void extractProjectInputCategory(
       ProjectDefinitionCategory category, ProjectInputCategory.Builder input) {
-    ProtoDaoUtils.toProjectInputCategoryProto(category, () -> input);
+    toProjectInputCategoryProto(category, () -> input);
 
     switch (input.getValueType()) {
       case MOTIVATION -> populateOptions(
@@ -436,7 +434,7 @@ public class ProjectManagementService {
                                   GetProjectDefinitionsRequest.ASSIGNMENT_IDS_FIELD_NUMBER)))
                   .forEach(
                       projectDefinition ->
-                          ProtoDaoUtils.toProjectDefinitionProto(
+                          toProjectDefinitionProto(
                               projectDefinition, response::addDefinitionsBuilder));
 
               return response.build();
@@ -488,21 +486,21 @@ public class ProjectManagementService {
                 return userX.returnNotFound(UpdateProjectResponse.getDefaultInstance());
               }
 
-              Project reqProject = ProtoDaoUtils.toProjectDao(request.getProject());
+              var reqProject = request.getProject();
               project
                   .setName(reqProject.getName())
                   .setShortDescr(reqProject.getShortDescr())
                   .setLongDescrHtml(reqProject.getLongDescrHtml())
                   .setFavorite(reqProject.getFavorite())
-                  .setThumbsState(reqProject.getThumbsState())
+                  .setThumbsState(reqProject.getThumbsState().name())
                   .setThumbsStateReason(reqProject.getThumbsStateReason())
-                  .setActive(reqProject.getActive())
-                  .setAssignment(reqProject.getAssignment());
+                  .setActive(reqProject.getActive());
+              toAssignmentDao(reqProject.getAssignment()).ifPresent(project::setAssignment);
 
               DaoUtils.removeTransientValues(project, db.getProjectRepository()::save);
 
               var response = UpdateProjectResponse.newBuilder();
-              ProtoDaoUtils.toProjectProto(project, true, response::getProjectBuilder);
+              toProjectProto(project, true, response::getProjectBuilder);
               return response.build();
             })
         .finish();

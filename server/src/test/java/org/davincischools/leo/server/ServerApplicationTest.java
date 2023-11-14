@@ -8,6 +8,8 @@ import static org.davincischools.leo.server.test_helpers.WebSession.DEFAULT_CSRF
 import static org.davincischools.leo.server.test_helpers.WebSession.DEFAULT_JSESSIONID_COOKIE_NAME;
 import static org.davincischools.leo.server.test_helpers.WebSession.bodyAsProto;
 import static org.davincischools.leo.server.test_helpers.WebSession.bodyAsString;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toRegisterUserXRequestProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toUserXProto;
 import static org.hamcrest.Matchers.matchesRegex;
 
 import com.google.common.net.HttpHeaders;
@@ -19,7 +21,6 @@ import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXResponse;
 import org.davincischools.leo.server.controllers.ReactResourceController;
 import org.davincischools.leo.server.test_helpers.WebSession;
-import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -174,19 +175,22 @@ public class ServerApplicationTest {
     Interest interest =
         db.getInterestRepository().findById(userX.getInterest().getId()).orElseThrow();
 
-    assertThat(ProtoDaoUtils.toUserXProto(userX, UserX::newBuilder).orElseThrow().build())
+    assertThat(toUserXProto(userX, UserX::newBuilder).orElseThrow().build())
         .ignoringFields(UserX.ID_FIELD_NUMBER)
         .isEqualTo(
             UserX.newBuilder()
                 .setEmailAddress(request.getEmailAddress())
                 .setFirstName(request.getFirstName())
                 .setLastName(request.getLastName())
+                .setIsAdminX(false)
+                .setIsTeacher(false)
+                .setIsStudent(false)
                 .setIsDemo(true)
                 .setIsAuthenticated(true)
                 .build());
 
     assertThat(
-            ProtoDaoUtils.toRegisterUserXRequestProto(interest, RegisterUserXRequest::newBuilder)
+            toRegisterUserXRequestProto(interest, RegisterUserXRequest::newBuilder)
                 .orElseThrow()
                 .build())
         .ignoringFields(

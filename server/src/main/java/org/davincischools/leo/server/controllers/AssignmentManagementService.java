@@ -2,8 +2,9 @@ package org.davincischools.leo.server.controllers;
 
 import static org.davincischools.leo.database.utils.DaoUtils.createJoinTableRows;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toAssignmentProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toClassXProto;
 
-import com.google.common.collect.Lists;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
@@ -93,12 +94,12 @@ public class AssignmentManagementService {
                               listOrNull(request, GetAssignmentsRequest.STUDENT_ID_FIELD_NUMBER)))
                   .forEach(
                       classX -> {
-                        ProtoDaoUtils.toClassXProto(classX, true, response::addClassXsBuilder);
+                        toClassXProto(classX, true, response::addClassXsBuilder);
                         classX
                             .getAssignments()
                             .forEach(
                                 assignment ->
-                                    ProtoDaoUtils.toAssignmentProto(
+                                    toAssignmentProto(
                                         assignment, true, response::addAssignmentsBuilder));
                       });
 
@@ -137,7 +138,7 @@ public class AssignmentManagementService {
               ClassX classX =
                   db.getClassXRepository().findById(request.getClassXId()).orElseThrow();
 
-              ProtoDaoUtils.toAssignmentProto(
+              toAssignmentProto(
                   db.getAssignmentRepository()
                       .save(
                           new Assignment()
@@ -194,9 +195,11 @@ public class AssignmentManagementService {
                           .setAssignmentKnowledgeAndSkills(
                               createJoinTableRows(
                                   assignment,
-                                  Lists.transform(
-                                      request.getAssignment().getKnowledgeAndSkillsList(),
-                                      ProtoDaoUtils::toKnowledgeAndSkillDao),
+                                  request.getAssignment().getKnowledgeAndSkillsList().stream()
+                                      .map(ProtoDaoUtils::toKnowledgeAndSkillDao)
+                                      .filter(Optional::isPresent)
+                                      .map(Optional::get)
+                                      .toList(),
                                   AssignmentKnowledgeAndSkillRepository::create)));
 
               return response.build();
