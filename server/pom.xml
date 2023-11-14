@@ -195,6 +195,9 @@
                             <goal>install-node-and-npm</goal>
                         </goals>
                         <phase>initialize</phase>
+                        <configuration>
+                            <skip>${settings.offline}</skip>
+                        </configuration>
                     </execution>
 
                     <!-- Install npm. -->
@@ -206,11 +209,12 @@
                         </goals>
                         <phase>initialize</phase>
                         <configuration>
+                            <skip>${settings.offline}</skip>
                             <arguments>install --ignore-scripts</arguments>
                         </configuration>
                     </execution>
 
-                    <!-- Install npm. -->
+                    <!-- Audit npm configuration. -->
                     <execution>
                         <?m2e ignore?>
                         <id>npm-audit</id>
@@ -219,6 +223,7 @@
                         </goals>
                         <phase>initialize</phase>
                         <configuration>
+                            <skip>${settings.offline}</skip>
                             <arguments>audit --omit=dev --audit-level=high</arguments>
                         </configuration>
                     </execution>
@@ -366,7 +371,7 @@
                     <!-- Build the React web app. -->
                     <execution>
                         <?m2e ignore?>
-                        <id>compile-web-browser-client</id>
+                        <id>build-web-browser-client</id>
                         <goals>
                             <goal>run</goal>
                         </goals>
