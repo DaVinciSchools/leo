@@ -24,6 +24,8 @@ import org.davincischools.leo.server.utils.http_executor.HttpExecutorArgumentRes
 import org.davincischools.leo.server.utils.http_user_x.HttpUserXArgumentResolver;
 import org.davincischools.leo.server.utils.http_user_x.HttpUserXService;
 import org.davincischools.leo.server.utils.http_user_x.UserXDetails;
+import org.davincischools.leo.server.utils.work_queue.WorkQueue;
+import org.davincischools.leo.server.utils.work_queue.workers.ReplyToPostWorker;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
@@ -54,13 +56,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
 @SpringBootApplication(
     scanBasePackages = "org.davincischools.leo.server",
     scanBasePackageClasses = {
+      ApplicationExceptionConsoleLogger.class,
       Database.class,
       HttpExecutor.class,
       HttpUserXService.class,
       ProjectGenerator.class,
+      ReplyToPostWorker.class,
       TestDatabase.class,
       UserX.class,
-      ApplicationExceptionConsoleLogger.class
+      WorkQueue.class
     })
 public class ServerApplication {
 
