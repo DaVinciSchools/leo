@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.Fetch;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -49,13 +48,17 @@ public class QueryHelper {
 
     public void orderBy(Order... orders);
 
-    public <X, Y> Join<X, Y> join(
+    public <X, Y> From<X, Y> join(
         From<?, X> parent, SingularAttribute<? super X, Y> attribute, JoinType joinType);
 
     public <X, Y> From<?, Y> join(
-        From<?, X> parent, SetAttribute<? super X, Y> attribute, JoinType joinType);
+        From<?, X> parent,
+        SetAttribute<? super X, Y> attribute,
+        JoinType joinType,
+        Function<Y, X> getSource,
+        BiConsumer<X, Set<Y>> setSourceTargets);
 
-    public <X, Y> Join<?, Y> fetch(
+    public <X, Y> From<?, Y> fetch(
         From<?, X> parent, SingularAttribute<? super X, Y> attribute, JoinType joinType);
 
     public <X, Y> From<?, Y> fetch(
@@ -65,13 +68,9 @@ public class QueryHelper {
         Function<Y, X> getSource,
         BiConsumer<X, Set<Y>> setSourceTargets);
 
-    public <X, Y> Join<X, Y> toJoin(Fetch<X, Y> fetch);
+    public <X, Y> From<X, Y> notDeleted(From<X, Y> join);
 
-    public <X, Y> Join<X, Y> notDeleted(Fetch<X, Y> fetch);
-
-    public <X, Y> Join<X, Y> notDeleted(Join<X, Y> join);
-
-    public <X, Y> Join<X, Y> addJoinOn(Join<X, Y> join, Predicate predicate);
+    public <X, Y> From<X, Y> addJoinOn(From<X, Y> join, Predicate predicate);
 
     public <E, P extends Path<E>> P notDeleted(P path);
   }
@@ -203,7 +202,7 @@ public class QueryHelper {
       orderBy.addAll(Arrays.asList(order));
     }
 
-    public <X, Y> Join<X, Y> join(
+    public <X, Y> From<X, Y> join(
         From<?, X> parent, SingularAttribute<? super X, Y> attribute, JoinType joinType) {
       checkNotNull(parent);
       checkNotNull(attribute);
@@ -216,7 +215,11 @@ public class QueryHelper {
     }
 
     public <X, Y> From<?, Y> join(
-        From<?, X> parent, SetAttribute<? super X, Y> attribute, JoinType joinType) {
+        From<?, X> parent,
+        SetAttribute<? super X, Y> attribute,
+        JoinType joinType,
+        Function<Y, X> getSource,
+        BiConsumer<X, Set<Y>> setSourceTargets) {
       checkNotNull(parent);
       checkNotNull(attribute);
 
@@ -227,7 +230,8 @@ public class QueryHelper {
       return join;
     }
 
-    public <X, Y> Join<?, Y> fetch(
+    @SuppressWarnings("unchecked")
+    public <X, Y> From<?, Y> fetch(
         From<?, X> parent, SingularAttribute<? super X, Y> attribute, JoinType joinType) {
       checkNotNull(parent);
       checkNotNull(attribute);
@@ -235,9 +239,10 @@ public class QueryHelper {
       if (gettingIds) {
         return join(parent, attribute, joinType);
       }
-      return toJoin(parent.fetch(attribute, joinType));
+      return (From<X, Y>) parent.fetch(attribute, joinType);
     }
 
+    @SuppressWarnings("unchecked")
     public <X, Y> From<?, Y> fetch(
         From<?, X> parent,
         SetAttribute<? super X, Y> attribute,
@@ -248,48 +253,39 @@ public class QueryHelper {
       checkNotNull(attribute);
 
       if (gettingIds) {
-        return join(parent, attribute, joinType);
+        return join(parent, attribute, joinType, getSource, setSourceTargets);
       }
-      return toJoin(parent.fetch(attribute, joinType));
+      return (From<?, Y>) parent.fetch(attribute, joinType);
     }
 
-    @SuppressWarnings("unchecked")
-    public <X, Y> Join<X, Y> toJoin(Fetch<X, Y> fetch) {
-      checkNotNull(fetch);
+    public <X, Y> From<X, Y> notDeleted(From<X, Y> from) {
+      checkNotNull(from);
 
-      return (Join<X, Y>) fetch;
+      return addJoinOn(from, from.get("deleted").isNull());
     }
 
-    public <X, Y> Join<X, Y> notDeleted(Fetch<X, Y> fetch) {
-      checkNotNull(fetch);
-
-      return notDeleted(toJoin(fetch));
-    }
-
-    public <X, Y> Join<X, Y> notDeleted(Join<X, Y> join) {
-      checkNotNull(join);
-
-      return addJoinOn(join, join.get("deleted").isNull());
-    }
-
-    public <X, Y> Join<X, Y> addJoinOn(Join<X, Y> join, Predicate predicate) {
-      checkNotNull(join);
+    public <X, Y> From<X, Y> addJoinOn(From<X, Y> from, Predicate predicate) {
+      checkNotNull(from);
       checkNotNull(predicate);
 
-      if (join.getOn() != null) {
-        join.on(join.getOn(), predicate);
+      if (from instanceof Join<X, Y> join) {
+        if (join.getOn() != null) {
+          join.on(join.getOn(), predicate);
+        } else {
+          join.on(predicate);
+        }
       } else {
-        join.on(predicate);
+        where(predicate);
       }
 
-      return join;
+      return from;
     }
 
     public <E, P extends Path<E>> P notDeleted(P path) {
       checkNotNull(path);
 
       if (path instanceof Join) {
-        notDeleted((Join<?, E>) path);
+        notDeleted(path);
       } else {
         where.add(path.get("deleted").isNull());
       }

@@ -17,9 +17,11 @@ import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill_;
 import org.davincischools.leo.database.daos.ClassX_;
 import org.davincischools.leo.database.daos.School_;
+import org.davincischools.leo.database.daos.StudentClassX;
 import org.davincischools.leo.database.daos.StudentClassX_;
 import org.davincischools.leo.database.daos.Student_;
 import org.davincischools.leo.database.daos.Teacher;
+import org.davincischools.leo.database.daos.TeacherClassX;
 import org.davincischools.leo.database.daos.TeacherClassX_;
 import org.davincischools.leo.database.daos.Teacher_;
 import org.davincischools.leo.database.exceptions.UnauthorizedUserX;
@@ -129,7 +131,14 @@ public interface ClassXRepository
     }
 
     if (params.getTeacherIds().isPresent()) {
-      var teacherClassXs = u.notDeleted(u.join(classX, ClassX_.teacherClassXES, JoinType.INNER));
+      var teacherClassXs =
+          u.notDeleted(
+              u.join(
+                  classX,
+                  ClassX_.teacherClassXES,
+                  JoinType.INNER,
+                  TeacherClassX::getClassX,
+                  ClassX::setTeacherClassXES));
       teacherClassXs
           .get(TeacherClassX_.teacher)
           .get(Teacher_.id)
@@ -138,7 +147,14 @@ public interface ClassXRepository
 
     // Where student ids.
     if (params.getStudentIds().isPresent()) {
-      var studentClassXs = u.notDeleted(u.join(classX, ClassX_.studentClassXES, JoinType.INNER));
+      var studentClassXs =
+          u.notDeleted(
+              u.join(
+                  classX,
+                  ClassX_.studentClassXES,
+                  JoinType.INNER,
+                  StudentClassX::getClassX,
+                  ClassX::setStudentClassXES));
       studentClassXs
           .get(StudentClassX_.student)
           .get(Student_.id)

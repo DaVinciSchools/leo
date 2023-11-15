@@ -15,9 +15,12 @@ import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill_;
 import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.AssignmentProjectDefinition_;
 import org.davincischools.leo.database.daos.Assignment_;
+import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.ClassX_;
+import org.davincischools.leo.database.daos.StudentClassX;
 import org.davincischools.leo.database.daos.StudentClassX_;
 import org.davincischools.leo.database.daos.Student_;
+import org.davincischools.leo.database.daos.TeacherClassX;
 import org.davincischools.leo.database.daos.TeacherClassX_;
 import org.davincischools.leo.database.daos.Teacher_;
 import org.davincischools.leo.database.utils.Database;
@@ -123,7 +126,14 @@ public interface AssignmentRepository
 
     if (params.getTeacherIds().isPresent()) {
       var classXs = u.notDeleted(u.join(assignment, Assignment_.classX, JoinType.INNER));
-      var teacherClassXs = u.notDeleted(u.join(classXs, ClassX_.teacherClassXES, JoinType.INNER));
+      var teacherClassXs =
+          u.notDeleted(
+              u.join(
+                  classXs,
+                  ClassX_.teacherClassXES,
+                  JoinType.INNER,
+                  TeacherClassX::getClassX,
+                  ClassX::setTeacherClassXES));
       u.where(
           teacherClassXs
               .get(TeacherClassX_.teacher)
@@ -133,7 +143,14 @@ public interface AssignmentRepository
 
     if (params.getStudentIds().isPresent()) {
       var classXs = u.notDeleted(u.join(assignment, Assignment_.classX, JoinType.INNER));
-      var studentClassXs = u.notDeleted(u.join(classXs, ClassX_.studentClassXES, JoinType.INNER));
+      var studentClassXs =
+          u.notDeleted(
+              u.join(
+                  classXs,
+                  ClassX_.studentClassXES,
+                  JoinType.INNER,
+                  StudentClassX::getClassX,
+                  ClassX::setStudentClassXES));
       u.where(
           studentClassXs
               .get(StudentClassX_.student)

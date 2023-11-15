@@ -90,7 +90,8 @@ public interface ProjectRepository
                     JoinType.LEFT,
                     ProjectInputFulfillment::getProjectInputValue,
                     ProjectInputValue::setProjectInputFulfillments));
-        u.where(
+        u.addJoinOn(
+            projectInputFulfillment,
             builder.equal(projectInputFulfillment.get(ProjectInputFulfillment_.project), project));
       }
     }
