@@ -53,6 +53,8 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
     DEMO
   }
 
+  String PROJECT_LEO_COACH_EMAIL = "coach_leo@projectleo.net";
+
   static boolean isAdminX(UserX userX) {
     return userX.getAdminX() != null && userX.getAdminX().getId() != null;
   }
@@ -90,6 +92,10 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
       roles.add(Role.DEMO);
     }
     return roles;
+  }
+
+  default UserX getProjectLeoCoach() {
+    return getProjectLeoCoach(this);
   }
 
   default Optional<UserX> findById(int userXId) {
