@@ -38,7 +38,7 @@ AllowEncodedSlashes NoDecode
 
   # Jenkins requirement for running a reverse proxy.
   # This seems to be set by ProxyPass.
-  # RequestHeader set X-Forwarded-Proto "${HTTPS}"
+  RequestHeader set X-Forwarded-Proto "${HTTPS}"
   RequestHeader set X-Forwarded-Host "${SUBDOMAIN}.${DOMAIN}"
   RequestHeader set X-Forwarded-Port "${HTTPS_PORT}"
   # RequestHeader set X-Forwarded-User %{RU}e
