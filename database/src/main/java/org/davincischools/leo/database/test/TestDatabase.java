@@ -45,7 +45,7 @@ public class TestDatabase {
   @Bean("dataSource")
   @Profile("!" + USE_EXTERNAL_DATABASE_PROFILE)
   @Primary
-  private static DataSource createTestDataSource(@Autowired Environment environment)
+  public static DataSource createTestDataSource(@Autowired Environment environment)
       throws SQLException, IOException {
     try {
       synchronized (TestDatabase.class) {
