@@ -25,9 +25,18 @@
         <spring.boot.starter.version>3.1.5</spring.boot.starter.version>
         <spring.framework.version>6.0.13</spring.framework.version>
         <google.truth.version>1.1.5</google.truth.version>
+        <lombok.version>1.18.30</lombok.version>
     </properties>
 
     <dependencies>
+        <!-- Annotation processors. -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Libraries of useful functions. -->
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -146,6 +155,24 @@
 
     <build>
         <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.hibernate</groupId>
+                            <artifactId>hibernate-jpamodelgen</artifactId>
+                            <version>6.2.7.Final</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
             <!-- Delete additional files for mvn clean. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

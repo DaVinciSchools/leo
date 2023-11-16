@@ -7,14 +7,13 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="project-leo-server" />
       </profile>
       <profile name="Annotation profile for Project Leo" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
-          <entry name="/home/sahendrickson/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar" />
+          <entry name="/home/sahendrickson/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
           <entry name="/home/sahendrickson/.m2/repository/org/hibernate/orm/hibernate-jpamodelgen/6.2.7.Final/hibernate-jpamodelgen-6.2.7.Final.jar" />
           <entry name="/home/sahendrickson/.m2/repository/org/jboss/logging/jboss-logging/3.5.0.Final/jboss-logging-3.5.0.Final.jar" />
           <entry name="/home/sahendrickson/.m2/repository/jakarta/xml/bind/jakarta.xml.bind-api/4.0.0/jakarta.xml.bind-api-4.0.0.jar" />
@@ -26,6 +25,7 @@
           <entry name="/home/sahendrickson/.m2/repository/com/sun/istack/istack-commons-runtime/4.1.1/istack-commons-runtime-4.1.1.jar" />
         </processorPath>
         <module name="project-leo-database" />
+        <module name="project-leo-server" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
