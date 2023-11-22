@@ -1,5 +1,5 @@
 -- 'class' is a Java reserved word. So, append '_x'.
-CREATE TABLE class_x
+CREATE TABLE IF NOT EXISTS class_x
 (
     id              INT PRIMARY KEY AUTO_INCREMENT,
     creation_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

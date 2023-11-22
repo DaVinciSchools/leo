@@ -182,7 +182,7 @@ public class TestDatabase {
           connection.prepareStatement(
               // We can't place the database name in SQL using a prepared
               // statement since the database name isn't a string.
-              String.format("GRANT ALL ON %s.* TO ?@'%%';", database));
+              String.format("GRANT ALL ON *.* TO ?@'%%';", database));
       statement.setString(1, username);
       statement.executeUpdate();
     }

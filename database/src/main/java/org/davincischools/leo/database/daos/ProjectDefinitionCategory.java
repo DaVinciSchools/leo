@@ -22,6 +22,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.davincischools.leo.database.dao_interfaces.DaoWithPosition;
+import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
 
 @Builder
 @AllArgsConstructor
@@ -89,12 +90,14 @@ public class ProjectDefinitionCategory implements Serializable, DaoWithPosition 
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_definition_category_type_id", nullable = false)
+  @PropagateDeleteFrom
   public ProjectDefinitionCategoryType getProjectDefinitionCategoryType() {
     return projectDefinitionCategoryType;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_definition_id", nullable = false)
+  @PropagateDeleteFrom
   public ProjectDefinition getProjectDefinition() {
     return projectDefinition;
   }

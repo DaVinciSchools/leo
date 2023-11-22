@@ -1,4 +1,4 @@
-CREATE TABLE log_reference
+CREATE TABLE IF NOT EXISTS log_reference
 (
     id               INT PRIMARY KEY AUTO_INCREMENT,
     creation_time    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

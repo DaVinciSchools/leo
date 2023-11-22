@@ -1,4 +1,4 @@
-CREATE TABLE project_post_comment
+CREATE TABLE IF NOT EXISTS project_post_comment
 (
     id              INT PRIMARY KEY AUTO_INCREMENT,
     creation_time   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -1,7 +1,7 @@
-CREATE TABLE project_input
+CREATE TABLE IF NOT EXISTS project_input
 (
     id                    INT PRIMARY KEY AUTO_INCREMENT,
-    creation_time         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    creation_time         DATETIME                                   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted               DATETIME,
 
     -- TODO: Manage these with a task queue.
@@ -9,7 +9,7 @@ CREATE TABLE project_input
 
     state                 ENUM ('PROCESSING', 'COMPLETED', 'FAILED') NOT NULL,
 
-    project_definition_id INT      NOT NULL,
+    project_definition_id INT                                        NOT NULL,
     CONSTRAINT project_input__project_definition_id
         FOREIGN KEY (project_definition_id)
             REFERENCES project_definition (id)

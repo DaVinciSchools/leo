@@ -1,4 +1,4 @@
-CREATE TABLE tag
+CREATE TABLE IF NOT EXISTS tag
 (
     id                      INT PRIMARY KEY AUTO_INCREMENT,
     creation_time           DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -6,7 +6,7 @@ CREATE TABLE tag
 
     text                    VARCHAR(32) NOT NULL,
 
-    user_x_id               INT NOT NULL,
+    user_x_id               INT         NOT NULL,
     CONSTRAINT tags__user_x_id
         FOREIGN KEY (user_x_id)
             REFERENCES user_x (id)

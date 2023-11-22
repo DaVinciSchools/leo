@@ -31,8 +31,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest(classes = DatabaseSchemaSyncTest.TestApplicationConfiguration.class)
 public class DatabaseSchemaSyncTest {
 
-  private static final ImmutableSet<String> COLUMNS_TO_IGNORE =
+  private static final ImmutableSet<String> TABLE_COLUMNS_TO_IGNORE =
       ImmutableSet.of(COLUMN_NAME, ORDINAL_POSITION, TABLE_CAT, TABLE_NAME);
+  private static final ImmutableSet<String> TRIGGER_COLUMNS_TO_IGNORE =
+      ImmutableSet.of(CREATED, DEFINER);
 
   @Configuration
   @ComponentScan(basePackageClasses = {Database.class, TestDatabase.class})
@@ -46,7 +48,7 @@ public class DatabaseSchemaSyncTest {
   private static final String SPRING_DATASOURCE_PASSWORD_PROP_NAME = "spring.datasource.password";
 
   @Test
-  public void verifyThatTheSchemaMatch() throws Exception {
+  public void verifyThatTablesMatch() throws Exception {
     Environment environment = getProjectLeoProperties();
 
     if (environment.getProperty(SPRING_DATASOURCE_USERNAME_PROP_NAME) == null
@@ -67,8 +69,34 @@ public class DatabaseSchemaSyncTest {
     var expectedColumns = getTableSchema(testDataSource.getConnection());
     var prodColumns = getTableSchema(prodDataSource.getConnection());
 
-    assertThat(prodColumns.keySet()).containsAtLeastElementsIn(expectedColumns.keySet());
-    assertThat(prodColumns).containsAtLeastEntriesIn(expectedColumns);
+    assertThat(prodColumns.keySet()).containsExactlyElementsIn(expectedColumns.keySet());
+    assertThat(prodColumns).containsExactlyEntriesIn(expectedColumns);
+  }
+
+  @Test
+  public void verifyThatTriggersMatch() throws Exception {
+    Environment environment = getProjectLeoProperties();
+
+    if (environment.getProperty(SPRING_DATASOURCE_USERNAME_PROP_NAME) == null
+        || environment.getProperty(SPRING_DATASOURCE_PASSWORD_PROP_NAME) == null) {
+      return;
+    }
+
+    var testDataSource = TestDatabase.createTestDataSource(environment);
+    var prodDataSource =
+        DataSourceBuilder.create()
+            .driverClassName(environment.getProperty(SPRING_DATASOURCE_DRIVER_CLASS_NAME_PROP_NAME))
+            .url(environment.getProperty(SPRING_DATASOURCE_URL_PROP_NAME))
+            .username(environment.getProperty(SPRING_DATASOURCE_USERNAME_PROP_NAME))
+            .password(environment.getProperty(SPRING_DATASOURCE_PASSWORD_PROP_NAME))
+            .type(MysqlDataSource.class)
+            .build();
+
+    var expectedTriggers = getTriggerSchema(testDataSource.getConnection());
+    var prodTriggers = getTriggerSchema(prodDataSource.getConnection());
+
+    assertThat(prodTriggers.keySet()).containsExactlyElementsIn(expectedTriggers.keySet());
+    assertThat(prodTriggers).containsExactlyEntriesIn(expectedTriggers);
   }
 
   private Map<String, Map<String, Object>> getTableSchema(Connection connection)
@@ -79,7 +107,7 @@ public class DatabaseSchemaSyncTest {
     while (columns.next()) {
       Map<String, Object> tableSchema = new TreeMap<>();
       for (int i = 1; i <= metadata.getColumnCount(); ++i) {
-        if (COLUMNS_TO_IGNORE.contains(metadata.getColumnName(i))) {
+        if (TABLE_COLUMNS_TO_IGNORE.contains(metadata.getColumnName(i))) {
           continue;
         }
         tableSchema.put(metadata.getColumnName(i), columns.getObject(i));
@@ -88,6 +116,23 @@ public class DatabaseSchemaSyncTest {
           columns.getString(TABLE_NAME) + "." + columns.getString(COLUMN_NAME), tableSchema);
     }
     return columnsMap;
+  }
+
+  private Map<String, Map<String, Object>> getTriggerSchema(Connection connection)
+      throws SQLException {
+    var triggerMap = new TreeMap<String, Map<String, Object>>();
+    var triggers = connection.prepareStatement("SHOW TRIGGERS").executeQuery();
+    while (triggers.next()) {
+      Map<String, Object> tableSchema = new TreeMap<>();
+      for (int i = 1; i <= triggers.getMetaData().getColumnCount(); ++i) {
+        if (TRIGGER_COLUMNS_TO_IGNORE.contains(triggers.getMetaData().getColumnName(i))) {
+          continue;
+        }
+        tableSchema.put(triggers.getMetaData().getColumnName(i), triggers.getObject(i));
+      }
+      triggerMap.put(triggers.getString(TRIGGER), tableSchema);
+    }
+    return triggerMap;
   }
 
   private MockEnvironment getProjectLeoProperties() throws IOException {

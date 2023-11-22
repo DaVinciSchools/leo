@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
 
 @Builder
 @AllArgsConstructor
@@ -82,6 +83,7 @@ public class ProjectInputFulfillment implements Serializable {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_input_value_id", nullable = false)
+  @PropagateDeleteFrom
   public ProjectInputValue getProjectInputValue() {
     return projectInputValue;
   }

@@ -1,4 +1,4 @@
-CREATE TABLE teacher__school
+CREATE TABLE IF NOT EXISTS teacher__school
 (
     creation_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted       DATETIME,

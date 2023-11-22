@@ -1,4 +1,4 @@
-CREATE TABLE project_input_value
+CREATE TABLE IF NOT EXISTS project_input_value
 (
     id                             INT PRIMARY KEY AUTO_INCREMENT,
     creation_time                  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

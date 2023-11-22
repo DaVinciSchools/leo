@@ -1,4 +1,4 @@
-CREATE TABLE project
+CREATE TABLE IF NOT EXISTS project
 (
     id                  INT PRIMARY KEY AUTO_INCREMENT,
     creation_time       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -12,12 +12,12 @@ CREATE TABLE project
     generator           MEDIUMTEXT,
 
     favorite            BOOLEAN,
-    thumbs_state        ENUM('THUMBS_UP', 'THUMBS_DOWN'),
+    thumbs_state        ENUM ('THUMBS_UP', 'THUMBS_DOWN'),
     thumbs_state_reason TEXT,
     archived            BOOLEAN,
     active              BOOLEAN,
 
-    assignment_id         INT,
+    assignment_id       INT,
     CONSTRAINT project__assignment_id
         FOREIGN KEY (assignment_id)
             REFERENCES assignment (id)

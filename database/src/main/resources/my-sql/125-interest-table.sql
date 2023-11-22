@@ -1,4 +1,4 @@
-CREATE TABLE interest
+CREATE TABLE IF NOT EXISTS interest
 (
     id                  INT PRIMARY KEY AUTO_INCREMENT,
     creation_time       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

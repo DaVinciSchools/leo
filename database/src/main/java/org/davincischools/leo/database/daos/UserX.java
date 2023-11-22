@@ -24,8 +24,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import org.davincischools.leo.database.dao_interfaces.PropagateDeleteTo;
 
 @Builder
 @AllArgsConstructor
@@ -168,24 +167,26 @@ public class UserX implements Serializable {
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "admin_x_id")
+  @PropagateDeleteTo
   public AdminX getAdminX() {
     return adminX;
   }
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "teacher_id")
+  @PropagateDeleteTo
   public Teacher getTeacher() {
     return teacher;
   }
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "student_id")
+  @PropagateDeleteTo
   public Student getStudent() {
     return student;
   }
 
   @OneToOne(fetch = FetchType.LAZY)
-  @OnDelete(action = OnDeleteAction.SET_NULL)
   @JoinColumn(name = "interest_id")
   public Interest getInterest() {
     return interest;

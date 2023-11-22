@@ -1,4 +1,4 @@
-CREATE TABLE assignment
+CREATE TABLE IF NOT EXISTS assignment
 (
     id              INT PRIMARY KEY AUTO_INCREMENT,
     creation_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

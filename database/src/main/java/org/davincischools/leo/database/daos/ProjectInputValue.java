@@ -23,6 +23,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.davincischools.leo.database.dao_interfaces.DaoWithPosition;
+import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
 
 @Builder
 @AllArgsConstructor
@@ -89,12 +90,14 @@ public class ProjectInputValue implements Serializable, DaoWithPosition {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_input_id", nullable = false)
+  @PropagateDeleteFrom
   public ProjectInput getProjectInput() {
     return projectInput;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_definition_category_id", nullable = false)
+  @PropagateDeleteFrom
   public ProjectDefinitionCategory getProjectDefinitionCategory() {
     return projectDefinitionCategory;
   }

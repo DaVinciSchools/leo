@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
 
 @Builder
 @AllArgsConstructor
@@ -56,6 +57,7 @@ public class ProjectImage implements Serializable {
   @MapsId("projectId")
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_id", nullable = false)
+  @PropagateDeleteFrom
   public Project getProject() {
     return project;
   }
@@ -63,6 +65,7 @@ public class ProjectImage implements Serializable {
   @MapsId("fileXId")
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "file_x_id", nullable = false)
+  @PropagateDeleteFrom
   public FileX getFileX() {
     return fileX;
   }

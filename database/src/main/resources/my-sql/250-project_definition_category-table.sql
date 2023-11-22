@@ -1,4 +1,4 @@
-CREATE TABLE project_definition_category
+CREATE TABLE IF NOT EXISTS project_definition_category
 (
     id                                  INT PRIMARY KEY AUTO_INCREMENT,
     creation_time                       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

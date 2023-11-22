@@ -1,4 +1,4 @@
-CREATE TABLE assignment__knowledge_and_skill
+CREATE TABLE IF NOT EXISTS assignment__knowledge_and_skill
 (
     creation_time          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted                DATETIME,

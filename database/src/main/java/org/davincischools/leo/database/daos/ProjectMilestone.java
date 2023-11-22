@@ -23,6 +23,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.davincischools.leo.database.dao_interfaces.DaoWithPosition;
+import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
 
 @Builder
 @AllArgsConstructor
@@ -106,6 +107,7 @@ public class ProjectMilestone implements Serializable, DaoWithPosition {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_id", nullable = false)
+  @PropagateDeleteFrom
   public Project getProject() {
     return project;
   }

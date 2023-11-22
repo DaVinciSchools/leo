@@ -135,7 +135,8 @@ public class TestData {
     deleteAllRecords(
         db.getDistrictRepository(),
         District::getDeleted,
-        (d, instant) -> d.setDeleted(instant).setName("deleted-" + d.getId() + "-" + d.getName()));
+        (d, instant) -> d.setDeleted(instant).setName("deleted-" + d.getId() + "-" + d.getName()),
+        d -> !d.getName().startsWith("deleted-"));
     district = db.getDistrictRepository().upsert("Project Leo School District");
 
     // Create schools.
@@ -215,7 +216,8 @@ public class TestData {
         (userX, instant) ->
             userX
                 .setDeleted(instant)
-                .setEmailAddress("deleted-" + userX.getId() + "_" + userX.getEmailAddress()));
+                .setEmailAddress("deleted-" + userX.getId() + "_" + userX.getEmailAddress()),
+        d -> !d.getEmailAddress().startsWith("deleted-"));
     deleteAllRecords(db.getAdminXRepository(), AdminX::getDeleted, AdminX::setDeleted);
     deleteAllRecords(db.getTeacherRepository(), Teacher::getDeleted, Teacher::setDeleted);
     deleteAllRecords(db.getStudentRepository(), Student::getDeleted, Student::setDeleted);

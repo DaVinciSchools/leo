@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Generate Database Schema" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.davincischools.leo.database.admin_x.DatabaseManagement" />
+    <module name="project-leo-database" />
+    <option name="PROGRAM_PARAMETERS" value="database/src/main/resources/my-sql-generated" />
+    <selectedOptions>
+      <option name="environmentVariables" visible="false" />
+    </selectedOptions>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

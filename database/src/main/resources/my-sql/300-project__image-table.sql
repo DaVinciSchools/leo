@@ -1,4 +1,4 @@
-CREATE TABLE project__image
+CREATE TABLE IF NOT EXISTS project__image
 (
     creation_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted       DATETIME,
@@ -14,7 +14,7 @@ CREATE TABLE project__image
             ON DELETE RESTRICT
             ON UPDATE RESTRICT,
 
-    file_x_id      INT      NOT NULL,
+    file_x_id     INT      NOT NULL,
     CONSTRAINT project__image__file_x_id
         FOREIGN KEY (file_x_id)
             REFERENCES file_x (id)

@@ -1,4 +1,4 @@
-CREATE TABLE project_milestone_step
+CREATE TABLE IF NOT EXISTS project_milestone_step
 (
     id                   INT PRIMARY KEY AUTO_INCREMENT,
     creation_time        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

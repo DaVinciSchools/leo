@@ -1,4 +1,4 @@
-CREATE TABLE motivation
+CREATE TABLE IF NOT EXISTS motivation
 (
     id              INT PRIMARY KEY AUTO_INCREMENT,
     creation_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

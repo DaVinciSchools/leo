@@ -1,4 +1,4 @@
-CREATE TABLE student
+CREATE TABLE IF NOT EXISTS student
 (
     id                  INT PRIMARY KEY AUTO_INCREMENT,
     creation_time       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

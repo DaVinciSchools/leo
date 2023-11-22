@@ -30,6 +30,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -238,6 +239,17 @@ public class DaoUtils {
     }
   }
 
+  public static <T> ImmutableList<T> listIfInitialized(@Nullable Iterable<T> entity) {
+    return isInitialized(entity) ? ImmutableList.copyOf(entity) : ImmutableList.of();
+  }
+
+  public static <T> Stream<T> streamIfInitialized(@Nullable Iterable<T> entities) {
+    if (isInitialized(entities)) {
+      return Streams.stream(entities);
+    }
+    return Stream.empty();
+  }
+
   public static <T, R> List<T> getJoinTableDaos(
       @Nullable Set<R> sourceTableRows, Function<R, T> getTargetFn) {
     checkNotNull(getTargetFn);
@@ -296,11 +308,21 @@ public class DaoUtils {
       JpaRepository<E, ?> repository,
       Function<E, Instant> getDeletedFn,
       BiConsumer<E, Instant> setFn) {
+    deleteAllRecords(repository, getDeletedFn, setFn, e -> false);
+  }
+
+  public static <E> void deleteAllRecords(
+      JpaRepository<E, ?> repository,
+      Function<E, Instant> getDeletedFn,
+      BiConsumer<E, Instant> setFn,
+      Function<E, Boolean> shouldDeleteAnywayFn) {
     checkNotNull(repository);
     checkNotNull(setFn);
 
     List<E> deleted =
-        repository.findAll().stream().filter(e -> getDeletedFn.apply(e) == null).toList();
+        repository.findAll().stream()
+            .filter(e -> getDeletedFn.apply(e) == null || shouldDeleteAnywayFn.apply(e))
+            .toList();
     deleted.forEach(entity -> setFn.accept(entity, Instant.now()));
     repository.saveAll(deleted);
   }

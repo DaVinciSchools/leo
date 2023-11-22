@@ -1,4 +1,4 @@
-CREATE TABLE project_post_rating
+CREATE TABLE IF NOT EXISTS project_post_rating
 (
     id                     INT PRIMARY KEY AUTO_INCREMENT,
     creation_time          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -13,7 +13,7 @@ CREATE TABLE project_post_rating
         -- 3 - Emerging
         -- 4 - Proficient
         -- 5 - Advanced
-        ) NOT NULL,
+        )                           NOT NULL,
 
     long_descr_html        MEDIUMTEXT,
 

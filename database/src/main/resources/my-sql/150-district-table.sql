@@ -1,4 +1,4 @@
-CREATE TABLE district
+CREATE TABLE IF NOT EXISTS district
 (
     id            INT PRIMARY KEY AUTO_INCREMENT,
     creation_time DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,

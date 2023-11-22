@@ -1,4 +1,4 @@
-CREATE TABLE portfolio
+CREATE TABLE IF NOT EXISTS portfolio
 (
     id              INT PRIMARY KEY AUTO_INCREMENT,
     creation_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
