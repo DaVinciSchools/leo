@@ -1,7 +1,25 @@
 import './AdminXDashboard.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {useContext} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {GlobalStateContext} from '../../../libs/GlobalState';
+import {
+  Paper,
+  TableCell,
+  Table,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableBody,
+  Button,
+  IconButton,
+  Collapse,
+} from '@mui/material';
+import {DeepReadonly} from '../../../libs/misc';
+import {createService} from '../../../libs/protos';
+import {task_service} from 'pl-pb';
+import TaskService = task_service.TaskService;
+import ITaskQueueStatus = task_service.ITaskQueueStatus;
+import {KeyboardArrowUp, KeyboardArrowDown} from '@mui/icons-material';
 
 export function AdminXDashboard() {
   const global = useContext(GlobalStateContext);
@@ -9,6 +27,24 @@ export function AdminXDashboard() {
     'You must be an administrator to view this dashboard.',
     userX => userX.isAdminX
   );
+  const [taskQueueStatuses, setTaskQueueStatuses] = useState<
+    DeepReadonly<ITaskQueueStatus>[]
+  >([]);
+  const [errorDetailsRow, setErrorDetailsRow] = useState<string>();
+
+  useEffect(() => {
+    createService(TaskService, 'TaskService')
+      .getTaskQueuesStatus({})
+      .then(response => {
+        setTaskQueueStatuses(response.taskQueueStatuses ?? []);
+      });
+  }, []);
+
+  function rescanForWork(name?: string) {
+    createService(TaskService, 'TaskService')
+      .scanForTasks({name})
+      .catch(global.setError);
+  }
 
   if (!userX) {
     return <></>;
@@ -35,6 +71,90 @@ export function AdminXDashboard() {
             </a>
           </li>
         </ul>
+        <TableContainer
+          component={Paper}
+          style={{width: 'fit-content', maxWidth: '100%'}}
+        >
+          <Table aria-label="Task Status">
+            <TableHead>
+              <TableRow>
+                <TableCell>Task Worker</TableCell>
+                <TableCell align="center"></TableCell>
+                <TableCell align="right">Processing</TableCell>
+                <TableCell align="right">Pending</TableCell>
+                <TableCell align="right">Processed</TableCell>
+                <TableCell align="right">Skipped</TableCell>
+                <TableCell align="right">Submitted</TableCell>
+                <TableCell align="right">Retries</TableCell>
+                <TableCell align="right">Failures</TableCell>
+                <TableCell align="right">Errors</TableCell>
+                <TableCell align="center">
+                  <Button onClick={() => rescanForWork()}>Rescan All</Button>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {taskQueueStatuses
+                .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+                .map(s => (
+                  <React.Fragment key={s.name}>
+                    <TableRow
+                      sx={{'&:last-child td, &:last-child th': {border: 0}}}
+                    >
+                      <TableCell component="th" scope="row">
+                        {s.name}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          aria-label="expand row"
+                          size="small"
+                          onClick={() =>
+                            setErrorDetailsRow(
+                              errorDetailsRow ? undefined : s.name ?? undefined
+                            )
+                          }
+                        >
+                          {errorDetailsRow === s.name ? (
+                            <KeyboardArrowUp />
+                          ) : (
+                            <KeyboardArrowDown />
+                          )}
+                        </IconButton>
+                      </TableCell>
+                      <TableCell align="right">{s.processingTasks}</TableCell>
+                      <TableCell align="right">{s.pendingTasks}</TableCell>
+                      <TableCell align="right">{s.processedTasks}</TableCell>
+                      <TableCell align="right">{s.skippedTasks}</TableCell>
+                      <TableCell align="right">{s.submittedTasks}</TableCell>
+                      <TableCell align="right">{s.retries}</TableCell>
+                      <TableCell align="right">{s.failures}</TableCell>
+                      <TableCell align="right">{s.errors}</TableCell>
+                      <TableCell align="center">
+                        <Button
+                          onClick={() => rescanForWork(s.name ?? undefined)}
+                        >
+                          Rescan
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell style={{padding: 0}} colSpan={9}>
+                        <Collapse
+                          in={errorDetailsRow === s.name}
+                          timeout="auto"
+                          unmountOnExit
+                        >
+                          <pre style={{padding: '1em'}}>
+                            {s.lastFailure || 'No failures recorded.'}
+                          </pre>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
+                ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </DefaultPage>
     </>
   );

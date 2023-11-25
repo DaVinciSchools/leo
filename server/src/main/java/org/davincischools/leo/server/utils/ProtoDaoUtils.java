@@ -940,7 +940,7 @@ public class ProtoDaoUtils {
     return translateToProto(tag, newBuilder, builder -> {});
   }
 
-  private static <M extends MessageOrBuilder, D> Optional<D> translateToDao(
+  public static <M extends MessageOrBuilder, D> Optional<D> translateToDao(
       @Nullable M fromMessage,
       Supplier<D> newDao,
       Consumer<D> customTranslations,
@@ -1146,7 +1146,7 @@ public class ProtoDaoUtils {
     return Optional.of(translatedDao);
   }
 
-  private static <M extends Message.Builder, D> Optional<M> translateToProto(
+  public static <M extends Message.Builder, D> Optional<M> translateToProto(
       D fromDao,
       Supplier<M> toMessageSupplier,
       Consumer<M> customTranslations,

@@ -52,7 +52,7 @@ public interface ProjectInputRepository
         .query(ProjectInput.class, projectInput -> configureQuery(projectInput, params));
   }
 
-  public static void configureQuery(
+  public static Entity<?, ProjectInput> configureQuery(
       Entity<?, ProjectInput> projectInput, GetProjectInputsParams params) {
     checkNotNull(projectInput);
     checkNotNull(params);
@@ -121,5 +121,7 @@ public interface ProjectInputRepository
         AssignmentRepository.configureQuery(assignment, params.getIncludeAssignment().get());
       }
     }
+
+    return projectInput;
   }
 }

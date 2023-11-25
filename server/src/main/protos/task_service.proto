@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.davincischools.leo.protos.task_service";
+
+package task_service;
+
+service TaskService {
+  rpc GetTaskQueuesStatus(GetTaskQueuesStatusRequest) returns (GetTaskQueuesStatusResponse);
+  rpc ScanForTasks(ScanForTasksRequest) returns (ScanForTasksResponse);
+}
+
+message GetTaskQueuesStatusRequest {}
+
+message GetTaskQueuesStatusResponse {
+  repeated TaskQueueStatus task_queue_statuses = 1;
+}
+
+message ScanForTasksRequest {
+  optional string name = 1;
+}
+
+message ScanForTasksResponse {
+}
+
+message TaskQueueStatus {
+  optional string name = 1;
+  optional int32 processing_tasks = 2;
+  optional int32 pending_tasks = 3;
+  optional int32 processed_tasks = 4;
+  optional int32 skipped_tasks = 5;
+  optional int32 submitted_tasks = 6;
+  optional int32 retries = 7;
+  optional int32 failures = 8;
+  optional int32 errors = 9;
+  optional string last_failure = 10;
+}
+
+message ReplyToPostTask {
+  optional int32 project_post_id = 1;
+}
+
+message CalculateProjectFulfillmentsTask {
+  optional int32 project_id = 1;
+}

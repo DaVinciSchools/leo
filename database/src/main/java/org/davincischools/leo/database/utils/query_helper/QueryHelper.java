@@ -186,7 +186,6 @@ public class QueryHelper {
         query.orderBy(
             root.getOrderByList().stream().map(o -> o.toOrder(builder)).toArray(Order[]::new));
       }
-      logger.atWarn().log("Query: {}", entity);
       var emQuery = em.createQuery(query);
       if (!gotIds && pageable.isPaged()) {
         emQuery

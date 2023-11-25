@@ -1,6 +1,7 @@
 package org.davincischools.leo.server.controllers.project_generators;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static org.davincischools.leo.database.utils.DaoUtils.streamIfInitialized;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -11,7 +12,7 @@ import com.google.common.collect.Maps;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -110,12 +111,12 @@ public class OpenAi3V1ProjectGenerator {
   private static final Joiner COMMA_AND_JOINER = Joiner.on(", and ");
   private static final Joiner SENTENCE_JOINER = Joiner.on(". ");
 
-  static record GetInitialChatMessageResponse(
+  public static record GetInitialChatMessageResponse(
       ChatMessage chatMessage, Map<Integer, Integer> criteriaToInputValue) {}
 
-  static GetInitialChatMessageResponse getInitialState(GenerateProjectsState state) {
+  public static GetInitialChatMessageResponse getInitialState(GenerateProjectsState state) {
     AtomicInteger previousCriteriaNumber = new AtomicInteger(0);
-    Map<Integer, Integer> criteriaToInputValue = new HashMap<>();
+    Map<Integer, Integer> criteriaToInputValue = state.criteriaToInputValue();
 
     List<String> requirements = new ArrayList<>();
     int i = -1;
@@ -222,7 +223,7 @@ public class OpenAi3V1ProjectGenerator {
   }
 
   @NotNull
-  static Project convertToProject(AiProject aiProject, GenerateProjectsState state) {
+  public static Project convertToProject(AiProject aiProject, GenerateProjectsState state) {
     AtomicInteger position = new AtomicInteger(0);
     var project =
         new Project()
@@ -265,16 +266,25 @@ public class OpenAi3V1ProjectGenerator {
           if (inputValue == null) {
             return;
           }
-          var projectInputFulfillment =
-              new ProjectInputFulfillment()
-                  .setCreationTime(Instant.now())
-                  .setProject(project)
-                  .setProjectInputValue(inputValue)
-                  .setHowProjectFulfills(c.howProjectFulfills)
-                  .setFulfillmentPercentage(c.fulfillmentPercentage)
-                  .setVisibleIndicator(c.assessmentApproach);
-          inputValue.getProjectInputFulfillments().add(projectInputFulfillment);
+          if (!DaoUtils.isInitialized(inputValue.getProjectInputFulfillments())) {
+            inputValue.setProjectInputFulfillments(new LinkedHashSet<>());
+          }
+          inputValue
+              .getProjectInputFulfillments()
+              .add(
+                  new ProjectInputFulfillment()
+                      .setCreationTime(Instant.now())
+                      .setProject(project)
+                      .setProjectInputValue(inputValue)
+                      .setHowProjectFulfills(c.howProjectFulfills)
+                      .setFulfillmentPercentage(c.fulfillmentPercentage)
+                      .setVisibleIndicator(c.assessmentApproach));
         });
+    project.setProjectInputFulfillments(
+        new LinkedHashSet<>(
+            project.getProjectInput().getProjectInputValues().stream()
+                .flatMap(v -> streamIfInitialized(v.getProjectInputFulfillments()))
+                .collect(toImmutableSet())));
     return project;
   }
 }

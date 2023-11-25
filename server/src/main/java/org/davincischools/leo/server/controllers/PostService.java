@@ -31,10 +31,12 @@ import org.davincischools.leo.protos.post_service.UpsertProjectPostRatingRequest
 import org.davincischools.leo.protos.post_service.UpsertProjectPostRatingResponse;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostRequest;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostResponse;
+import org.davincischools.leo.protos.task_service.ReplyToPostTask;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.Authenticated;
 import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
+import org.davincischools.leo.server.utils.task_queue.workers.ReplyToPostsWorker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
@@ -47,6 +49,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class PostService {
 
   @Autowired Database db;
+  @Autowired ReplyToPostsWorker replyToPostsWorker;
 
   @PostMapping(value = "/api/protos/PostService/GetProjectPosts")
   @ResponseBody
@@ -161,6 +164,10 @@ public class PostService {
               projectPost.setPostTime(Instant.now());
 
               db.getProjectPostRepository().upsert(db, postUserX, projectPost);
+              if (!projectPost.getBeingEdited()) {
+                replyToPostsWorker.submitTask(
+                    ReplyToPostTask.newBuilder().setProjectPostId(projectPost.getId()).build());
+              }
               response.setProjectPostId(projectPost.getId());
 
               return response.build();

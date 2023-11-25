@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
 import jakarta.persistence.criteria.JoinType;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import org.davincischools.leo.database.daos.ProjectPost;
@@ -24,11 +25,15 @@ import org.davincischools.leo.database.utils.query_helper.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProjectPostRepository
     extends JpaRepository<ProjectPost, Integer>, AutowiredRepositoryValues {
+
+  @Query("SELECT id FROM #{#entityName}")
+  List<Integer> getAllIds();
 
   default Page<ProjectPost> getProjectPosts(GetProjectPostsParams params) {
     checkNotNull(params);
