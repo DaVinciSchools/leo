@@ -47,20 +47,23 @@ public class TestDatabase {
   @Primary
   public static DataSource createTestDataSource(@Autowired Environment environment)
       throws SQLException, IOException {
-    try {
-      synchronized (TestDatabase.class) {
-        if (dataSource != null) {
-          return dataSource;
-        }
+    if (dataSource != null) {
+      return dataSource;
+    }
 
+    int attempts = 0;
+    Exception lastException = null;
+    DataSource rootDataSource = null;
+    while (attempts++ < 10) {
+      try {
         // Create and start the container.
         int port =
             Optional.ofNullable(environment.getProperty(TEST_DATABASE_PORT_KEY, Integer.class))
-                .orElse(-1);
+                .orElse(TestSocketUtils.findAvailableTcpPort());
         MySQLContainer<?> container = createAndStartMySqlContainer(port);
 
         // Configure a data source to point to the container.
-        DataSource rootDataSource =
+        rootDataSource =
             DataSourceBuilder.create()
                 .driverClassName(org.testcontainers.jdbc.ContainerDatabaseDriver.class.getName())
                 .url(container.getJdbcUrl())
@@ -68,6 +71,9 @@ public class TestDatabase {
                 .password(ROOT_PASSWORD)
                 .type(MysqlDataSource.class)
                 .build();
+        if (rootDataSource == null) {
+          throw new IllegalStateException("Failed to connect to database.");
+        }
 
         // Create the user and grant them permission.
         createUserX(rootDataSource, USERNAME, PASSWORD);
@@ -93,21 +99,30 @@ public class TestDatabase {
                 .build();
 
         return dataSource;
+      } catch (Exception e) {
+        lastException = e;
+        logger.atWarn().log("Failed to create database: {}", e.getMessage());
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException ex) {
+          // Do nothing.
+        }
       }
-    } catch (IllegalStateException e) {
-      // Ths failure is probably due to Docker Desktop not being installed.
-      if (e.getMessage().contains("Could not find a valid Docker environment")) {
-        throw new IllegalArgumentException(
-            "You may need to start or install Docker Desktop. See instructions at: "
-                + "https://github.com/DaVinciSchools/leo/blob/main/BUILDING.md#build-dependencies-docker-desktop.",
-            e);
-      }
-      throw e;
     }
+    // Ths failure is probably due to Docker Desktop not being installed.
+    logger
+        .atError()
+        .withThrowable(lastException)
+        .log("Failed to create database. Is Docker running?");
+    throw new IllegalArgumentException(
+        "You may need to start or install Docker Desktop. See instructions at: "
+            + "https://github.com/DaVinciSchools/leo/blob/main/BUILDING.md#build-dependencies-docker-desktop.");
   }
 
   @NotNull
   private static MySQLContainer<?> createAndStartMySqlContainer(int port) {
+    logger.atInfo().log("Trying to start MySQL container on port {}.", port);
+
     // Configure the test database container.
     MySQLContainer<?> container =
         new MySQLContainer<>(DockerImageName.parse("mysql").withTag("8-debian"))
@@ -126,31 +141,8 @@ public class TestDatabase {
     // https://github.com/testcontainers/testcontainers-java/issues/914#issuecomment-876965013
     container.addParameter("TC_MY_CNF", null);
 
-    int attempts = 0;
-    while (true) {
-      int attemptedPort = port > 0 ? port : TestSocketUtils.findAvailableTcpPort();
-      logger.atInfo().log("Trying to start container on port {}.", attemptedPort);
-      try {
-        container.setPortBindings(ImmutableList.of(attemptedPort + ":3306"));
-        container.start();
-        break;
-      } catch (RuntimeException e) {
-        if (attempts++ < 10) {
-          logger
-              .atWarn()
-              .withThrowable(e)
-              .log("Failed to start container on port {}. Retrying...", attemptedPort);
-        } else {
-          logger
-              .atError()
-              .withThrowable(e)
-              .log("Failed to start container on port {}.", attemptedPort);
-          throw e;
-        }
-      }
-    }
-    logger.atInfo().log("Successfully started container.");
-
+    container.setPortBindings(ImmutableList.of(port + ":3306"));
+    container.start();
     return container;
   }
 
