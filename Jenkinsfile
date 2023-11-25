@@ -13,6 +13,7 @@ pipeline {
   }
   options {
     ansiColor('gnome-terminal')
+    disableConcurrentBuilds()
   }
   stages {
     stage('Build') {
