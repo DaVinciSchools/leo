@@ -17,26 +17,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.admin_x.AdminXUtils;
 import org.davincischools.leo.database.admin_x.AdminXUtils.DaVinciSchoolsByNickname;
-import org.davincischools.leo.database.daos.AdminX;
 import org.davincischools.leo.database.daos.Assignment;
-import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill;
-import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.ClassX;
-import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.ProjectDefinition;
-import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.School;
-import org.davincischools.leo.database.daos.Student;
-import org.davincischools.leo.database.daos.StudentClassX;
-import org.davincischools.leo.database.daos.StudentSchool;
-import org.davincischools.leo.database.daos.Teacher;
-import org.davincischools.leo.database.daos.TeacherClassX;
-import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
@@ -131,20 +120,53 @@ public class TestData {
       throw new RuntimeException(e);
     }
 
-    // Upsert a new district.
+    // Delete district / schools / classes / assignments.
     deleteAllRecords(
         db.getDistrictRepository(),
         District::getDeleted,
         (d, instant) -> d.setDeleted(instant).setName("deleted-" + d.getId() + "-" + d.getName()),
         d -> !d.getName().startsWith("deleted-"));
+    deleteAllRecords(
+        db.getSchoolRepository(),
+        School::getDeleted,
+        (school, instant) ->
+            school
+                .setDeleted(instant)
+                .setNickname("deleted-" + school.getId() + "_" + school.getNickname()),
+        d -> !d.getNickname().startsWith("deleted-"));
+    deleteAllRecords(db.getClassXRepository(), ClassX::getDeleted, ClassX::setDeleted);
+    // Delete motivations / Knowledge and skills.
+    deleteAllRecords(db.getMotivationRepository(), Motivation::getDeleted, Motivation::setDeleted);
+    deleteAllRecords(
+        db.getKnowledgeAndSkillRepository(),
+        KnowledgeAndSkill::getDeleted,
+        KnowledgeAndSkill::setDeleted);
+    // Delete users.
+    deleteAllRecords(
+        db.getUserXRepository(),
+        UserX::getDeleted,
+        (userX, instant) ->
+            userX
+                .setDeleted(instant)
+                .setEmailAddress("deleted-" + userX.getId() + "_" + userX.getEmailAddress()),
+        d -> !d.getEmailAddress().startsWith("deleted-"));
+    deleteAllRecords(db.getInterestRepository(), Interest::getDeleted, Interest::setDeleted);
+    // Create project definitions / inputs.
+    deleteAllRecords(
+        db.getProjectDefinitionRepository(),
+        ProjectDefinition::getDeleted,
+        ProjectDefinition::setDeleted);
+    deleteAllRecords(
+        db.getProjectDefinitionCategoryTypeRepository(),
+        ProjectDefinitionCategoryType::getDeleted,
+        ProjectDefinitionCategoryType::setDeleted);
+
+    entityManager.clear();
+
+    // Upsert a new district.
     district = db.getDistrictRepository().upsert("Project Leo School District");
 
     // Create schools.
-    deleteAllRecords(db.getSchoolRepository(), School::getDeleted, School::setDeleted);
-    deleteAllRecords(
-        db.getStudentSchoolRepository(), StudentSchool::getDeleted, StudentSchool::setDeleted);
-    deleteAllRecords(
-        db.getTeacherSchoolRepository(), TeacherSchool::getDeleted, TeacherSchool::setDeleted);
     db.getSchoolRepository()
         .saveAll(
             Arrays.stream(DaVinciSchoolsByNickname.values())
@@ -167,7 +189,6 @@ public class TestData {
             .orElseThrow();
 
     // Create motivations.
-    deleteAllRecords(db.getMotivationRepository(), Motivation::getDeleted, Motivation::setDeleted);
     beCentralMotivation =
         db.getMotivationRepository()
             .save(
@@ -210,18 +231,6 @@ public class TestData {
                     .setShortDescr("set up a smooth-running operation"));
 
     // Create users.
-    deleteAllRecords(
-        db.getUserXRepository(),
-        UserX::getDeleted,
-        (userX, instant) ->
-            userX
-                .setDeleted(instant)
-                .setEmailAddress("deleted-" + userX.getId() + "_" + userX.getEmailAddress()),
-        d -> !d.getEmailAddress().startsWith("deleted-"));
-    deleteAllRecords(db.getAdminXRepository(), AdminX::getDeleted, AdminX::setDeleted);
-    deleteAllRecords(db.getTeacherRepository(), Teacher::getDeleted, Teacher::setDeleted);
-    deleteAllRecords(db.getStudentRepository(), Student::getDeleted, Student::setDeleted);
-
     adminX =
         createUserX(
             db,
@@ -284,10 +293,6 @@ public class TestData {
             });
 
     // Create XQ Competencies.
-    deleteAllRecords(
-        db.getKnowledgeAndSkillRepository(),
-        KnowledgeAndSkill::getDeleted,
-        KnowledgeAndSkill::setDeleted);
     for (var xqCompetency : AdminXUtils.XqCategoriesByNickname.values()) {
       db.getKnowledgeAndSkillRepository()
           .save(
@@ -301,15 +306,6 @@ public class TestData {
     }
 
     // Create programming class.
-    deleteAllRecords(db.getClassXRepository(), ClassX::getDeleted, ClassX::setDeleted);
-    deleteAllRecords(
-        db.getTeacherClassXRepository(), TeacherClassX::getDeleted, TeacherClassX::setDeleted);
-    deleteAllRecords(
-        db.getStudentClassXRepository(), StudentClassX::getDeleted, StudentClassX::setDeleted);
-    deleteAllRecords(
-        db.getClassXKnowledgeAndSkillRepository(),
-        ClassXKnowledgeAndSkill::getDeleted,
-        ClassXKnowledgeAndSkill::setDeleted);
     programmingClassX =
         db.getClassXRepository()
             .upsert(
@@ -344,11 +340,6 @@ public class TestData {
     db.getClassXKnowledgeAndSkillRepository().upsert(programmingClassX, programmingSortEks);
     db.getClassXKnowledgeAndSkillRepository().upsert(programmingClassX, programmingContainerEks);
 
-    deleteAllRecords(db.getAssignmentRepository(), Assignment::getDeleted, Assignment::setDeleted);
-    deleteAllRecords(
-        db.getAssignmentKnowledgeAndSkillRepository(),
-        AssignmentKnowledgeAndSkill::getDeleted,
-        AssignmentKnowledgeAndSkill::setDeleted);
     programmingSortAssignment =
         db.getAssignmentRepository()
             .upsert(
@@ -442,22 +433,6 @@ public class TestData {
     db.getStudentClassXRepository().upsert(student.getStudent(), danceClassX);
 
     // Create project definitions.
-    deleteAllRecords(
-        db.getProjectDefinitionRepository(),
-        ProjectDefinition::getDeleted,
-        ProjectDefinition::setDeleted);
-    deleteAllRecords(
-        db.getProjectDefinitionCategoryRepository(),
-        ProjectDefinitionCategory::getDeleted,
-        ProjectDefinitionCategory::setDeleted);
-    deleteAllRecords(
-        db.getProjectDefinitionCategoryTypeRepository(),
-        ProjectDefinitionCategoryType::getDeleted,
-        ProjectDefinitionCategoryType::setDeleted);
-    deleteAllRecords(
-        db.getAssignmentProjectDefinitionRepository(),
-        AssignmentProjectDefinition::getDeleted,
-        AssignmentProjectDefinition::setDeleted);
     AdminXUtils.addIkigaiDiagramDescriptions(
         db,
         adminX,
