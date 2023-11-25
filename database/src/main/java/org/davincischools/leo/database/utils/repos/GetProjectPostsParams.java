@@ -15,9 +15,9 @@ public class GetProjectPostsParams {
 
   @Nullable private Boolean includeTags;
   @Nullable private Boolean includeComments;
-  @Nullable private Boolean includeProjects;
+  @Nullable private GetProjectsParams includeProjects;
   @Nullable private Boolean includeRatings;
-  @Nullable private Boolean includeAssignments;
+  @Nullable private GetAssignmentsParams includeAssignments;
 
   @Nullable private Iterable<Integer> projectPostIds;
   @Nullable private Iterable<Integer> projectIds;
@@ -38,7 +38,7 @@ public class GetProjectPostsParams {
     return Optional.ofNullable(includeComments);
   }
 
-  Optional<Boolean> getIncludeProjects() {
+  Optional<GetProjectsParams> getIncludeProjects() {
     return Optional.ofNullable(includeProjects);
   }
 
@@ -46,7 +46,7 @@ public class GetProjectPostsParams {
     return Optional.ofNullable(includeRatings);
   }
 
-  Optional<Boolean> getIncludeAssignments() {
+  Optional<GetAssignmentsParams> getIncludeAssignments() {
     return Optional.ofNullable(includeAssignments);
   }
 

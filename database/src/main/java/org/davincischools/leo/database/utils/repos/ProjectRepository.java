@@ -2,24 +2,16 @@ package org.davincischools.leo.database.utils.repos;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.collect.ImmutableList;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import java.util.List;
 import org.davincischools.leo.database.daos.Project;
-import org.davincischools.leo.database.daos.ProjectInput;
-import org.davincischools.leo.database.daos.ProjectInputFulfillment;
-import org.davincischools.leo.database.daos.ProjectInputFulfillment_;
-import org.davincischools.leo.database.daos.ProjectInputValue;
-import org.davincischools.leo.database.daos.ProjectInputValue_;
-import org.davincischools.leo.database.daos.ProjectInput_;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.daos.ProjectMilestone_;
 import org.davincischools.leo.database.daos.Project_;
 import org.davincischools.leo.database.daos.Tag;
-import org.davincischools.leo.database.utils.QueryHelper.QueryHelperUtils;
+import org.davincischools.leo.database.utils.query_helper.Entity;
+import org.davincischools.leo.database.utils.query_helper.Predicate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -30,94 +22,51 @@ public interface ProjectRepository
   default List<Project> getProjects(GetProjectsParams params) {
     checkNotNull(params);
 
-    return getQueryHelper()
-        .query(Project.class, (u, project, builder) -> configureQuery(u, project, builder, params));
+    return getQueryHelper().query(Project.class, project -> configureQuery(project, params));
   }
 
-  public static void configureQuery(
-      QueryHelperUtils u,
-      From<?, Project> project,
-      CriteriaBuilder builder,
-      GetProjectsParams params) {
-    checkNotNull(u);
+  static void configureQuery(Entity<?, Project> project, GetProjectsParams params) {
     checkNotNull(project);
-    checkNotNull(builder);
     checkNotNull(params);
 
-    u.notDeleted(project);
-
-    var projectInput = u.notDeleted(u.fetch(project, Project_.projectInput, JoinType.LEFT));
-    var userX = u.notDeleted(u.fetch(projectInput, ProjectInput_.userX, JoinType.LEFT));
-
-    if (params.getUserXIds().isPresent()) {
-      u.where(userX.get("id").in(ImmutableList.of(params.getUserXIds().get())));
-    }
-
-    if (params.getProjectIds().isPresent()) {
-      u.where(project.get(Project_.id).in(ImmutableList.of(params.getProjectIds().get())));
-    }
+    project.notDeleted().fetch().requireId(params.getProjectIds());
 
     if (!params.getIncludeInactive().orElse(false)) {
-      u.where(builder.isTrue(project.get(Project_.active)));
+      project.where(Predicate.isTrue(project.get(Project_.active)));
     }
 
     if (params.getIncludeTags().orElse(false)) {
-      u.notDeleted(
-          u.fetch(project, Project_.tags, JoinType.LEFT, Tag::getProject, Project::setTags));
+      project
+          .join(Project_.tags, JoinType.LEFT, Tag::getProject, Project::setTags)
+          .notDeleted()
+          .fetch();
     }
 
-    if (params.getIncludeInputs().orElse(false) || params.getIncludeFulfillments().orElse(false)) {
-      var projectInputValue =
-          u.notDeleted(
-              u.fetch(
-                  projectInput,
-                  ProjectInput_.projectInputValues,
-                  JoinType.LEFT,
-                  ProjectInputValue::getProjectInput,
-                  ProjectInput::setProjectInputValues));
-
-      var projectDefinition =
-          u.notDeleted(u.fetch(projectInput, ProjectInput_.projectDefinition, JoinType.LEFT));
-      ProjectDefinitionRepository.configureQuery(
-          u, projectDefinition, builder, new GetProjectDefinitionsParams());
-
-      if (params.getIncludeFulfillments().orElse(false)) {
-        var projectInputFulfillment =
-            u.notDeleted(
-                u.fetch(
-                    projectInputValue,
-                    ProjectInputValue_.projectInputFulfillments,
-                    JoinType.LEFT,
-                    ProjectInputFulfillment::getProjectInputValue,
-                    ProjectInputValue::setProjectInputFulfillments));
-        u.where(
-            builder.equal(projectInputFulfillment.get(ProjectInputFulfillment_.project), project));
-      }
+    if (params.getIncludeInputs().isPresent()) {
+      ProjectInputRepository.configureQuery(
+          project.join(Project_.projectInput, JoinType.LEFT), params.getIncludeInputs().get());
     }
 
     if (params.getIncludeAssignment().isPresent()) {
-      var assignment = u.notDeleted(u.fetch(project, Project_.assignment, JoinType.LEFT));
       AssignmentRepository.configureQuery(
-          u, assignment, builder, params.getIncludeAssignment().get());
+          project.join(Project_.assignment, JoinType.LEFT), params.getIncludeAssignment().get());
     }
 
     if (params.getIncludeMilestones().orElse(false)) {
-      var milestone =
-          u.notDeleted(
-              u.fetch(
-                  project,
-                  Project_.projectMilestones,
-                  JoinType.LEFT,
-                  ProjectMilestone::getProject,
-                  Project::setProjectMilestones));
-
-      u.notDeleted(
-          u.fetch(
-              milestone,
+      project
+          .join(
+              Project_.projectMilestones,
+              JoinType.LEFT,
+              ProjectMilestone::getProject,
+              Project::setProjectMilestones)
+          .notDeleted()
+          .join(
               ProjectMilestone_.projectMilestoneSteps,
               JoinType.LEFT,
               ProjectMilestoneStep::getProjectMilestone,
-              ProjectMilestone::setProjectMilestoneSteps));
+              ProjectMilestone::setProjectMilestoneSteps)
+          .notDeleted()
+          .fetch();
     }
   }
 }

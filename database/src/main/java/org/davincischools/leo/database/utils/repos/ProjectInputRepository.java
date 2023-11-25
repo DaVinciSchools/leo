@@ -2,11 +2,10 @@ package org.davincischools.leo.database.utils.repos;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.collect.ImmutableList;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import java.util.List;
+import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
+import org.davincischools.leo.database.daos.AssignmentProjectDefinition_;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory_;
@@ -15,7 +14,9 @@ import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectInputValue_;
 import org.davincischools.leo.database.daos.ProjectInput_;
-import org.davincischools.leo.database.utils.QueryHelper.QueryHelperUtils;
+import org.davincischools.leo.database.utils.query_helper.Entity;
+import org.davincischools.leo.database.utils.query_helper.Expression;
+import org.davincischools.leo.database.utils.query_helper.Predicate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -48,75 +49,77 @@ public interface ProjectInputRepository
     checkNotNull(params);
 
     return getQueryHelper()
-        .query(
-            ProjectInput.class,
-            (u, projectInput, builder) -> configureQuery(u, projectInput, builder, params));
+        .query(ProjectInput.class, projectInput -> configureQuery(projectInput, params));
   }
 
   public static void configureQuery(
-      QueryHelperUtils u,
-      From<?, ProjectInput> projectInput,
-      CriteriaBuilder builder,
-      GetProjectInputsParams params) {
-    checkNotNull(u);
+      Entity<?, ProjectInput> projectInput, GetProjectInputsParams params) {
     checkNotNull(projectInput);
-    checkNotNull(builder);
     checkNotNull(params);
 
-    u.notDeleted(projectInput);
+    projectInput.notDeleted().fetch().requireId(params.getProjectInputIds());
 
-    var userX = u.notDeleted(u.fetch(projectInput, ProjectInput_.userX, JoinType.LEFT));
+    // UserX
+    projectInput
+        .join(ProjectInput_.userX, JoinType.LEFT)
+        .notDeleted()
+        .fetch()
+        .requireId(params.getUserXIds());
+
+    // includeComplete/Processing
+    projectInput.where(
+        Predicate.or(
+            params.getIncludeComplete().orElse(false)
+                ? Predicate.eq(projectInput.get(ProjectInput_.state), State.COMPLETED.name())
+                : Expression.FALSE,
+            params.getIncludeProcessing().orElse(false)
+                ? Predicate.eq(projectInput.get(ProjectInput_.state), State.PROCESSING.name())
+                : Expression.FALSE));
 
     var projectDefinition =
-        u.notDeleted(u.fetch(projectInput, ProjectInput_.projectDefinition, JoinType.LEFT));
-    var projectDefintionCategories =
-        u.notDeleted(
-            u.fetch(
-                projectDefinition,
-                ProjectDefinition_.projectDefinitionCategories,
-                JoinType.LEFT,
-                ProjectDefinitionCategory::getProjectDefinition,
-                ProjectDefinition::setProjectDefinitionCategories));
-    u.notDeleted(
-        u.fetch(
-            projectDefintionCategories,
-            ProjectDefinitionCategory_.projectDefinitionCategoryType,
-            JoinType.LEFT));
+        projectInput.join(ProjectInput_.projectDefinition, JoinType.LEFT).notDeleted().fetch();
+    projectDefinition
+        .join(
+            ProjectDefinition_.projectDefinitionCategories,
+            JoinType.LEFT,
+            ProjectDefinitionCategory::getProjectDefinition,
+            ProjectDefinition::setProjectDefinitionCategories)
+        .notDeleted()
+        .fetch()
+        .join(ProjectDefinitionCategory_.projectDefinitionCategoryType, JoinType.LEFT)
+        .notDeleted()
+        .fetch();
 
     var projectInputValue =
-        u.fetch(
-            projectInput,
-            ProjectInput_.projectInputValues,
-            JoinType.LEFT,
-            ProjectInputValue::getProjectInput,
-            ProjectInput::setProjectInputValues);
-    u.fetch(projectInputValue, ProjectInputValue_.knowledgeAndSkillValue, JoinType.LEFT);
-    u.fetch(projectInputValue, ProjectInputValue_.motivationValue, JoinType.LEFT);
-
-    if (params.getUserXIds().isPresent()) {
-      u.where(userX.get("id").in(ImmutableList.of(params.getUserXIds().get())));
-    }
-
-    if (params.getProjectInputIds().isPresent()) {
-      u.where(
-          projectInput
-              .get(ProjectInput_.id)
-              .in(ImmutableList.of(params.getProjectInputIds().get())));
-    }
-
-    u.where(
-        builder.or(
-            params.getIncludeComplete().orElse(false)
-                ? builder.equal(projectInput.get(ProjectInput_.state), State.COMPLETED.name())
-                : builder.literal(false),
-            params.getIncludeProcessing().orElse(false)
-                ? builder.equal(projectInput.get(ProjectInput_.state), State.PROCESSING.name())
-                : builder.literal(false)));
+        projectInput
+            .join(
+                ProjectInput_.projectInputValues,
+                JoinType.LEFT,
+                ProjectInputValue::getProjectInput,
+                ProjectInput::setProjectInputValues)
+            .notDeleted()
+            .fetch();
+    projectInputValue
+        .join(ProjectInputValue_.knowledgeAndSkillValue, JoinType.LEFT)
+        .notDeleted()
+        .fetch();
+    projectInputValue.join(ProjectInputValue_.motivationValue, JoinType.LEFT).notDeleted().fetch();
 
     if (params.getIncludeAssignment().isPresent()) {
-      var assignment = u.notDeleted(u.fetch(projectInput, ProjectInput_.assignment, JoinType.LEFT));
-      AssignmentRepository.configureQuery(
-          u, assignment, builder, params.getIncludeAssignment().get());
+      for (var assignment :
+          List.of(
+              projectInput.join(ProjectInput_.assignment, JoinType.LEFT),
+              projectDefinition
+                  .join(
+                      ProjectDefinition_.assignmentProjectDefinitions,
+                      JoinType.LEFT,
+                      AssignmentProjectDefinition::getProjectDefinition,
+                      ProjectDefinition::setAssignmentProjectDefinitions)
+                  .notDeleted()
+                  .fetch()
+                  .join(AssignmentProjectDefinition_.assignment, JoinType.LEFT))) {
+        AssignmentRepository.configureQuery(assignment, params.getIncludeAssignment().get());
+      }
     }
   }
 }

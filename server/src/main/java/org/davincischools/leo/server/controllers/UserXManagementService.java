@@ -23,6 +23,7 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserXUtils;
+import org.davincischools.leo.database.utils.repos.GetClassXsParams;
 import org.davincischools.leo.database.utils.repos.GetUserXsParams;
 import org.davincischools.leo.protos.user_x_management.GetUserXsRequest;
 import org.davincischools.leo.protos.user_x_management.GetUserXsResponse;
@@ -265,7 +266,7 @@ public class UserXManagementService {
                   .getUserXs(
                       new GetUserXsParams()
                           .setInUserXIds(List.of(finalUserXId))
-                          .setIncludeClassXs(true))
+                          .setIncludeClassXs(new GetClassXsParams()))
                   .stream()
                   .findFirst()
                   .orElseThrow(
@@ -477,8 +478,9 @@ public class UserXManagementService {
                                   valueOrNull(
                                       request, GetUserXsRequest.INCLUDE_SCHOOLS_FIELD_NUMBER))
                               .setIncludeClassXs(
-                                  valueOrNull(
-                                      request, GetUserXsRequest.INCLUDE_CLASS_XS_FIELD_NUMBER))
+                                  request.getIncludeClassXs()
+                                      ? new GetClassXsParams().setIncludeSchool(true)
+                                      : null)
                               .setInDistrictIds(
                                   listOrNull(
                                       request, GetUserXsRequest.IN_DISTRICT_IDS_FIELD_NUMBER))

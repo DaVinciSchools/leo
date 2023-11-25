@@ -134,7 +134,7 @@ public class UserXRepositoryTest {
             .getUserXRepository()
             .getUserXs(
                 new GetUserXsParams()
-                    .setIncludeClassXs(true)
+                    .setIncludeClassXs(new GetClassXsParams())
                     .setInUserXIds(List.of(testData.getStudent().getId())))
             .stream()
             .findFirst()

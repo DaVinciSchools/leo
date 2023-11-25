@@ -1,6 +1,7 @@
 package org.davincischools.leo.server.controllers;
 
 import static org.davincischools.leo.database.utils.DaoUtils.sortByPosition;
+import static org.davincischools.leo.protos.pl_types.ProjectDefinition.State.FAILED;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.enumNameOrNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toAssignmentDao;
@@ -160,7 +161,9 @@ public class ProjectManagementService {
 
               db.getKnowledgeAndSkillRepository()
                   .guardedUpsert(
-                      toKnowledgeAndSkillDao(request.getKnowledgeAndSkill()).orElseThrow(),
+                      toKnowledgeAndSkillDao(request.getKnowledgeAndSkill())
+                          .orElseThrow()
+                          .setUserX(userX.get().orElseThrow()),
                       userX.isAdminX() ? null : userX.getUserXIdOrNull())
                   .ifPresent(
                       ks -> {
@@ -414,6 +417,13 @@ public class ProjectManagementService {
                   .forEach(
                       projectInput ->
                           toProjectDefinitionProto(projectInput, response::addProjectsBuilder));
+
+              var filteredInputs =
+                  response.getProjectsBuilderList().stream()
+                      .filter(def -> def.getState() != FAILED)
+                      .toList();
+              response.clearProjects();
+              filteredInputs.forEach(response::addProjects);
 
               return response.build();
             })

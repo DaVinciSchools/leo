@@ -19,6 +19,7 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetProjectPostsParams;
+import org.davincischools.leo.database.utils.repos.GetProjectsParams;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
 import org.davincischools.leo.protos.post_service.DeleteProjectPostCommentRequest;
 import org.davincischools.leo.protos.post_service.DeleteProjectPostCommentResponse;
@@ -74,9 +75,7 @@ public class PostService {
                                       request,
                                       GetProjectPostsRequest.INCLUDE_COMMENTS_FIELD_NUMBER))
                               .setIncludeProjects(
-                                  valueOrNull(
-                                      request,
-                                      GetProjectPostsRequest.INCLUDE_PROJECTS_FIELD_NUMBER))
+                                  request.getIncludeProjects() ? new GetProjectsParams() : null)
                               .setIncludeRatings(
                                   valueOrNull(
                                       request,

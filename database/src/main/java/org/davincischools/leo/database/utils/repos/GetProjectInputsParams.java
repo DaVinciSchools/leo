@@ -13,12 +13,13 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 public class GetProjectInputsParams {
 
-  @Nullable private Iterable<Integer> userXIds;
-  @Nullable private Iterable<Integer> projectInputIds;
-  // The following fields, if left unset, will return all results.
+  @Nullable private GetAssignmentsParams includeAssignment;
+  // One of the following fields must be set to get any results.
   @Nullable private Boolean includeComplete;
   @Nullable private Boolean includeProcessing;
-  @Nullable private GetAssignmentsParams includeAssignment;
+
+  @Nullable private Iterable<Integer> userXIds;
+  @Nullable private Iterable<Integer> projectInputIds;
 
   public Optional<Iterable<Integer>> getUserXIds() {
     return Optional.ofNullable(userXIds);

@@ -18,6 +18,7 @@ message GetClassXsRequest {
   repeated int32 teacher_ids = 2;
   repeated int32 student_ids = 1;
 
+  optional bool include_school = 8;
   optional bool include_assignments = 6;
   optional bool include_knowledge_and_skills = 4;
 

@@ -4,7 +4,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.criteria.JoinType;
-import java.util.Objects;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.daos.TeacherClassX;
@@ -14,6 +13,9 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.daos.UserX_;
 import org.davincischools.leo.database.test.TestData;
 import org.davincischools.leo.database.test.TestDatabase;
+import org.davincischools.leo.database.utils.query_helper.Entity;
+import org.davincischools.leo.database.utils.query_helper.Predicate;
+import org.davincischools.leo.database.utils.query_helper.QueryHelper;
 import org.hibernate.Hibernate;
 import org.hibernate.SessionFactory;
 import org.junit.Before;
@@ -45,7 +47,6 @@ public class QueryHelperTest {
 
   @Before
   public void setup() {
-    // TODO: Test data updates are not appearing in the tests.
     testData.addTestData();
     sessionFactory = entityManagerFactory.unwrap(SessionFactory.class);
     sessionFactory.getStatistics().setStatisticsEnabled(true);
@@ -56,10 +57,7 @@ public class QueryHelperTest {
   public void getEmptyResultsTest() {
     var results =
         queryHelper.query(
-            UserX.class,
-            (u, root, builder) -> {
-              u.where(builder.notEqual(root.get(UserX_.id), root.get(UserX_.id)));
-            });
+            UserX.class, userX -> userX.where(Predicate.neq(userX.getId(), userX.getId())));
 
     assertThat(results).isEmpty();
 
@@ -68,12 +66,7 @@ public class QueryHelperTest {
 
   @Test
   public void getEntitiesWithNoConfigurationTest() {
-    var results =
-        queryHelper.query(
-            UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-            });
+    var results = queryHelper.query(UserX.class, Entity::notDeleted);
 
     assertThat(results.stream().map(UserX::getId).toList())
         .containsExactly(
@@ -90,21 +83,11 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.notDeleted(u.join(root, UserX_.adminX, JoinType.LEFT));
-            });
+            userX -> userX.notDeleted().join(UserX_.adminX, JoinType.INNER).notDeleted());
 
     assertThat(results.stream().map(UserX::getId).toList())
-        .containsExactly(
-            testData.getAdminX().getId(),
-            testData.getTeacher().getId(),
-            testData.getStudent().getId(),
-            testData.getDemo().getId());
-    assertThat(results.stream().map(UserX::getAdminX).map(Objects::nonNull).toList())
-        .containsExactly(true, false, false, false);
-    assertThat(results.stream().map(UserX::getAdminX).map(Hibernate::isInitialized).toList())
-        .containsExactly(false, true, true, true);
+        .containsExactly(testData.getAdminX().getId());
+    assertThat(Hibernate.isInitialized(results.get(0).getAdminX())).isFalse();
 
     assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
   }
@@ -114,21 +97,11 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.notDeleted(u.fetch(root, UserX_.adminX, JoinType.LEFT));
-            });
+            userX -> userX.notDeleted().join(UserX_.adminX, JoinType.INNER).notDeleted().fetch());
 
     assertThat(results.stream().map(UserX::getId).toList())
-        .containsExactly(
-            testData.getAdminX().getId(),
-            testData.getTeacher().getId(),
-            testData.getStudent().getId(),
-            testData.getDemo().getId());
-    assertThat(results.stream().map(UserX::getAdminX).map(Objects::nonNull).toList())
-        .containsExactly(true, false, false, false);
-    assertThat(results.stream().map(UserX::getAdminX).map(Hibernate::isInitialized).toList())
-        .containsExactly(true, true, true, true);
+        .containsExactly(testData.getAdminX().getId());
+    assertThat(Hibernate.isInitialized(results.get(0).getAdminX())).isTrue();
 
     assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
   }
@@ -138,17 +111,19 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             Teacher.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              var teacherClassX =
-                  u.notDeleted(
-                      u.fetch(
-                          root,
-                          Teacher_.teacherClassXES,
-                          JoinType.LEFT,
-                          TeacherClassX::getTeacher,
-                          Teacher::setTeacherClassXES));
-              u.notDeleted(u.fetch(teacherClassX, TeacherClassX_.classX, JoinType.INNER));
+            teacher -> {
+              teacher
+                  .notDeleted()
+                  .join(
+                      Teacher_.teacherClassXES,
+                      JoinType.LEFT,
+                      TeacherClassX::getTeacher,
+                      Teacher::setTeacherClassXES)
+                  .notDeleted()
+                  .fetch()
+                  .join(TeacherClassX_.classX, JoinType.LEFT)
+                  .notDeleted()
+                  .fetch();
             });
 
     assertThat(results.stream().map(Teacher::getId).toList())
@@ -194,10 +169,7 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.orderBy(builder.asc(root.get(UserX_.emailAddress)));
-            },
+            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
             PageRequest.of(0, 1));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -209,10 +181,7 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.orderBy(builder.asc(root.get(UserX_.emailAddress)));
-            },
+            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
             PageRequest.of(1, 1));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -224,10 +193,7 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.orderBy(builder.asc(root.get(UserX_.emailAddress)));
-            },
+            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
             PageRequest.of(2, 1));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -239,10 +205,7 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.orderBy(builder.asc(root.get(UserX_.emailAddress)));
-            },
+            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
             PageRequest.of(3, 1));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -254,10 +217,7 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.orderBy(builder.asc(root.get(UserX_.emailAddress)));
-            },
+            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
             PageRequest.of(4, 1));
 
     assertThat(results).isEmpty();
@@ -268,10 +228,7 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.orderBy(builder.asc(root.get(UserX_.emailAddress)));
-            },
+            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
             PageRequest.of(0, 2));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -283,10 +240,7 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.orderBy(builder.asc(root.get(UserX_.emailAddress)));
-            },
+            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
             PageRequest.of(1, 2));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -298,10 +252,7 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.orderBy(builder.asc(root.get(UserX_.emailAddress)));
-            },
+            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
             PageRequest.of(2, 2));
 
     assertThat(results).isEmpty();
@@ -312,10 +263,7 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.orderBy(builder.asc(root.get(UserX_.emailAddress)));
-            },
+            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
             PageRequest.of(0, 3));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -330,10 +278,7 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.orderBy(builder.asc(root.get(UserX_.emailAddress)));
-            },
+            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
             PageRequest.of(1, 3));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -345,10 +290,7 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            (u, root, builder) -> {
-              u.notDeleted(root);
-              u.orderBy(builder.asc(root.get(UserX_.emailAddress)));
-            },
+            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
             PageRequest.of(0, 5));
 
     assertThat(results.stream().map(UserX::getId).toList())

@@ -13,14 +13,15 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 public class GetProjectsParams {
 
-  @Nullable private Iterable<Integer> userXIds;
-  @Nullable private Iterable<Integer> projectIds;
   @Nullable private Boolean includeInactive;
   @Nullable private Boolean includeTags;
-  @Nullable private Boolean includeInputs;
+  @Nullable private GetProjectInputsParams includeInputs;
   @Nullable private Boolean includeFulfillments;
   @Nullable private GetAssignmentsParams includeAssignment;
   @Nullable private Boolean includeMilestones;
+
+  @Nullable private Iterable<Integer> userXIds;
+  @Nullable private Iterable<Integer> projectIds;
 
   public Optional<Iterable<Integer>> getUserXIds() {
     return Optional.ofNullable(userXIds);
@@ -38,7 +39,7 @@ public class GetProjectsParams {
     return Optional.ofNullable(includeTags);
   }
 
-  public Optional<Boolean> getIncludeInputs() {
+  public Optional<GetProjectInputsParams> getIncludeInputs() {
     return Optional.ofNullable(includeInputs);
   }
 

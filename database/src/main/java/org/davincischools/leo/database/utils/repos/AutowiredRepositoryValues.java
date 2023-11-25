@@ -2,7 +2,7 @@ package org.davincischools.leo.database.utils.repos;
 
 import jakarta.persistence.EntityManager;
 import org.davincischools.leo.database.daos.UserX;
-import org.davincischools.leo.database.utils.QueryHelper;
+import org.davincischools.leo.database.utils.query_helper.QueryHelper;
 
 public interface AutowiredRepositoryValues {
 

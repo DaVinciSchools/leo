@@ -71,6 +71,8 @@ public class ClassXManagementService {
                               listOrNull(request, GetClassXsRequest.TEACHER_IDS_FIELD_NUMBER))
                           .setStudentIds(
                               listOrNull(request, GetClassXsRequest.STUDENT_IDS_FIELD_NUMBER))
+                          .setIncludeSchool(
+                              valueOrNull(request, GetClassXsRequest.INCLUDE_SCHOOL_FIELD_NUMBER))
                           .setIncludeAssignments(
                               request.getIncludeAssignments()
                                   ? new GetAssignmentsParams()

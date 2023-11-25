@@ -4,9 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.davincischools.leo.database.utils.DaoUtils.removeTransientValues;
 import static org.davincischools.leo.database.utils.DaoUtils.saveJoinTableAndTargets;
 
-import com.google.common.collect.ImmutableList;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -16,15 +13,14 @@ import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill_;
 import org.davincischools.leo.database.daos.ClassX_;
-import org.davincischools.leo.database.daos.School_;
+import org.davincischools.leo.database.daos.StudentClassX;
 import org.davincischools.leo.database.daos.StudentClassX_;
-import org.davincischools.leo.database.daos.Student_;
 import org.davincischools.leo.database.daos.Teacher;
+import org.davincischools.leo.database.daos.TeacherClassX;
 import org.davincischools.leo.database.daos.TeacherClassX_;
-import org.davincischools.leo.database.daos.Teacher_;
 import org.davincischools.leo.database.exceptions.UnauthorizedUserX;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.QueryHelper.QueryHelperUtils;
+import org.davincischools.leo.database.utils.query_helper.Entity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -68,81 +64,69 @@ public interface ClassXRepository
   default List<ClassX> getClassXs(GetClassXsParams params) {
     checkNotNull(params);
 
-    return getQueryHelper()
-        .query(ClassX.class, (u, classX, builder) -> configureQuery(u, classX, builder, params));
+    return getQueryHelper().query(ClassX.class, classX -> configureQuery(classX, params));
   }
 
-  public static void configureQuery(
-      QueryHelperUtils u,
-      From<?, ClassX> classX,
-      CriteriaBuilder builder,
-      GetClassXsParams params) {
-    checkNotNull(u);
+  public static void configureQuery(Entity<?, ClassX> classX, GetClassXsParams params) {
     checkNotNull(classX);
-    checkNotNull(builder);
     checkNotNull(params);
 
-    u.notDeleted(classX);
+    classX.notDeleted().fetch().requireId(params.getClassXIds());
+
+    var school =
+        classX.supplier(
+            () -> classX.join(ClassX_.school, JoinType.LEFT).notDeleted(), params.getSchoolIds());
+
+    // var teacher =
+    classX.supplier(
+        () ->
+            classX
+                .join(
+                    ClassX_.teacherClassXES,
+                    JoinType.LEFT,
+                    TeacherClassX::getClassX,
+                    ClassX::setTeacherClassXES)
+                .notDeleted()
+                .join(TeacherClassX_.teacher, JoinType.LEFT)
+                .notDeleted(),
+        params.getTeacherIds());
+
+    // var student =
+    classX.supplier(
+        () ->
+            classX
+                .join(
+                    ClassX_.studentClassXES,
+                    JoinType.LEFT,
+                    StudentClassX::getClassX,
+                    ClassX::setStudentClassXES)
+                .notDeleted()
+                .join(StudentClassX_.student, JoinType.LEFT)
+                .notDeleted(),
+        params.getStudentIds());
 
     if (params.getIncludeSchool().orElse(false)) {
-      var school = u.notDeleted(u.fetch(classX, ClassX_.school, JoinType.LEFT));
-      u.notDeleted(u.fetch(school, School_.district, JoinType.LEFT));
+      school.get().fetch();
     }
 
     if (params.getIncludeAssignments().isPresent()) {
-      var assignment =
-          u.notDeleted(
-              u.fetch(
-                  classX,
-                  ClassX_.assignments,
-                  JoinType.LEFT,
-                  Assignment::getClassX,
-                  ClassX::setAssignments));
       AssignmentRepository.configureQuery(
-          u, assignment, builder, params.getIncludeAssignments().get());
+          classX.join(
+              ClassX_.assignments, JoinType.LEFT, Assignment::getClassX, ClassX::setAssignments),
+          params.getIncludeAssignments().get());
     }
 
     if (params.getIncludeKnowledgeAndSkills().orElse(false)) {
-      var classXKnowledgeAndSkills =
-          u.notDeleted(
-              u.fetch(
-                  classX,
-                  ClassX_.classXKnowledgeAndSkills,
-                  JoinType.LEFT,
-                  ClassXKnowledgeAndSkill::getClassX,
-                  ClassX::setClassXKnowledgeAndSkills));
-      u.notDeleted(
-          u.fetch(
-              classXKnowledgeAndSkills, ClassXKnowledgeAndSkill_.knowledgeAndSkill, JoinType.LEFT));
-    }
-
-    if (params.getSchoolIds().isPresent()) {
-      u.where(
-          classX
-              .get(ClassX_.school)
-              .get(School_.id)
-              .in(ImmutableList.copyOf(params.getSchoolIds().get())));
-    }
-
-    if (params.getClassXIds().isPresent()) {
-      u.where(classX.get(ClassX_.id).in(ImmutableList.copyOf(params.getClassXIds().get())));
-    }
-
-    if (params.getTeacherIds().isPresent()) {
-      var teacherClassXs = u.notDeleted(u.join(classX, ClassX_.teacherClassXES, JoinType.INNER));
-      teacherClassXs
-          .get(TeacherClassX_.teacher)
-          .get(Teacher_.id)
-          .in(ImmutableList.copyOf(params.getTeacherIds().get()));
-    }
-
-    // Where student ids.
-    if (params.getStudentIds().isPresent()) {
-      var studentClassXs = u.notDeleted(u.join(classX, ClassX_.studentClassXES, JoinType.INNER));
-      studentClassXs
-          .get(StudentClassX_.student)
-          .get(Student_.id)
-          .in(ImmutableList.copyOf(params.getStudentIds().get()));
+      classX
+          .join(
+              ClassX_.classXKnowledgeAndSkills,
+              JoinType.LEFT,
+              ClassXKnowledgeAndSkill::getClassX,
+              ClassX::setClassXKnowledgeAndSkills)
+          .notDeleted()
+          .join(ClassXKnowledgeAndSkill_.knowledgeAndSkill, JoinType.LEFT)
+          .notDeleted()
+          .fetch();
     }
   }
 }

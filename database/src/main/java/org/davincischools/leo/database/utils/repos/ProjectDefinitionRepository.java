@@ -4,22 +4,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import org.davincischools.leo.database.daos.AssignmentProjectDefinition_;
-import org.davincischools.leo.database.daos.Assignment_;
+import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory_;
 import org.davincischools.leo.database.daos.ProjectDefinition_;
 import org.davincischools.leo.database.daos.UserX;
-import org.davincischools.leo.database.utils.QueryHelper.QueryHelperUtils;
+import org.davincischools.leo.database.utils.query_helper.Entity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -69,52 +65,38 @@ public interface ProjectDefinitionRepository
     return getQueryHelper()
         .query(
             org.davincischools.leo.database.daos.ProjectDefinition.class,
-            (u, projectDefinition, builder) ->
-                configureQuery(u, projectDefinition, builder, params));
+            projectDefinition -> configureQuery(projectDefinition, params));
   }
 
   static void configureQuery(
-      QueryHelperUtils u,
-      From<?, org.davincischools.leo.database.daos.ProjectDefinition> projectDefinition,
-      CriteriaBuilder builder,
-      GetProjectDefinitionsParams params) {
-    checkNotNull(u);
+      Entity<?, ProjectDefinition> projectDefinition, GetProjectDefinitionsParams params) {
     checkNotNull(projectDefinition);
-    checkNotNull(builder);
     checkNotNull(params);
 
-    u.notDeleted(projectDefinition);
+    projectDefinition.notDeleted().fetch().requireId(params.getProjectDefinitionIds());
 
-    u.notDeleted(u.fetch(projectDefinition, ProjectDefinition_.userX, JoinType.LEFT));
+    // var assignment =
+    projectDefinition.supplier(
+        () ->
+            projectDefinition
+                .join(
+                    ProjectDefinition_.assignmentProjectDefinitions,
+                    JoinType.LEFT,
+                    AssignmentProjectDefinition::getProjectDefinition,
+                    ProjectDefinition::setAssignmentProjectDefinitions)
+                .notDeleted()
+                .requireId(params.getAssignmentIds()));
 
-    var projectDefinitionCategory =
-        u.fetch(
-            projectDefinition,
+    // var categoryType =
+    projectDefinition
+        .join(
             ProjectDefinition_.projectDefinitionCategories,
             JoinType.LEFT,
             ProjectDefinitionCategory::getProjectDefinition,
-            org.davincischools.leo.database.daos.ProjectDefinition::setProjectDefinitionCategories);
-
-    u.fetch(
-        projectDefinitionCategory,
-        ProjectDefinitionCategory_.projectDefinitionCategoryType,
-        JoinType.LEFT);
-
-    if (params.getProjectDefinitionIds().isPresent()) {
-      u.where(
-          projectDefinition
-              .get(ProjectDefinition_.id)
-              .in(ImmutableList.copyOf(params.getProjectDefinitionIds().get())));
-    }
-
-    if (params.getAssignmentIds().isPresent()) {
-      var assignmentProjectDefinition =
-          projectDefinition.join(ProjectDefinition_.assignmentProjectDefinitions, JoinType.LEFT);
-      u.where(
-          assignmentProjectDefinition
-              .get(AssignmentProjectDefinition_.assignment)
-              .get(Assignment_.id)
-              .in(ImmutableList.copyOf(params.getAssignmentIds().get())));
-    }
+            ProjectDefinition::setProjectDefinitionCategories)
+        .notDeleted()
+        .join(ProjectDefinitionCategory_.projectDefinitionCategoryType, JoinType.LEFT)
+        .notDeleted()
+        .fetch();
   }
 }

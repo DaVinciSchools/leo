@@ -1,17 +1,12 @@
 package org.davincischools.leo.database.utils.repos;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.davincischools.leo.database.utils.query_helper.QueryHelper.DEFAULT_PAGE_SIZE;
 
-import com.google.common.collect.ImmutableList;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import org.davincischools.leo.database.daos.ClassX_;
-import org.davincischools.leo.database.daos.District_;
-import org.davincischools.leo.database.daos.School_;
 import org.davincischools.leo.database.daos.Student;
 import org.davincischools.leo.database.daos.StudentClassX;
 import org.davincischools.leo.database.daos.StudentClassX_;
@@ -27,24 +22,26 @@ import org.davincischools.leo.database.daos.Teacher_;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.daos.UserX_;
 import org.davincischools.leo.database.utils.EntityUtils;
-import org.davincischools.leo.database.utils.QueryHelper.QueryHelperUtils;
+import org.davincischools.leo.database.utils.query_helper.Entity;
+import org.davincischools.leo.database.utils.query_helper.Expression;
+import org.davincischools.leo.database.utils.query_helper.Predicate;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserXRepository extends JpaRepository<UserX, Integer>, AutowiredRepositoryValues {
 
-  public static final int MAX_EMAIL_ADDRESS_LENGTH =
+  int MAX_EMAIL_ADDRESS_LENGTH =
       EntityUtils.getColumn(UserX.class, UserX.COLUMN_EMAILADDRESS_NAME).length();
-  public static final int MAX_FIRST_NAME_LENGTH =
+  int MAX_FIRST_NAME_LENGTH =
       EntityUtils.getColumn(UserX.class, UserX.COLUMN_FIRSTNAME_NAME).length();
-  public static final int MAX_LAST_NAME_LENGTH =
+  int MAX_LAST_NAME_LENGTH =
       EntityUtils.getColumn(UserX.class, UserX.COLUMN_LASTNAME_NAME).length();
 
   public static final int MIN_PASSWORD_LENGTH = 8;
-  public static final String INVALID_ENCODED_PASSWORD = "INVALID ENCODED PASSWORD";
+  String INVALID_ENCODED_PASSWORD = "INVALID ENCODED PASSWORD";
 
   enum Role {
     ADMIN_X,
@@ -112,135 +109,126 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
     return getQueryHelper()
         .query(
             UserX.class,
-            (u, projectPost, builder) -> configureQuery(u, projectPost, builder, params),
-            PageRequest.of(
-                params.getPage().orElse(0), params.getPageSize().orElse(Integer.MAX_VALUE)));
+            userX -> configureQuery(userX, params),
+            params
+                .getPage()
+                .map(
+                    page ->
+                        Pageable.ofSize(params.getPageSize().orElse(DEFAULT_PAGE_SIZE))
+                            .withPage(page))
+                .orElse(Pageable.unpaged()));
   }
 
-  public static void configureQuery(
-      QueryHelperUtils u, From<?, UserX> userX, CriteriaBuilder builder, GetUserXsParams params) {
-    checkNotNull(u);
+  public static void configureQuery(Entity<?, UserX> userX, GetUserXsParams params) {
     checkNotNull(userX);
-    checkNotNull(builder);
     checkNotNull(params);
 
-    u.notDeleted(userX);
+    userX.notDeleted().fetch().requireId(params.getInUserXIds());
 
-    var district = u.notDeleted(u.fetch(userX, UserX_.district, JoinType.LEFT));
-    var adminX = u.notDeleted(u.fetch(userX, UserX_.adminX, JoinType.LEFT));
-    var teacher = u.notDeleted(u.fetch(userX, UserX_.teacher, JoinType.LEFT));
-    var student = u.notDeleted(u.fetch(userX, UserX_.student, JoinType.LEFT));
+    // var district =
+    userX
+        .join(UserX_.district, JoinType.LEFT)
+        .notDeleted()
+        .fetch()
+        .requireId(params.getInDistrictIds());
+    var adminX = userX.join(UserX_.adminX, JoinType.LEFT).notDeleted().fetch();
+    var teacher = userX.join(UserX_.teacher, JoinType.LEFT).notDeleted().fetch();
+    var student = userX.join(UserX_.student, JoinType.LEFT).notDeleted().fetch();
 
-    if (params.getInDistrictIds().isPresent()) {
-      u.where(district.get(District_.id).in(ImmutableList.copyOf(params.getInDistrictIds().get())));
+    var teacherSchool =
+        teacher.supplier(
+            () ->
+                teacher
+                    .join(
+                        Teacher_.teacherSchools,
+                        JoinType.LEFT,
+                        TeacherSchool::getTeacher,
+                        Teacher::setTeacherSchools)
+                    .notDeleted()
+                    .join(TeacherSchool_.school, JoinType.LEFT)
+                    .notDeleted(),
+            params.getInSchoolIds());
+    var studentSchool =
+        student.supplier(
+            () ->
+                student
+                    .join(
+                        Student_.studentSchools,
+                        JoinType.LEFT,
+                        StudentSchool::getStudent,
+                        Student::setStudentSchools)
+                    .notDeleted()
+                    .join(StudentSchool_.school, JoinType.LEFT)
+                    .notDeleted(),
+            params.getInSchoolIds());
+    if (params.getIncludeSchools().orElse(false)) {
+      teacherSchool.get().fetch();
+      studentSchool.get().fetch();
     }
 
-    if (params.getInUserXIds().isPresent()) {
-      u.where(userX.get(UserX_.id).in(ImmutableList.copyOf(params.getInUserXIds().get())));
-    }
-
-    if (params.getIncludeSchools().orElse(false) || params.getInSchoolIds().isPresent()) {
-      var teacherSchools =
-          u.notDeleted(
-              u.fetch(
-                  teacher,
-                  Teacher_.teacherSchools,
-                  JoinType.LEFT,
-                  TeacherSchool::getTeacher,
-                  Teacher::setTeacherSchools));
-      var teacherSchool =
-          u.notDeleted(u.fetch(teacherSchools, TeacherSchool_.school, JoinType.LEFT));
-
-      var studentSchools =
-          u.notDeleted(
-              u.fetch(
-                  student,
-                  Student_.studentSchools,
-                  JoinType.LEFT,
-                  StudentSchool::getStudent,
-                  Student::setStudentSchools));
-      var studentSchool =
-          u.notDeleted(u.fetch(studentSchools, StudentSchool_.school, JoinType.LEFT));
-
-      if (params.getInSchoolIds().isPresent()) {
-        u.where(
-            builder.or(
-                teacherSchool
-                    .get(School_.id)
-                    .in(ImmutableList.copyOf(params.getInSchoolIds().get())),
-                studentSchool
-                    .get(School_.id)
-                    .in(ImmutableList.copyOf(params.getInSchoolIds().get()))));
-      }
-    }
-
-    if (params.getIncludeClassXs().orElse(false) || params.getInClassXIds().isPresent()) {
-      var teacherClassXs =
-          u.notDeleted(
-              u.fetch(
-                  teacher,
-                  Teacher_.teacherClassXES,
-                  JoinType.LEFT,
-                  TeacherClassX::getTeacher,
-                  Teacher::setTeacherClassXES));
-      var teacherClassX =
-          u.notDeleted(u.fetch(teacherClassXs, TeacherClassX_.classX, JoinType.LEFT));
-
-      var studentClassXs =
-          u.notDeleted(
-              u.fetch(
-                  student,
-                  Student_.studentClassXES,
-                  JoinType.LEFT,
-                  StudentClassX::getStudent,
-                  Student::setStudentClassXES));
-      var studentClassX =
-          u.notDeleted(u.fetch(studentClassXs, StudentClassX_.classX, JoinType.LEFT));
-
-      if (params.getInSchoolIds().isPresent()) {
-        u.where(
-            builder.or(
-                teacherClassX
-                    .get(ClassX_.id)
-                    .in(ImmutableList.copyOf(params.getInClassXIds().get())),
-                studentClassX
-                    .get(ClassX_.id)
-                    .in(ImmutableList.copyOf(params.getInClassXIds().get()))));
-      }
+    var teacherClassX =
+        teacher.supplier(
+            () ->
+                teacher
+                    .join(
+                        Teacher_.teacherClassXES,
+                        JoinType.LEFT,
+                        TeacherClassX::getTeacher,
+                        Teacher::setTeacherClassXES)
+                    .notDeleted()
+                    .join(TeacherClassX_.classX, JoinType.LEFT)
+                    .notDeleted(),
+            params.getInClassXIds());
+    var studentClassX =
+        student.supplier(
+            () ->
+                student
+                    .join(
+                        Student_.studentClassXES,
+                        JoinType.LEFT,
+                        StudentClassX::getStudent,
+                        Student::setStudentClassXES)
+                    .notDeleted()
+                    .join(StudentClassX_.classX, JoinType.LEFT)
+                    .notDeleted(),
+            params.getInClassXIds());
+    if (params.getIncludeClassXs().isPresent()) {
+      ClassXRepository.configureQuery(teacherClassX.get(), params.getIncludeClassXs().get());
+      ClassXRepository.configureQuery(studentClassX.get(), params.getIncludeClassXs().get());
     }
 
     if (params.getHasEmailAddress().isPresent()) {
-      u.where(builder.equal(userX.get(UserX_.emailAddress), params.getHasEmailAddress().get()));
+      userX.where(Predicate.eq(userX.get(UserX_.emailAddress), params.getHasEmailAddress().get()));
     }
 
     if (params.getAdminXsOnly().orElse(false)) {
-      u.where(adminX.isNotNull());
+      userX.where(Predicate.isNotNull(adminX));
     }
 
     if (params.getTeachersOnly().orElse(false)) {
-      u.where(teacher.isNotNull());
+      userX.where(Predicate.isNotNull(teacher));
     }
 
     if (params.getStudentsOnly().orElse(false)) {
-      u.where(student.isNotNull());
+      userX.where(Predicate.isNotNull(student));
     }
 
     if (params.getFirstLastEmailSearchText().isPresent()) {
-      u.where(
-          builder.like(
-              builder.concat(
-                  builder.concat(
-                      builder.concat(userX.get(UserX_.firstName), " "),
-                      builder.concat(userX.get(UserX_.lastName), ", ")),
-                  builder.concat(
-                      builder.concat(userX.get(UserX_.firstName), " "),
-                      userX.get(UserX_.emailAddress))),
+      userX.where(
+          Predicate.like(
+              Expression.concat(
+                  userX.get(UserX_.firstName),
+                  Expression.literal(" "),
+                  userX.get(UserX_.lastName),
+                  Expression.literal(", "),
+                  userX.get(UserX_.firstName),
+                  Expression.literal(" "),
+                  userX.get(UserX_.emailAddress)),
               "%" + params.getFirstLastEmailSearchText().get() + "%"));
     }
 
-    u.orderBy(
-        builder.asc(userX.get(UserX_.lastName)),
-        builder.asc(userX.get(UserX_.firstName)),
-        builder.asc(userX.get(UserX_.emailAddress)));
+    userX.orderByAsc(userX.get(UserX_.lastName));
+    userX.orderByAsc(userX.get(UserX_.firstName));
+    userX.orderByAsc(userX.get(UserX_.emailAddress));
   }
 }

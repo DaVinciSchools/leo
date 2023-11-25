@@ -147,6 +147,7 @@ export function TeacherEditClassXs() {
       .getClassXs({
         teacherIds: [userX.teacherId ?? 0],
         includeKnowledgeAndSkills: true,
+        includeSchool: true,
       })
       .then(response => {
         setSortedClasses(response.classXs.sort(CLASS_X_SORTER));

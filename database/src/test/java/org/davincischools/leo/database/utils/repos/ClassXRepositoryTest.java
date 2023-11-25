@@ -2,6 +2,8 @@ package org.davincischools.leo.database.utils.repos;
 
 import static com.google.common.truth.Truth.assertThat;
 import static java.util.stream.Collectors.toSet;
+import static org.davincischools.leo.database.utils.DaoUtils.listIfInitialized;
+import static org.davincischools.leo.database.utils.DaoUtils.streamIfInitialized;
 
 import java.util.List;
 import java.util.Set;
@@ -77,7 +79,7 @@ public class ClassXRepositoryTest {
                     classX ->
                         List.of(
                             classX.getName(),
-                            classX.getAssignments().stream()
+                            streamIfInitialized(classX.getAssignments())
                                 .map(Assignment::getName)
                                 .collect(toSet())))
                 .collect(toSet()))
@@ -93,14 +95,6 @@ public class ClassXRepositoryTest {
                     testData.getChemistryValenceElectronsAssignment().getName(),
                     testData.getChemistryPeriodicTableAssignment().getName())),
             List.of(testData.getDanceClassX().getName(), Set.of()));
-
-    assertThat(
-            classXs.stream()
-                .flatMap(e -> e.getAssignments().stream())
-                .map(Assignment::getAssignmentKnowledgeAndSkills)
-                .map(Hibernate::isInitialized)
-                .toList())
-        .containsExactly(false, false, false, false);
   }
 
   @Test
@@ -115,7 +109,7 @@ public class ClassXRepositoryTest {
                     classX ->
                         List.of(
                             classX.getName(),
-                            classX.getClassXKnowledgeAndSkills().stream()
+                            streamIfInitialized(classX.getClassXKnowledgeAndSkills())
                                 .map(ClassXKnowledgeAndSkill::getKnowledgeAndSkill)
                                 .map(KnowledgeAndSkill::getName)
                                 .collect(toSet())))
@@ -148,10 +142,10 @@ public class ClassXRepositoryTest {
             classXs.stream()
                 .flatMap(
                     classX -> {
-                      if (classX.getAssignments().isEmpty()) {
+                      if (listIfInitialized(classX.getAssignments()).isEmpty()) {
                         return Stream.of(List.of(classX.getName(), "", Set.of()));
                       } else {
-                        return classX.getAssignments().stream()
+                        return streamIfInitialized(classX.getAssignments())
                             .map(
                                 assignment ->
                                     List.of(

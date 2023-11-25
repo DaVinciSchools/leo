@@ -1,35 +1,28 @@
 package org.davincischools.leo.database.utils.repos;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.davincischools.leo.database.utils.query_helper.QueryHelper.DEFAULT_PAGE_SIZE;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.JoinType;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.function.Function;
-import org.davincischools.leo.database.daos.Assignment;
-import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill;
-import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill_;
-import org.davincischools.leo.database.daos.Assignment_;
-import org.davincischools.leo.database.daos.ClassX_;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.ProjectPostComment;
 import org.davincischools.leo.database.daos.ProjectPostComment_;
 import org.davincischools.leo.database.daos.ProjectPostRating;
+import org.davincischools.leo.database.daos.ProjectPostRating_;
 import org.davincischools.leo.database.daos.ProjectPost_;
-import org.davincischools.leo.database.daos.Project_;
-import org.davincischools.leo.database.daos.School_;
 import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.daos.UserX;
-import org.davincischools.leo.database.daos.UserX_;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.QueryHelper.QueryHelperUtils;
+import org.davincischools.leo.database.utils.query_helper.Entity;
+import org.davincischools.leo.database.utils.query_helper.Predicate;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -37,126 +30,85 @@ import org.springframework.stereotype.Repository;
 public interface ProjectPostRepository
     extends JpaRepository<ProjectPost, Integer>, AutowiredRepositoryValues {
 
-  public static final int DEFAULT_PAGE_SIZE = 25;
-
   default Page<ProjectPost> getProjectPosts(GetProjectPostsParams params) {
     checkNotNull(params);
 
     return getQueryHelper()
         .query(
             ProjectPost.class,
-            (u, projectPost, builder) -> configureQuery(u, projectPost, builder, params),
+            projectPost -> configureQuery(projectPost, params),
             params
                 .getPage()
-                .map(page -> PageRequest.of(page, params.getPageSize().orElse(DEFAULT_PAGE_SIZE)))
-                .orElse(null));
+                .map(
+                    page ->
+                        Pageable.ofSize(params.getPageSize().orElse(DEFAULT_PAGE_SIZE))
+                            .withPage(page))
+                .orElse(Pageable.unpaged()));
   }
 
   public static void configureQuery(
-      QueryHelperUtils u,
-      From<?, ProjectPost> projectPost,
-      CriteriaBuilder builder,
-      GetProjectPostsParams params) {
-    checkNotNull(u);
+      Entity<?, ProjectPost> projectPost, GetProjectPostsParams params) {
     checkNotNull(projectPost);
-    checkNotNull(builder);
     checkNotNull(params);
 
-    u.notDeleted(projectPost);
-    u.notDeleted(u.fetch(projectPost, ProjectPost_.userX, JoinType.LEFT));
+    projectPost.notDeleted().fetch().requireId(params.getProjectPostIds());
+    projectPost
+        .join(ProjectPost_.userX, JoinType.LEFT)
+        .notDeleted()
+        .fetch()
+        .requireId(params.getUserXIds());
 
     if (params.getIncludeTags().orElse(false)) {
-      u.notDeleted(
-          u.fetch(
-              projectPost,
-              ProjectPost_.tags,
-              JoinType.LEFT,
-              Tag::getProjectPost,
-              ProjectPost::setTags));
+      projectPost
+          .join(ProjectPost_.tags, JoinType.LEFT, Tag::getProjectPost, ProjectPost::setTags)
+          .notDeleted()
+          .fetch();
     }
 
     if (params.getIncludeComments().orElse(false)) {
-      var projectPostComment =
-          u.notDeleted(
-              u.fetch(
-                  projectPost,
-                  ProjectPost_.projectPostComments,
-                  JoinType.LEFT,
-                  ProjectPostComment::getProjectPost,
-                  ProjectPost::setProjectPostComments));
-      u.notDeleted(u.fetch(projectPostComment, ProjectPostComment_.userX, JoinType.LEFT));
+      projectPost
+          .join(
+              ProjectPost_.projectPostComments,
+              JoinType.LEFT,
+              ProjectPostComment::getProjectPost,
+              ProjectPost::setProjectPostComments)
+          .notDeleted()
+          .join(ProjectPostComment_.userX, JoinType.LEFT)
+          .notDeleted()
+          .fetch();
     }
 
-    if (params.getIncludeProjects().orElse(false)) {
-      u.notDeleted(u.fetch(projectPost, ProjectPost_.project, JoinType.LEFT));
+    var project =
+        projectPost.supplier(
+            () -> projectPost.join(ProjectPost_.project, JoinType.LEFT).notDeleted(),
+            params.getProjectIds());
+    if (params.getIncludeProjects().isPresent()) {
+      ProjectRepository.configureQuery(project.get(), params.getIncludeProjects().get());
     }
 
     if (params.getIncludeRatings().orElse(false)) {
-      u.notDeleted(
-          u.fetch(
-              projectPost,
-              ProjectPost_.projectPostRatings,
-              JoinType.LEFT,
-              ProjectPostRating::getProjectPost,
-              ProjectPost::setProjectPostRatings));
-    }
-
-    if (params.getIncludeAssignments().orElse(false) || params.getIncludeRatings().orElse(false)) {
-      var project = u.notDeleted(u.fetch(projectPost, ProjectPost_.project, JoinType.LEFT));
-      var assignment = u.notDeleted(u.fetch(project, Project_.assignment, JoinType.LEFT));
-      var assignmentKnowledgeAndSkills =
-          u.notDeleted(
-              u.fetch(
-                  assignment,
-                  Assignment_.assignmentKnowledgeAndSkills,
-                  JoinType.LEFT,
-                  AssignmentKnowledgeAndSkill::getAssignment,
-                  Assignment::setAssignmentKnowledgeAndSkills));
-      u.notDeleted(
-          u.fetch(
-              assignmentKnowledgeAndSkills,
-              AssignmentKnowledgeAndSkill_.knowledgeAndSkill,
-              JoinType.LEFT));
-    }
-
-    if (params.getProjectPostIds().isPresent()) {
-      u.where(
+      var projectPostRating =
           projectPost
-              .get(ProjectPost_.id)
-              .in(ImmutableList.copyOf(params.getProjectPostIds().get())));
-    }
-
-    if (params.getProjectIds().isPresent()) {
-      var project = u.notDeleted(u.fetch(projectPost, ProjectPost_.project, JoinType.LEFT));
-      u.where(project.get(Project_.id).in(ImmutableList.copyOf(params.getProjectIds().get())));
-    }
-
-    if (params.getClassXIds().isPresent()) {
-      var project = u.notDeleted(u.fetch(projectPost, ProjectPost_.project, JoinType.LEFT));
-      var assignment = u.notDeleted(u.fetch(project, Project_.assignment, JoinType.LEFT));
-      var classX = u.notDeleted(u.fetch(assignment, Assignment_.classX, JoinType.LEFT));
-      u.where(classX.get(ClassX_.id).in(ImmutableList.copyOf(params.getClassXIds().get())));
-    }
-
-    if (params.getSchoolIds().isPresent()) {
-      var project = u.notDeleted(u.fetch(projectPost, ProjectPost_.project, JoinType.LEFT));
-      var assignment = u.notDeleted(u.fetch(project, Project_.assignment, JoinType.LEFT));
-      var classX = u.notDeleted(u.fetch(assignment, Assignment_.classX, JoinType.LEFT));
-      var school = u.notDeleted(u.fetch(classX, ClassX_.school, JoinType.LEFT));
-      u.where(school.get(School_.id).in(ImmutableList.copyOf(params.getSchoolIds().get())));
-    }
-
-    if (params.getUserXIds().isPresent()) {
-      var userX = u.notDeleted(u.fetch(projectPost, ProjectPost_.userX, JoinType.LEFT));
-      u.where(userX.get(UserX_.id).in(ImmutableList.copyOf(params.getUserXIds().get())));
+              .join(
+                  ProjectPost_.projectPostRatings,
+                  JoinType.LEFT,
+                  ProjectPostRating::getProjectPost,
+                  ProjectPost::setProjectPostRatings)
+              .notDeleted()
+              .fetch();
+      projectPostRating.join(ProjectPostRating_.userX, JoinType.LEFT).notDeleted().fetch();
+      projectPostRating
+          .join(ProjectPostRating_.knowledgeAndSkill, JoinType.LEFT)
+          .notDeleted()
+          .fetch();
     }
 
     if (params.getBeingEdited().isPresent()) {
-      u.where(
-          builder.equal(projectPost.get(ProjectPost_.beingEdited), params.getBeingEdited().get()));
+      projectPost.where(
+          Predicate.eq(projectPost.get(ProjectPost_.beingEdited), params.getBeingEdited().get()));
     }
 
-    u.orderBy(builder.desc(projectPost.get(ProjectPost_.creationTime)));
+    projectPost.orderByDesc(projectPost.get(ProjectPost_.creationTime));
   }
 
   default void upsert(Database db, UserX tagUserX, ProjectPost projectPost) {
