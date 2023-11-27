@@ -31,7 +31,7 @@ import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectsParams;
 import org.davincischools.leo.protos.project_management.GenerateProjectsRequest;
 import org.davincischools.leo.protos.project_management.GenerateProjectsResponse;
-import org.davincischools.leo.protos.task_service.CalculateProjectFulfillmentsTask;
+import org.davincischools.leo.protos.task_service.FillInMissingProjectInfoTask;
 import org.davincischools.leo.server.controllers.ProjectManagementService.GenerateProjectsState;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V1ProjectGenerator;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V1ProjectGenerator.AiProject;
@@ -44,15 +44,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public final class CalculateProjectFulfillmentsWorker
-    extends TaskQueue<CalculateProjectFulfillmentsTask, DefaultTaskMetadata> {
+public final class FillInMissingProjectInfoWorker
+    extends TaskQueue<FillInMissingProjectInfoTask, DefaultTaskMetadata> {
 
   private static final Logger logger = LogManager.getLogger();
 
   private final Database db;
   private final OpenAiUtils openAiUtils;
 
-  public CalculateProjectFulfillmentsWorker(
+  public FillInMissingProjectInfoWorker(
       @Autowired Database db, @Autowired OpenAiUtils openAiUtils) {
     super(20);
     this.db = db;
@@ -73,13 +73,13 @@ public final class CalculateProjectFulfillmentsWorker
             p -> {
               if (listIfInitialized(p.getProjectInputFulfillments()).isEmpty()) {
                 submitTask(
-                    CalculateProjectFulfillmentsTask.newBuilder().setProjectId(p.getId()).build());
+                    FillInMissingProjectInfoTask.newBuilder().setProjectId(p.getId()).build());
               }
             });
   }
 
   @Override
-  protected void processTask(CalculateProjectFulfillmentsTask task, DefaultTaskMetadata metadata)
+  protected void processTask(FillInMissingProjectInfoTask task, DefaultTaskMetadata metadata)
       throws IOException {
     for (var project :
         db.getProjectRepository()

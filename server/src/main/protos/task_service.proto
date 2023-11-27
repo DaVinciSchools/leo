@@ -38,10 +38,12 @@ message TaskQueueStatus {
   optional int64 failed_processing_time_ms = 12;
 }
 
+// Task payloads.
+
 message ReplyToPostTask {
   optional int32 project_post_id = 1;
 }
 
-message CalculateProjectFulfillmentsTask {
+message FillInMissingProjectInfoTask {
   optional int32 project_id = 1;
 }
