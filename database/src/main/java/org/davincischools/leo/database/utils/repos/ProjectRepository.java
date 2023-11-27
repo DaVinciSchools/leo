@@ -6,6 +6,7 @@ import jakarta.persistence.criteria.JoinType;
 import java.util.List;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectInputFulfillment;
+import org.davincischools.leo.database.daos.ProjectInput_;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.daos.ProjectMilestone_;
@@ -14,15 +15,11 @@ import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.utils.query_helper.Entity;
 import org.davincischools.leo.database.utils.query_helper.Predicate;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProjectRepository
     extends JpaRepository<Project, Integer>, AutowiredRepositoryValues {
-
-  @Query("SELECT id FROM #{#entityName}")
-  List<Integer> getAllIds();
 
   default List<Project> getProjects(GetProjectsParams params) {
     checkNotNull(params);
@@ -35,6 +32,15 @@ public interface ProjectRepository
     checkNotNull(params);
 
     project.notDeleted().fetch().requireId(params.getProjectIds());
+
+    project.supplier(
+        () ->
+            project
+                .join(Project_.projectInput, JoinType.LEFT)
+                .notDeleted()
+                .join(ProjectInput_.userX, JoinType.LEFT)
+                .notDeleted(),
+        params.getUserXIds());
 
     if (!params.getIncludeInactive().orElse(false)) {
       project.where(Predicate.isTrue(project.get(Project_.active)));
