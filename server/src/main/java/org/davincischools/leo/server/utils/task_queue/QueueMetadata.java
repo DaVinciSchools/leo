@@ -19,5 +19,9 @@ public final class QueueMetadata<T extends Message, M extends TaskMetadata<M>> {
   int retries;
   int failures;
   int errors;
+  long totalProcessingTimeMs;
+  long totalProcessingTimeCount;
+  long totalFailedProcessingTimeMs;
+  long totalFailedProcessingTimeCount;
   @Nullable String lastFailure = null;
 }

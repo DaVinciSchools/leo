@@ -14,12 +14,13 @@ import {
   IconButton,
   Collapse,
 } from '@mui/material';
-import {DeepReadonly} from '../../../libs/misc';
+import {DeepReadonly, toLong} from '../../../libs/misc';
 import {createService} from '../../../libs/protos';
 import {task_service} from 'pl-pb';
 import TaskService = task_service.TaskService;
 import ITaskQueueStatus = task_service.ITaskQueueStatus;
 import {KeyboardArrowUp, KeyboardArrowDown} from '@mui/icons-material';
+import formatDuration from 'format-duration';
 
 export function AdminXDashboard() {
   const global = useContext(GlobalStateContext);
@@ -83,10 +84,12 @@ export function AdminXDashboard() {
                 <TableCell align="right">Processing</TableCell>
                 <TableCell align="right">Pending</TableCell>
                 <TableCell align="right">Processed</TableCell>
+                <TableCell align="right">Processing Time</TableCell>
                 <TableCell align="right">Skipped</TableCell>
                 <TableCell align="right">Submitted</TableCell>
                 <TableCell align="right">Retries</TableCell>
                 <TableCell align="right">Failures</TableCell>
+                <TableCell align="right">Failure Time</TableCell>
                 <TableCell align="right">Errors</TableCell>
                 <TableCell align="center">
                   <Button onClick={() => rescanForWork()}>Rescan All</Button>
@@ -124,10 +127,22 @@ export function AdminXDashboard() {
                       <TableCell align="right">{s.processingTasks}</TableCell>
                       <TableCell align="right">{s.pendingTasks}</TableCell>
                       <TableCell align="right">{s.processedTasks}</TableCell>
+                      <TableCell align="right">
+                        {formatDuration(
+                          toLong(s.processingTimeMs ?? 0).toNumber(),
+                          {ms: true}
+                        )}
+                      </TableCell>
                       <TableCell align="right">{s.skippedTasks}</TableCell>
                       <TableCell align="right">{s.submittedTasks}</TableCell>
                       <TableCell align="right">{s.retries}</TableCell>
                       <TableCell align="right">{s.failures}</TableCell>
+                      <TableCell align="right">
+                        {formatDuration(
+                          toLong(s.failedProcessingTimeMs ?? 0).toNumber(),
+                          {ms: true}
+                        )}
+                      </TableCell>
                       <TableCell align="right">{s.errors}</TableCell>
                       <TableCell align="center">
                         <Button

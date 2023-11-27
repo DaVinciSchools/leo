@@ -5,6 +5,7 @@ import org.davincischools.leo.protos.task_service.GetTaskQueuesStatusRequest;
 import org.davincischools.leo.protos.task_service.GetTaskQueuesStatusResponse;
 import org.davincischools.leo.protos.task_service.ScanForTasksRequest;
 import org.davincischools.leo.protos.task_service.ScanForTasksResponse;
+import org.davincischools.leo.protos.task_service.TaskQueueStatus;
 import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
@@ -39,7 +40,22 @@ public class TaskService {
                   .forEach(
                       m ->
                           ProtoDaoUtils.translateToProto(
-                              m, response::addTaskQueueStatusesBuilder, s -> {}));
+                              m,
+                              response::addTaskQueueStatusesBuilder,
+                              s -> {
+                                s.setProcessingTimeMs(
+                                    m.getTotalProcessingTimeCount() == 0
+                                        ? 0
+                                        : m.getTotalProcessingTimeMs()
+                                            / m.getTotalProcessingTimeCount());
+                                s.setFailedProcessingTimeMs(
+                                    m.getTotalFailedProcessingTimeCount() == 0
+                                        ? 0
+                                        : m.getTotalFailedProcessingTimeMs()
+                                            / m.getTotalFailedProcessingTimeCount());
+                              },
+                              TaskQueueStatus.PROCESSING_TIME_MS_FIELD_NUMBER,
+                              TaskQueueStatus.FAILED_PROCESSING_TIME_MS_FIELD_NUMBER));
 
               return response.build();
             })

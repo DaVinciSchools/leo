@@ -68,10 +68,14 @@ public final class CalculateProjectFulfillmentsWorker
   @Override
   protected void scanForTasks() {
     db.getProjectRepository()
-        .getAllIds()
+        .getProjects(new GetProjectsParams().setIncludeFulfillments(true).setIncludeInactive(true))
         .forEach(
-            id ->
-                submitTask(CalculateProjectFulfillmentsTask.newBuilder().setProjectId(id).build()));
+            p -> {
+              if (listIfInitialized(p.getProjectInputFulfillments()).isEmpty()) {
+                submitTask(
+                    CalculateProjectFulfillmentsTask.newBuilder().setProjectId(p.getId()).build());
+              }
+            });
   }
 
   @Override

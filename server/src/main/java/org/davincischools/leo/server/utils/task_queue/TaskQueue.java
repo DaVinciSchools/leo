@@ -105,6 +105,7 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
     submitTask(task, createDefaultMetadata());
   }
 
+  @SuppressWarnings("InfiniteLoopStatement")
   private void processTasks() {
     NEXT_TASK:
     while (true) {
@@ -147,10 +148,18 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
         // Process task.
         executorService.submit(
             () -> {
+              long startTimeMs = System.currentTimeMillis();
               try {
                 processTask(task, taskMetadata);
+                synchronized (LOCK) {
+                  queueMetadata.totalProcessingTimeMs += System.currentTimeMillis() - startTimeMs;
+                  queueMetadata.totalProcessingTimeCount++;
+                }
               } catch (Throwable t) {
                 synchronized (LOCK) {
+                  queueMetadata.totalFailedProcessingTimeMs +=
+                      System.currentTimeMillis() - startTimeMs;
+                  queueMetadata.totalFailedProcessingTimeCount++;
                   queueMetadata.failures++;
                   queueMetadata.lastFailure =
                       Throwables.getStacktrace(t)

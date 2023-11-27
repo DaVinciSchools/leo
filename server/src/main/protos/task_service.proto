@@ -34,6 +34,8 @@ message TaskQueueStatus {
   optional int32 failures = 8;
   optional int32 errors = 9;
   optional string last_failure = 10;
+  optional int64 processing_time_ms = 11;
+  optional int64 failed_processing_time_ms = 12;
 }
 
 message ReplyToPostTask {
