@@ -1,20 +1,25 @@
 package org.davincischools.leo.server.controllers.project_generators;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static org.davincischools.leo.database.utils.DaoUtils.listIfInitialized;
+import static org.davincischools.leo.database.utils.DaoUtils.sortByPosition;
 import static org.davincischools.leo.database.utils.DaoUtils.streamIfInitialized;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -29,6 +34,7 @@ import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.server.controllers.ProjectManagementService;
 import org.davincischools.leo.server.controllers.ProjectManagementService.GenerateProjectsState;
+import org.davincischools.leo.server.controllers.project_generators.OpenAi3V1ProjectGenerator.AiProject.Milestone;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
@@ -106,6 +112,47 @@ public class OpenAi3V1ProjectGenerator {
     @JsonPropertyDescription("The resulting list of projects.")
     @JsonProperty(required = true)
     List<AiProject> projects;
+  }
+
+  // This uses the project input value id as the criteria number if a mapping is not provided.
+  public static AiProject copyToAiProject(
+      Project project, Optional<Map<Integer, Integer>> criteriaNumberToInputValueId) {
+    var inputValueIdToCriteriaNumber =
+        HashBiMap.create(criteriaNumberToInputValueId.orElse(new HashMap<>())).inverse();
+
+    var aiProject = new AiProject();
+    aiProject.name = project.getName();
+    aiProject.shortDescr = project.getShortDescr();
+    aiProject.longDescrHtml = project.getLongDescrHtml();
+
+    aiProject.milestones = new ArrayList<>();
+    sortByPosition(listIfInitialized(project.getProjectMilestones()))
+        .forEach(
+            m -> {
+              var aiMilestone = new Milestone();
+              aiMilestone.name = m.getName();
+              aiMilestone.steps =
+                  sortByPosition(listIfInitialized(m.getProjectMilestoneSteps())).stream()
+                      .map(ProjectMilestoneStep::getName)
+                      .toList();
+              aiProject.milestones.add(aiMilestone);
+            });
+
+    aiProject.criteriaFulfillment = new ArrayList<>();
+    streamIfInitialized(project.getProjectInputFulfillments())
+        .forEach(
+            i -> {
+              var criteriaFulfillment = new AiProject.CriteriaFulfillment();
+              criteriaFulfillment.criteriaNumber =
+                  inputValueIdToCriteriaNumber.getOrDefault(
+                      i.getProjectInputValue().getId(), i.getProjectInputValue().getId());
+              criteriaFulfillment.howProjectFulfills = i.getHowProjectFulfills();
+              criteriaFulfillment.fulfillmentPercentage = i.getFulfillmentPercentage();
+              criteriaFulfillment.assessmentApproach = i.getVisibleIndicator();
+              aiProject.criteriaFulfillment.add(criteriaFulfillment);
+            });
+
+    return aiProject;
   }
 
   private static final Joiner COMMA_AND_JOINER = Joiner.on(", and ");

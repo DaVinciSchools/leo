@@ -22,10 +22,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
-import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectsParams;
@@ -35,7 +35,6 @@ import org.davincischools.leo.protos.task_service.FillInMissingProjectInfoTask;
 import org.davincischools.leo.server.controllers.ProjectManagementService.GenerateProjectsState;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V1ProjectGenerator;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V1ProjectGenerator.AiProject;
-import org.davincischools.leo.server.controllers.project_generators.OpenAi3V1ProjectGenerator.AiProject.Milestone;
 import org.davincischools.leo.server.controllers.project_generators.OpenAi3V1ProjectGenerator.GetInitialChatMessageResponse;
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.task_queue.DefaultTaskMetadata;
@@ -122,24 +121,6 @@ public final class FillInMissingProjectInfoWorker
       GetInitialChatMessageResponse projectRequestDescription =
           OpenAi3V1ProjectGenerator.getInitialState(state);
 
-      // Fill in an existing project with what we have.
-      var aiProject = new OpenAi3V1ProjectGenerator.AiProject();
-      aiProject.name = project.getName();
-      aiProject.shortDescr = project.getShortDescr();
-      aiProject.longDescrHtml = project.getLongDescrHtml();
-      aiProject.milestones = new ArrayList<>();
-      sortByPosition(project.getProjectMilestones())
-          .forEach(
-              m -> {
-                var aiMilestone = new Milestone();
-                aiMilestone.name = m.getName();
-                aiMilestone.steps =
-                    sortByPosition(m.getProjectMilestoneSteps()).stream()
-                        .map(ProjectMilestoneStep::getName)
-                        .toList();
-                aiProject.milestones.add(aiMilestone);
-              });
-
       // Create OpenAI client connection.
       var timeout = Duration.ofMinutes(20);
       var okHttpClient =
@@ -152,7 +133,10 @@ public final class FillInMissingProjectInfoWorker
 
       // Convert the existing project to JSON.
       ObjectMapper jsonObjectMapper = new ObjectMapper();
-      String projectJson = jsonObjectMapper.writeValueAsString(aiProject);
+      String projectJson =
+          jsonObjectMapper.writeValueAsString(
+              OpenAi3V1ProjectGenerator.copyToAiProject(
+                  project, Optional.of(state.criteriaToInputValue())));
 
       // Add a message with the existing project.
       var messages = new ArrayList<ChatMessage>();
