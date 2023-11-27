@@ -82,10 +82,10 @@ public class TaskService {
                       q -> {
                         if (request.hasName()) {
                           if (request.getName().equals(q.getName())) {
-                            q.getTaskQueue().rescanForTasks();
+                            q.getTaskQueue().rescanForTasks(false);
                           }
                         } else {
-                          q.getTaskQueue().rescanForTasks();
+                          q.getTaskQueue().rescanForTasks(false);
                         }
                       });
 

@@ -56,11 +56,10 @@ public final class FillInMissingProjectInfoWorker
     super(20);
     this.db = db;
     this.openAiUtils = openAiUtils;
-    rescanForTasks();
   }
 
   @Override
-  public DefaultTaskMetadata createDefaultMetadata() {
+  protected DefaultTaskMetadata createDefaultMetadata() {
     return new DefaultTaskMetadata().setRetries(2);
   }
 

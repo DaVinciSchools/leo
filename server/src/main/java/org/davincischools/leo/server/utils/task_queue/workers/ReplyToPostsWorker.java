@@ -19,11 +19,10 @@ public final class ReplyToPostsWorker extends TaskQueue<ReplyToPostTask, Default
   public ReplyToPostsWorker(@Autowired Database db) {
     super(10);
     this.db = db;
-    rescanForTasks();
   }
 
   @Override
-  public DefaultTaskMetadata createDefaultMetadata() {
+  protected DefaultTaskMetadata createDefaultMetadata() {
     return new DefaultTaskMetadata().setRetries(2);
   }
 

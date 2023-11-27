@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.Message;
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -18,10 +19,16 @@ import javax.annotation.concurrent.GuardedBy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.internal.Throwables;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
 
+  public static final String AUTO_SCAN_FOR_TASKS_PROP_NAME =
+      "project_leo.tasks.auto_scan_for_tasks";
+
   private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+", Pattern.DOTALL);
+
   private static final Object LOCK = new Object();
   private static final Logger logger = LogManager.getLogger();
 
@@ -39,7 +46,7 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
 
   private final int numThreads;
   private final Semaphore semaphore;
-
+  private boolean autoScanForTasks = false;
   private final ExecutorService executorService;
 
   protected TaskQueue(int numThreads) {
@@ -68,7 +75,22 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
         .start();
   }
 
-  public void rescanForTasks() {
+  @Autowired
+  public final void initializeAutowiredProperties(Environment environment) {
+    autoScanForTasks = environment.getProperty(AUTO_SCAN_FOR_TASKS_PROP_NAME, Boolean.class, false);
+  }
+
+  @PostConstruct
+  public void autoRescan() {
+    rescanForTasks(true);
+  }
+
+  public void rescanForTasks(boolean isAutoRescan) {
+    if (isAutoRescan && !autoScanForTasks) {
+      logger.atInfo().log("Skipping rescan for tasks: {}", getClass().getSimpleName());
+      return;
+    }
+
     new ThreadFactoryBuilder()
         .setNameFormat(getClass().getSimpleName() + "ScanThread-%d")
         .setDaemon(true)
@@ -79,7 +101,7 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
 
   protected void scanForTasks() {}
 
-  public abstract M createDefaultMetadata();
+  protected abstract M createDefaultMetadata();
 
   protected abstract void processTask(T task, M metadata) throws Throwable;
 
@@ -165,7 +187,7 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
                       Throwables.getStacktrace(t)
                           + System.lineSeparator()
                           + System.lineSeparator()
-                          + toCompressedString(task);
+                          + TaskQueue.toCompressedString(task);
                   if (taskMetadata.retries-- > 0) {
                     queueMetadata.retries++;
                     submitTask(task, taskMetadata);
@@ -181,7 +203,7 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
                         Throwables.getStacktrace(t).trim()
                             + System.lineSeparator()
                             + System.lineSeparator()
-                            + toCompressedString(task)
+                            + TaskQueue.toCompressedString(task)
                             + System.lineSeparator()
                             + System.lineSeparator()
                             + Throwables.getStacktrace(t2).trim();
@@ -223,7 +245,7 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
     }
   }
 
-  protected String toCompressedString(Message m) {
+  protected static String toCompressedString(Message m) {
     return WHITESPACE_PATTERN.matcher(m.toString()).replaceAll(" ").trim();
   }
 }
