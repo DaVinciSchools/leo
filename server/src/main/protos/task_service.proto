@@ -8,6 +8,7 @@ package task_service;
 service TaskService {
   rpc GetTaskQueuesStatus(GetTaskQueuesStatusRequest) returns (GetTaskQueuesStatusResponse);
   rpc ScanForTasks(ScanForTasksRequest) returns (ScanForTasksResponse);
+  rpc ResetTaskQueues(ResetTaskQueuesRequest) returns (ResetTaskQueuesResponse);
 }
 
 message GetTaskQueuesStatusRequest {}
@@ -36,6 +37,13 @@ message TaskQueueStatus {
   optional string last_failure = 10;
   optional int64 processing_time_ms = 11;
   optional int64 failed_processing_time_ms = 12;
+}
+
+message ResetTaskQueuesRequest {
+  optional string name = 1;
+}
+
+message ResetTaskQueuesResponse {
 }
 
 // Task payloads.

@@ -28,7 +28,6 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
       "project_leo.tasks.auto_scan_for_tasks";
 
   private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+", Pattern.DOTALL);
-
   private static final Object LOCK = new Object();
   private static final Logger logger = LogManager.getLogger();
 
@@ -36,7 +35,7 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
   private static final List<TaskQueue<?, ?>> taskQueues = new ArrayList<>();
 
   @GuardedBy("LOCK")
-  private final QueueMetadata<T, M> queueMetadata = QueueMetadata.<T, M>builder().build();
+  private QueueMetadata<T, M> queueMetadata;
 
   @GuardedBy("LOCK")
   private final LinkedHashMap<T, M> pendingTasks = new LinkedHashMap<>();
@@ -60,10 +59,8 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
                 .setDaemon(true)
                 .build());
 
-    queueMetadata.name = this.getClass().getSimpleName();
-    queueMetadata.taskQueue = this;
-
     synchronized (LOCK) {
+      resetTaskQueues();
       taskQueues.add(this);
     }
 
@@ -97,6 +94,17 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
         .build()
         .newThread(this::scanForTasks)
         .start();
+  }
+
+  public void resetTaskQueues() {
+    synchronized (LOCK) {
+      pendingTasks.clear();
+      queueMetadata =
+          QueueMetadata.<T, M>builder()
+              .setName(this.getClass().getSimpleName())
+              .setTaskQueue(this)
+              .build();
+    }
   }
 
   protected void scanForTasks() {}
@@ -237,8 +245,8 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
                 // Account for tasks that are waiting for a thread.
                 int waiting = Math.max(0, t.processingTasks.size() - t.numThreads);
                 return t.queueMetadata.toBuilder()
-                    .processingTasks(t.processingTasks.size() - waiting)
-                    .pendingTasks(t.pendingTasks.size() + waiting)
+                    .setProcessingTasks(t.processingTasks.size() - waiting)
+                    .setPendingTasks(t.pendingTasks.size() + waiting)
                     .build();
               })
           .toList();

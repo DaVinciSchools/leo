@@ -3,6 +3,8 @@ package org.davincischools.leo.server.controllers;
 import java.util.Optional;
 import org.davincischools.leo.protos.task_service.GetTaskQueuesStatusRequest;
 import org.davincischools.leo.protos.task_service.GetTaskQueuesStatusResponse;
+import org.davincischools.leo.protos.task_service.ResetTaskQueuesRequest;
+import org.davincischools.leo.protos.task_service.ResetTaskQueuesResponse;
 import org.davincischools.leo.protos.task_service.ScanForTasksRequest;
 import org.davincischools.leo.protos.task_service.ScanForTasksResponse;
 import org.davincischools.leo.protos.task_service.TaskQueueStatus;
@@ -90,6 +92,39 @@ public class TaskService {
                       });
 
               return ScanForTasksResponse.getDefaultInstance();
+            })
+        .finish();
+  }
+
+  @PostMapping(value = "/api/protos/TaskService/ResetTaskQueues")
+  @ResponseBody
+  public ResetTaskQueuesResponse resetTaskQueues(
+      @Authenticated HttpUserX userX,
+      @RequestBody Optional<ResetTaskQueuesRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    return httpExecutors
+        .start(optionalRequest.orElse(ResetTaskQueuesRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              if (!userX.isAdminX()) {
+                return userX.returnForbidden(ResetTaskQueuesResponse.getDefaultInstance());
+              }
+
+              TaskQueue.getTaskQueueMetadata()
+                  .forEach(
+                      q -> {
+                        if (request.hasName()) {
+                          if (request.getName().equals(q.getName())) {
+                            q.getTaskQueue().resetTaskQueues();
+                            ;
+                          }
+                        } else {
+                          q.getTaskQueue().resetTaskQueues();
+                        }
+                      });
+
+              return ResetTaskQueuesResponse.getDefaultInstance();
             })
         .finish();
   }

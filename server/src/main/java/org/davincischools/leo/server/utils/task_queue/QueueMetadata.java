@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@Builder(toBuilder = true, access = AccessLevel.PACKAGE)
+@Builder(setterPrefix = "set", toBuilder = true, access = AccessLevel.PACKAGE)
 public final class QueueMetadata<T extends Message, M extends TaskMetadata<M>> {
   String name;
   TaskQueue<T, M> taskQueue;

@@ -41,9 +41,15 @@ export function AdminXDashboard() {
       });
   }, []);
 
-  function rescanForWork(name?: string) {
+  function rescanForTasks(name?: string | null) {
     createService(TaskService, 'TaskService')
       .scanForTasks({name})
+      .catch(global.setError);
+  }
+
+  function resetTaskQueues(name?: string | null) {
+    createService(TaskService, 'TaskService')
+      .resetTaskQueues({name})
       .catch(global.setError);
   }
 
@@ -80,19 +86,22 @@ export function AdminXDashboard() {
             <TableHead>
               <TableRow>
                 <TableCell>Task Worker</TableCell>
-                <TableCell align="center"></TableCell>
-                <TableCell align="right">Processing</TableCell>
-                <TableCell align="right">Pending</TableCell>
-                <TableCell align="right">Processed</TableCell>
-                <TableCell align="right">Processing Time</TableCell>
-                <TableCell align="right">Skipped</TableCell>
-                <TableCell align="right">Submitted</TableCell>
-                <TableCell align="right">Retries</TableCell>
-                <TableCell align="right">Failures</TableCell>
-                <TableCell align="right">Failure Time</TableCell>
-                <TableCell align="right">Errors</TableCell>
+                <TableCell align="center">Last Error</TableCell>
+                <TableCell align="right"># Processing</TableCell>
+                <TableCell align="right"># Pending</TableCell>
+                <TableCell align="right"># Processed</TableCell>
+                <TableCell align="right">Avg. Processing Time</TableCell>
+                <TableCell align="right"># Skipped</TableCell>
+                <TableCell align="right"># Submitted</TableCell>
+                <TableCell align="right"># Retries</TableCell>
+                <TableCell align="right"># Failures</TableCell>
+                <TableCell align="right">Avg. Failure Time</TableCell>
+                <TableCell align="right"># Unrecoverable Errors</TableCell>
                 <TableCell align="center">
-                  <Button onClick={() => rescanForWork()}>Rescan All</Button>
+                  <Button onClick={() => rescanForTasks()}>Rescan All</Button>
+                </TableCell>
+                <TableCell align="center">
+                  <Button onClick={() => resetTaskQueues()}>Reset All</Button>
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -145,10 +154,13 @@ export function AdminXDashboard() {
                       </TableCell>
                       <TableCell align="right">{s.errors}</TableCell>
                       <TableCell align="center">
-                        <Button
-                          onClick={() => rescanForWork(s.name ?? undefined)}
-                        >
+                        <Button onClick={() => rescanForTasks(s.name)}>
                           Rescan
+                        </Button>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Button onClick={() => resetTaskQueues(s.name)}>
+                          Reset
                         </Button>
                       </TableCell>
                     </TableRow>
