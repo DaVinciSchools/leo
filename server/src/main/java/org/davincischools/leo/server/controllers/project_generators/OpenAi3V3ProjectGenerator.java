@@ -80,7 +80,7 @@ public class OpenAi3V3ProjectGenerator implements ProjectGenerator {
 
     ChatCompletionRequest chatCompletionRequest =
         ChatCompletionRequest.builder()
-            .model(OpenAiUtils.GPT_3_5_TURBO_16K_MODEL)
+            .model(OpenAiUtils.CURRENT_GPT_MODEL)
             .messages(messages)
             .functions(functionExecutor.getFunctions())
             .functionCall(new ChatCompletionRequestFunctionCall(describeProjectFn.getName()))
