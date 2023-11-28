@@ -52,12 +52,12 @@ public interface ProjectInputRepository
         .query(ProjectInput.class, projectInput -> configureQuery(projectInput, params));
   }
 
-  public static Entity<?, ProjectInput> configureQuery(
+  static Entity<?, ProjectInput> configureQuery(
       Entity<?, ProjectInput> projectInput, GetProjectInputsParams params) {
     checkNotNull(projectInput);
     checkNotNull(params);
 
-    projectInput.notDeleted().fetch().requireId(params.getProjectInputIds());
+    projectInput.fetch().requireId(params.getProjectInputIds());
 
     // UserX
     projectInput
@@ -77,7 +77,7 @@ public interface ProjectInputRepository
                 : Expression.FALSE));
 
     var projectDefinition =
-        projectInput.join(ProjectInput_.projectDefinition, JoinType.LEFT).notDeleted().fetch();
+        projectInput.join(ProjectInput_.projectDefinition, JoinType.LEFT).fetch();
     projectDefinition
         .join(
             ProjectDefinition_.projectDefinitionCategories,
@@ -85,9 +85,7 @@ public interface ProjectInputRepository
             ProjectDefinitionCategory::getProjectDefinition,
             ProjectDefinition::setProjectDefinitionCategories)
         .notDeleted()
-        .fetch()
         .join(ProjectDefinitionCategory_.projectDefinitionCategoryType, JoinType.LEFT)
-        .notDeleted()
         .fetch();
 
     var projectInputValue =
@@ -118,7 +116,8 @@ public interface ProjectInputRepository
                   .notDeleted()
                   .fetch()
                   .join(AssignmentProjectDefinition_.assignment, JoinType.LEFT))) {
-        AssignmentRepository.configureQuery(assignment, params.getIncludeAssignment().get());
+        AssignmentRepository.configureQuery(assignment, params.getIncludeAssignment().get())
+            .notDeleted();
       }
     }
 

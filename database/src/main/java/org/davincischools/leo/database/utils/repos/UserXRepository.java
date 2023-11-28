@@ -41,7 +41,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
   int MAX_LAST_NAME_LENGTH =
       EntityUtils.getColumn(UserX.class, UserX.COLUMN_LASTNAME_NAME).length();
 
-  public static final int MIN_PASSWORD_LENGTH = 8;
+  static final int MIN_PASSWORD_LENGTH = 8;
   String INVALID_ENCODED_PASSWORD = "INVALID ENCODED PASSWORD";
 
   enum Role {
@@ -120,11 +120,11 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
                 .orElse(Pageable.unpaged()));
   }
 
-  public static void configureQuery(Entity<?, UserX> userX, GetUserXsParams params) {
+  static Entity<?, UserX> configureQuery(Entity<?, UserX> userX, GetUserXsParams params) {
     checkNotNull(userX);
     checkNotNull(params);
 
-    userX.notDeleted().fetch().requireId(params.getInUserXIds());
+    userX.fetch().requireId(params.getInUserXIds());
 
     // var district =
     userX
@@ -132,6 +132,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
         .notDeleted()
         .fetch()
         .requireId(params.getInDistrictIds());
+
     var adminX = userX.join(UserX_.adminX, JoinType.LEFT).notDeleted().fetch();
     var teacher = userX.join(UserX_.teacher, JoinType.LEFT).notDeleted().fetch();
     var student = userX.join(UserX_.student, JoinType.LEFT).notDeleted().fetch();
@@ -146,8 +147,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
                         TeacherSchool::getTeacher,
                         Teacher::setTeacherSchools)
                     .notDeleted()
-                    .join(TeacherSchool_.school, JoinType.LEFT)
-                    .notDeleted());
+                    .join(TeacherSchool_.school, JoinType.LEFT));
     var studentSchool =
         student.supplier(
             () ->
@@ -158,8 +158,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
                         StudentSchool::getStudent,
                         Student::setStudentSchools)
                     .notDeleted()
-                    .join(StudentSchool_.school, JoinType.LEFT)
-                    .notDeleted());
+                    .join(StudentSchool_.school, JoinType.LEFT));
     if (params.getInSchoolIds().isPresent() && !Iterables.isEmpty(params.getInSchoolIds().get())) {
       userX.where(
           Predicate.or(
@@ -181,8 +180,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
                         TeacherClassX::getTeacher,
                         Teacher::setTeacherClassXES)
                     .notDeleted()
-                    .join(TeacherClassX_.classX, JoinType.LEFT)
-                    .notDeleted());
+                    .join(TeacherClassX_.classX, JoinType.LEFT));
     var studentClassX =
         student.supplier(
             () ->
@@ -193,8 +191,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
                         StudentClassX::getStudent,
                         Student::setStudentClassXES)
                     .notDeleted()
-                    .join(StudentClassX_.classX, JoinType.LEFT)
-                    .notDeleted());
+                    .join(StudentClassX_.classX, JoinType.LEFT));
     if (params.getInClassXIds().isPresent() && !Iterables.isEmpty(params.getInClassXIds().get())) {
       userX.where(
           Predicate.or(
@@ -202,8 +199,10 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
               Predicate.in(studentClassX.get().getId(), params.getInClassXIds().get())));
     }
     if (params.getIncludeClassXs().isPresent()) {
-      ClassXRepository.configureQuery(teacherClassX.get(), params.getIncludeClassXs().get());
-      ClassXRepository.configureQuery(studentClassX.get(), params.getIncludeClassXs().get());
+      ClassXRepository.configureQuery(teacherClassX.get(), params.getIncludeClassXs().get())
+          .notDeleted();
+      ClassXRepository.configureQuery(studentClassX.get(), params.getIncludeClassXs().get())
+          .notDeleted();
     }
 
     if (params.getHasEmailAddress().isPresent()) {
@@ -239,5 +238,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
     userX.orderByAsc(userX.get(UserX_.lastName));
     userX.orderByAsc(userX.get(UserX_.firstName));
     userX.orderByAsc(userX.get(UserX_.emailAddress));
+
+    return userX;
   }
 }

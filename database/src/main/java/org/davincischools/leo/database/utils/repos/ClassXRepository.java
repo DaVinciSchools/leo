@@ -67,11 +67,11 @@ public interface ClassXRepository
     return getQueryHelper().query(ClassX.class, classX -> configureQuery(classX, params));
   }
 
-  public static void configureQuery(Entity<?, ClassX> classX, GetClassXsParams params) {
+  static Entity<?, ClassX> configureQuery(Entity<?, ClassX> classX, GetClassXsParams params) {
     checkNotNull(classX);
     checkNotNull(params);
 
-    classX.notDeleted().fetch().requireId(params.getClassXIds());
+    classX.fetch().requireId(params.getClassXIds());
 
     var school =
         classX.supplier(
@@ -87,8 +87,7 @@ public interface ClassXRepository
                     TeacherClassX::getClassX,
                     ClassX::setTeacherClassXES)
                 .notDeleted()
-                .join(TeacherClassX_.teacher, JoinType.LEFT)
-                .notDeleted(),
+                .join(TeacherClassX_.teacher, JoinType.LEFT),
         params.getTeacherIds());
 
     // var student =
@@ -101,8 +100,7 @@ public interface ClassXRepository
                     StudentClassX::getClassX,
                     ClassX::setStudentClassXES)
                 .notDeleted()
-                .join(StudentClassX_.student, JoinType.LEFT)
-                .notDeleted(),
+                .join(StudentClassX_.student, JoinType.LEFT),
         params.getStudentIds());
 
     if (params.getIncludeSchool().orElse(false)) {
@@ -111,9 +109,13 @@ public interface ClassXRepository
 
     if (params.getIncludeAssignments().isPresent()) {
       AssignmentRepository.configureQuery(
-          classX.join(
-              ClassX_.assignments, JoinType.LEFT, Assignment::getClassX, ClassX::setAssignments),
-          params.getIncludeAssignments().get());
+              classX.join(
+                  ClassX_.assignments,
+                  JoinType.LEFT,
+                  Assignment::getClassX,
+                  ClassX::setAssignments),
+              params.getIncludeAssignments().get())
+          .notDeleted();
     }
 
     if (params.getIncludeKnowledgeAndSkills().orElse(false)) {
@@ -125,8 +127,9 @@ public interface ClassXRepository
               ClassX::setClassXKnowledgeAndSkills)
           .notDeleted()
           .join(ClassXKnowledgeAndSkill_.knowledgeAndSkill, JoinType.LEFT)
-          .notDeleted()
           .fetch();
     }
+
+    return classX;
   }
 }

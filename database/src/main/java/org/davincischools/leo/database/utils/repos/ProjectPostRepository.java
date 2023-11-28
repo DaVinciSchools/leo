@@ -51,17 +51,13 @@ public interface ProjectPostRepository
                 .orElse(Pageable.unpaged()));
   }
 
-  public static void configureQuery(
+  static Entity<?, ProjectPost> configureQuery(
       Entity<?, ProjectPost> projectPost, GetProjectPostsParams params) {
     checkNotNull(projectPost);
     checkNotNull(params);
 
-    projectPost.notDeleted().fetch().requireId(params.getProjectPostIds());
-    projectPost
-        .join(ProjectPost_.userX, JoinType.LEFT)
-        .notDeleted()
-        .fetch()
-        .requireId(params.getUserXIds());
+    projectPost.fetch().requireId(params.getProjectPostIds());
+    projectPost.join(ProjectPost_.userX, JoinType.LEFT).fetch().requireId(params.getUserXIds());
 
     if (params.getIncludeTags().orElse(false)) {
       projectPost
@@ -79,14 +75,12 @@ public interface ProjectPostRepository
               ProjectPost::setProjectPostComments)
           .notDeleted()
           .join(ProjectPostComment_.userX, JoinType.LEFT)
-          .notDeleted()
           .fetch();
     }
 
     var project =
         projectPost.supplier(
-            () -> projectPost.join(ProjectPost_.project, JoinType.LEFT).notDeleted(),
-            params.getProjectIds());
+            () -> projectPost.join(ProjectPost_.project, JoinType.LEFT), params.getProjectIds());
     if (params.getIncludeProjects().isPresent()) {
       ProjectRepository.configureQuery(project.get(), params.getIncludeProjects().get());
     }
@@ -101,7 +95,7 @@ public interface ProjectPostRepository
                   ProjectPost::setProjectPostRatings)
               .notDeleted()
               .fetch();
-      projectPostRating.join(ProjectPostRating_.userX, JoinType.LEFT).notDeleted().fetch();
+      projectPostRating.join(ProjectPostRating_.userX, JoinType.LEFT).fetch();
       projectPostRating
           .join(ProjectPostRating_.knowledgeAndSkill, JoinType.LEFT)
           .notDeleted()
@@ -114,6 +108,8 @@ public interface ProjectPostRepository
     }
 
     projectPost.orderByDesc(projectPost.get(ProjectPost_.creationTime));
+
+    return projectPost;
   }
 
   default void upsert(Database db, UserX tagUserX, ProjectPost projectPost) {

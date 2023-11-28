@@ -27,19 +27,17 @@ public interface ProjectRepository
     return getQueryHelper().query(Project.class, project -> configureQuery(project, params));
   }
 
-  static void configureQuery(Entity<?, Project> project, GetProjectsParams params) {
+  static Entity<?, Project> configureQuery(Entity<?, Project> project, GetProjectsParams params) {
     checkNotNull(project);
     checkNotNull(params);
 
-    project.notDeleted().fetch().requireId(params.getProjectIds());
+    project.fetch().requireId(params.getProjectIds());
 
     project.supplier(
         () ->
             project
                 .join(Project_.projectInput, JoinType.LEFT)
-                .notDeleted()
-                .join(ProjectInput_.userX, JoinType.LEFT)
-                .notDeleted(),
+                .join(ProjectInput_.userX, JoinType.LEFT),
         params.getUserXIds());
 
     if (!params.getIncludeInactive().orElse(false)) {
@@ -55,7 +53,8 @@ public interface ProjectRepository
 
     if (params.getIncludeInputs().isPresent()) {
       ProjectInputRepository.configureQuery(
-          project.join(Project_.projectInput, JoinType.LEFT), params.getIncludeInputs().get());
+              project.join(Project_.projectInput, JoinType.LEFT), params.getIncludeInputs().get())
+          .notDeleted();
     }
 
     if (params.getIncludeFulfillments().orElse(false)) {
@@ -71,7 +70,8 @@ public interface ProjectRepository
 
     if (params.getIncludeAssignment().isPresent()) {
       AssignmentRepository.configureQuery(
-          project.join(Project_.assignment, JoinType.LEFT), params.getIncludeAssignment().get());
+              project.join(Project_.assignment, JoinType.LEFT), params.getIncludeAssignment().get())
+          .notDeleted();
     }
 
     if (params.getIncludeMilestones().orElse(false)) {
@@ -90,5 +90,7 @@ public interface ProjectRepository
           .notDeleted()
           .fetch();
     }
+
+    return project;
   }
 }

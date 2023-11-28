@@ -48,11 +48,12 @@ public interface AssignmentRepository
         .query(Assignment.class, assignment -> configureQuery(assignment, params));
   }
 
-  public static void configureQuery(Entity<?, Assignment> assignment, GetAssignmentsParams params) {
+  static Entity<?, Assignment> configureQuery(
+      Entity<?, Assignment> assignment, GetAssignmentsParams params) {
     checkNotNull(assignment);
     checkNotNull(params);
 
-    assignment.notDeleted().fetch().requireId(params.getAssignmentIds());
+    assignment.fetch().requireId(params.getAssignmentIds());
 
     var classX =
         assignment.supplier(
@@ -70,8 +71,7 @@ public interface AssignmentRepository
                     TeacherClassX::getClassX,
                     ClassX::setTeacherClassXES)
                 .notDeleted()
-                .join(TeacherClassX_.teacher, JoinType.LEFT)
-                .notDeleted(),
+                .join(TeacherClassX_.teacher, JoinType.LEFT),
         params.getTeacherIds());
 
     // var student =
@@ -85,12 +85,11 @@ public interface AssignmentRepository
                     StudentClassX::getClassX,
                     ClassX::setStudentClassXES)
                 .notDeleted()
-                .join(StudentClassX_.student, JoinType.LEFT)
-                .notDeleted(),
+                .join(StudentClassX_.student, JoinType.LEFT),
         params.getStudentIds());
 
     if (params.getIncludeClassXs().isPresent()) {
-      ClassXRepository.configureQuery(classX.get(), params.getIncludeClassXs().get());
+      ClassXRepository.configureQuery(classX.get(), params.getIncludeClassXs().get()).notDeleted();
     }
 
     if (params.getIncludeKnowledgeAndSkills().orElse(false)) {
@@ -102,21 +101,23 @@ public interface AssignmentRepository
               Assignment::setAssignmentKnowledgeAndSkills)
           .notDeleted()
           .join(AssignmentKnowledgeAndSkill_.knowledgeAndSkill, JoinType.LEFT)
-          .notDeleted()
           .fetch();
     }
 
     if (params.getIncludeProjectDefinitions().isPresent()) {
       ProjectDefinitionRepository.configureQuery(
-          assignment
-              .join(
-                  Assignment_.assignmentProjectDefinitions,
-                  JoinType.LEFT,
-                  AssignmentProjectDefinition::getAssignment,
-                  Assignment::setAssignmentProjectDefinitions)
-              .notDeleted()
-              .join(AssignmentProjectDefinition_.projectDefinition, JoinType.LEFT),
-          params.getIncludeProjectDefinitions().get());
+              assignment
+                  .join(
+                      Assignment_.assignmentProjectDefinitions,
+                      JoinType.LEFT,
+                      AssignmentProjectDefinition::getAssignment,
+                      Assignment::setAssignmentProjectDefinitions)
+                  .notDeleted()
+                  .join(AssignmentProjectDefinition_.projectDefinition, JoinType.LEFT),
+              params.getIncludeProjectDefinitions().get())
+          .notDeleted();
     }
+
+    return assignment;
   }
 }

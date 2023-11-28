@@ -73,7 +73,7 @@ public class QueryHelper {
 
     var root =
         new Entity<Void, E>(entityManager).setEntityType(EntityType.ROOT).setEntityClass(rootClass);
-    queryBuilder.configureQuery(root);
+    queryBuilder.configureQuery(root).notDeleted();
 
     try (var em = entityManager.getEntityManagerFactory().createEntityManager()) {
       // TODO: Profile and maybe incorporate optimizations.

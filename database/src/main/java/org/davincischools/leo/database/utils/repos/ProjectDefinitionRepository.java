@@ -68,12 +68,12 @@ public interface ProjectDefinitionRepository
             projectDefinition -> configureQuery(projectDefinition, params));
   }
 
-  static void configureQuery(
+  static Entity<?, ProjectDefinition> configureQuery(
       Entity<?, ProjectDefinition> projectDefinition, GetProjectDefinitionsParams params) {
     checkNotNull(projectDefinition);
     checkNotNull(params);
 
-    projectDefinition.notDeleted().fetch().requireId(params.getProjectDefinitionIds());
+    projectDefinition.fetch().requireId(params.getProjectDefinitionIds());
 
     // var assignment =
     projectDefinition.supplier(
@@ -96,7 +96,8 @@ public interface ProjectDefinitionRepository
             ProjectDefinition::setProjectDefinitionCategories)
         .notDeleted()
         .join(ProjectDefinitionCategory_.projectDefinitionCategoryType, JoinType.LEFT)
-        .notDeleted()
         .fetch();
+
+    return projectDefinition;
   }
 }
