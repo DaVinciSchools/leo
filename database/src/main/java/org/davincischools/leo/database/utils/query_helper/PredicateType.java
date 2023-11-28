@@ -8,6 +8,7 @@ enum PredicateType {
   IS_NULL,
   LIKE,
   NEQ,
+  NOT,
   OR,
   TRUE,
 }
