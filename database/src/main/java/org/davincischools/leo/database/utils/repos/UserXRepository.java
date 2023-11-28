@@ -3,6 +3,7 @@ package org.davincischools.leo.database.utils.repos;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.davincischools.leo.database.utils.query_helper.QueryHelper.DEFAULT_PAGE_SIZE;
 
+import com.google.common.collect.Iterables;
 import jakarta.persistence.criteria.JoinType;
 import java.util.EnumSet;
 import java.util.List;
@@ -146,8 +147,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
                         Teacher::setTeacherSchools)
                     .notDeleted()
                     .join(TeacherSchool_.school, JoinType.LEFT)
-                    .notDeleted(),
-            params.getInSchoolIds());
+                    .notDeleted());
     var studentSchool =
         student.supplier(
             () ->
@@ -159,8 +159,13 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
                         Student::setStudentSchools)
                     .notDeleted()
                     .join(StudentSchool_.school, JoinType.LEFT)
-                    .notDeleted(),
-            params.getInSchoolIds());
+                    .notDeleted());
+    if (params.getInSchoolIds().isPresent() && !Iterables.isEmpty(params.getInSchoolIds().get())) {
+      userX.where(
+          Predicate.or(
+              Predicate.in(teacherSchool.get().getId(), params.getInSchoolIds().get()),
+              Predicate.in(studentSchool.get().getId(), params.getInSchoolIds().get())));
+    }
     if (params.getIncludeSchools().orElse(false)) {
       teacherSchool.get().fetch();
       studentSchool.get().fetch();
@@ -177,8 +182,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
                         Teacher::setTeacherClassXES)
                     .notDeleted()
                     .join(TeacherClassX_.classX, JoinType.LEFT)
-                    .notDeleted(),
-            params.getInClassXIds());
+                    .notDeleted());
     var studentClassX =
         student.supplier(
             () ->
@@ -190,8 +194,13 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
                         Student::setStudentClassXES)
                     .notDeleted()
                     .join(StudentClassX_.classX, JoinType.LEFT)
-                    .notDeleted(),
-            params.getInClassXIds());
+                    .notDeleted());
+    if (params.getInClassXIds().isPresent() && !Iterables.isEmpty(params.getInClassXIds().get())) {
+      userX.where(
+          Predicate.or(
+              Predicate.in(teacherClassX.get().getId(), params.getInClassXIds().get()),
+              Predicate.in(studentClassX.get().getId(), params.getInClassXIds().get())));
+    }
     if (params.getIncludeClassXs().isPresent()) {
       ClassXRepository.configureQuery(teacherClassX.get(), params.getIncludeClassXs().get());
       ClassXRepository.configureQuery(studentClassX.get(), params.getIncludeClassXs().get());

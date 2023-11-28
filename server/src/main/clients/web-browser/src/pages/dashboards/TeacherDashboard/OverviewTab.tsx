@@ -209,8 +209,8 @@ export function OverviewTab() {
         }}
         baseRequest={{
           studentsOnly: true,
-          inSchoolIds: schoolOptions.map(e => e.id ?? 0),
-          inClassXIds: classXOptions.map(e => e.id ?? 0),
+          inSchoolIds: schoolFilter.getValue()?.map(e => e.id ?? 0),
+          inClassXIds: classXFilter.getValue()?.map(e => e.id ?? 0),
         }}
       />
     </>

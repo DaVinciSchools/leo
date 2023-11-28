@@ -85,7 +85,7 @@ public class Entity<W, E> implements Expression<E> {
     checkNotNull(inIds);
 
     if (inIds.isPresent()) {
-      supplier.get().setJoinType(JoinType.INNER).requireId(inIds);
+      supplier.get().requireId(inIds);
     }
     return supplier;
   }
@@ -204,7 +204,7 @@ public class Entity<W, E> implements Expression<E> {
 
     optionalIds.ifPresent(
         ids -> {
-          where(Predicate.in(getId(), Sets.newHashSet(ids)));
+          where(Predicate.or(Predicate.isNull(this), Predicate.in(getId(), Sets.newHashSet(ids))));
         });
     return this;
   }
