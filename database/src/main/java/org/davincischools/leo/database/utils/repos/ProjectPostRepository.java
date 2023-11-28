@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.davincischools.leo.database.utils.query_helper.QueryHelper.DEFAULT_PAGE_SIZE;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
 import jakarta.persistence.criteria.JoinType;
 import java.time.Instant;
@@ -67,15 +68,17 @@ public interface ProjectPostRepository
     }
 
     if (params.getIncludeComments().orElse(false)) {
-      projectPost
-          .join(
-              ProjectPost_.projectPostComments,
-              JoinType.LEFT,
-              ProjectPostComment::getProjectPost,
-              ProjectPost::setProjectPostComments)
-          .notDeleted()
-          .join(ProjectPostComment_.userX, JoinType.LEFT)
-          .fetch();
+      var commentUserX =
+          projectPost
+              .join(
+                  ProjectPost_.projectPostComments,
+                  JoinType.LEFT,
+                  ProjectPostComment::getProjectPost,
+                  ProjectPost::setProjectPostComments)
+              .notDeleted()
+              .join(ProjectPostComment_.userX, JoinType.LEFT)
+              .fetch();
+      commentUserX.requireNotId(params.getExcludeCommentsByUserXIds());
     }
 
     var project =

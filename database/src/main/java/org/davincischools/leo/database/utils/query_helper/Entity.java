@@ -204,7 +204,22 @@ public class Entity<W, E> implements Expression<E> {
 
     optionalIds.ifPresent(
         ids -> {
+          setJoinType(JoinType.INNER);
           where(Predicate.or(Predicate.isNull(this), Predicate.in(getId(), Sets.newHashSet(ids))));
+        });
+    return this;
+  }
+
+  public Entity<W, E> requireNotId(Optional<Iterable<Integer>> optionalIds) {
+    checkNotNull(optionalIds);
+
+    optionalIds.ifPresent(
+        ids -> {
+          setJoinType(JoinType.INNER);
+          where(
+              Predicate.or(
+                  Predicate.isNull(this),
+                  Predicate.not(Predicate.in(getId(), Sets.newHashSet(ids)))));
         });
     return this;
   }
