@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -204,8 +205,7 @@ public class Entity<W, E> implements Expression<E> {
 
     optionalIds.ifPresent(
         ids -> {
-          setJoinType(JoinType.INNER);
-          where(Predicate.or(Predicate.isNull(this), Predicate.in(getId(), Sets.newHashSet(ids))));
+          where(Predicate.in(getId(), Sets.newHashSet(ids)));
         });
     return this;
   }
@@ -213,14 +213,13 @@ public class Entity<W, E> implements Expression<E> {
   public Entity<W, E> requireNotId(Optional<Iterable<Integer>> optionalIds) {
     checkNotNull(optionalIds);
 
-    optionalIds.ifPresent(
-        ids -> {
-          setJoinType(JoinType.INNER);
-          where(
-              Predicate.or(
-                  Predicate.isNull(this),
-                  Predicate.not(Predicate.in(getId(), Sets.newHashSet(ids)))));
-        });
+    if (optionalIds.isPresent() && !Iterables.isEmpty(optionalIds.get())) {
+      where(
+          Predicate.or(
+              Predicate.isNull(this),
+              Predicate.not(Predicate.in(getId(), Sets.newHashSet(optionalIds.get())))));
+    }
+
     return this;
   }
 
@@ -267,12 +266,6 @@ public class Entity<W, E> implements Expression<E> {
     // Null is a valid value.
 
     this.joinType = joinType;
-
-    if (joinType == JoinType.INNER) {
-      if (parent != null && parent.getJoinType() != JoinType.INNER) {
-        parent.setJoinType(JoinType.INNER);
-      }
-    }
 
     return this;
   }
@@ -329,13 +322,13 @@ public class Entity<W, E> implements Expression<E> {
     switch (entityType) {
       case ROOT -> sb.append("Root(").append(entityClass.getSimpleName()).append(")");
       case GET -> sb.append("Get(")
-          .append(attribute.getName())
-          .append(": ")
+          .append(children.get(attribute))
+          .append(":")
           .append(entityClass.getSimpleName())
           .append(")");
       case JOIN, FETCH -> sb.append("Join(")
-          .append(attribute.getName())
-          .append(": ")
+          .append(children.get(attribute))
+          .append(":")
           .append(entityClass.getSimpleName())
           .append(")");
     }

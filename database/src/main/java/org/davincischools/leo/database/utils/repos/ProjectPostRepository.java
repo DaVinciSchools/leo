@@ -105,7 +105,7 @@ public interface ProjectPostRepository
     }
 
     if (params.getBeingEdited().isPresent()) {
-      projectPost.where(
+      projectPost.on(
           Predicate.eq(projectPost.get(ProjectPost_.beingEdited), params.getBeingEdited().get()));
     }
 
