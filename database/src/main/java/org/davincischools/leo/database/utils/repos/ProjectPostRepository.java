@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.davincischools.leo.database.utils.query_helper.QueryHelper.DEFAULT_PAGE_SIZE;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
 import jakarta.persistence.criteria.JoinType;
 import java.time.Instant;

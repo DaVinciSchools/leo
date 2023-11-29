@@ -3,7 +3,6 @@ package org.davincischools.leo.database.utils.query_helper;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.stream;
 
-import com.google.common.collect.Iterables;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import java.util.Arrays;
 import java.util.List;

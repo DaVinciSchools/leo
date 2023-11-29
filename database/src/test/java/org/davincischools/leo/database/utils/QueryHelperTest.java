@@ -83,7 +83,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().join(UserX_.adminX, JoinType.INNER).notDeleted());
+            userX -> {
+              userX.notDeleted().join(UserX_.adminX, JoinType.INNER).notDeleted();
+              return userX;
+            });
 
     assertThat(results.stream().map(UserX::getId).toList())
         .containsExactly(testData.getAdminX().getId());
@@ -97,7 +100,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().join(UserX_.adminX, JoinType.INNER).notDeleted().fetch());
+            userX -> {
+              userX.notDeleted().join(UserX_.adminX, JoinType.INNER).notDeleted().fetch();
+              return userX;
+            });
 
     assertThat(results.stream().map(UserX::getId).toList())
         .containsExactly(testData.getAdminX().getId());
@@ -124,6 +130,7 @@ public class QueryHelperTest {
                   .join(TeacherClassX_.classX, JoinType.LEFT)
                   .notDeleted()
                   .fetch();
+              return teacher;
             });
 
     assertThat(results.stream().map(Teacher::getId).toList())
@@ -169,7 +176,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
+            userX -> {
+              userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress));
+              return userX;
+            },
             PageRequest.of(0, 1));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -181,7 +191,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
+            userX -> {
+              userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress));
+              return userX;
+            },
             PageRequest.of(1, 1));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -193,7 +206,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
+            userX -> {
+              userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress));
+              return userX;
+            },
             PageRequest.of(2, 1));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -205,7 +221,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
+            userX -> {
+              userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress));
+              return userX;
+            },
             PageRequest.of(3, 1));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -217,7 +236,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
+            userX -> {
+              userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress));
+              return userX;
+            },
             PageRequest.of(4, 1));
 
     assertThat(results).isEmpty();
@@ -228,7 +250,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
+            userX -> {
+              userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress));
+              return userX;
+            },
             PageRequest.of(0, 2));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -240,7 +265,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
+            userX -> {
+              userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress));
+              return userX;
+            },
             PageRequest.of(1, 2));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -252,7 +280,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
+            userX -> {
+              userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress));
+              return userX;
+            },
             PageRequest.of(2, 2));
 
     assertThat(results).isEmpty();
@@ -263,7 +294,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
+            userX -> {
+              userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress));
+              return userX;
+            },
             PageRequest.of(0, 3));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -278,7 +312,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
+            userX -> {
+              userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress));
+              return userX;
+            },
             PageRequest.of(1, 3));
 
     assertThat(results.stream().map(UserX::getId).toList())
@@ -290,7 +327,10 @@ public class QueryHelperTest {
     var results =
         queryHelper.query(
             UserX.class,
-            userX -> userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress)),
+            userX -> {
+              userX.notDeleted().orderByAsc(userX.get(UserX_.emailAddress));
+              return userX;
+            },
             PageRequest.of(0, 5));
 
     assertThat(results.stream().map(UserX::getId).toList())
