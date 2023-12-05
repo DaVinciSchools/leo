@@ -9,9 +9,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,7 +43,7 @@ public class ProjectInputFulfillment implements Serializable {
   public static final String COLUMN_HOWPROJECTFULFILLS_NAME = "how_project_fulfills";
   public static final String COLUMN_FULFILLMENTPERCENTAGE_NAME = "fulfillment_percentage";
   public static final String COLUMN_VISIBLEINDICATOR_NAME = "visible_indicator";
-  private static final long serialVersionUID = -9053034918526440029L;
+  private static final long serialVersionUID = -3260899148948451604L;
 
   private Integer id;
 
@@ -57,6 +60,8 @@ public class ProjectInputFulfillment implements Serializable {
   private Integer fulfillmentPercentage;
 
   private String visibleIndicator;
+
+  private Set<ProjectPostRating> projectPostRatings = new LinkedHashSet<>();
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -103,5 +108,10 @@ public class ProjectInputFulfillment implements Serializable {
   @Column(name = COLUMN_VISIBLEINDICATOR_NAME, nullable = false)
   public String getVisibleIndicator() {
     return visibleIndicator;
+  }
+
+  @OneToMany(mappedBy = "projectInputFulfillment")
+  public Set<ProjectPostRating> getProjectPostRatings() {
+    return projectPostRatings;
   }
 }

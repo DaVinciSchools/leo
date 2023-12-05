@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProjectPostRatingRepository extends JpaRepository<ProjectPostRating, Integer> {
   enum RatingType {
-    INITIAL_1_TO_5
+    INITIAL_1_TO_5,
+    GOAL_COMPLETE_PCT,
   }
 }

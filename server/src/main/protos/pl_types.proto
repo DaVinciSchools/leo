@@ -202,10 +202,20 @@ message ProjectPostComment {
   reserved 'project_post_id';
 }
 
+// A row in the rating matrix
+message ProjectPostRatingCategory {
+  // Used to match to a ProjectPostRating.
+  optional int32 project_input_fulfillment_id = 1;
+  optional string category = 2;
+  optional string value = 3;
+  optional ProjectInputCategory.ValueType value_type = 4;
+}
+
 message ProjectPostRating {
   enum RatingType {
     UNSET = 0;
     INITIAL_1_TO_5 = 1;
+    GOAL_COMPLETE_PCT = 2;
   }
 
   optional int32 id = 1;
@@ -213,7 +223,10 @@ message ProjectPostRating {
   optional int32 rating = 3;
   optional RatingType rating_type = 4;
   optional ProjectPost project_post = 5;
+  // Depreciated. Use project_input_fulfillment_id instead.
   optional KnowledgeAndSkill knowledge_and_skill = 6;
+  // Used to match to a ProjectRatingCategory.
+  optional int32 project_input_fulfillment_id = 7;
 }
 
 message ProjectPost {
@@ -227,6 +240,7 @@ message ProjectPost {
   repeated ProjectPostComment comments = 11;
   optional int64 post_time_ms = 8;
   optional bool being_edited = 9;
+  repeated ProjectPostRatingCategory rating_categories = 14;
   repeated ProjectPostRating ratings = 13;
 
   reserved 10;

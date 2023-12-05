@@ -44,7 +44,13 @@ public class ProjectPostComment implements Serializable {
   public static final String COLUMN_COMMENTHTML_NAME = "comment_html";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_BEINGEDITED_NAME = "being_edited";
-  private static final long serialVersionUID = -5534382728911383883L;
+  public static final String COLUMN_POSITIVEFEEDBACK_NAME = "positive_feedback";
+  public static final String COLUMN_HOWIMPROVEDFEEDBACK_NAME = "how_improved_feedback";
+  public static final String COLUMN_TOIMPROVEFEEDBACK_NAME = "to_improve_feedback";
+  public static final String COLUMN_HASENOUGHCONTENTPERCENT_NAME = "has_enough_content_percent";
+  public static final String COLUMN_INCREMENTALPOSTSUMMARY_NAME = "incremental_post_summary";
+  public static final String COLUMN_FEEDBACKRESPONSEHTML_NAME = "feedback_response_html";
+  private static final long serialVersionUID = 295605713590740816L;
 
   private Integer id;
 
@@ -59,6 +65,18 @@ public class ProjectPostComment implements Serializable {
   private String longDescrHtml;
 
   private Boolean beingEdited;
+
+  private String positiveFeedback;
+
+  private String howImprovedFeedback;
+
+  private String toImproveFeedback;
+
+  private Integer hasEnoughContentPercent;
+
+  private String incrementalPostSummary;
+
+  private String feedbackResponseHtml;
 
   private UserX userX;
 
@@ -103,6 +121,41 @@ public class ProjectPostComment implements Serializable {
   @Column(name = COLUMN_BEINGEDITED_NAME)
   public Boolean getBeingEdited() {
     return beingEdited;
+  }
+
+  @Lob
+  @Column(name = COLUMN_POSITIVEFEEDBACK_NAME)
+  public String getPositiveFeedback() {
+    return positiveFeedback;
+  }
+
+  @Lob
+  @Column(name = COLUMN_HOWIMPROVEDFEEDBACK_NAME)
+  public String getHowImprovedFeedback() {
+    return howImprovedFeedback;
+  }
+
+  @Lob
+  @Column(name = COLUMN_TOIMPROVEFEEDBACK_NAME)
+  public String getToImproveFeedback() {
+    return toImproveFeedback;
+  }
+
+  @Column(name = COLUMN_HASENOUGHCONTENTPERCENT_NAME)
+  public Integer getHasEnoughContentPercent() {
+    return hasEnoughContentPercent;
+  }
+
+  @Lob
+  @Column(name = COLUMN_INCREMENTALPOSTSUMMARY_NAME)
+  public String getIncrementalPostSummary() {
+    return incrementalPostSummary;
+  }
+
+  @Lob
+  @Column(name = COLUMN_FEEDBACKRESPONSEHTML_NAME)
+  public String getFeedbackResponseHtml() {
+    return feedbackResponseHtml;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)

@@ -40,7 +40,9 @@ public class ProjectPostRating implements Serializable {
   public static final String COLUMN_RATING_NAME = "rating";
   public static final String COLUMN_RATINGTYPE_NAME = "rating_type";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = -108173455935561219L;
+  public static final String COLUMN_GOALPROGRESS_NAME = "goal_progress";
+  public static final String COLUMN_GOALREMAINING_NAME = "goal_remaining";
+  private static final long serialVersionUID = 1616415498133771364L;
 
   private Integer id;
 
@@ -54,11 +56,17 @@ public class ProjectPostRating implements Serializable {
 
   private String longDescrHtml;
 
+  private String goalProgress;
+
+  private String goalRemaining;
+
   private UserX userX;
 
   private ProjectPost projectPost;
 
   private KnowledgeAndSkill knowledgeAndSkill;
+
+  private ProjectInputFulfillment projectInputFulfillment;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -94,6 +102,18 @@ public class ProjectPostRating implements Serializable {
     return longDescrHtml;
   }
 
+  @Lob
+  @Column(name = COLUMN_GOALPROGRESS_NAME)
+  public String getGoalProgress() {
+    return goalProgress;
+  }
+
+  @Lob
+  @Column(name = COLUMN_GOALREMAINING_NAME)
+  public String getGoalRemaining() {
+    return goalRemaining;
+  }
+
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "user_x_id", nullable = false)
   @PropagateDeleteFrom
@@ -108,10 +128,17 @@ public class ProjectPostRating implements Serializable {
     return projectPost;
   }
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "knowledge_and_skill_id", nullable = false)
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "knowledge_and_skill_id")
   @PropagateDeleteFrom
   public KnowledgeAndSkill getKnowledgeAndSkill() {
     return knowledgeAndSkill;
+  }
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "project_input_fulfillment_id")
+  @PropagateDeleteFrom
+  public ProjectInputFulfillment getProjectInputFulfillment() {
+    return projectInputFulfillment;
   }
 }

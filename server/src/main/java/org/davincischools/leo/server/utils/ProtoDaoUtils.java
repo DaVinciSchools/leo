@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.davincischools.leo.database.utils.DaoUtils.createJoinTableRows;
 import static org.davincischools.leo.database.utils.DaoUtils.getDaoClass;
 import static org.davincischools.leo.database.utils.DaoUtils.ifInitialized;
+import static org.davincischools.leo.database.utils.DaoUtils.isInitialized;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -49,6 +51,7 @@ import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
+import org.davincischools.leo.database.daos.ProjectInputFulfillment;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
@@ -69,6 +72,7 @@ import org.davincischools.leo.protos.pl_types.ClassX.Builder;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
+import org.davincischools.leo.protos.pl_types.ProjectInputCategory.ValueType;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategoryOrBuilder;
 import org.davincischools.leo.protos.user_x_management.FullUserXDetails;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
@@ -542,23 +546,69 @@ public class ProtoDaoUtils {
                   .filter(Optional::isPresent)
                   .map(Optional::get)
                   .collect(toSet()));
-          dao.setProjectPostRatings(
-              projectPost.getRatingsList().stream()
-                  .map(ProtoDaoUtils::toProjectPostRatingDao)
-                  .filter(Optional::isPresent)
-                  .map(Optional::get)
-                  .collect(toSet()));
           dao.setProjectPostComments(
               projectPost.getCommentsList().stream()
                   .map(ProtoDaoUtils::toProjectPostCommentDao)
                   .filter(Optional::isPresent)
                   .map(Optional::get)
                   .collect(toSet()));
+          if (projectPost.getRatingCategoriesCount() > 0) {
+            if (!isInitialized(dao.getProject().getProjectInputFulfillments())) {
+              dao.getProject().setProjectInputFulfillments(new LinkedHashSet<>());
+            }
+
+            projectPost
+                .getRatingCategoriesList()
+                .forEach(
+                    ratingCategory -> {
+                      var inputFulfillmentId = ratingCategory.getProjectInputFulfillmentId();
+                      var valueType = ratingCategory.getValueType();
+                      var projectInputValue = new ProjectInputValue();
+                      switch (valueType) {
+                        case MOTIVATION -> projectInputValue.setMotivationValue(
+                            new Motivation().setName(ratingCategory.getValue()));
+                        case FREE_TEXT -> projectInputValue.setFreeTextValue(
+                            ratingCategory.getValue());
+                        default -> projectInputValue.setKnowledgeAndSkillValue(
+                            new KnowledgeAndSkill().setName(ratingCategory.getValue()));
+                      }
+                      projectInputValue.setProjectDefinitionCategory(
+                          new ProjectDefinitionCategory()
+                              .setProjectDefinitionCategoryType(
+                                  new ProjectDefinitionCategoryType()
+                                      .setName(ratingCategory.getCategory())
+                                      .setValueType(valueType.name())));
+                      var projectInputFulfillment =
+                          new ProjectInputFulfillment()
+                              .setId(inputFulfillmentId)
+                              .setProjectInputValue(projectInputValue);
+                      dao.getProject().getProjectInputFulfillments().add(projectInputFulfillment);
+                    });
+
+            var ratings =
+                projectPost.getRatingsList().stream()
+                    .map(ProtoDaoUtils::toProjectPostRatingDao)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(toSet());
+            var idToProjectInputFulfillments =
+                new HashMap<>(
+                    Maps.uniqueIndex(
+                        dao.getProject().getProjectInputFulfillments(),
+                        ProjectInputFulfillment::getId));
+            ratings.forEach(
+                rating ->
+                    rating.setProjectInputFulfillment(
+                        idToProjectInputFulfillments.get(
+                            rating.getProjectInputFulfillment().getId())));
+            dao.setProjectPostRatings(ratings);
+          }
         },
         org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.PROJECT_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectPost.RATING_CATEGORIES_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.RATINGS_FIELD_NUMBER);
   }
 
@@ -581,12 +631,49 @@ public class ProtoDaoUtils {
             ifInitialized(
                 projectPost.getProjectPostRatings(),
                 rating -> toProjectPostRatingProto(rating, b::addRatingsBuilder));
+            ifInitialized(projectPost.getProject())
+                .ifPresent(
+                    project -> {
+                      ifInitialized(
+                          project.getProjectInputFulfillments(),
+                          inputFulfillment -> {
+                            ifInitialized(inputFulfillment.getProjectInputValue())
+                                .ifPresent(
+                                    inputValue -> {
+                                      var valueType =
+                                          ValueType.valueOf(
+                                              inputValue
+                                                  .getProjectDefinitionCategory()
+                                                  .getProjectDefinitionCategoryType()
+                                                  .getValueType());
+                                      var rating =
+                                          b.addRatingCategoriesBuilder()
+                                              .setProjectInputFulfillmentId(
+                                                  inputFulfillment.getId())
+                                              .setCategory(
+                                                  inputValue
+                                                      .getProjectDefinitionCategory()
+                                                      .getProjectDefinitionCategoryType()
+                                                      .getName())
+                                              .setValueType(valueType);
+                                      switch (valueType) {
+                                        case MOTIVATION -> rating.setValue(
+                                            inputValue.getMotivationValue().getName());
+                                        case FREE_TEXT -> rating.setValue(
+                                            inputValue.getFreeTextValue());
+                                        default -> rating.setValue(
+                                            inputValue.getKnowledgeAndSkillValue().getName());
+                                      }
+                                    });
+                          });
+                    });
           }
         },
         org.davincischools.leo.protos.pl_types.ProjectPost.USER_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.PROJECT_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.TAGS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.COMMENTS_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectPost.RATING_CATEGORIES_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPost.RATINGS_FIELD_NUMBER);
   }
 
@@ -641,10 +728,15 @@ public class ProtoDaoUtils {
           toKnowledgeAndSkillDao(projectPostRating.getKnowledgeAndSkill())
               .ifPresent(dao::setKnowledgeAndSkill);
           toProjectPostDao(projectPostRating.getProjectPost()).ifPresent(dao::setProjectPost);
+          dao.setProjectInputFulfillment(
+              new ProjectInputFulfillment()
+                  .setId(projectPostRating.getProjectInputFulfillmentId()));
         },
         org.davincischools.leo.protos.pl_types.ProjectPostRating.USER_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPostRating.KNOWLEDGE_AND_SKILL_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectPostRating.PROJECT_POST_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.ProjectPostRating.PROJECT_POST_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectPostRating
+            .PROJECT_INPUT_FULFILLMENT_ID_FIELD_NUMBER);
   }
 
   public static Optional<org.davincischools.leo.protos.pl_types.ProjectPostRating.Builder>
@@ -660,10 +752,14 @@ public class ProtoDaoUtils {
               projectPostRating.getKnowledgeAndSkill(), builder::getKnowledgeAndSkillBuilder);
           toProjectPostProto(
               projectPostRating.getProjectPost(), false, builder::getProjectPostBuilder);
+          builder.setProjectInputFulfillmentId(
+              projectPostRating.getProjectInputFulfillment().getId());
         },
         org.davincischools.leo.protos.pl_types.ProjectPostRating.USER_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectPostRating.KNOWLEDGE_AND_SKILL_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectPostRating.PROJECT_POST_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.ProjectPostRating.PROJECT_POST_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectPostRating
+            .PROJECT_INPUT_FULFILLMENT_ID_FIELD_NUMBER);
   }
 
   public static Optional<Interest> toInterestDao(RegisterUserXRequest register_userX_request) {

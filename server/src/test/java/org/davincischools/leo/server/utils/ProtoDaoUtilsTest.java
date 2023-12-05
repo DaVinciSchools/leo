@@ -539,6 +539,66 @@ public class ProtoDaoUtilsTest {
                 }
                 post_time_ms: 15
                 being_edited: true
+                rating_categories {
+                  project_input_fulfillment_id: 16
+                  category: "category_1"
+                  value: "value_1"
+                  value_type: MOTIVATION
+                }
+                rating_categories {
+                  project_input_fulfillment_id: 17
+                  category: "category_2"
+                  value: "value_2"
+                  value_type: FREE_TEXT
+                }
+                rating_categories {
+                  project_input_fulfillment_id: 18
+                  category: "category_3"
+                  value: "value_3"
+                  value_type: EKS
+                }
+                ratings {
+                  id: 19
+                  user_x {
+                    id: 20
+                    is_admin_x: false
+                    is_teacher: false
+                    is_student: false
+                    is_demo: true
+                    is_authenticated: true
+                  }
+                  rating: 5
+                  rating_type: INITIAL_1_TO_5
+                  project_input_fulfillment_id: 16
+                }
+                ratings {
+                  id: 22
+                  user_x {
+                    id: 23
+                    is_admin_x: false
+                    is_teacher: false
+                    is_student: false
+                    is_demo: true
+                    is_authenticated: true
+                  }
+                  rating: 24
+                  rating_type: GOAL_COMPLETE_PCT
+                  project_input_fulfillment_id: 17
+                }
+                ratings {
+                  id: 25
+                  user_x {
+                    id: 26
+                    is_admin_x: false
+                    is_teacher: false
+                    is_student: false
+                    is_demo: true
+                    is_authenticated: true
+                  }
+                  rating: 27
+                  rating_type: GOAL_COMPLETE_PCT
+                  project_input_fulfillment_id: 18
+                }
                 """,
             ProjectPost.class);
 
@@ -931,6 +991,7 @@ public class ProtoDaoUtilsTest {
                 }
                 rating: 1
                 rating_type: INITIAL_1_TO_5
+                project_input_fulfillment_id: 3
                 """,
             ProjectPostRating.class);
 
