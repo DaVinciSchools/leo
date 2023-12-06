@@ -12,10 +12,12 @@ import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.daos.ProjectMilestone_;
 import org.davincischools.leo.database.daos.Project_;
 import org.davincischools.leo.database.daos.Tag;
+import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.query_helper.Entity;
 import org.davincischools.leo.database.utils.query_helper.Predicate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface ProjectRepository
@@ -92,5 +94,22 @@ public interface ProjectRepository
     }
 
     return project;
+  }
+
+  @Transactional
+  default void deeplySaveProjects(Database db, List<Project> projects) {
+    checkNotNull(projects);
+
+    db.getProjectRepository().saveAll(projects);
+    db.getProjectInputFulfillmentRepository()
+        .saveAll(projects.stream().flatMap(p -> p.getProjectInputFulfillments().stream()).toList());
+    db.getProjectMilestoneRepository()
+        .saveAll(projects.stream().flatMap(p -> p.getProjectMilestones().stream()).toList());
+    db.getProjectMilestoneStepRepository()
+        .saveAll(
+            projects.stream()
+                .flatMap(p -> p.getProjectMilestones().stream())
+                .flatMap(m -> m.getProjectMilestoneSteps().stream())
+                .toList());
   }
 }
