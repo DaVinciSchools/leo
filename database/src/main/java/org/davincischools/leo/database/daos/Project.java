@@ -49,7 +49,7 @@ public class Project implements Serializable {
   public static final String COLUMN_THUMBSSTATEREASON_NAME = "thumbs_state_reason";
   public static final String COLUMN_ARCHIVED_NAME = "archived";
   public static final String COLUMN_ACTIVE_NAME = "active";
-  private static final long serialVersionUID = -4790642321537533031L;
+  private static final long serialVersionUID = 1849850730655062598L;
 
   private Integer id;
 
@@ -82,6 +82,8 @@ public class Project implements Serializable {
   private Set<LogReference> logReferences = new LinkedHashSet<>();
 
   private Set<ProjectImage> projectImages = new LinkedHashSet<>();
+
+  private Set<ProjectInput> projectInputs = new LinkedHashSet<>();
 
   private Set<ProjectInputFulfillment> projectInputFulfillments = new LinkedHashSet<>();
 
@@ -179,6 +181,11 @@ public class Project implements Serializable {
   @OneToMany(mappedBy = "project")
   public Set<ProjectImage> getProjectImages() {
     return projectImages;
+  }
+
+  @OneToMany(mappedBy = "existingProject")
+  public Set<ProjectInput> getProjectInputs() {
+    return projectInputs;
   }
 
   @OneToMany(mappedBy = "project")

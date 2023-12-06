@@ -1,6 +1,8 @@
 -- All tables created in my-sql in reverse file order.
 -- Previous names of tables are grouped together with the new name.
 
+ALTER TABLE project_input DROP CONSTRAINT project_input__existing_project_id;
+
 DROP TABLE IF EXISTS log_reference;
 DROP TABLE IF EXISTS log;
 DROP TABLE IF EXISTS tag;

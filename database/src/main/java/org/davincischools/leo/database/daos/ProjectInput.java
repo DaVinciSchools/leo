@@ -2,6 +2,8 @@ package org.davincischools.leo.database.daos;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -42,7 +44,8 @@ public class ProjectInput implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_TIMEOUT_NAME = "timeout";
   public static final String COLUMN_STATE_NAME = "state";
-  private static final long serialVersionUID = 1766468001473245882L;
+  public static final String COLUMN_EXISTINGPROJECTCONFIG_NAME = "existing_project_config";
+  private static final long serialVersionUID = 8838856827390049025L;
 
   private Integer id;
 
@@ -53,6 +56,10 @@ public class ProjectInput implements Serializable {
   private Instant timeout;
 
   private String state;
+
+  private Project existingProject;
+
+  private ExistingProjectConfigType existingProjectConfig;
 
   private ProjectDefinition projectDefinition;
 
@@ -94,6 +101,19 @@ public class ProjectInput implements Serializable {
     return state;
   }
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "existing_project_id")
+  public Project getExistingProject() {
+    return existingProject;
+  }
+
+  @Lob
+  @Enumerated(EnumType.STRING)
+  @Column(name = COLUMN_EXISTINGPROJECTCONFIG_NAME)
+  public ExistingProjectConfigType getExistingProjectConfig() {
+    return existingProjectConfig;
+  }
+
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "project_definition_id", nullable = false)
   @PropagateDeleteFrom
@@ -120,7 +140,6 @@ public class ProjectInput implements Serializable {
   }
 
   @OneToMany(mappedBy = "projectInput")
-  @PropagateDeleteFrom
   public Set<Project> getProjects() {
     return projects;
   }
