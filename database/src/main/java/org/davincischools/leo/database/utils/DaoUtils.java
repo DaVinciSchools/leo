@@ -3,6 +3,7 @@ package org.davincischools.leo.database.utils;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -250,6 +251,12 @@ public class DaoUtils {
     return Stream.empty();
   }
 
+  public static <T extends DaoWithPosition> ImmutableList<T> sortByPosition(Iterable<T> daos) {
+    return Streams.stream(daos)
+        .sorted(Comparator.comparing(DaoWithPosition::getPosition))
+        .collect(toImmutableList());
+  }
+
   public static <T, R> List<T> getJoinTableDaos(
       @Nullable Set<R> sourceTableRows, Function<R, T> getTargetFn) {
     checkNotNull(getTargetFn);
@@ -341,14 +348,4 @@ public class DaoUtils {
       Function<Object, Object> getId,
       BiConsumer<Object, Object> setId,
       ImmutableList<BiConsumer<Object, Object>> copyFields) {}
-
-  public static <T extends DaoWithPosition> List<T> sortByPosition(Iterable<T> daos) {
-    if (Iterables.isEmpty(daos)) {
-      return Collections.emptyList();
-    }
-
-    return Streams.stream(daos)
-        .sorted(Comparator.comparing(DaoWithPosition::getPosition))
-        .collect(Collectors.toList());
-  }
 }
