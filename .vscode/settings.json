@@ -18,10 +18,8 @@
         "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
     "[jsonc]": {
+        "editor.formatOnSave": true,
         "editor.defaultFormatter": "vscode.json-language-features"
-    },
-    "[java]": {
-        "editor.defaultFormatter": "redhat.java"
     },
     "eslint.format.enable": true,
     "eslint.ignoreUntitled": true,
@@ -33,4 +31,5 @@
     "java.sources.organizeImports.staticStarThreshold": 999999,
     "maven.pomfile.autoUpdateEffectivePOM": true,
     "files.eol": "\n",
+    "java.format.enabled": false,
 }

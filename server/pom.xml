@@ -26,6 +26,7 @@
     </properties>
 
     <dependencies>
+
         <!-- Spring framework. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -63,6 +64,12 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-webflux</artifactId>
             <version>${spring.framework.version}</version>
+        </dependency>
+        <!-- Added by VS Code. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+            <version>${spring.boot.starter.version}</version>
         </dependency>
 
         <!-- Parse command line options. -->

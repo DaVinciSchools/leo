@@ -26,8 +26,6 @@ import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -48,7 +46,6 @@ public class QueryHelper {
 
   public static final int DEFAULT_PAGE_SIZE = 25;
 
-  private static final Logger logger = LogManager.getLogger();
   private static final IdentityHashMap<Class<?>, Method> getIdMethods = new IdentityHashMap<>();
 
   private final EntityManager entityManager;
@@ -255,18 +252,20 @@ public class QueryHelper {
         entity.setJpaEntity(query.from(entity.getEntityClass()));
         break;
       case GET:
-        if (entity.getAttribute() instanceof SingularAttribute<? super W, ?> a
-            && entity.getParent().getJpaEntity() instanceof From<?, ?> f) {
-          @SuppressWarnings("unchecked")
-          var expr = f.get((SingularAttribute<Object, E>) a);
-          entity.setJpaEntity(expr);
-        } else if (entity.getAttribute() instanceof SetAttribute<?, ?> a
-            && entity.getParent().getJpaEntity() instanceof From<?, ?> f) {
-          @SuppressWarnings("unchecked")
-          var expr = ((From<Object, Object>) f).get((SetAttribute<Object, E>) a);
-          entity.setJpaEntity(expr);
-        } else {
-          throw new RuntimeException("Invalid attribute type.");
+        {
+          if (entity.getAttribute() instanceof SingularAttribute<? super W, ?> a
+              && entity.getParent().getJpaEntity() instanceof From<?, ?> f) {
+            @SuppressWarnings("unchecked")
+            var expr = f.get((SingularAttribute<Object, E>) a);
+            entity.setJpaEntity(expr);
+          } else if (entity.getAttribute() instanceof SetAttribute<?, ?> a
+              && entity.getParent().getJpaEntity() instanceof From<?, ?> f) {
+            @SuppressWarnings("unchecked")
+            var expr = ((From<Object, Object>) f).get((SetAttribute<Object, E>) a);
+            entity.setJpaEntity(expr);
+          } else {
+            throw new RuntimeException("Invalid attribute type.");
+          }
         }
         break;
       case JOIN:

@@ -6,7 +6,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
