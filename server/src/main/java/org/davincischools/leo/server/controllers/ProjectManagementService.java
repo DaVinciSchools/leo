@@ -1,6 +1,6 @@
 package org.davincischools.leo.server.controllers;
 
-import static org.davincischools.leo.database.utils.DaoUtils.sortByPosition;
+import static org.davincischools.leo.database.utils.DaoUtils.listIfInitialized;
 import static org.davincischools.leo.protos.pl_types.ProjectDefinition.State.FAILED;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.enumNameOrNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
@@ -13,28 +13,21 @@ import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectProto;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
-import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import org.apache.commons.text.StringEscapeUtils;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.Project;
-import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.UserX;
@@ -44,8 +37,8 @@ import org.davincischools.leo.database.utils.repos.GetAssignmentsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectDefinitionsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectsParams;
-import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
+import org.davincischools.leo.protos.pl_types.ProjectDefinition;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsRequest;
@@ -68,15 +61,19 @@ import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
 import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillRequest;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillResponse;
-import org.davincischools.leo.server.controllers.project_generators.OpenAi3V3ProjectGenerator;
-import org.davincischools.leo.server.utils.OpenAiUtils;
+import org.davincischools.leo.protos.task_service.GenerateProjectTask;
+import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.Anonymous;
 import org.davincischools.leo.server.utils.http_user_x.Authenticated;
 import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
+import org.davincischools.leo.server.utils.task_queue.workers.ProjectGeneratorWorker;
+import org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai.OpenAi3V3ProjectGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -84,20 +81,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class ProjectManagementService {
 
-  public record GenerateProjectsState(
-      GenerateProjectsRequest request,
-      ProjectDefinition definition,
-      ProjectInput input,
-      List<ImmutableList<ProjectInputValue>> values,
-      Map<Integer, Integer> criteriaToInputValue,
-      GenerateProjectsResponse.Builder response) {}
-
-  public record GenerateAnonymousProjectInput(
-      ProjectInputCategory input, ProjectDefinitionCategory inputDefinition) {}
-
   private static final AtomicInteger positionCounter = new AtomicInteger(0);
 
   @Autowired Database db;
+  @Autowired ProjectGeneratorWorker projectGeneratorWorker;
   @Autowired OpenAi3V3ProjectGenerator openAi3V3ProjectGenerator;
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetKnowledgeAndSkills")
@@ -177,6 +164,7 @@ public class ProjectManagementService {
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GenerateProjects")
   @ResponseBody
+  @Transactional
   public GenerateProjectsResponse generateProjects(
       @Authenticated HttpUserX userX,
       @RequestBody Optional<GenerateProjectsRequest> optionalRequest,
@@ -186,145 +174,110 @@ public class ProjectManagementService {
       return userX.returnForbidden(GenerateProjectsResponse.getDefaultInstance());
     }
 
+    var projectInputRef = new AtomicReference<ProjectInput>();
     return httpExecutors
         .start(optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()))
         .andThen(
             (request, log) -> {
-              // Generate initial GenerateProjectsState state with definition.
-              List<ProjectDefinition> definitions =
-                  db.getProjectDefinitionRepository()
-                      .getProjectDefinitions(
-                          new GetProjectDefinitionsParams()
-                              .setProjectDefinitionIds(List.of(request.getDefinition().getId())));
-              if (definitions.size() != 1) {
+              // Load the official definition.
+              var definition =
+                  Iterables.getOnlyElement(
+                      db.getProjectDefinitionRepository()
+                          .getProjectDefinitions(
+                              new GetProjectDefinitionsParams()
+                                  .setProjectDefinitionIds(
+                                      List.of(request.getDefinition().getId()))));
+
+              // Verify that the categories match.
+              if (request.getDefinition().getInputsCount()
+                  != listIfInitialized(definition.getProjectDefinitionCategories()).size()) {
                 throw new IllegalArgumentException(
-                    "Project definition does not exist: " + request.getDefinition().getId());
-              }
-              ProjectDefinition definition = definitions.get(0);
-
-              return new GenerateProjectsState(
-                  request,
-                  definition,
-                  new ProjectInput()
-                      .setCreationTime(Instant.now())
-                      .setProjectDefinition(definition)
-                      .setUserX(userX.get().orElse(null))
-                      .setState(State.PROCESSING.name())
-                      .setTimeout(Instant.now().plus(Duration.ofMinutes(OpenAiUtils.TIMEOUT_MIN)))
-                      .setAssignment(
-                          request.hasAssignmentId()
-                              ? new Assignment().setId(request.getAssignmentId())
-                              : null),
-                  new ArrayList<>(),
-                  new HashMap<>(),
-                  GenerateProjectsResponse.newBuilder());
-            })
-        .andThen(
-            (state, log) -> {
-              // Save project values and input.
-              if (state.definition.getProjectDefinitionCategories().size()
-                  != state.request.getDefinition().getInputsList().size()) {
-                throw new IllegalArgumentException(
-                    "Incorrect number of inputs: "
-                        + state.request.getDefinition().getInputsList().size());
+                    "Incorrect number of input categories: " + request);
               }
 
-              int i = 0;
-              for (ProjectDefinitionCategory category :
-                  sortByPosition(state.definition.getProjectDefinitionCategories())) {
-                var inputProto = state.request.getDefinition().getInputsList().get(i++);
+              // Save project input.
+              var projectInput = createProjectInput(userX, request.getDefinition());
+              projectInputRef.set(db.getProjectInputRepository().save(projectInput));
+              db.getProjectInputValueRepository().saveAll(projectInput.getProjectInputValues());
+              projectGeneratorWorker.submitTask(
+                  GenerateProjectTask.newBuilder().setProjectInputId(projectInput.getId()).build());
 
-                Supplier<ProjectInputValue> newProjectInputValue =
-                    () ->
-                        new ProjectInputValue()
-                            .setCreationTime(Instant.now())
-                            .setProjectInput(state.input)
-                            .setProjectDefinitionCategory(category)
-                            .setPosition((float) positionCounter.incrementAndGet());
-
-                Builder<ProjectInputValue> projectInputValues = ImmutableList.builder();
-                switch (ValueType.valueOf(
-                    category.getProjectDefinitionCategoryType().getValueType())) {
-                  case FREE_TEXT -> projectInputValues.addAll(
-                      throwIfEmptyCategory(
-                          inputProto.getFreeTextsList().stream()
-                              .map(s -> newProjectInputValue.get().setFreeTextValue(s))
-                              .toList()));
-                  case MOTIVATION -> projectInputValues.addAll(
-                      throwIfEmptyCategory(
-                          db
-                              .getMotivationRepository()
-                              .findAllByIds(inputProto.getSelectedIdsList())
-                              .stream()
-                              .map(m -> newProjectInputValue.get().setMotivationValue(m))
-                              .toList()));
-                  default -> projectInputValues.addAll(
-                      throwIfEmptyCategory(
-                          db
-                              .getKnowledgeAndSkillRepository()
-                              .findAllByIdsAndType(
-                                  inputProto.getSelectedIdsList(),
-                                  category.getProjectDefinitionCategoryType().getValueType())
-                              .stream()
-                              .map(ks -> newProjectInputValue.get().setKnowledgeAndSkillValue(ks))
-                              .toList()));
-                }
-                state.values.add(projectInputValues.build());
-              }
-
-              // Save project projectInput.
-              db.getProjectInputRepository().save(state.input);
-              db.getProjectInputValueRepository()
-                  .saveAll(state.values.stream().flatMap(Collection::stream).toList());
-
-              log.addProjectInput(state.input);
-              state.response.setProjectInputId(state.input.getId());
-
-              return state;
-            })
-        .andThen(
-            (state, log) -> {
-              new Thread(
-                      () -> {
-                        var failed = new AtomicBoolean(false);
-                        ImmutableList.of(openAi3V3ProjectGenerator).parallelStream()
-                            .forEach(
-                                generator -> {
-                                  try {
-                                    generator.generateAndSaveProjects(state, httpExecutors, 5);
-                                  } catch (Throwable t) {
-                                    failed.set(true);
-                                  }
-                                });
-                        db.getProjectInputRepository()
-                            .updateState(
-                                state.input.getId(),
-                                failed.get() ? State.FAILED.name() : State.COMPLETED.name());
-                      })
-                  .start();
-
-              return state.response.build();
+              return GenerateProjectsResponse.newBuilder()
+                  .setProjectInputId(projectInput.getId())
+                  .build();
             })
         .onError(
             (error, log) -> {
-              if (error.lastInput() instanceof GenerateProjectsState state) {
+              if (projectInputRef.get() != null) {
                 db.getProjectInputRepository()
-                    .updateState(state.input.getId(), State.FAILED.name());
+                    .updateState(projectInputRef.get().getId(), State.FAILED.name());
               }
               return Optional.empty();
             })
         .finish();
   }
 
-  private <T> Iterable<T> throwIfEmptyCategory(Iterable<T> values) {
-    if (Iterables.isEmpty(values)) {
-      throw new IllegalArgumentException("No projectInput for category");
-    }
-    return values;
-  }
+  @NotNull
+  private ProjectInput createProjectInput(
+      HttpUserX userX, org.davincischools.leo.protos.pl_types.ProjectDefinition definition) {
+    // Convert request to ProjectInput.
+    var projectInput =
+        new ProjectInput()
+            .setCreationTime(Instant.now())
+            .setProjectDefinition(ProtoDaoUtils.toProjectDefinitionDao(definition).orElseThrow())
+            .setUserX(userX.getUserXOrNull())
+            .setAssignment(
+                definition.getAssignment().hasId()
+                    ? new Assignment().setId(definition.getAssignment().getId())
+                    : null)
+            .setState(State.PROCESSING.name());
 
-  public static String quoteAndEscape(String s) {
-    return "\"" + StringEscapeUtils.escapeJava(s) + "\"";
+    // Convert request inputs to ProjectInputValues.
+    projectInput.setProjectInputValues(new LinkedHashSet<>());
+    for (int i = 0; i < definition.getInputsCount(); ++i) {
+      // Get category at index i.
+      var inputs = definition.getInputs(i);
+      Supplier<ProjectInputValue> newProjectInputValue =
+          () ->
+              new ProjectInputValue()
+                  .setCreationTime(Instant.now())
+                  .setProjectInput(projectInput)
+                  .setProjectDefinitionCategory(
+                      new ProjectDefinitionCategory().setId(inputs.getCategory().getId()))
+                  .setPosition((float) positionCounter.incrementAndGet());
+
+      // Get inputs at index i.
+      switch (inputs.getCategory().getValueType()) {
+        case FREE_TEXT -> {
+          projectInput
+              .getProjectInputValues()
+              .addAll(
+                  inputs.getFreeTextsList().stream()
+                      .map(t -> newProjectInputValue.get().setFreeTextValue(t))
+                      .toList());
+        }
+        case MOTIVATION -> {
+          projectInput
+              .getProjectInputValues()
+              .addAll(
+                  db.getMotivationRepository().findAllByIds(inputs.getSelectedIdsList()).stream()
+                      .map(m -> newProjectInputValue.get().setMotivationValue(m))
+                      .toList());
+        }
+        default -> {
+          projectInput
+              .getProjectInputValues()
+              .addAll(
+                  db
+                      .getKnowledgeAndSkillRepository()
+                      .findAllById(inputs.getSelectedIdsList())
+                      .stream()
+                      .map(ks -> newProjectInputValue.get().setKnowledgeAndSkillValue(ks))
+                      .toList());
+        }
+      }
+    }
+    return projectInput;
   }
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjects")
@@ -443,6 +396,9 @@ public class ProjectManagementService {
                   .setName(i.getName())
                   .setShortDescr(i.getShortDescr()),
           input);
+      case FREE_TEXT -> {
+        // No options.
+      }
       default -> populateOptions(
           db.getKnowledgeAndSkillRepository().findAll(input.getValueType().name()),
           i -> {
@@ -598,61 +554,73 @@ public class ProjectManagementService {
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GenerateAnonymousProjects")
   @ResponseBody
+  @Transactional
   public GenerateAnonymousProjectsResponse generateAnonymousProjects(
       @Anonymous HttpUserX userX,
       @RequestBody Optional<GenerateAnonymousProjectsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    var response = GenerateAnonymousProjectsResponse.newBuilder();
-
+    var projectInputRef = new AtomicReference<ProjectInput>();
     return httpExecutors
         .start(optionalRequest.orElse(GenerateAnonymousProjectsRequest.getDefaultInstance()))
-        // Create the GenerateProjectRequest.
         .andThen(
             (request, log) -> {
-              var generateRequest = GenerateProjectsRequest.newBuilder();
-
-              // Create the definition and GenerateProjectRequest.
-              org.davincischools.leo.database.daos.ProjectDefinition definition =
+              // Create the definition.
+              var definition =
                   new org.davincischools.leo.database.daos.ProjectDefinition()
                       .setCreationTime(Instant.now())
-                      .setName("Anonymously Created Project Definition");
-              if (userX.isAuthenticated()) {
-                definition.setUserX(userX.get().orElseThrow());
-              }
+                      .setName("Anonymously Created Project Definition")
+                      .setUserX(userX.getUserXOrNull());
+
+              // Create the definition categories.
+              var categories =
+                  request.getInputValuesList().stream()
+                      .map(
+                          input ->
+                              new ProjectDefinitionCategory()
+                                  .setCreationTime(Instant.now())
+                                  .setProjectDefinition(definition)
+                                  .setPosition((float) positionCounter.incrementAndGet())
+                                  .setMaxNumValues(input.getCategory().getMaxNumValues())
+                                  .setProjectDefinitionCategoryType(
+                                      new ProjectDefinitionCategoryType()
+                                          .setId(input.getCategory().getTypeId())))
+                      .toList();
+              definition.setProjectDefinitionCategories(new LinkedHashSet<>(categories));
+
+              // Save the definition & categories.
               db.getProjectDefinitionRepository().save(definition);
-              generateRequest.getDefinitionBuilder().setId(definition.getId());
+              db.getProjectDefinitionCategoryRepository()
+                  .saveAll(definition.getProjectDefinitionCategories());
 
-              // Process the inputs.
-              request
-                  .getInputValuesList()
-                  .forEach(
-                      input -> {
-                        db.getProjectDefinitionCategoryRepository()
-                            .upsert(
-                                definition,
-                                db.getProjectDefinitionCategoryTypeRepository()
-                                    .findById(input.getCategory().getTypeId())
-                                    .orElseThrow(),
-                                e ->
-                                    e.setMaxNumValues(input.getCategory().getMaxNumValues())
-                                        .setPosition((float) positionCounter.incrementAndGet()));
-                        generateRequest
-                            .getDefinitionBuilder()
-                            .addInputsBuilder()
-                            .addAllFreeTexts(input.getFreeTextsList())
-                            .addAllSelectedIds(input.getSelectedIdsList());
-                      });
+              // Build definition proto.
+              var definitionProto =
+                  toProjectDefinitionProto(definition, ProjectDefinition::newBuilder).orElseThrow();
+              definitionProto.clearInputs();
+              for (int i = 0; i < categories.size(); ++i) {
+                var input = request.getInputValues(i).toBuilder();
+                input.getCategoryBuilder().setId(categories.get(i).getId());
+                definitionProto.addInputs(input);
+              }
 
-              return generateRequest;
-            })
-        .andThen(
-            (generateRequest, log) -> {
-              GenerateProjectsResponse generateProjectsResponse =
-                  generateProjects(userX, Optional.of(generateRequest.build()), httpExecutors);
-              return response
-                  .setProjectInputId(generateProjectsResponse.getProjectInputId())
+              // Save project input.
+              var projectInput = createProjectInput(userX, definitionProto.build());
+              projectInputRef.set(db.getProjectInputRepository().save(projectInput));
+              db.getProjectInputValueRepository().saveAll(projectInput.getProjectInputValues());
+              projectGeneratorWorker.submitTask(
+                  GenerateProjectTask.newBuilder().setProjectInputId(projectInput.getId()).build());
+
+              return GenerateAnonymousProjectsResponse.newBuilder()
+                  .setProjectInputId(projectInput.getId())
                   .build();
+            })
+        .onError(
+            (error, log) -> {
+              if (projectInputRef.get() != null) {
+                db.getProjectInputRepository()
+                    .updateState(projectInputRef.get().getId(), State.FAILED.name());
+              }
+              return Optional.empty();
             })
         .finish();
   }

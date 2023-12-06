@@ -65,11 +65,9 @@ import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository;
-import org.davincischools.leo.database.utils.repos.ProjectInputRepository;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.ClassX.Builder;
-import org.davincischools.leo.protos.pl_types.ProjectDefinition;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.ValueType;
@@ -174,17 +172,6 @@ public class ProtoDaoUtils {
           toProjectDefinitionProto(projectInput.getProjectDefinition(), () -> builder);
           toAssignmentProto(projectInput.getAssignment(), false, builder::getAssignmentBuilder);
 
-          if (projectInput.getState() != null) {
-            builder.setState(
-                switch (ProjectInputRepository.State.valueOf(projectInput.getState())) {
-                  case FAILED -> ProjectDefinition.State.FAILED;
-                  case COMPLETED -> ProjectDefinition.State.COMPLETED;
-                  case PROCESSING -> Instant.now().isAfter(projectInput.getTimeout())
-                      ? ProjectDefinition.State.FAILED
-                      : ProjectDefinition.State.PROCESSING;
-                });
-          }
-
           Map<Integer, org.davincischools.leo.protos.pl_types.ProjectInputValue.Builder>
               categoryIdToProjectInputValue = new HashMap<>();
           builder
@@ -222,7 +209,6 @@ public class ProtoDaoUtils {
         org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUT_ID_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.TEMPLATE_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER);
   }

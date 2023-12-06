@@ -55,3 +55,7 @@ message ReplyToPostTask {
 message FillInMissingProjectInfoTask {
   optional int32 project_id = 1;
 }
+
+message GenerateProjectTask {
+  optional int32 project_input_id = 1;
+}

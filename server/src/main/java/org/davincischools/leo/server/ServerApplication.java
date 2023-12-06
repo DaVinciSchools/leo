@@ -16,7 +16,6 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.post_environment_processors.LoadCustomProjectLeoProperties;
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.server.controllers.project_generators.ProjectGenerator;
 import org.davincischools.leo.server.utils.ApplicationExceptionConsoleLogger;
 import org.davincischools.leo.server.utils.QueryWithNullsToRecordConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutor;
@@ -25,6 +24,7 @@ import org.davincischools.leo.server.utils.http_user_x.HttpUserXArgumentResolver
 import org.davincischools.leo.server.utils.http_user_x.HttpUserXService;
 import org.davincischools.leo.server.utils.http_user_x.UserXDetails;
 import org.davincischools.leo.server.utils.task_queue.workers.ReplyToPostsWorker;
+import org.davincischools.leo.server.utils.task_queue.workers.project_generators.ProjectGenerator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
