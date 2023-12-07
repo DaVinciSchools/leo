@@ -15,6 +15,7 @@ import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -61,7 +62,7 @@ import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
 import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillRequest;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillResponse;
-import org.davincischools.leo.protos.task_service.GenerateProjectTask;
+import org.davincischools.leo.protos.task_service.GenerateProjectsTask;
 import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
@@ -199,8 +200,10 @@ public class ProjectManagementService {
               var projectInput = createProjectInput(userX, request.getDefinition());
               projectInputRef.set(db.getProjectInputRepository().save(projectInput));
               db.getProjectInputValueRepository().saveAll(projectInput.getProjectInputValues());
+
               projectGeneratorWorker.submitTask(
-                  GenerateProjectTask.newBuilder().setProjectInputId(projectInput.getId()).build());
+                  GenerateProjectsTask.newBuilder().setProjectInputId(projectInput.getId()).build(),
+                  Duration.ofSeconds(5));
 
               return GenerateProjectsResponse.newBuilder()
                   .setProjectInputId(projectInput.getId())
@@ -608,7 +611,8 @@ public class ProjectManagementService {
               projectInputRef.set(db.getProjectInputRepository().save(projectInput));
               db.getProjectInputValueRepository().saveAll(projectInput.getProjectInputValues());
               projectGeneratorWorker.submitTask(
-                  GenerateProjectTask.newBuilder().setProjectInputId(projectInput.getId()).build());
+                  GenerateProjectsTask.newBuilder().setProjectInputId(projectInput.getId()).build(),
+                  Duration.ofSeconds(5));
 
               return GenerateAnonymousProjectsResponse.newBuilder()
                   .setProjectInputId(projectInput.getId())

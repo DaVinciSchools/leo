@@ -34,11 +34,12 @@ public final class ReplyToPostsWorker extends TaskQueue<ReplyToPostTask, Default
   }
 
   @Override
-  protected void processTask(ReplyToPostTask task, DefaultTaskMetadata metadata) {
+  protected boolean processTask(ReplyToPostTask task, DefaultTaskMetadata metadata) {
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
       // Do nothing.
     }
+    return false;
   }
 }

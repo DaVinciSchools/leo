@@ -50,7 +50,7 @@ public final class FillInMissingProjectInfoWorker
   }
 
   @Override
-  protected void processTask(FillInMissingProjectInfoTask task, DefaultTaskMetadata metadata)
+  protected boolean processTask(FillInMissingProjectInfoTask task, DefaultTaskMetadata metadata)
       throws IOException {
 
     // Get the project.
@@ -68,9 +68,11 @@ public final class FillInMissingProjectInfoWorker
                         .setIncludeFulfillments(true)
                         .setIncludeInactive(true)),
             null);
-    if (existingProject == null
-        || !listIfInitialized(existingProject.getProjectInputFulfillments()).isEmpty()) {
-      return;
+    if (existingProject == null) {
+      throw new IllegalArgumentException("Existing project not found.");
+    }
+    if (!listIfInitialized(existingProject.getProjectInputFulfillments()).isEmpty()) {
+      return false;
     }
 
     // Recreate the state that was used to generate the project.
@@ -78,7 +80,7 @@ public final class FillInMissingProjectInfoWorker
         ProjectGeneratorInput.getProjectGeneratorInput(
             db, existingProject.getProjectInput().getId());
     if (generatorInput == null) {
-      return;
+      throw new IllegalArgumentException("Unable to create project generator input.");
     }
     generatorInput.setFillInProject(existingProject);
 
@@ -86,5 +88,6 @@ public final class FillInMissingProjectInfoWorker
     db.getProjectRepository().deeplySaveProjects(db, projects);
     db.getProjectInputRepository()
         .updateState(generatorInput.getProjectInput().getId(), State.COMPLETED.name());
+    return true;
   }
 }

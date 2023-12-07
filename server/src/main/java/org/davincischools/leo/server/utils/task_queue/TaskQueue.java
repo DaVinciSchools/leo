@@ -5,12 +5,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.Message;
 import jakarta.annotation.PostConstruct;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -111,28 +114,43 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
 
   protected abstract M createDefaultMetadata();
 
-  protected abstract void processTask(T task, M metadata) throws Throwable;
+  protected abstract boolean processTask(T task, M metadata) throws Throwable;
 
   protected void taskFailed(T task, M metadata, Throwable t) throws Throwable {}
 
-  public final void submitTask(T task, M metadata) {
+  public final void submitTask(T task, M metadata, Duration afterDuration) {
     checkNotNull(task);
     checkNotNull(metadata);
 
-    synchronized (LOCK) {
-      queueMetadata.submittedTasks++;
-      M oldMetadata = pendingTasks.put(task, metadata);
-      if (oldMetadata != null) {
-        queueMetadata.skippedTasks++;
-      }
-      LOCK.notifyAll();
-    }
+    new Timer()
+        .schedule(
+            new TimerTask() {
+              @Override
+              public void run() {
+                synchronized (LOCK) {
+                  queueMetadata.submittedTasks++;
+                  M oldMetadata = pendingTasks.put(task, metadata);
+                  if (oldMetadata != null) {
+                    queueMetadata.skippedTasks++;
+                  }
+                  LOCK.notifyAll();
+                }
+              }
+            },
+            afterDuration.toMillis());
+  }
+
+  public void submitTask(T task, Duration afterDuration) {
+    checkNotNull(task);
+    checkNotNull(afterDuration);
+
+    submitTask(task, createDefaultMetadata(), afterDuration);
   }
 
   public final void submitTask(T task) {
     checkNotNull(task);
 
-    submitTask(task, createDefaultMetadata());
+    submitTask(task, createDefaultMetadata(), Duration.ZERO);
   }
 
   @SuppressWarnings("InfiniteLoopStatement")
@@ -180,10 +198,11 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
             () -> {
               long startTimeMs = System.currentTimeMillis();
               try {
-                processTask(task, taskMetadata);
-                synchronized (LOCK) {
-                  queueMetadata.totalProcessingTimeMs += System.currentTimeMillis() - startTimeMs;
-                  queueMetadata.totalProcessingTimeCount++;
+                if (processTask(task, taskMetadata)) {
+                  synchronized (LOCK) {
+                    queueMetadata.totalProcessingTimeMs += System.currentTimeMillis() - startTimeMs;
+                    queueMetadata.totalProcessingTimeCount++;
+                  }
                 }
               } catch (Throwable t) {
                 synchronized (LOCK) {
@@ -198,7 +217,7 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
                           + TaskQueue.toCompressedString(task);
                   if (taskMetadata.retries-- > 0) {
                     queueMetadata.retries++;
-                    submitTask(task, taskMetadata);
+                    submitTask(task, taskMetadata, Duration.ofSeconds(5));
                     return;
                   }
                 }
