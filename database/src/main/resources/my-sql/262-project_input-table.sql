@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS project_input
 
     state                   ENUM ('PROCESSING', 'COMPLETED', 'FAILED') NOT NULL,
 
-    existing_project_config ENUM('USE_CONFIGURATION', 'MORE_LIKE_THIS', 'SUB_PROJECTS'),
+    existing_project_config ENUM ('USE_CONFIGURATION', 'MORE_LIKE_THIS', 'SUB_PROJECTS'),
 
     existing_project_id     INT,
     -- CONSTRAINT project_input__existing_project_id is added in 999-project_input-table.sql.
