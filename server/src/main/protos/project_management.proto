@@ -16,7 +16,6 @@ service ProjectManagementService {
   rpc GenerateAnonymousProjects (GenerateAnonymousProjectsRequest) returns (GenerateAnonymousProjectsResponse) {}
   rpc RegisterAnonymousProjects (RegisterAnonymousProjectsRequest) returns (RegisterAnonymousProjectsResponse) {}
 
-  rpc GetProjectDefinitions (GetProjectDefinitionsRequest) returns (GetProjectDefinitionsResponse) {}
   rpc GetProjectInputs (GetProjectInputsRequest) returns (GetProjectInputsResponse) {}
   rpc GetProjects (GetProjectsRequest) returns (GetProjectsResponse) {}
 
@@ -75,15 +74,6 @@ message UpdateProjectRequest {
 
 message UpdateProjectResponse {
   optional pl_types.Project project = 1;
-}
-
-message GetProjectDefinitionsRequest {
-  repeated int32 project_definition_ids = 1;
-  repeated int32 assignment_ids = 2;
-}
-
-message GetProjectDefinitionsResponse {
-  repeated pl_types.ProjectDefinition definitions = 1;
 }
 
 message GetProjectDefinitionCategoryTypesRequest {

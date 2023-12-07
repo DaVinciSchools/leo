@@ -50,8 +50,6 @@ import org.davincischools.leo.protos.project_management.GetKnowledgeAndSkillsReq
 import org.davincischools.leo.protos.project_management.GetKnowledgeAndSkillsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionCategoryTypesRequest;
 import org.davincischools.leo.protos.project_management.GetProjectDefinitionCategoryTypesResponse;
-import org.davincischools.leo.protos.project_management.GetProjectDefinitionsRequest;
-import org.davincischools.leo.protos.project_management.GetProjectDefinitionsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectInputsRequest;
 import org.davincischools.leo.protos.project_management.GetProjectInputsResponse;
 import org.davincischools.leo.protos.project_management.GetProjectsRequest;
@@ -418,44 +416,6 @@ public class ProjectManagementService {
           },
           input);
     }
-  }
-
-  @PostMapping(value = "/api/protos/ProjectManagementService/GetProjectDefinitions")
-  @ResponseBody
-  public GetProjectDefinitionsResponse getProjectDefinitions(
-      @Authenticated HttpUserX userX,
-      @RequestBody Optional<GetProjectDefinitionsRequest> optionalRequest,
-      HttpExecutors httpExecutors)
-      throws HttpExecutorException {
-    if (userX.isNotAuthorized()) {
-      return userX.returnForbidden(GetProjectDefinitionsResponse.getDefaultInstance());
-    }
-
-    return httpExecutors
-        .start(optionalRequest.orElse(GetProjectDefinitionsRequest.getDefaultInstance()))
-        .andThen(
-            (request, log) -> {
-              var response = GetProjectDefinitionsResponse.newBuilder();
-
-              db.getProjectDefinitionRepository()
-                  .getProjectDefinitions(
-                      new GetProjectDefinitionsParams()
-                          .setProjectDefinitionIds(
-                              listOrNull(
-                                  request,
-                                  GetProjectDefinitionsRequest.PROJECT_DEFINITION_IDS_FIELD_NUMBER))
-                          .setAssignmentIds(
-                              listOrNull(
-                                  request,
-                                  GetProjectDefinitionsRequest.ASSIGNMENT_IDS_FIELD_NUMBER)))
-                  .forEach(
-                      projectDefinition ->
-                          toProjectDefinitionProto(
-                              projectDefinition, response::addDefinitionsBuilder));
-
-              return response.build();
-            })
-        .finish();
   }
 
   private <T> void populateOptions(
