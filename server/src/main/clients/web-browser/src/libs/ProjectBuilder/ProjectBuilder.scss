@@ -48,12 +48,35 @@
   width: 100%;
 }
 
+.project-builder-existing-project {
+  height: 100%;
+}
+
+.project-builder-existing-project-title {
+  font-size: xx-large;
+  font-style: italic;
+  font-weight: bold;
+  text-align: center;
+}
+
 .project-builder-project-details {
   display: grid;
   gap: 1em;
   grid-template-columns: 1.5fr 2fr;
   grid-template-rows: auto auto 1fr;
   height: 100%;
+}
+
+.project-builder-project-details-project-configuration {
+  border: 1px solid #002077;
+  background: #eaf5ff;
+  color: #002077;
+  margin: 0.5em;
+  padding: 1em;
+  border-radius: 0.5em;
+  box-shadow: #002077bb 5px 5px 10px 0;
+  width: 90%;
+  align-self: center;
 }
 
 .project-builder-project-details-title {

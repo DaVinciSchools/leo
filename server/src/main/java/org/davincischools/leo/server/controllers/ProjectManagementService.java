@@ -1,7 +1,6 @@
 package org.davincischools.leo.server.controllers;
 
 import static org.davincischools.leo.database.utils.DaoUtils.listIfInitialized;
-import static org.davincischools.leo.protos.pl_types.ProjectDefinition.State.FAILED;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.enumNameOrNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toAssignmentDao;
@@ -317,7 +316,15 @@ public class ProjectManagementService {
                           .setIncludeTags(
                               valueOrNull(request, GetProjectsRequest.INCLUDE_TAGS_FIELD_NUMBER))
                           .setIncludeInputs(
-                              valueOrNull(request, GetProjectsRequest.INCLUDE_INPUTS_FIELD_NUMBER))
+                              request.getIncludeInputs()
+                                  ? new GetProjectInputsParams()
+                                      .setIncludeProcessing(true)
+                                      .setIncludeComplete(true)
+                                      .setIncludeAssignment(
+                                          request.getIncludeAssignment()
+                                              ? new GetAssignmentsParams()
+                                              : null)
+                                  : null)
                           .setIncludeFulfillments(
                               valueOrNull(
                                   request, GetProjectsRequest.INCLUDE_FULFILLMENTS_FIELD_NUMBER))
@@ -374,7 +381,7 @@ public class ProjectManagementService {
 
               var filteredInputs =
                   response.getProjectsBuilderList().stream()
-                      .filter(def -> def.getState() != FAILED)
+                      .filter(def -> def.getState() != ProjectDefinition.State.FAILED)
                       .toList();
               response.clearProjects();
               filteredInputs.forEach(response::addProjects);
