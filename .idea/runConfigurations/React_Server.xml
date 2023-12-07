@@ -2,7 +2,7 @@
   <configuration default="false" name="React Server" type="js.build_tools.npm">
     <package-json value="$PROJECT_DIR$/server/src/main/clients/web-browser/package.json" />
     <command value="start" />
-    <node-interpreter value="project" />
+    <node-interpreter value="wsl://Ubuntu-22.04@/usr/bin/node" />
     <envs>
       <env name="BROWSER" value="none" />
     </envs>
