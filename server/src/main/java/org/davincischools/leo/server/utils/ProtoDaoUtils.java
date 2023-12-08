@@ -493,9 +493,11 @@ public class ProtoDaoUtils {
                   .filter(Optional::isPresent)
                   .map(Optional::get)
                   .collect(toSet()));
+          toProjectInputDao(project.getProjectDefinition()).ifPresent(dao::setProjectInput);
         },
         org.davincischools.leo.protos.pl_types.Project.ASSIGNMENT_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.Project.PROJECT_DEFINITION_FIELD_NUMBER);
   }
 
   public static Optional<org.davincischools.leo.protos.pl_types.Project.Builder> toProjectProto(
@@ -513,9 +515,14 @@ public class ProtoDaoUtils {
               project.getProjectMilestones(),
               Comparator.comparing(ProjectMilestone::getPosition),
               milestone -> toMilestoneProto(milestone, builder::addMilestonesBuilder));
+          ifInitialized(project.getProjectInput())
+              .ifPresent(
+                  projectInput ->
+                      toProjectDefinitionProto(projectInput, builder::getProjectDefinitionBuilder));
         },
         org.davincischools.leo.protos.pl_types.Project.ASSIGNMENT_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.Project.MILESTONES_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.Project.PROJECT_DEFINITION_FIELD_NUMBER);
   }
 
   public static Optional<ProjectPost> toProjectPostDao(
