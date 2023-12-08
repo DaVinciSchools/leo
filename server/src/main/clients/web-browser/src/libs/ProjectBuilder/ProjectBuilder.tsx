@@ -23,7 +23,7 @@ import {login} from '../authentication';
 import {pl_types, project_management, user_x_management} from 'pl-pb';
 import {useNavigate} from 'react-router';
 import {ProjectsAutocomplete} from '../common_fields/ProjectsAutocomplete';
-import {DeepReadonly} from '../misc';
+import {DeepReadOnly} from '../misc';
 import {PROJECT_SORTER} from '../sorters';
 import {useFormFields} from '../form_utils/forms';
 import ProjectManagementService = project_management.ProjectManagementService;
@@ -78,7 +78,7 @@ export function ProjectBuilder(props: {
     readonly IProject[]
   >([]);
   const [selectedExistingProject, setSelectedExistingProject] =
-    useState<DeepReadonly<IProject | null>>(null);
+    useState<DeepReadOnly<IProject | null>>(null);
   const [selectedProjectConfiguration, setSelectedProjectConfiguration] =
     useState<ExistingProjectSelection | null>(null);
 

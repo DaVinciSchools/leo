@@ -11,8 +11,8 @@ import {
 } from '@mui/icons-material';
 import {useContext, useEffect, useState} from 'react';
 import {
-  DeepReadonly,
-  DeepWritable,
+  DeepReadOnly,
+  deepWritable,
   formatAsTag,
   isTextEmpty,
   removeInPlace,
@@ -47,8 +47,8 @@ interface RatingKey {
 }
 
 export function Post(props: {
-  post: DeepReadonly<IProjectPost>;
-  postUpdated: (post: DeepReadonly<IProjectPost>, refresh: boolean) => void;
+  post: DeepReadOnly<IProjectPost>;
+  postUpdated: (post: DeepReadOnly<IProjectPost>, refresh: boolean) => void;
   showComments?: boolean | null | undefined;
   showRatings?: boolean | null | undefined;
 }) {
@@ -58,24 +58,24 @@ export function Post(props: {
   const global = useContext(GlobalStateContext);
 
   const [sortedAssignmentKs, setSortedAssignmentKs] = useState<
-    DeepReadonly<IKnowledgeAndSkill[]>
+    DeepReadOnly<IKnowledgeAndSkill[]>
   >([]);
   const [sortedRatingUsers, setSortedRatingUsers] = useState<
-    DeepReadonly<IUserX[]>
+    DeepReadOnly<IUserX[]>
   >([]);
-  const [sortedTags, setSortedTags] = useState<DeepReadonly<ITag[]>>([]);
+  const [sortedTags, setSortedTags] = useState<DeepReadOnly<ITag[]>>([]);
   const [sortedComments, setSortedComments] = useState<
-    DeepReadonly<IProjectPostComment>[]
+    DeepReadOnly<IProjectPostComment>[]
   >([]);
 
   const [ratings, setRatings] = useState<
-    DeepReadonly<
+    DeepReadOnly<
       Map</* JSON.stringify(RatingKey)= */ string, IProjectPostRating>
     >
   >(new Map());
 
   const [commentBeingEdited, setCommentBeingEdited] = useState<
-    DeepReadonly<IProjectPostComment> | undefined
+    DeepReadOnly<IProjectPostComment> | undefined
   >(undefined);
   const [newCommentContent, setNewCommentContent] = useState('');
 
@@ -127,7 +127,7 @@ export function Post(props: {
       return;
     }
 
-    const newComment = Object.assign({}, DeepWritable(commentBeingEdited), {
+    const newComment = Object.assign({}, deepWritable(commentBeingEdited), {
       longDescrHtml: newCommentContent,
     } as IProjectPostComment);
     setCommentBeingEdited(undefined);
@@ -185,7 +185,7 @@ export function Post(props: {
     });
   }
 
-  function deleteComment(comment: DeepReadonly<IProjectPostComment>) {
+  function deleteComment(comment: DeepReadOnly<IProjectPostComment>) {
     saveCommentBeingEdited();
 
     const newSortedComments = removeInPlace(
@@ -383,7 +383,7 @@ export function Post(props: {
                               }
                               const newRating = Object.assign(
                                 {},
-                                DeepWritable(oldRating),
+                                deepWritable(oldRating),
                                 {
                                   rating: value,
                                 }

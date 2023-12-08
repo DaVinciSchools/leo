@@ -11,7 +11,7 @@ export function asObject(value: any) {
   return isObject(value) ? value : {};
 }
 
-export function toLong(value: DeepReadonly<PbLong> | number) {
+export function toLong(value: DeepReadOnly<PbLong> | number) {
   if (typeof value === 'number') {
     return Long.fromNumber(value);
   } else {
@@ -109,11 +109,11 @@ export type DeepWritable<T> = T extends
   ? Set<DeepWritable<E>>
   : {-readonly [K in keyof T]: DeepWritable<T[K]>};
 
-export function DeepWritable<T>(value: T | DeepReadonly<T>): DeepWritable<T> {
+export function deepWritable<T>(value: T | DeepReadOnly<T>): DeepWritable<T> {
   return value as DeepWritable<T>;
 }
 
-export type DeepReadonly<T> = T extends
+export type DeepReadOnly<T> = T extends
   | undefined
   | void
   | null
@@ -123,13 +123,13 @@ export type DeepReadonly<T> = T extends
   | Function
   ? T
   : T extends Array<infer E>
-  ? ReadonlyArray<DeepReadonly<E>>
+  ? ReadonlyArray<DeepReadOnly<E>>
   : T extends Map<infer K, infer V>
-  ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
+  ? ReadonlyMap<DeepReadOnly<K>, DeepReadOnly<V>>
   : T extends Set<infer E>
-  ? ReadonlySet<DeepReadonly<E>>
-  : {readonly [K in keyof T]: DeepReadonly<T[K]>};
+  ? ReadonlySet<DeepReadOnly<E>>
+  : {readonly [K in keyof T]: DeepReadOnly<T[K]>};
 
-export function DeepReadonly<T>(value: T | DeepWritable<T>): DeepReadonly<T> {
-  return value as DeepReadonly<T>;
+export function deepReadOnly<T>(value: T | DeepWritable<T>): DeepReadOnly<T> {
+  return value as DeepReadOnly<T>;
 }

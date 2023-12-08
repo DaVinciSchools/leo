@@ -11,22 +11,22 @@ import {
 } from '@mui/material';
 import Table from '@mui/material/Table';
 import {useContext, useEffect, useState} from 'react';
-import IFullUserXDetails = user_x_management.IFullUserXDetails;
-import {DeepReadonly} from '../misc';
+import {DeepReadOnly} from '../misc';
 import {Person} from '@mui/icons-material';
 import {createService} from '../protos';
+import {GlobalStateContext} from '../GlobalState';
+import IFullUserXDetails = user_x_management.IFullUserXDetails;
 import UserXManagementService = user_x_management.UserXManagementService;
 import IGetUserXsRequest = user_x_management.IGetUserXsRequest;
-import {GlobalStateContext} from '../GlobalState';
 
 export function SearchForUserX(props: {
-  onSelect: (userX?: DeepReadonly<IFullUserXDetails>) => void;
-  baseRequest: DeepReadonly<IGetUserXsRequest>;
+  onSelect: (userX?: DeepReadOnly<IFullUserXDetails>) => void;
+  baseRequest: DeepReadOnly<IGetUserXsRequest>;
 }) {
   const global = useContext(GlobalStateContext);
 
   const [userXs, setUserXs] = useState<
-    readonly DeepReadonly<IFullUserXDetails>[]
+    readonly DeepReadOnly<IFullUserXDetails>[]
   >([]);
 
   const form = useFormFields();

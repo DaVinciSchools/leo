@@ -3,24 +3,24 @@ import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import React, {useContext, useEffect, useState} from 'react';
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {
+  Button,
+  Collapse,
+  IconButton,
   Paper,
-  TableCell,
   Table,
+  TableBody,
+  TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TableBody,
-  Button,
-  IconButton,
-  Collapse,
 } from '@mui/material';
-import {DeepReadonly, toLong} from '../../../libs/misc';
+import {DeepReadOnly, toLong} from '../../../libs/misc';
 import {createService} from '../../../libs/protos';
 import {task_service} from 'pl-pb';
+import {KeyboardArrowDown, KeyboardArrowUp} from '@mui/icons-material';
+import formatDuration from 'format-duration';
 import TaskService = task_service.TaskService;
 import ITaskQueueStatus = task_service.ITaskQueueStatus;
-import {KeyboardArrowUp, KeyboardArrowDown} from '@mui/icons-material';
-import formatDuration from 'format-duration';
 
 export function AdminXDashboard() {
   const global = useContext(GlobalStateContext);
@@ -29,7 +29,7 @@ export function AdminXDashboard() {
     userX => userX.isAdminX
   );
   const [taskQueueStatuses, setTaskQueueStatuses] = useState<
-    DeepReadonly<ITaskQueueStatus>[]
+    DeepReadOnly<ITaskQueueStatus>[]
   >([]);
   const [errorDetailsRow, setErrorDetailsRow] = useState<string>();
 
