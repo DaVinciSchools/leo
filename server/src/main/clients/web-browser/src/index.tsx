@@ -1,5 +1,5 @@
 import './index.scss';
-import React, {PropsWithChildren, useEffect} from 'react';
+import React, {PropsWithChildren, StrictMode, useEffect} from 'react';
 import ReactDOM from 'react-dom/client';
 import {
   createBrowserRouter,
@@ -294,11 +294,11 @@ const router = createBrowserRouter([
 ]);
 
 root.render(
-  <React.StrictMode>
+  <StrictMode>
     <GlobalState>
       <RouterProvider router={router} />
     </GlobalState>
-  </React.StrictMode>
+  </StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function

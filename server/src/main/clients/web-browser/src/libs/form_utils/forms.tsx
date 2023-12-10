@@ -7,6 +7,7 @@ import {
   FormHTMLAttributes,
   ReactElement,
   RefObject,
+  SyntheticEvent,
   useEffect,
   useRef,
   useState,
@@ -55,7 +56,7 @@ export interface FormFieldMetadata {
 
 export interface IFormAutocompleteParams<T> {
   value: Writable<T>;
-  onChange: (event: React.SyntheticEvent, value: Readonly<T>) => void;
+  onChange: (event: SyntheticEvent, value: Readonly<T>) => void;
   disabled: boolean;
 }
 
@@ -377,7 +378,7 @@ export function useFormFields(
         value: Array.isArray(autocompleteValue)
           ? (autocompleteValue.slice() as unknown as Writable<T>)
           : autocompleteValue,
-        onChange: (e: React.SyntheticEvent, value: Readonly<T>) => {
+        onChange: (e: SyntheticEvent, value: Readonly<T>) => {
           setAutocompleteValue(
             (Array.isArray(value) ? value.slice() : value) as T
           );

@@ -1,9 +1,9 @@
-import React from 'react';
+import React, {CSSProperties} from 'react';
 import Venn, {stringSet} from './utils/Venn';
 import generateCompletion from './utils/Completion';
 
 function App() {
-  const style: React.CSSProperties = {
+  const style: CSSProperties = {
     display: 'flex',
     flexFlow: 'column nowrap',
     justifyContent: 'center',

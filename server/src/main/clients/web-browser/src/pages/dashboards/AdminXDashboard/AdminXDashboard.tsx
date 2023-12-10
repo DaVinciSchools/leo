@@ -1,6 +1,6 @@
 import './AdminXDashboard.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import React, {useContext, useEffect, useState} from 'react';
+import React, {Fragment, useContext, useEffect, useState} from 'react';
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {
   Button,
@@ -109,7 +109,7 @@ export function AdminXDashboard() {
               {taskQueueStatuses
                 .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
                 .map(s => (
-                  <React.Fragment key={s.name}>
+                  <Fragment key={s.name}>
                     <TableRow
                       sx={{'&:last-child td, &:last-child th': {border: 0}}}
                     >
@@ -177,7 +177,7 @@ export function AdminXDashboard() {
                         </Collapse>
                       </TableCell>
                     </TableRow>
-                  </React.Fragment>
+                  </Fragment>
                 ))}
             </TableBody>
           </Table>
