@@ -130,6 +130,7 @@ export function ProjectBuilder(props: {
           userXIds: [userX?.id ?? 0],
           includeAssignment: true,
           includeInputs: true,
+          includeInputOptions: true,
         })
         .then(response => {
           setSortedExistingProjects(response.projects.sort(PROJECT_SORTER));

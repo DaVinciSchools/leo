@@ -329,6 +329,19 @@ public class ProjectManagementService {
                               valueOrNull(
                                   request, GetProjectsRequest.INCLUDE_MILESTONES_FIELD_NUMBER)))
                   .forEach(project -> toProjectProto(project, true, response::addProjectsBuilder));
+              if (request.getIncludeInputOptions()) {
+                addProjectInputCategoryOptions(
+                    db,
+                    response.getProjectsBuilderList().stream()
+                        .map(
+                            org.davincischools.leo.protos.pl_types.Project.Builder
+                                ::getProjectDefinitionBuilder)
+                        .flatMap(d -> d.getInputsBuilderList().stream())
+                        .map(
+                            org.davincischools.leo.protos.pl_types.ProjectInputValue.Builder
+                                ::getCategoryBuilder)
+                        .toList());
+              }
 
               return response.build();
             })
