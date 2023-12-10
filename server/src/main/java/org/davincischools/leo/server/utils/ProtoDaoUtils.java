@@ -8,7 +8,6 @@ import static org.davincischools.leo.database.utils.DaoUtils.getDaoClass;
 import static org.davincischools.leo.database.utils.DaoUtils.ifInitialized;
 import static org.davincischools.leo.database.utils.DaoUtils.isInitialized;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -64,7 +63,6 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.AssignmentKnowledgeAndSkillRepository;
 import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillRepository;
-import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.ClassX.Builder;
@@ -339,47 +337,57 @@ public class ProtoDaoUtils {
         ProjectInputCategory.OPTIONS_FIELD_NUMBER);
   }
 
-  public static Optional<org.davincischools.leo.protos.pl_types.ProjectInputCategory.Builder>
-      addProjectInputCategoryProtoValues(
-          ProjectDefinitionCategory projectDefinitionCategory,
-          Database db,
-          Optional<org.davincischools.leo.protos.pl_types.ProjectInputCategory.Builder> builder) {
-    if (builder.isEmpty()) {
-      return builder;
-    }
+  public static Optional<Option.Builder> toOptionProto(
+      KnowledgeAndSkill knowledgeAndSkill, Supplier<Option.Builder> newBuilder) {
+    return translateToProto(
+        knowledgeAndSkill,
+        newBuilder,
+        builder -> {
+          toUserXProto(knowledgeAndSkill.getUserX(), builder::getUserXBuilder);
+        },
+        Option.USER_X_FIELD_NUMBER);
+  }
 
-    switch (ProjectDefinitionCategoryTypeRepository.ValueType.valueOf(
-        projectDefinitionCategory.getProjectDefinitionCategoryType().getValueType())) {
-      case MOTIVATION -> populateOptions(
-          db.getMotivationRepository().findAll(),
-          i ->
-              Option.newBuilder()
-                  .setId(i.getId())
-                  .setName(i.getName())
-                  .setShortDescr(i.getShortDescr()),
-          builder.get());
-      case FREE_TEXT -> {
-        // No options to populate.
+  public static Optional<Option.Builder> toOptionProto(
+      Motivation motivation, Supplier<Option.Builder> newBuilder) {
+    return translateToProto(
+        motivation,
+        newBuilder,
+        builder -> {},
+        Option.USER_X_FIELD_NUMBER,
+        Option.CATEGORY_FIELD_NUMBER);
+  }
+
+  public static void addProjectInputCategoryOptions(
+      Database db, Iterable<ProjectInputCategory.Builder> projectInputCategories) {
+    var options = new HashMap<ValueType, List<Option>>();
+    for (var projectInputCategory : projectInputCategories) {
+      switch (projectInputCategory.getValueType()) {
+        case MOTIVATION -> projectInputCategory.addAllOptions(
+            options.computeIfAbsent(
+                projectInputCategory.getValueType(),
+                valueType ->
+                    db.getMotivationRepository().findAll().stream()
+                        .map(motivation -> toOptionProto(motivation, Option::newBuilder))
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .map(Option.Builder::build)
+                        .toList()));
+        case FREE_TEXT -> {}
+        default -> projectInputCategory.addAllOptions(
+            options.computeIfAbsent(
+                projectInputCategory.getValueType(),
+                valueType ->
+                    db.getKnowledgeAndSkillRepository().findAll(valueType.name()).stream()
+                        .map(
+                            knowledgeAndSkill ->
+                                toOptionProto(knowledgeAndSkill, Option::newBuilder))
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .map(Option.Builder::build)
+                        .toList()));
       }
-      default -> populateOptions(
-          db.getKnowledgeAndSkillRepository()
-              .findAll(projectDefinitionCategory.getProjectDefinitionCategoryType().getValueType()),
-          i -> {
-            var option =
-                Option.newBuilder()
-                    .setId(i.getId())
-                    .setName(i.getName())
-                    .setShortDescr(Strings.nullToEmpty(i.getShortDescr()))
-                    .setUserXId(i.getUserX().getId());
-            if (i.getCategory() != null) {
-              option.setCategory(i.getCategory());
-            }
-            return option;
-          },
-          builder.get());
     }
-
-    return builder;
   }
 
   private static <T> void populateOptions(

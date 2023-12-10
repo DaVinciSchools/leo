@@ -1,6 +1,7 @@
 package org.davincischools.leo.server.controllers;
 
 import static org.davincischools.leo.database.utils.DaoUtils.listIfInitialized;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.addProjectInputCategoryOptions;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.enumNameOrNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toAssignmentDao;
@@ -11,18 +12,14 @@ import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectInputCa
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectProto;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Streams;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.Project;
@@ -39,8 +36,6 @@ import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectsParams;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition;
-import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
-import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsRequest;
 import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsResponse;
 import org.davincischools.leo.protos.project_management.GenerateProjectsRequest;
@@ -391,50 +386,6 @@ public class ProjectManagementService {
         .finish();
   }
 
-  private void extractProjectInputCategory(
-      ProjectDefinitionCategory category, ProjectInputCategory.Builder input) {
-    toProjectInputCategoryProto(category, () -> input);
-
-    switch (input.getValueType()) {
-      case MOTIVATION -> populateOptions(
-          db.getMotivationRepository().findAll(),
-          i ->
-              Option.newBuilder()
-                  .setId(i.getId())
-                  .setName(i.getName())
-                  .setShortDescr(i.getShortDescr()),
-          input);
-      case FREE_TEXT -> {
-        // No options.
-      }
-      default -> populateOptions(
-          db.getKnowledgeAndSkillRepository().findAll(input.getValueType().name()),
-          i -> {
-            var option =
-                Option.newBuilder()
-                    .setId(i.getId())
-                    .setName(i.getName())
-                    .setShortDescr(Strings.nullToEmpty(i.getShortDescr()))
-                    .setUserXId(i.getUserX().getId());
-            if (i.getCategory() != null) {
-              option.setCategory(i.getCategory());
-            }
-            return option;
-          },
-          input);
-    }
-  }
-
-  private <T> void populateOptions(
-      Iterable<T> values,
-      Function<T, Option.Builder> toOption,
-      ProjectInputCategory.Builder inputCategory) {
-    Streams.stream(values)
-        .map(toOption)
-        .sorted(Comparator.comparing(Option.Builder::getName))
-        .forEach(inputCategory::addOptions);
-  }
-
   @PostMapping(value = "/api/protos/ProjectManagementService/UpdateProject")
   @ResponseBody
   public UpdateProjectResponse updateProject(
@@ -491,7 +442,7 @@ public class ProjectManagementService {
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjectDefinitionCategoryTypes")
   @ResponseBody
-  public GetProjectDefinitionCategoryTypesResponse GetProjectDefinitionCategoryTypes(
+  public GetProjectDefinitionCategoryTypesResponse getProjectDefinitionCategoryTypes(
       @Anonymous HttpUserX userX,
       @RequestBody Optional<GetProjectDefinitionCategoryTypesRequest> optionalRequest,
       HttpExecutors httpExecutors)
@@ -510,12 +461,15 @@ public class ProjectManagementService {
                   .findAllByCategories(request.getIncludeDemos())
                   .stream()
                   .map(
-                      t ->
+                      categoryType ->
                           new ProjectDefinitionCategory()
-                              .setProjectDefinitionCategoryType(t)
+                              .setProjectDefinitionCategoryType(categoryType)
                               .setMaxNumValues(4))
                   .forEach(
-                      c -> extractProjectInputCategory(c, response.addInputCategoriesBuilder()));
+                      category ->
+                          toProjectInputCategoryProto(
+                              category, response::addInputCategoriesBuilder));
+              addProjectInputCategoryOptions(db, response.getInputCategoriesBuilderList());
 
               return response.build();
             })

@@ -165,7 +165,9 @@ message ProjectInputCategory {
     optional string name = 2;
     optional string category = 4;
     optional string short_descr = 3;
-    optional int32 user_x_id = 5;
+    optional UserX user_x = 6;
+
+    reserved 5;
   }
 
   // ProjectDefinitionCategory.id
