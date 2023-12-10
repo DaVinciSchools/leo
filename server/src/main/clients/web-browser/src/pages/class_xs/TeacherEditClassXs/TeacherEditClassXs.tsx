@@ -237,7 +237,7 @@ export function TeacherEditClassXs() {
                 ': ' +
                 (option?.name ?? 'undefined')
               }
-              onChange={(e, option) => {
+              onChange={(ignore, option) => {
                 autoSave.forceDelayedAction(() => {
                   setSelectedClass(option);
                 });
