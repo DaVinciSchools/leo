@@ -142,7 +142,7 @@ export function OverviewTab() {
                     sortedClassXs={classXOptions}
                     formField={classXFilter}
                     placeholder={hasOptions =>
-                      hasOptions ? 'Filter by Class' : 'Select Schools'
+                      hasOptions ? 'Filter by Class' : 'Select Schools First'
                     }
                     InputLabelProps={{shrink: true}}
                   />

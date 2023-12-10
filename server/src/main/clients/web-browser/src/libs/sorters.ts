@@ -12,90 +12,95 @@ import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
 import Type = pl_types.KnowledgeAndSkill.Type;
 import ITag = pl_types.ITag;
 
-export const TEXT_SORTER = (a: DeepReadOnly<string>, b: DeepReadOnly<string>) =>
-  a.localeCompare(b);
+export const TEXT_SORTER = (
+  a: DeepReadOnly<string | null | undefined>,
+  b: DeepReadOnly<string | null | undefined>
+) => (a ?? '').localeCompare(b ?? '');
 
 export const OPTION_SORTER = (
-  a: DeepReadOnly<IOption>,
-  b: DeepReadOnly<IOption>
+  a: DeepReadOnly<IOption | null | undefined>,
+  b: DeepReadOnly<IOption | null | undefined>
 ) =>
-  (a.category ?? '').localeCompare(b.category ?? '') ||
-  (a.name ?? '').localeCompare(b.name ?? '') ||
-  (a.shortDescr ?? '').localeCompare(b.shortDescr ?? '');
+  (a?.category ?? '').localeCompare(b?.category ?? '') ||
+  (a?.name ?? '').localeCompare(b?.name ?? '') ||
+  (a?.shortDescr ?? '').localeCompare(b?.shortDescr ?? '');
 
 export const KNOWLEDGE_AND_SKILL_SORTER = (
-  a: DeepReadOnly<IKnowledgeAndSkill>,
-  b: DeepReadOnly<IKnowledgeAndSkill>
+  a: DeepReadOnly<IKnowledgeAndSkill | null | undefined>,
+  b: DeepReadOnly<IKnowledgeAndSkill | null | undefined>
 ) =>
-  (a.type ?? Type.UNSET) - (b.type ?? Type.UNSET) ||
-  (a.category ?? '').localeCompare(b.category ?? '') ||
-  (a.name ?? '').localeCompare(b.name ?? '') ||
-  (a.shortDescr ?? '').localeCompare(b.shortDescr ?? '');
+  (a?.type ?? Type.UNSET) - (b?.type ?? Type.UNSET) ||
+  (a?.category ?? '').localeCompare(b?.category ?? '') ||
+  (a?.name ?? '').localeCompare(b?.name ?? '') ||
+  (a?.shortDescr ?? '').localeCompare(b?.shortDescr ?? '');
 
 export const DISTRICT_SORTER = (
-  a: DeepReadOnly<IDistrict>,
-  b: DeepReadOnly<IDistrict>
-) => (a.name ?? '').localeCompare(b.name ?? '');
+  a: DeepReadOnly<IDistrict | null | undefined>,
+  b: DeepReadOnly<IDistrict | null | undefined>
+) => (a?.name ?? '').localeCompare(b?.name ?? '');
 
 export const SCHOOL_SORTER = (
-  a: DeepReadOnly<ISchool>,
-  b: DeepReadOnly<ISchool>
+  a: DeepReadOnly<ISchool | null | undefined>,
+  b: DeepReadOnly<ISchool | null | undefined>
 ) =>
-  DISTRICT_SORTER(a.district ?? {}, b.district ?? {}) ||
-  (a.name ?? '').localeCompare(b.name ?? '') ||
-  (a.address ?? '').localeCompare(b.address ?? '');
+  DISTRICT_SORTER(a?.district, b?.district) ||
+  (a?.name ?? '').localeCompare(b?.name ?? '') ||
+  (a?.address ?? '').localeCompare(b?.address ?? '');
 
 export const CLASS_X_SORTER = (
-  a: DeepReadOnly<IClassX>,
-  b: DeepReadOnly<IClassX>
+  a: DeepReadOnly<IClassX | null | undefined>,
+  b: DeepReadOnly<IClassX | null | undefined>
 ) =>
-  SCHOOL_SORTER(a.school ?? {}, b.school ?? {}) ||
-  (a.name ?? '').localeCompare(b.name ?? '');
+  SCHOOL_SORTER(a?.school, b?.school) ||
+  (a?.name ?? '').localeCompare(b?.name ?? '');
 
 export const ASSIGNMENT_SORTER = (
-  a: DeepReadOnly<IAssignment>,
-  b: DeepReadOnly<IAssignment>
+  a: DeepReadOnly<IAssignment | null | undefined>,
+  b: DeepReadOnly<IAssignment | null | undefined>
 ) =>
-  CLASS_X_SORTER(a.classX ?? {}, b.classX ?? {}) ||
-  (a.name ?? '').localeCompare(b.name ?? '');
+  CLASS_X_SORTER(a?.classX, b?.classX) ||
+  (a?.name ?? '').localeCompare(b?.name ?? '');
 
 export const PROJECT_SORTER = (
-  a: DeepReadOnly<IProject>,
-  b: DeepReadOnly<IProject>
+  a: DeepReadOnly<IProject | null | undefined>,
+  b: DeepReadOnly<IProject | null | undefined>
 ) =>
-  (a.name ?? '').localeCompare(b.name ?? '') ||
-  (a.shortDescr ?? '').localeCompare(b.shortDescr ?? '');
+  (a?.name ?? '').localeCompare(b?.name ?? '') ||
+  (a?.shortDescr ?? '').localeCompare(b?.shortDescr ?? '');
 
 export const PROJECT_POST_COMMENT_SORTER = (
-  a: DeepReadOnly<pl_types.IProjectPostComment>,
-  b: DeepReadOnly<pl_types.IProjectPostComment>
-) => toLong(b.postTimeMs ?? 0).compare(toLong(a.postTimeMs ?? 0));
+  a: DeepReadOnly<pl_types.IProjectPostComment | null | undefined>,
+  b: DeepReadOnly<pl_types.IProjectPostComment | null | undefined>
+) => toLong(b?.postTimeMs ?? 0).compare(toLong(a?.postTimeMs ?? 0));
 
 export const REVERSE_DATE_THEN_PROJECT_SORTER = (
-  a: DeepReadOnly<IProject>,
-  b: DeepReadOnly<IProject>
+  a: DeepReadOnly<IProject | null | undefined>,
+  b: DeepReadOnly<IProject | null | undefined>
 ) =>
-  (b.id ?? 0) - (a.id ?? 0) ||
-  (a.name ?? '').localeCompare(b.name ?? '') ||
-  (a.shortDescr ?? '').localeCompare(b.shortDescr ?? '');
+  (b?.id ?? 0) - (a?.id ?? 0) ||
+  (a?.name ?? '').localeCompare(b?.name ?? '') ||
+  (a?.shortDescr ?? '').localeCompare(b?.shortDescr ?? '');
 
 export const PROJECT_DEFINITION_SORTER = (
-  a: DeepReadOnly<IProjectDefinition>,
-  b: DeepReadOnly<IProjectDefinition>
+  a: DeepReadOnly<IProjectDefinition | null | undefined>,
+  b: DeepReadOnly<IProjectDefinition | null | undefined>
 ) =>
-  (b.state === State.FAILED ? -1 : 1) - (b.state === State.FAILED ? -1 : 1) ||
-  (b.state === State.PROCESSING ? -1 : 1) -
-    (b.state === State.PROCESSING ? -1 : 1) ||
-  (b.template === true ? 1 : -1) - (a.template === true ? 1 : -1) ||
-  (a.name ?? '').localeCompare(b.name ?? '');
+  (b?.state === State.FAILED ? -1 : 1) - (a?.state === State.FAILED ? -1 : 1) ||
+  (b?.state === State.PROCESSING ? -1 : 1) -
+    (a?.state === State.PROCESSING ? -1 : 1) ||
+  (b?.template === true ? 1 : -1) - (a?.template === true ? 1 : -1) ||
+  (a?.name ?? '').localeCompare(b?.name ?? '');
 
-export const TAG_SORTER = (a: DeepReadOnly<ITag>, b: DeepReadOnly<ITag>) =>
-  (a.userXId ?? 0) - (b.userXId ?? 0) ||
-  (a.text ?? '').localeCompare(b.text ?? '');
+export const TAG_SORTER = (
+  a: DeepReadOnly<ITag | null | undefined>,
+  b: DeepReadOnly<ITag | null | undefined>
+) =>
+  (a?.userXId ?? 0) - (b?.userXId ?? 0) ||
+  (a?.text ?? '').localeCompare(b?.text ?? '');
 
 export const USER_X_SORTER = (
-  a: DeepReadOnly<pl_types.IUserX>,
-  b: DeepReadOnly<pl_types.IUserX>
+  a: DeepReadOnly<pl_types.IUserX | null | undefined>,
+  b: DeepReadOnly<pl_types.IUserX | null | undefined>
 ) =>
-  (a.lastName ?? '').localeCompare(b.lastName ?? '') ||
-  (a.firstName ?? '').localeCompare(b.firstName ?? '');
+  (a?.lastName ?? '').localeCompare(b?.lastName ?? '') ||
+  (a?.firstName ?? '').localeCompare(b?.firstName ?? '');
