@@ -17,21 +17,15 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
 
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
 @Accessors(chain = true)
 @Entity(name = ProjectInput.ENTITY_NAME)
 @Table(name = ProjectInput.TABLE_NAME, schema = "leo_test")
@@ -44,8 +38,8 @@ public class ProjectInput implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_TIMEOUT_NAME = "timeout";
   public static final String COLUMN_STATE_NAME = "state";
-  public static final String COLUMN_EXISTINGPROJECTCONFIG_NAME = "existing_project_config";
-  private static final long serialVersionUID = 8838856827390049025L;
+  public static final String COLUMN_EXISTINGPROJECTUSETYPE_NAME = "existing_project_use_type";
+  private static final long serialVersionUID = 8018302510977246859L;
 
   private Integer id;
 
@@ -59,7 +53,7 @@ public class ProjectInput implements Serializable {
 
   private Project existingProject;
 
-  private ExistingProjectConfigType existingProjectConfig;
+  private ExistingProjectUseType existingProjectUseType;
 
   private ProjectDefinition projectDefinition;
 
@@ -109,9 +103,9 @@ public class ProjectInput implements Serializable {
 
   @Lob
   @Enumerated(EnumType.STRING)
-  @Column(name = COLUMN_EXISTINGPROJECTCONFIG_NAME)
-  public ExistingProjectConfigType getExistingProjectConfig() {
-    return existingProjectConfig;
+  @Column(name = COLUMN_EXISTINGPROJECTUSETYPE_NAME)
+  public ExistingProjectUseType getExistingProjectUseType() {
+    return existingProjectUseType;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
