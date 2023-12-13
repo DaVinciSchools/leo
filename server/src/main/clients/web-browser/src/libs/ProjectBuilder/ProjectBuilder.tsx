@@ -12,7 +12,14 @@ import {
   StepButton,
   Stepper,
 } from '@mui/material';
-import {CSSProperties, ReactNode, useContext, useEffect, useState} from 'react';
+import {
+  CSSProperties,
+  ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {GlobalStateContext} from '../GlobalState';
 import {IkigaiProjectBuilder} from '../IkigaiProjectBuilder/IkigaiProjectBuilder';
 import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectConfigurer';
@@ -23,9 +30,9 @@ import {login} from '../authentication';
 import {pl_types, project_management, user_x_management} from 'pl-pb';
 import {useNavigate} from 'react-router';
 import {ProjectsAutocomplete} from '../common_fields/ProjectsAutocomplete';
-import {DeepReadOnly} from '../misc';
+import {deepClone, DeepReadOnly, deepWritable, modifyInPlace} from '../misc';
 import {PROJECT_SORTER} from '../sorters';
-import {useFormFields} from '../form_utils/forms';
+import {FormField, useFormFields} from '../form_utils/forms';
 import ProjectManagementService = project_management.ProjectManagementService;
 import UserXManagementService = user_x_management.UserXManagementService;
 import IProject = pl_types.IProject;
@@ -52,21 +59,34 @@ const STATE_LABELS = new Map<State, string>([
   [State.CONGRATULATIONS, 'Congratulations!'],
 ]);
 
-export function ProjectBuilder(props: {
-  noCategoriesText: ReactNode;
-  style?: Partial<CSSProperties>;
-}) {
+export interface ProjectInput {
+  input: pl_types.IProjectInputValue;
+  selected: boolean;
+  highlightHue: number;
+}
+
+export function getCategoryId(
+  category?: DeepReadOnly<pl_types.IProjectInputCategory | null>
+) {
+  return category?.id ?? -(category?.typeId ?? 0);
+}
+
+export function ProjectBuilder(
+  props: DeepReadOnly<{
+    noCategoriesText: ReactNode;
+    style?: Partial<CSSProperties>;
+  }>
+) {
   const global = useContext(GlobalStateContext);
   const userX = global.optionalUserX();
   const navigate = useNavigate();
+  const hiddenForm = useFormFields();
 
-  const [allInputValues, setAllInputValues] = useState<
-    readonly pl_types.IProjectInputValue[]
-  >([]);
-  const [inputValues, setInputValues] = useState<
-    readonly pl_types.IProjectInputValue[]
-  >([]);
   const [projectInputId, setProjectInputId] = useState<number | undefined>();
+  const [demoInputs, setDemoInputs] = useState<ProjectInput[]>([]);
+  const demoInputsLoaded = useRef(false);
+  const [allInputs, internalSetAllInputs] = useState<ProjectInput[]>([]);
+  const selectedInputs = allInputs.filter(i => i.selected);
 
   const [loginUserXVisible, setLoginUserXVisible] = useState(false);
   const [registerUserXVisible, setRegisterUserXVisible] = useState(false);
@@ -75,12 +95,16 @@ export function ProjectBuilder(props: {
 
   const [selectExistingProject, setSelectExistingProject] = useState(false);
   const [sortedExistingProjects, setSortedExistingProjects] = useState<
-    readonly IProject[]
-  >([]);
-  const [selectedExistingProject, setSelectedExistingProject] =
-    useState<DeepReadOnly<IProject | null>>(null);
-  const [selectedProjectConfiguration, setSelectedProjectConfiguration] =
-    useState<ExistingProjectSelection | null>(null);
+    IProject[] | null
+  >(null);
+  const selectedExistingProject =
+    hiddenForm.useAutocompleteFormField<IProject | null>('project', {
+      onChange: selectedExistingProjectUpdated,
+    });
+  const [
+    selectedExistingProjectConfiguration,
+    setSelectedExistingProjectConfiguration,
+  ] = useState<ExistingProjectSelection | null>(null);
 
   // All states. But, filter out REGISTER depending on whether a user is already logged in.
   const steps = Object.values(State)
@@ -90,41 +114,93 @@ export function ProjectBuilder(props: {
     .map(i => i as State);
   const [activeStep, internalSetActiveStep] = useState(State.GETTING_STARTED);
 
-  const hiddenForm = useFormFields({
-    onChange: () => {
-      setSelectedExistingProject(hiddenProject.getValue() ?? null);
-    },
-  });
-  const hiddenProject = hiddenForm.useAutocompleteFormField<IProject | null>(
-    'project'
-  );
-
-  function copySelectedProjectConfiguration() {
-    // TODO: copy existing project configuration.
+  function setAllInputs(inputs: ProjectInput[]) {
+    // Color selected inputs.
+    const newAllInputs = inputs.slice();
+    const selectedInputs = inputs.filter(i => i.selected);
+    selectedInputs.forEach((i, index) => {
+      i.highlightHue = index * (360 / selectedInputs.length);
+    });
+    internalSetAllInputs(newAllInputs);
   }
 
-  function setActiveStep(step: State) {
-    if (step === State.GETTING_STARTED) {
-      setSelectExistingProject(false);
-      hiddenProject.setValue(null);
-      setSelectedProjectConfiguration(null);
+  function loadAndSetInputs(project?: DeepReadOnly<IProject | null>) {
+    if (!demoInputsLoaded.current) {
+      demoInputsLoaded.current = true;
+      createService(ProjectManagementService, 'ProjectManagementService')
+        .getProjectDefinitionCategoryTypes({includeDemos: true})
+        .then(response => {
+          const inputCategories = response.inputCategories.map((c, index) => ({
+            input: {
+              category: c,
+              freeTexts: [],
+              selectedIds: [],
+            },
+            selected: index < 4 && !project,
+            highlightHue: 0,
+          }));
+          setDemoInputs(inputCategories);
+        })
+        .catch(global.setError);
+      return;
+    } else if (demoInputs.length === 0) {
+      return;
     }
-    if (step === State.PROJECT_DETAILS && selectedExistingProject) {
-      switch (selectedProjectConfiguration) {
-        case ExistingProjectSelection.USE_CONFIGURATION:
-          copySelectedProjectConfiguration();
-          break;
-        case ExistingProjectSelection.MORE_LIKE_THIS:
-          copySelectedProjectConfiguration();
-          break;
-        case ExistingProjectSelection.SUB_PROJECTS:
+
+    // Build all inputs.
+    let allInputs = demoInputs.slice();
+    allInputs.forEach(i => (i.selected = false));
+    if (project) {
+      // Initialize project inputs.
+      const projectInputs = deepClone(
+        project.projectDefinition?.inputs?.map(i => ({
+          input: i,
+          selected: true,
+          highlightHue: 0,
+        })) ?? []
+      );
+
+      // Remove any matching pre-existing demo inputs.
+      const projectInputIds = new Set(
+        projectInputs.flatMap(i => [
+          getCategoryId(i.input?.category),
+          -(i.input?.category?.typeId ?? 0),
+        ])
+      );
+      allInputs = allInputs.filter(
+        i => !projectInputIds.has(getCategoryId(i.input?.category))
+      );
+
+      // Insert the new project inputs.
+      allInputs.splice(0, 0, ...projectInputs);
+    } else {
+      for (let i = 0; i < 4 && i < allInputs.length; i++) {
+        allInputs[i].selected = true;
       }
     }
-    internalSetActiveStep(step);
+
+    // Store result.
+    setAllInputs(allInputs);
   }
 
-  useEffect(() => {
-    if (userX?.isAuthenticated) {
+  function setInput(input: DeepReadOnly<ProjectInput>) {
+    setAllInputs(
+      modifyInPlace(
+        [...allInputs],
+        i => getCategoryId(i.input?.category),
+        getCategoryId(input.input?.category),
+        i => (i.input = deepClone(input.input))
+      )
+    );
+  }
+
+  function loadUserXProjects() {
+    if (!userX?.isAuthenticated) {
+      setSelectExistingProject(false);
+      setSortedExistingProjects(null);
+      selectedExistingProject.setValue(null);
+      setSelectedExistingProjectConfiguration(null);
+    } else if (userX?.isAuthenticated) {
       createService(ProjectManagementService, 'ProjectManagementService')
         .getProjects({
           userXIds: [userX?.id ?? 0],
@@ -133,32 +209,49 @@ export function ProjectBuilder(props: {
           includeInputOptions: true,
         })
         .then(response => {
+          setSelectExistingProject(false);
           setSortedExistingProjects(response.projects.sort(PROJECT_SORTER));
+          selectedExistingProject.setValue(null);
+          setSelectedExistingProjectConfiguration(null);
         })
         .catch(global.setError);
     }
+  }
 
-    if (allInputValues.length === 0) {
-      createService(ProjectManagementService, 'ProjectManagementService')
-        .getProjectDefinitionCategoryTypes({includeDemos: true})
-        .then(response => {
-          setAllInputValues(
-            response.inputCategories.map(c => ({
-              category: c,
-              freeTexts: [],
-              selectedIds: [],
-            }))
-          );
-        })
-        .catch(global.setError);
-    }
-  }, []);
-
-  function startGeneratingProjects(
-    values: readonly pl_types.IProjectInputValue[]
+  function selectedExistingProjectUpdated(
+    selectedExistingProject: FormField<IProject | null>
   ) {
+    loadAndSetInputs(selectedExistingProject.getValue());
+  }
+
+  function setActiveStep(step: State) {
+    if (step === State.GETTING_STARTED) {
+      setSelectExistingProject(false);
+      selectedExistingProject.setValue(null);
+      setSelectedExistingProjectConfiguration(null);
+    }
+    if (step === State.PROJECT_DETAILS && selectedExistingProject) {
+      switch (selectedExistingProjectConfiguration) {
+        case ExistingProjectSelection.USE_CONFIGURATION:
+          loadAndSetInputs(selectedExistingProject.getValue());
+          break;
+        case ExistingProjectSelection.MORE_LIKE_THIS:
+          loadAndSetInputs(selectedExistingProject.getValue());
+          break;
+        case ExistingProjectSelection.SUB_PROJECTS:
+          loadAndSetInputs();
+      }
+    }
+    internalSetActiveStep(step);
+  }
+
+  function startGeneratingProjects() {
     createService(ProjectManagementService, 'ProjectManagementService')
-      .generateAnonymousProjects({inputValues: values.slice()})
+      .generateAnonymousProjects({
+        inputValues: allInputs
+          .filter(i => i.selected)
+          .map(i => deepWritable(i.input)),
+      })
       .then(response => {
         setProjectInputId(response.projectInputId ?? undefined);
         setActiveStep(activeStep + 1);
@@ -168,13 +261,15 @@ export function ProjectBuilder(props: {
 
   function onLoggedIn() {
     setLoginUserXVisible(false);
-    createService(ProjectManagementService, 'ProjectManagementService')
-      .registerAnonymousProjects({projectInputId})
-      .then(() => {
-        // The act of logging in should advance the step due to the removal of the REGISTER step.
-        setProjectInputId(undefined);
-      })
-      .catch(global.setError);
+    if (projectInputId) {
+      createService(ProjectManagementService, 'ProjectManagementService')
+        .registerAnonymousProjects({projectInputId})
+        .then(() => {
+          // The act of logging in should advance the step due to the removal of the REGISTER step.
+          setProjectInputId(undefined);
+        })
+        .catch(global.setError);
+    }
   }
 
   function onRegisterUserX(request: user_x_management.IRegisterUserXRequest) {
@@ -201,7 +296,7 @@ export function ProjectBuilder(props: {
                 .catch(global.setError);
             },
             () => {
-              global.setError('Failed to log registered user in.');
+              global.setError('Failed to log in new user.');
             },
             global.setError
           );
@@ -213,6 +308,12 @@ export function ProjectBuilder(props: {
   function onSeeProjects() {
     navigate('/projects/all-projects.html');
   }
+
+  useEffect(() => {
+    loadAndSetInputs();
+  }, [demoInputs, selectedExistingProject.getValue()]);
+
+  useEffect(() => loadUserXProjects(), [userX]);
 
   return (
     <>
@@ -264,7 +365,7 @@ export function ProjectBuilder(props: {
                 <Button
                   variant="contained"
                   className="project-builder-button"
-                  disabled={!(userX?.isAuthenticated ?? false)}
+                  disabled={!userX?.isAuthenticated}
                   onClick={() => {
                     setSelectExistingProject(true);
                     setActiveStep(activeStep + 1);
@@ -325,8 +426,8 @@ export function ProjectBuilder(props: {
                     className="global-flex-row"
                   >
                     <ProjectsAutocomplete
-                      sortedProjects={sortedExistingProjects}
-                      formField={hiddenProject}
+                      sortedProjects={sortedExistingProjects ?? []}
+                      formField={selectedExistingProject}
                       style={{width: '100%'}}
                     />
                   </div>
@@ -342,9 +443,9 @@ export function ProjectBuilder(props: {
                     <RadioGroup
                       defaultValue=""
                       name="radio-buttons-group"
-                      value={selectedProjectConfiguration}
+                      value={selectedExistingProjectConfiguration}
                       onChange={event => {
-                        setSelectedProjectConfiguration(
+                        setSelectedExistingProjectConfiguration(
                           parseInt(
                             event.target.value
                           ) as ExistingProjectSelection
@@ -426,7 +527,7 @@ export function ProjectBuilder(props: {
                     className="project-builder-button"
                     disabled={
                       !selectedExistingProject ||
-                      selectedProjectConfiguration == null
+                      selectedExistingProjectConfiguration == null
                     }
                     onClick={() => setActiveStep(activeStep + 1)}
                   >
@@ -469,8 +570,8 @@ export function ProjectBuilder(props: {
                   }}
                 >
                   <IkigaiProjectConfigurer
-                    allCategories={allInputValues}
-                    setSelectedCategories={setInputValues}
+                    inputs={allInputs}
+                    setInputs={setAllInputs}
                   />
                 </div>
                 <div
@@ -501,7 +602,7 @@ export function ProjectBuilder(props: {
                   }}
                   className="project-builder-project-details-widget project-builder-project-details-ikigai-builder global-flex-column"
                 >
-                  {selectedProjectConfiguration ===
+                  {selectedExistingProjectConfiguration ===
                   ExistingProjectSelection.USE_CONFIGURATION ? (
                     <div className="project-builder-project-details-project-configuration">
                       <div style={{fontWeight: 'bold'}}>
@@ -516,7 +617,7 @@ export function ProjectBuilder(props: {
                       projects. The new projects <u>will likely be unrelated</u>{' '}
                       to that project.
                     </div>
-                  ) : selectedProjectConfiguration ===
+                  ) : selectedExistingProjectConfiguration ===
                     ExistingProjectSelection.MORE_LIKE_THIS ? (
                     <div className="project-builder-project-details-project-configuration">
                       <div style={{fontWeight: 'bold'}}>
@@ -530,7 +631,7 @@ export function ProjectBuilder(props: {
                       projects. The new projects <u>should be similar</u> to
                       that project.
                     </div>
-                  ) : selectedProjectConfiguration ===
+                  ) : selectedExistingProjectConfiguration ===
                     ExistingProjectSelection.SUB_PROJECTS ? (
                     <div className="project-builder-project-details-project-configuration">
                       <div style={{fontWeight: 'bold'}}>
@@ -549,21 +650,17 @@ export function ProjectBuilder(props: {
                     <></>
                   )}
                   <IkigaiProjectBuilder
-                    id="ikigai-builder"
-                    categories={inputValues.slice()}
-                    noCategoriesText={props.noCategoriesText}
-                    categoryDiameter={(width, height) =>
-                      Math.min(width, height) / 2
+                    inputs={selectedInputs}
+                    setInput={setInput}
+                    noInputsText={props.noCategoriesText}
+                    inputDiameter={(width, height) =>
+                      (Math.min(width, height) / 2) * 0.95
                     }
-                    distanceToCategoryCenter={(width, height) =>
-                      (Math.min(width, height) / 2) * 0.45
+                    distanceToInputCenter={(width, height) =>
+                      (Math.min(width, height) / 4) * 0.85
                     }
                     enabled={true}
-                    onSpinClick={(
-                      configuration: pl_types.IProjectInputValue[]
-                    ) => {
-                      startGeneratingProjects(configuration);
-                    }}
+                    onSpinClick={startGeneratingProjects}
                   />
                 </div>
               </Box>

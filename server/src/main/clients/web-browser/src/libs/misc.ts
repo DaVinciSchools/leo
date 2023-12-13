@@ -51,6 +51,39 @@ export function replaceInPlace<T>(
   return values;
 }
 
+export function modifyInPlace<T, K>(
+  values: T[],
+  toKey: (value: T) => K,
+  key: K,
+  modifyFn: (value: DeepWritable<T>) => void
+): T[] {
+  const index = values.findIndex(value => toKey(value) === key);
+  if (index !== -1) {
+    const value = deepClone(values[index]);
+    modifyFn(value);
+    values[index] = value as T;
+  }
+  return values;
+}
+
+export function cloneAndModify<T, K>(
+  values: DeepReadOnly<T[]>,
+  oldValue: DeepReadOnly<T>,
+  processFn: (value: DeepWritable<T>) => void,
+  toKey: (value: DeepReadOnly<T>) => K
+): DeepReadOnly<T[]> {
+  const oldKey = toKey(oldValue);
+  const index = values.findIndex(value => toKey(value) === oldKey);
+  if (index !== -1) {
+    const newValues = values.slice();
+    const newValue = deepClone(newValues[index]);
+    processFn(newValue);
+    newValues[index] = deepReadOnly(newValue);
+    return newValues;
+  }
+  return values;
+}
+
 export function removeInPlace<T>(
   values: T[],
   oldValue: T,
@@ -130,6 +163,10 @@ export type DeepReadOnly<T> = T extends
   ? ReadonlySet<DeepReadOnly<E>>
   : {readonly [K in keyof T]: DeepReadOnly<T[K]>};
 
-export function deepReadOnly<T>(value: T | DeepWritable<T>): DeepReadOnly<T> {
+export function deepReadOnly<T>(value: T | DeepWritable<T>) {
   return value as DeepReadOnly<T>;
+}
+
+export function deepClone<T>(value: T | DeepReadOnly<T>) {
+  return structuredClone(deepWritable(value)) as DeepWritable<T>;
 }
