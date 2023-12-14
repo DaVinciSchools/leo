@@ -64,6 +64,19 @@ export function removeInPlace<T>(
   return values;
 }
 
+export function cloneAndReplace<T, K>(
+  values: DeepReadOnly<T[]>,
+  replaceValue: DeepReadOnly<T>,
+  toKey: (value: DeepReadOnly<T>) => K
+): DeepReadOnly<T[]> {
+  const key = toKey(replaceValue);
+  const index = values.findIndex(value => toKey(value) === key);
+  if (index !== -1) {
+    return values.slice().splice(index, 1, replaceValue);
+  }
+  return values;
+}
+
 export type Writable<T> = {-readonly [P in keyof T]: T[P]};
 
 export function isTextEmpty(text: string | null | undefined) {

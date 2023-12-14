@@ -12,26 +12,25 @@ import {
   tag_service,
 } from 'pl-pb';
 import {useContext, useEffect, useRef, useState} from 'react';
-
-import IProject = pl_types.IProject;
-import ProjectManagementService = project_management.ProjectManagementService;
 import {useDelayedAction} from '../../../libs/delayed_action';
-import {replaceInPlace} from '../../../libs/misc';
+import {cloneAndReplace, DeepReadOnly} from '../../../libs/misc';
 import {ASSIGNMENT_SORTER, PROJECT_SORTER} from '../../../libs/sorters';
 import {useFormFields} from '../../../libs/form_utils/forms';
 import {ProjectsAutocomplete} from '../../../libs/common_fields/ProjectsAutocomplete';
-import IAssignment = pl_types.IAssignment;
-import AssignmentManagementService = assignment_management.AssignmentManagementService;
 import {TabbedSwiper} from '../../../libs/TabbedSwiper/TabbedSwiper';
 import {ProjectEditor} from '../../../libs/ProjectEditor/ProjectEditor';
 import {PostEditor} from '../../../libs/PostEditor/PostEditor';
+import {Button} from '@mui/material';
+import {Add, Clear} from '@mui/icons-material';
+import {PostsFeed} from '../../../libs/PostsFeed/PostsFeed';
+import IProject = pl_types.IProject;
+import ProjectManagementService = project_management.ProjectManagementService;
+import IAssignment = pl_types.IAssignment;
+import AssignmentManagementService = assignment_management.AssignmentManagementService;
 import TagService = tag_service.TagService;
 import PostService = post_service.PostService;
 import IProjectPost = pl_types.IProjectPost;
-import {Button} from '@mui/material';
-import {Add, Clear} from '@mui/icons-material';
 import ITag = pl_types.ITag;
-import {PostsFeed} from '../../../libs/PostsFeed/PostsFeed';
 
 enum TabValue {
   OVERVIEW,
@@ -50,7 +49,9 @@ export function MyProjects() {
 
   // Project editor tab.
 
-  const [sortedProjects, setSortedProjects] = useState<readonly IProject[]>([]);
+  const [sortedProjects, setSortedProjects] = useState<
+    DeepReadOnly<IProject[]>
+  >([]);
   const [selectedProject, setSelectedProject] = useState<IProject | null>(null);
   const [sortedAssignments, setSortedAssignments] = useState<
     readonly IAssignment[]
@@ -66,9 +67,9 @@ export function MyProjects() {
       if (selectedProject != null) {
         const newProject = projectForm.getValuesObject(true, selectedProject);
         setSortedProjects(
-          replaceInPlace(sortedProjects.slice(), newProject, e => e?.id).sort(
-            PROJECT_SORTER
-          )
+          cloneAndReplace(sortedProjects, newProject, e => e?.id)
+            .slice()
+            .sort(PROJECT_SORTER)
         );
       }
     },
@@ -146,9 +147,8 @@ export function MyProjects() {
       setSelectedProject(hiddenProject.getValue() ?? null);
     },
   });
-  const hiddenProject = hiddenForm.useAutocompleteFormField<IProject | null>(
-    'project'
-  );
+  const hiddenProject =
+    hiddenForm.useAutocompleteFormField<IProject>('project');
 
   // Initialize the data.
 
@@ -239,7 +239,6 @@ export function MyProjects() {
           <ProjectsAutocomplete
             sortedProjects={sortedProjects}
             formField={hiddenProject}
-            style={{width: '100%'}}
           />
           <span style={{whiteSpace: 'nowrap'}}>
             {{

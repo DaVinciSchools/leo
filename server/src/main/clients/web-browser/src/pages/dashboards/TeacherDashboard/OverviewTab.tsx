@@ -42,12 +42,9 @@ export function OverviewTab() {
   // Maintain school filters.
 
   const [schoolOptions, setSchoolOptions] = useState<readonly ISchool[]>([]);
-  const schoolFilter = filterForm.useAutocompleteFormField<readonly ISchool[]>(
+  const schoolFilter = filterForm.useAutocompleteFormField<ISchool, true>(
     'schoolFilter',
     {
-      isAutocomplete: {
-        isMultiple: true,
-      },
       disabled: !userX,
     }
   );
@@ -72,14 +69,9 @@ export function OverviewTab() {
 
   // Maintain classX filters.
 
-  const [classXOptions, setClassXOptions] = useState<readonly IClassX[]>([]);
-  const classXFilter = filterForm.useAutocompleteFormField<readonly IClassX[]>(
-    'classXFilter',
-    {
-      isAutocomplete: {
-        isMultiple: true,
-      },
-    }
+  const [classXOptions, setClassXOptions] = useState<IClassX[]>([]);
+  const classXFilter = filterForm.useAutocompleteFormField<IClassX, true>(
+    'classXFilter'
   );
 
   useEffect(() => {

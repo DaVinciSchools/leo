@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import {InputAdornment} from '@mui/material';
+import {AutocompleteValue, InputAdornment} from '@mui/material';
 import {CheckboxProps} from '@mui/material/Checkbox/Checkbox';
 import {
   DetailedHTMLProps,
@@ -15,7 +15,7 @@ import {
 import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
 import {ReactQuillProps} from 'react-quill';
-import {Writable} from '../misc';
+import {DeepWritable} from '../misc';
 
 const MAX_ZIP_CODE_LENGTH = 10;
 const MIN_PASSWORD_LENGTH = 8;
@@ -33,7 +33,15 @@ const PASSWORD_ERROR_MESSAGE =
   'Passwords must have 8+ characters, a number, and a lower and upper case letter.';
 const PASSWORDS_DO_NOT_MATCH = 'Passwords do not match.';
 
-export interface FormFieldMetadata<T> {
+export interface FormFieldMetadata<
+  T,
+  Multiple extends boolean | undefined = false,
+  FreeSolo extends boolean | undefined = false,
+  MultipleT = AutocompleteValue<T, Multiple, false, FreeSolo>
+> {
+  isMultiple: Multiple;
+  isBoolean: T extends boolean ? true : false;
+  isFreeSolo: FreeSolo;
   isPassword?: {
     skipPasswordCheck?: boolean;
   };
@@ -41,30 +49,43 @@ export interface FormFieldMetadata<T> {
     min?: number;
     max?: number;
   };
-  isBoolean?: boolean;
   isEmail?: boolean;
   isZipCode?: boolean;
   startIcon?: ReactElement;
   maxLength?: number;
-  isAutocomplete?: {
-    isFreeSolo?: boolean;
-    isMultiple?: boolean;
-  };
-  onChange?: (formField: FormField<T>, formFields: FormFields) => void;
+  isAutocomplete?: boolean;
+  onChange?: (
+    formField: FormField<T, Multiple, FreeSolo, MultipleT>,
+    formFields: FormFields
+  ) => void;
   disabled?: boolean;
 }
 
-export interface IFormAutocompleteParams<T> {
-  value: Writable<T>;
-  onChange: (event: SyntheticEvent, value: Readonly<T>) => void;
+export interface IFormAutocompleteParams<
+  T,
+  Multiple extends boolean | undefined = false,
+  FreeSolo extends boolean | undefined = false
+> {
+  value: AutocompleteValue<DeepWritable<T>, Multiple, false, FreeSolo>;
+  onChange: (
+    event: SyntheticEvent,
+    value: AutocompleteValue<DeepWritable<T>, Multiple, false, FreeSolo>
+  ) => void;
   disabled: boolean;
+  multiple: Multiple;
 }
 
-export interface FormField<T> {
+export interface FormField<
+  T,
+  Multiple extends boolean | undefined = false,
+  FreeSolo extends boolean | undefined = false,
+  MultipleT = AutocompleteValue<T, Multiple, false, FreeSolo>
+> {
   readonly name: string;
+  readonly multiple: Multiple;
 
-  getValue: () => T | undefined;
-  setValue: (value: T | undefined) => void;
+  getValue: () => MultipleT;
+  setValue: (value: MultipleT) => void;
 
   readonly stringValue: string;
   setStringValue: (value: string) => void;
@@ -72,7 +93,7 @@ export interface FormField<T> {
   readonly error: string;
   setError: (message: string) => void;
 
-  autocompleteParams(): IFormAutocompleteParams<T>;
+  autocompleteParams(): IFormAutocompleteParams<T, Multiple, FreeSolo>;
 
   textFieldParams: (
     params?: Partial<OutlinedTextFieldProps>
@@ -83,9 +104,14 @@ export interface FormField<T> {
   quillParams: () => ReactQuillProps;
 }
 
-interface InternalFormField<T> extends FormField<T> {
+interface InternalFormField<
+  T,
+  Multiple extends boolean | undefined = false,
+  FreeSolo extends boolean | undefined = false,
+  MultipleT = AutocompleteValue<T, Multiple, false, FreeSolo>
+> extends FormField<T, Multiple, FreeSolo, MultipleT> {
   fieldRef: RefObject<HTMLDivElement | HTMLButtonElement>;
-  fieldMetadata?: FormFieldMetadata<T>;
+  fieldMetadata: FormFieldMetadata<T, Multiple, FreeSolo, MultipleT>;
 
   reset: () => void;
 
@@ -94,31 +120,44 @@ interface InternalFormField<T> extends FormField<T> {
   calculateError: (finalCheck: boolean) => string | undefined;
 }
 
-export type FormFieldsMetadata<T> = {
-  onChange?: (formField: FormField<T>, formFields: FormFields) => void;
+export type FormFieldsMetadata<
+  T,
+  Multiple extends boolean | undefined = false,
+  FreeSolo extends boolean | undefined = false,
+  MultipleT = AutocompleteValue<T, Multiple, false, FreeSolo>
+> = {
+  onChange?: (
+    formField: FormField<T, Multiple, FreeSolo, MultipleT>,
+    formFields: FormFields
+  ) => void;
   disabled?: boolean;
 };
 
 export interface FormFields {
   useStringFormField(
     name: string,
-    fieldMetadata?: FormFieldMetadata<string>
+    fieldMetadata?: Partial<FormFieldMetadata<string>>
   ): FormField<string>;
 
   useNumberFormField(
     name: string,
-    fieldMetadata?: FormFieldMetadata<number>
+    fieldMetadata?: Partial<FormFieldMetadata<number>>
   ): FormField<number>;
 
   useBooleanFormField(
     name: string,
-    fieldMetadata?: FormFieldMetadata<boolean>
+    fieldMetadata?: Partial<FormFieldMetadata<boolean>>
   ): FormField<boolean>;
 
-  useAutocompleteFormField<T>(
+  useAutocompleteFormField<
+    T,
+    Multiple extends boolean | undefined = false,
+    FreeSolo extends boolean | undefined = false,
+    MultipleT = AutocompleteValue<T, Multiple, false, FreeSolo>
+  >(
     name: string,
-    fieldMetadata?: FormFieldMetadata<T>
-  ): FormField<T>;
+    fieldMetadata?: Partial<FormFieldMetadata<T, Multiple, FreeSolo, MultipleT>>
+  ): FormField<T, Multiple, FreeSolo, MultipleT>;
 
   formParams(): DetailedHTMLProps<
     FormHTMLAttributes<HTMLFormElement>,
@@ -140,9 +179,9 @@ export interface FormFields {
 }
 
 export function useFormFields(
-  formFieldsMetadata?: FormFieldsMetadata<any>
+  formFieldsMetadata?: FormFieldsMetadata<any, any, any, any>
 ): FormFields {
-  const fields: Map<string, InternalFormField<any>> = new Map();
+  const fields: Map<string, InternalFormField<any, any, any, any>> = new Map();
   const formRef = useRef<HTMLFormElement>(null);
   const [showPasswords, setShowPasswords] = useState(false);
   const [evaluateAllFields, setEvaluateAllFields] = useState(false);
@@ -151,94 +190,111 @@ export function useFormFields(
     name: string,
     fieldMetadata?: FormFieldMetadata<string>
   ): FormField<string> {
+    fieldMetadata = {...fieldMetadata} as FormFieldMetadata<string>;
     if (
-      fieldMetadata?.isInteger ||
-      fieldMetadata?.isBoolean ||
-      fieldMetadata?.isAutocomplete
+      fieldMetadata.isInteger ||
+      fieldMetadata.isBoolean ||
+      fieldMetadata.isAutocomplete
     ) {
       throw new Error(
         `fieldMetadata for ${name} does not indicate a string: ${JSON.stringify(
-          fieldMetadata ?? {}
+          fieldMetadata
         )}`
       );
     }
-    return useFormField<string>(name, fieldMetadata);
+    return useFormField<string>(name, fieldMetadata ?? {});
   }
 
   function useNumberFormField(
     name: string,
     fieldMetadata?: FormFieldMetadata<number>
   ): FormField<number> {
-    fieldMetadata = {...fieldMetadata};
+    fieldMetadata = {...fieldMetadata} as FormFieldMetadata<number>;
     fieldMetadata.isInteger = fieldMetadata.isInteger ?? {};
     if (
-      !fieldMetadata?.isInteger ||
-      fieldMetadata?.isBoolean ||
-      fieldMetadata?.isAutocomplete
+      !fieldMetadata.isInteger ||
+      fieldMetadata.isBoolean ||
+      fieldMetadata.isAutocomplete
     ) {
       throw new Error(
         `fieldMetadata for ${name} does not indicate a number: ${JSON.stringify(
-          fieldMetadata ?? {}
+          fieldMetadata
         )}`
       );
     }
-    return useFormField<number>(name, fieldMetadata);
+    return useFormField<number>(name, fieldMetadata ?? {});
   }
 
   function useBooleanFormField(
     name: string,
     fieldMetadata?: FormFieldMetadata<boolean>
   ): FormField<boolean> {
-    fieldMetadata = {...fieldMetadata};
-    fieldMetadata.isBoolean = true;
+    fieldMetadata = {...fieldMetadata} as FormFieldMetadata<boolean>;
+    fieldMetadata.isBoolean = fieldMetadata.isBoolean ?? true;
     if (
-      fieldMetadata?.isInteger ||
-      !fieldMetadata?.isBoolean ||
-      fieldMetadata?.isAutocomplete
+      fieldMetadata.isInteger ||
+      !fieldMetadata.isBoolean ||
+      fieldMetadata.isAutocomplete
     ) {
       throw new Error(
         `fieldMetadata for ${name} does not indicate a boolean: ${JSON.stringify(
-          fieldMetadata ?? {}
+          fieldMetadata
         )}`
       );
     }
     return useFormField<boolean>(name, fieldMetadata);
   }
 
-  function useAutocompleteFormField<T>(
+  function useAutocompleteFormField<
+    T,
+    Multiple extends boolean | undefined = false,
+    FreeSolo extends boolean | undefined = false,
+    MultipleT = AutocompleteValue<T, Multiple, false, FreeSolo>
+  >(
     name: string,
-    fieldMetadata?: FormFieldMetadata<T>
-  ): FormField<T> {
-    fieldMetadata = {...fieldMetadata};
-    fieldMetadata.isAutocomplete = fieldMetadata.isAutocomplete ?? {};
+    fieldMetadata?: FormFieldMetadata<T, Multiple, FreeSolo, MultipleT>
+  ): FormField<T, Multiple, FreeSolo, MultipleT> {
+    fieldMetadata = {...fieldMetadata} as FormFieldMetadata<
+      T,
+      Multiple,
+      FreeSolo,
+      MultipleT
+    >;
+    fieldMetadata.isAutocomplete = fieldMetadata.isAutocomplete ?? true;
     if (
-      fieldMetadata?.isInteger ||
-      fieldMetadata?.isBoolean ||
-      !fieldMetadata?.isAutocomplete
+      fieldMetadata.isInteger ||
+      fieldMetadata.isBoolean ||
+      !fieldMetadata.isAutocomplete
     ) {
       throw new Error(
         `fieldMetadata for ${name} does not indicate an autocomplete: ${JSON.stringify(
-          fieldMetadata ?? {}
+          fieldMetadata
         )}`
       );
     }
-    return useFormField<T>(name, fieldMetadata);
+    return useFormField<T, Multiple, FreeSolo, MultipleT>(name, fieldMetadata);
   }
 
-  function useFormField<T>(
+  function useFormField<
+    T,
+    Multiple extends boolean | undefined = false,
+    FreeSolo extends boolean | undefined = false,
+    MultipleT = AutocompleteValue<T, Multiple, false, FreeSolo>
+  >(
     name: string,
-    fieldMetadata?: FormFieldMetadata<T>
-  ): FormField<T> {
+    fieldMetadata: FormFieldMetadata<T, Multiple, FreeSolo, MultipleT>
+  ): FormField<T, Multiple, FreeSolo, MultipleT> {
     const [stringValue, setStringValue] = useState('');
-    const [autocompleteValue, setAutocompleteValue] = useState<T>(
-      fieldMetadata?.isAutocomplete?.isMultiple ? ([] as T) : (null as T)
+    const [autocompleteValue, setAutocompleteValue] = useState(
+      (fieldMetadata.isMultiple ? [] : null) as MultipleT
     );
+
     const [error, setError] = useState('');
     const [evaluateField, setEvaluateField] = useState(false);
     const fieldRef = useRef<HTMLDivElement | HTMLButtonElement>(null);
 
     useEffect(() => {
-      fieldMetadata?.onChange?.(formField, formFields);
+      fieldMetadata.onChange?.(formField, formFields);
       formFieldsMetadata?.onChange?.(formField, formFields);
     }, [stringValue, autocompleteValue]);
 
@@ -262,26 +318,26 @@ export function useFormFields(
     function reset() {
       setError('');
       setEvaluateField(false);
-      setStringValue('');
-      if (fieldMetadata?.isAutocomplete) {
-        if (fieldMetadata?.isAutocomplete?.isMultiple) {
-          setAutocompleteValue([] as T);
-        } else {
-          setAutocompleteValue(null as T);
-        }
-      } else if (fieldMetadata?.isBoolean) {
+      if (fieldMetadata.isBoolean) {
         setStringValue('off');
+      } else {
+        setStringValue('');
+      }
+      if (fieldMetadata.isMultiple) {
+        setAutocompleteValue([] as MultipleT);
+      } else {
+        setAutocompleteValue(null as MultipleT);
       }
     }
 
     function getType() {
-      return fieldMetadata?.isPassword && !showPasswords
+      return fieldMetadata.isPassword && !showPasswords
         ? 'password'
-        : fieldMetadata?.isEmail
+        : fieldMetadata.isEmail
         ? 'email'
-        : fieldMetadata?.isInteger != null
+        : fieldMetadata.isInteger != null
         ? 'number'
-        : fieldMetadata?.isBoolean
+        : fieldMetadata.isBoolean
         ? 'checkbox'
         : 'text';
     }
@@ -305,19 +361,19 @@ export function useFormFields(
           params?.onChange?.(e);
         },
         onBlur: e => {
-          setEvaluateField(true);
           setStringValue(e.target.value);
+          setEvaluateField(true);
         },
         InputProps: {
           ...(params?.InputProps ?? {}),
-          startAdornment: fieldMetadata?.startIcon ? (
+          startAdornment: fieldMetadata.startIcon ? (
             <InputAdornment position="start" style={{cursor: 'not-allowed'}}>
               {fieldMetadata.startIcon}
             </InputAdornment>
           ) : (
             params?.InputProps?.startAdornment
           ),
-          endAdornment: fieldMetadata?.isPassword ? (
+          endAdornment: fieldMetadata.isPassword ? (
             showPasswords ? (
               <Visibility
                 onClick={() => setShowPasswords(false)}
@@ -336,24 +392,24 @@ export function useFormFields(
         inputProps: {
           ...(params?.inputProps ?? {}),
           minLength:
-            fieldMetadata?.isPassword &&
-            fieldMetadata?.isPassword?.skipPasswordCheck !== true
+            fieldMetadata.isPassword &&
+            fieldMetadata.isPassword?.skipPasswordCheck !== true
               ? MIN_PASSWORD_LENGTH
               : undefined,
           maxLength:
-            fieldMetadata?.maxLength ??
-            (fieldMetadata?.isZipCode
+            fieldMetadata.maxLength ??
+            (fieldMetadata.isZipCode
               ? MAX_ZIP_CODE_LENGTH
-              : fieldMetadata?.isPassword &&
-                fieldMetadata?.isPassword?.skipPasswordCheck !== true
+              : fieldMetadata.isPassword &&
+                fieldMetadata.isPassword?.skipPasswordCheck !== true
               ? MAX_PASSWORD_LENGTH
               : undefined),
-          min: fieldMetadata?.isInteger?.min,
-          max: fieldMetadata?.isInteger?.max,
+          min: fieldMetadata.isInteger?.min,
+          max: fieldMetadata.isInteger?.max,
         },
         disabled:
           formFieldsMetadata?.disabled === true ||
-          fieldMetadata?.disabled === true,
+          fieldMetadata.disabled === true,
       } as OutlinedTextFieldProps;
     }
 
@@ -368,25 +424,32 @@ export function useFormFields(
         },
         disabled:
           formFieldsMetadata?.disabled === true ||
-          fieldMetadata?.disabled === true,
+          fieldMetadata.disabled === true,
       };
     }
 
     function autocompleteParams() {
       return {
+        multiple: fieldMetadata.isMultiple,
+        freeSolo: fieldMetadata.isFreeSolo,
+        disableCloseOnSelect: fieldMetadata.isMultiple,
         // The value must be modifiable, even though it doesn't modify anything.
-        value: Array.isArray(autocompleteValue)
-          ? (autocompleteValue.slice() as unknown as Writable<T>)
-          : autocompleteValue,
-        onChange: (ignore: SyntheticEvent, value: Readonly<T>) => {
-          setAutocompleteValue(
-            (Array.isArray(value) ? value.slice() : value) as T
-          );
+        value: autocompleteValue as AutocompleteValue<
+          DeepWritable<T>,
+          Multiple,
+          false,
+          FreeSolo
+        >,
+        onChange: (
+          _: SyntheticEvent,
+          value: AutocompleteValue<DeepWritable<T>, Multiple, false, FreeSolo>
+        ) => {
+          setAutocompleteValue(value as MultipleT);
         },
         disabled:
           formFieldsMetadata?.disabled === true ||
-          fieldMetadata?.disabled === true,
-      };
+          fieldMetadata.disabled === true,
+      } as IFormAutocompleteParams<T, Multiple, FreeSolo>;
     }
 
     function quillParams(): ReactQuillProps {
@@ -398,30 +461,24 @@ export function useFormFields(
         preserveWhitespace: true,
         readOnly:
           formFieldsMetadata?.disabled === true ||
-          fieldMetadata?.disabled === true,
+          fieldMetadata.disabled === true,
       };
     }
 
-    function getValue() {
-      if (fieldMetadata?.isAutocomplete) {
-        if (fieldMetadata?.isAutocomplete?.isMultiple) {
-          return autocompleteValue ?? ([] as T);
-        } else if (fieldMetadata?.isAutocomplete?.isFreeSolo) {
-          return stringValue as T;
-        } else {
-          return autocompleteValue as T;
-        }
-      }
-
-      const trimmedValue = stringValue.trim();
-      if (trimmedValue === '') {
-        return;
+    function getValue(): MultipleT {
+      if (fieldMetadata.isAutocomplete) {
+        return autocompleteValue as MultipleT;
       }
 
       const type = getType();
+      const trimmedValue = stringValue?.trim() ?? '';
+
+      if (type === 'checkbox' || fieldMetadata.isBoolean) {
+        return (trimmedValue === 'on') as MultipleT;
+      }
 
       if (['email', 'password', 'text', 'textarea'].includes(type)) {
-        return trimmedValue as T;
+        return trimmedValue as MultipleT;
       }
 
       if (type === 'number') {
@@ -430,34 +487,22 @@ export function useFormFields(
             INTEGER_PATTERN.exec(trimmedValue)
               ? parseInt(trimmedValue)
               : parseFloat(trimmedValue)
-          ) as T;
+          ) as MultipleT;
         }
-        return;
-      }
-
-      if (type === 'checkbox') {
-        return (trimmedValue === 'on') as T;
+        return 0 as MultipleT;
       }
 
       throw new Error(`Input type '${type}' is not recognized.`);
     }
 
-    function setValue(value: T | undefined) {
-      setStringValue('');
-      if (fieldMetadata?.isAutocomplete) {
-        if (fieldMetadata?.isAutocomplete?.isMultiple) {
-          setAutocompleteValue(value ?? ([] as T));
-        } else if (!fieldMetadata?.isAutocomplete?.isFreeSolo) {
-          setAutocompleteValue(value ?? (null as T));
-        } else if (value != null) {
-          setStringValue(String(value));
-        }
+    function setValue(value: MultipleT) {
+      if (fieldMetadata.isAutocomplete) {
+        setStringValue('');
+        setAutocompleteValue(value as MultipleT);
+      } else if (fieldMetadata.isBoolean) {
+        setStringValue(value ? 'on' : 'off');
       } else {
-        if (fieldMetadata?.isBoolean) {
-          setStringValue(value ? 'on' : 'off');
-        } else if (value != null) {
-          setStringValue(String(value));
-        }
+        setStringValue(value == null ? '' : String(value));
       }
     }
 
@@ -466,8 +511,8 @@ export function useFormFields(
       if (error) {
         setError(error);
       } else if (
-        fieldMetadata?.isPassword &&
-        fieldMetadata?.isPassword?.skipPasswordCheck !== true &&
+        fieldMetadata.isPassword &&
+        fieldMetadata.isPassword?.skipPasswordCheck !== true &&
         getUnmatchedPasswords(finalCheck).length > 0
       ) {
         setError(PASSWORDS_DO_NOT_MATCH);
@@ -496,8 +541,8 @@ export function useFormFields(
       }
 
       if (
-        (input.type === 'password' || fieldMetadata?.isPassword) &&
-        fieldMetadata?.isPassword?.skipPasswordCheck !== true &&
+        (input.type === 'password' || fieldMetadata.isPassword) &&
+        fieldMetadata.isPassword?.skipPasswordCheck !== true &&
         stringValue !== '' &&
         !PASSWORD_PATTERN.exec(stringValue)
       ) {
@@ -533,7 +578,7 @@ export function useFormFields(
           return 'This field must be a number.';
         }
         if (
-          fieldMetadata?.isInteger &&
+          fieldMetadata.isInteger &&
           INTEGER_PATTERN.exec(stringValue) == null
         ) {
           return 'This field must be an integer.';
@@ -562,7 +607,7 @@ export function useFormFields(
         return 'This field is not a valid e-mail address.';
       }
       if (
-        fieldMetadata?.isZipCode &&
+        fieldMetadata.isZipCode &&
         ZIP_CODE_PATTERN.exec(stringValue) == null
       ) {
         return 'This field must be 5 digits optionally followed by a dash and 4 digits.';
@@ -570,8 +615,9 @@ export function useFormFields(
       return;
     }
 
-    const formField: InternalFormField<T> = {
+    const formField: InternalFormField<T, Multiple, FreeSolo, MultipleT> = {
       name,
+      multiple: fieldMetadata.isMultiple,
 
       getValue,
       setValue,
@@ -623,8 +669,8 @@ export function useFormFields(
 
     for (const field of fields.values()) {
       if (
-        field.fieldMetadata?.isPassword != null &&
-        field?.fieldMetadata?.isPassword?.skipPasswordCheck !== true
+        field.fieldMetadata.isPassword != null &&
+        field?.fieldMetadata.isPassword?.skipPasswordCheck !== true
       ) {
         passwordFields.push(field);
         passwordInputs.push(getInputField(field.fieldRef.current));
@@ -762,12 +808,12 @@ export function getInputField(
 }
 
 export function filterAutocompleteFormField<T, ID>(
-  formField: FormField<readonly T[]>,
+  formField: FormField<T, true>,
   toId: (idFunction: T) => ID,
   options: T[]
 ) {
-  const idOptions = new Set(options.map(toId));
+  const idOptions = new Set(options.map(o => toId(o)));
   const filteredOptions =
-    formField.getValue()?.filter?.(t => idOptions.has(toId(t))) ?? [];
+    formField.getValue()?.filter?.(o => idOptions.has(toId(o))) ?? [];
   formField.setValue(filteredOptions);
 }

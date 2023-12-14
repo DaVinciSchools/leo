@@ -1,18 +1,21 @@
 import {FormField} from '../form_utils/forms';
 import {Autocomplete, Checkbox, Chip, TextField} from '@mui/material';
 import {addClassName} from '../tags';
+import {DeepReadOnly} from '../misc';
 
-export function MultiTagAutocomplete(props: {
-  sortedTags: readonly string[];
-  formField: FormField<readonly string[]>;
-  placeholder?: (hasOptions: boolean) => string;
-}) {
+export function MultiTagAutocomplete(
+  props: DeepReadOnly<{
+    sortedTags: string[];
+    formField: FormField<string, true, true>;
+    placeholder?: (hasOptions: boolean) => string;
+  }>
+) {
   return (
     <Autocomplete
       {...props.formField.autocompleteParams()}
-      multiple
-      disableCloseOnSelect
       freeSolo
+      autoHighlight
+      disableCloseOnSelect
       options={props.sortedTags}
       renderOption={(params, option, {selected}) => (
         <li {...params} key={option}>
@@ -30,6 +33,7 @@ export function MultiTagAutocomplete(props: {
       renderInput={params => (
         <TextField
           {...props.formField.textFieldParams(params)}
+          label="Tags"
           placeholder={
             props.placeholder
               ? props.placeholder(props.sortedTags.length > 0)

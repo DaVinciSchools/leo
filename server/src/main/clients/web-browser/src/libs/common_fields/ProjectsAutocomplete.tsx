@@ -1,35 +1,53 @@
-import {Autocomplete, TextField} from '@mui/material';
+import {
+  Autocomplete,
+  Checkbox,
+  InputLabelProps,
+  TextField,
+} from '@mui/material';
 import {FormField} from '../form_utils/forms';
 import {pl_types} from 'pl-pb';
-import {CSSProperties, useEffect, useState} from 'react';
-
+import {useEffect, useState} from 'react';
+import {DeepReadOnly, deepWritable} from '../misc';
 import IProject = pl_types.IProject;
 
-export function ProjectsAutocomplete(props: {
-  sortedProjects: readonly IProject[];
-  formField: FormField<IProject | null>;
-  style?: CSSProperties;
-}) {
-  const [hasMultipleProjects, setHasMultipleProjects] = useState(true);
+export function ProjectsAutocomplete<
+  Multiple extends boolean | undefined = false
+>(
+  props: DeepReadOnly<{
+    sortedProjects: IProject[];
+    formField:
+      | FormField<IProject, Multiple>
+      | FormField<DeepReadOnly<IProject>, Multiple>;
+    InputLabelProps?: Partial<InputLabelProps>;
+    placeholder?: (hasOptions: boolean) => string;
+  }>
+) {
+  const [hasMultipleClassXs, setHasMultipleClassXs] = useState(false);
 
   useEffect(() => {
-    setHasMultipleProjects(
+    setHasMultipleClassXs(
       new Set(props.sortedProjects.map(e => e?.assignment?.classX?.id)).size > 1
     );
   }, [props.sortedProjects]);
+
   return (
     <Autocomplete
-      fullWidth
+      {...props.formField.autocompleteParams()}
       autoHighlight
-      options={props.sortedProjects}
+      options={deepWritable(props.sortedProjects)}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       groupBy={
-        hasMultipleProjects
+        hasMultipleClassXs
           ? option => option?.assignment?.classX?.name ?? 'No Class Selected'
           : undefined
       }
-      renderOption={(props, option) => (
-        <li {...props} key={option.id}>
+      renderOption={(props2, option, {selected}) => (
+        <li {...props2} key={option.id}>
+          {props.formField.multiple ? (
+            <Checkbox style={{marginRight: 8}} checked={selected} />
+          ) : (
+            <></>
+          )}
           <span
             style={{
               textOverflow: 'ellipsis',
@@ -40,16 +58,19 @@ export function ProjectsAutocomplete(props: {
           </span>
         </li>
       )}
+      // getOptionLabel={option => option.name + ': ' + option.shortDescr}
       renderInput={params => (
         <TextField
-          label="Select Project"
-          size="small"
           {...props.formField.textFieldParams(params)}
-          style={props.style}
+          label="Projects"
+          InputLabelProps={props.InputLabelProps as InputLabelProps}
+          placeholder={
+            props.placeholder
+              ? props.placeholder(props.sortedProjects.length > 0)
+              : undefined
+          }
         />
       )}
-      getOptionLabel={option => option.name + ': ' + option.shortDescr}
-      {...props.formField.autocompleteParams()}
     />
   );
 }

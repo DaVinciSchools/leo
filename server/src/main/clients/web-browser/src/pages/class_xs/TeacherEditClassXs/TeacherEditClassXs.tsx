@@ -93,10 +93,7 @@ export function TeacherEditClassXs() {
     disabled: selectedClass == null,
   });
   const classSchool = classFormFields.useAutocompleteFormField<ISchool | null>(
-    'school',
-    {
-      isAutocomplete: {},
-    }
+    'school'
   );
   const className = classFormFields.useStringFormField('name', {
     maxLength: 255,
@@ -105,8 +102,9 @@ export function TeacherEditClassXs() {
     maxLength: 255,
   });
   const classEks = classFormFields.useAutocompleteFormField<
-    readonly IKnowledgeAndSkill[]
-  >('knowledgeAndSkills', {isAutocomplete: {isMultiple: true}});
+    IKnowledgeAndSkill,
+    true
+  >('knowledgeAndSkills');
   const classPeriod = classFormFields.useStringFormField('period', {
     maxLength: 16,
   });
@@ -315,7 +313,6 @@ export function TeacherEditClassXs() {
             </Grid>
             <Grid item {...spread({sm: 12, md: 9.5})}>
               <Autocomplete
-                multiple
                 autoHighlight
                 disableCloseOnSelect
                 options={sortedKnowledgeAndSkills}

@@ -34,15 +34,13 @@ export function RegistrationForm(props: {
     isPassword: {},
     startIcon: <Lock />,
   });
-  const profession = formFields.useAutocompleteFormField<string | null>(
-    'profession',
-    {
-      maxLength: 255,
-      isAutocomplete: {
-        isFreeSolo: true,
-      },
-    }
-  );
+  const profession = formFields.useAutocompleteFormField<
+    string | null,
+    false,
+    true
+  >('profession', {
+    maxLength: 255,
+  });
   const reasonForInterest = formFields.useStringFormField('reasonForInterest', {
     startIcon: <Comment />,
     maxLength: 8192,

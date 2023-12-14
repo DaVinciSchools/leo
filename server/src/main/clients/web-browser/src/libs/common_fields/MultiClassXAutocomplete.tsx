@@ -1,24 +1,27 @@
 import '../global.scss';
 import {pl_types} from 'pl-pb';
-import IClassX = pl_types.IClassX;
 import {
   Autocomplete,
-  TextField,
-  InputLabelProps,
   Checkbox,
   Chip,
+  InputLabelProps,
+  TextField,
 } from '@mui/material';
 import {useEffect, useState} from 'react';
 import {FormField} from '../form_utils/forms';
 import {addClassName} from '../tags';
+import {DeepReadOnly, deepWritable} from '../misc';
+import IClassX = pl_types.IClassX;
 
-export function MultiClassXAutocomplete(props: {
-  sortedClassXs: readonly IClassX[];
-  formField: FormField<readonly IClassX[]>;
-  InputLabelProps?: Partial<InputLabelProps>;
-  placeholder?: (hasOptions: boolean) => string;
-}) {
-  const [hasMultipleSchools, setHasMultipleSchools] = useState(true);
+export function MultiClassXAutocomplete(
+  props: DeepReadOnly<{
+    sortedClassXs: IClassX[];
+    formField: FormField<IClassX, true>;
+    InputLabelProps?: Partial<InputLabelProps>;
+    placeholder?: (hasOptions: boolean) => string;
+  }>
+) {
+  const [hasMultipleSchools, setHasMultipleSchools] = useState(false);
 
   useEffect(() => {
     setHasMultipleSchools(
@@ -29,10 +32,8 @@ export function MultiClassXAutocomplete(props: {
   return (
     <Autocomplete
       {...props.formField.autocompleteParams()}
-      multiple
       autoHighlight
-      disableCloseOnSelect
-      options={props.sortedClassXs.slice()}
+      options={deepWritable(props.sortedClassXs)}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       groupBy={
         hasMultipleSchools
@@ -59,14 +60,14 @@ export function MultiClassXAutocomplete(props: {
           </span>
         </li>
       )}
-      getOptionLabel={option => {
-        return option.number + ' ' + (option.name ?? 'Unnamed School');
-      }}
+      getOptionLabel={option =>
+        option.number + ' ' + (option.name ?? 'Unnamed School')
+      }
       renderInput={params => (
         <TextField
           {...props.formField.textFieldParams(params)}
           label="Classes"
-          InputLabelProps={props.InputLabelProps}
+          InputLabelProps={props.InputLabelProps as InputLabelProps}
           placeholder={
             props.placeholder
               ? props.placeholder(props.sortedClassXs.length > 0)
@@ -74,13 +75,13 @@ export function MultiClassXAutocomplete(props: {
           }
         />
       )}
-      renderTags={(classXs: readonly IClassX[], getTagProps) =>
+      renderTags={(classXs, getTagProps) =>
         classXs.map((option, index) => (
           <Chip
             {...addClassName(getTagProps({index}), 'global-tags')}
             label={option.number ?? option.name ?? 'Unnamed Class'}
             title={
-              (option.number ? option.number + ': ' : '') +
+              (option.number != null ? option.number + ': ' : '') +
               (option.name ?? 'Unnamed Class')
             }
             size="small"

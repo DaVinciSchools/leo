@@ -80,8 +80,9 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
   const [shortDescr, setShortDescr] = useState('');
   const [longDescrHtml, setLongDescrHtml] = useState<Value>('');
   const assignmentEks = assignmentFormField.useAutocompleteFormField<
-    readonly IKnowledgeAndSkill[]
-  >('knowledgeAndSkills', {isAutocomplete: {isMultiple: true}});
+    IKnowledgeAndSkill,
+    true
+  >('knowledgeAndSkills');
 
   // Used to track the project definition.
   const [projectDefinitions, setProjectDefinitions] = useState<

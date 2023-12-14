@@ -9,23 +9,39 @@ import {
 } from '@mui/material';
 import {FormField} from '../form_utils/forms';
 import {pl_types} from 'pl-pb';
-import ISchool = pl_types.ISchool;
 import {addClassName} from '../tags';
+import {DeepReadOnly} from '../misc';
+import {useEffect, useState} from 'react';
+import ISchool = pl_types.ISchool;
 
-export function MultiSchoolAutocomplete(props: {
-  sortedSchools: readonly ISchool[];
-  formField: FormField<readonly ISchool[]>;
-  InputLabelProps?: Partial<InputLabelProps>;
-  placeholder?: (hasOptions: boolean) => string;
-}) {
+export function MultiSchoolAutocomplete(
+  props: DeepReadOnly<{
+    sortedSchools: ISchool[];
+    formField: FormField<ISchool | DeepReadOnly<ISchool>, true>;
+    InputLabelProps?: Partial<InputLabelProps>;
+    placeholder?: (hasOptions: boolean) => string;
+  }>
+) {
+  const [hasMultipleDistricts, setHasMultipleDistricts] = useState(false);
+
+  useEffect(() => {
+    setHasMultipleDistricts(
+      new Set(props.sortedSchools.map(e => e?.district?.id)).size > 1
+    );
+  }, [props.sortedSchools]);
+
   return (
     <Autocomplete
       {...props.formField.autocompleteParams()}
-      multiple
       autoHighlight
       disableCloseOnSelect
       options={props.sortedSchools}
       isOptionEqualToValue={(option, value) => option.id === value.id}
+      groupBy={
+        hasMultipleDistricts
+          ? option => option?.district?.name ?? 'Unnamed District'
+          : undefined
+      }
       renderOption={(params, option, {selected}) => (
         <li {...params} key={option?.id ?? 0}>
           <Checkbox style={{marginRight: 8}} checked={selected} />
@@ -47,13 +63,18 @@ export function MultiSchoolAutocomplete(props: {
         </li>
       )}
       getOptionLabel={option => {
-        return (option.name ?? 'Unnamed School') + ' (' + option.nickname + ')';
+        return (
+          (option.name ?? 'Unnamed School') +
+          ' (' +
+          (option.nickname ?? '') +
+          ')'
+        );
       }}
       renderInput={params => (
         <TextField
           {...props.formField.textFieldParams(params)}
           label="Schools"
-          InputLabelProps={props.InputLabelProps}
+          InputLabelProps={props.InputLabelProps as InputLabelProps}
           placeholder={
             props.placeholder
               ? props.placeholder(props.sortedSchools.length > 0)
@@ -61,7 +82,7 @@ export function MultiSchoolAutocomplete(props: {
           }
         />
       )}
-      renderTags={(schools: readonly ISchool[], getTagProps) =>
+      renderTags={(schools, getTagProps) =>
         schools.map((option, index) => (
           <Chip
             {...addClassName(getTagProps({index}), 'global-tags')}

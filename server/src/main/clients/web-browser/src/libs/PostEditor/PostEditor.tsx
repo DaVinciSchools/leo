@@ -10,11 +10,10 @@ export function PostEditor(props: {
   const postName = props.postForm.useStringFormField('name', {
     maxLength: 255,
   });
-  const postTags = props.postForm.useAutocompleteFormField<readonly string[]>(
+  const postTags = props.postForm.useAutocompleteFormField<string, true, true>(
     'tags',
     {
       maxLength: 32,
-      isAutocomplete: {isMultiple: true, isFreeSolo: true},
     }
   );
   const postLongDescrHtml = props.postForm.useStringFormField('longDescrHtml', {

@@ -95,9 +95,8 @@ export function ProjectBuilder(props: {
       setSelectedExistingProject(hiddenProject.getValue() ?? null);
     },
   });
-  const hiddenProject = hiddenForm.useAutocompleteFormField<IProject | null>(
-    'project'
-  );
+  const hiddenProject =
+    hiddenForm.useAutocompleteFormField<DeepReadOnly<IProject>>('project');
 
   function copySelectedProjectConfiguration() {
     // TODO: copy existing project configuration.
@@ -327,7 +326,6 @@ export function ProjectBuilder(props: {
                     <ProjectsAutocomplete
                       sortedProjects={sortedExistingProjects}
                       formField={hiddenProject}
-                      style={{width: '100%'}}
                     />
                   </div>
                 </div>

@@ -4,8 +4,8 @@ import {AssignmentAutocomplete} from '../common_fields/AssignmentAutocomplete';
 import {TextField} from '@mui/material';
 import {FormFields} from '../form_utils/forms';
 import {pl_types} from 'pl-pb';
-import IAssignment = pl_types.IAssignment;
 import ReactQuill from 'react-quill';
+import IAssignment = pl_types.IAssignment;
 
 export function ProjectEditor(props: {
   projectForm: FormFields;
@@ -16,10 +16,7 @@ export function ProjectEditor(props: {
   });
   const projectAssignment =
     props.projectForm.useAutocompleteFormField<IAssignment | null>(
-      'assignment',
-      {
-        isAutocomplete: {},
-      }
+      'assignment'
     );
   const projectShortDescr = props.projectForm.useStringFormField('shortDescr', {
     maxLength: 65535,
