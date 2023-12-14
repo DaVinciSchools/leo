@@ -158,7 +158,11 @@ export function ProjectBuilder(props: {
     values: readonly pl_types.IProjectInputValue[]
   ) {
     createService(ProjectManagementService, 'ProjectManagementService')
-      .generateAnonymousProjects({inputValues: values.slice()})
+      .generateProjects({
+        definition: {
+          inputs: values.slice(),
+        },
+      })
       .then(response => {
         setProjectInputId(response.projectInputId ?? undefined);
         setActiveStep(activeStep + 1);
