@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import org.davincischools.leo.database.daos.Assignment;
+import org.davincischools.leo.database.daos.ExistingProjectUseType;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
@@ -264,7 +265,15 @@ public class ProjectManagementService {
                 definition.getAssignment().hasId()
                     ? new Assignment().setId(definition.getAssignment().getId())
                     : null)
-            .setState(State.PROCESSING.name());
+            .setState(State.PROCESSING.name())
+            .setExistingProject(
+                definition.hasExistingProject()
+                    ? new Project().setId(definition.getExistingProject().getId())
+                    : null)
+            .setExistingProjectUseType(
+                definition.hasExistingProjectUseType()
+                    ? ExistingProjectUseType.valueOf(definition.getExistingProjectUseType().name())
+                    : null);
 
     // Convert request inputs to ProjectInputValues.
     projectInput.setProjectInputValues(new LinkedHashSet<>());
