@@ -10,6 +10,7 @@ package post_service;
 service PostService {
   rpc GetProjectPosts(GetProjectPostsRequest) returns (GetProjectPostsResponse) {};
   rpc UpsertProjectPost(UpsertProjectPostRequest) returns (UpsertProjectPostResponse) {};
+  rpc DeleteProjectPost(DeleteProjectPostRequest) returns (DeleteProjectPostResponse) {};
   rpc UpsertProjectPostComment(UpsertProjectPostCommentRequest) returns (UpsertProjectPostCommentResponse) {};
   rpc DeleteProjectPostComment(DeleteProjectPostCommentRequest) returns (DeleteProjectPostCommentResponse) {};
   rpc UpsertProjectPostRating(UpsertProjectPostRatingRequest) returns (UpsertProjectPostRatingResponse) {};
@@ -51,6 +52,13 @@ message UpsertProjectPostRequest {
 
 message UpsertProjectPostResponse {
   optional int32 project_post_id = 1;
+}
+
+message DeleteProjectPostRequest {
+  optional int32 project_post_id = 1;
+}
+
+message DeleteProjectPostResponse {
 }
 
 message UpsertProjectPostCommentRequest {

@@ -9,7 +9,9 @@ import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectPostRat
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toUserXDao;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
+import com.google.common.collect.Iterables;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.ProjectPost;
@@ -23,6 +25,8 @@ import org.davincischools.leo.database.utils.repos.GetProjectsParams;
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
 import org.davincischools.leo.protos.post_service.DeleteProjectPostCommentRequest;
 import org.davincischools.leo.protos.post_service.DeleteProjectPostCommentResponse;
+import org.davincischools.leo.protos.post_service.DeleteProjectPostRequest;
+import org.davincischools.leo.protos.post_service.DeleteProjectPostResponse;
 import org.davincischools.leo.protos.post_service.GetProjectPostsRequest;
 import org.davincischools.leo.protos.post_service.GetProjectPostsResponse;
 import org.davincischools.leo.protos.post_service.UpsertProjectPostCommentRequest;
@@ -149,9 +153,12 @@ public class PostService {
                       ? toUserXDao(request.getProjectPost().getUserX()).orElseThrow()
                       : checkNotNull(userX.getUserXOrNull());
 
+              Optional<ProjectPost> existingPost;
+              if (request.getProjectPost().getId()) {}
+
+              db.getProjectPostRepository().findById(request.getProjectPost().getId());
+
               if (!userX.isAdminX() && request.getProjectPost().getUserX().hasId()) {
-                Optional<ProjectPost> existingPost =
-                    db.getProjectPostRepository().findById(request.getProjectPost().getId());
                 if (existingPost.isPresent()) {
                   if (!Objects.equals(existingPost.get().getUserX().getId(), postUserX.getId())) {
                     return userX.returnForbidden(response.build());
@@ -171,6 +178,47 @@ public class PostService {
               response.setProjectPostId(projectPost.getId());
 
               return response.build();
+            })
+        .finish();
+  }
+
+  @Transactional
+  @PostMapping(value = "/api/protos/PostService/DeleteProjectPost")
+  @ResponseBody
+  public DeleteProjectPostResponse deleteProjectPost(
+      @Authenticated HttpUserX userX,
+      @RequestBody Optional<DeleteProjectPostRequest> optionalRequest,
+      HttpExecutors httpExecutors)
+      throws HttpExecutorException {
+    return httpExecutors
+        .start(optionalRequest.orElse(DeleteProjectPostRequest.getDefaultInstance()))
+        .andThen(
+            (request, log) -> {
+              if (userX.isNotAuthorized()) {
+                return userX.returnForbidden(DeleteProjectPostResponse.getDefaultInstance());
+              }
+
+              ProjectPost projectPost =
+                  Iterables.getOnlyElement(
+                      db.getProjectPostRepository()
+                          .getProjectPosts(
+                              new GetProjectPostsParams()
+                                  .setProjectPostIds(List.of(request.getProjectPostId()))),
+                      null);
+              if (projectPost == null) {
+                return userX.returnNotFound(DeleteProjectPostResponse.getDefaultInstance());
+              }
+
+              if (!userX.isAdminX()
+                  && !userX.isTeacher()
+                  && !Objects.equals(projectPost.getUserX().getId(), userX.getUserXIdOrNull())) {
+                return userX.returnForbidden(DeleteProjectPostResponse.getDefaultInstance());
+              }
+
+              projectPost.setDeleted(Instant.now());
+              db.getProjectPostRepository().save(projectPost);
+
+              return DeleteProjectPostResponse.getDefaultInstance();
             })
         .finish();
   }
