@@ -25,6 +25,7 @@ public class GetProjectPostsParams {
   @Nullable private Iterable<Integer> classXIds;
   @Nullable private Iterable<Integer> schoolIds;
   @Nullable private Iterable<Integer> userXIds;
+  @Nullable private Iterable<Integer> excludeCommentsByUserXIds;
   @Nullable private Boolean beingEdited;
 
   @Nullable private Integer page;
@@ -72,6 +73,10 @@ public class GetProjectPostsParams {
 
   Optional<Iterable<Integer>> getUserXIds() {
     return Optional.ofNullable(userXIds);
+  }
+
+  Optional<Iterable<Integer>> getExcludeCommentsByUserXIds() {
+    return Optional.ofNullable(excludeCommentsByUserXIds);
   }
 
   Optional<Boolean> getBeingEdited() {

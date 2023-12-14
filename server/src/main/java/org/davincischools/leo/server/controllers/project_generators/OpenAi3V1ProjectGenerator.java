@@ -313,25 +313,26 @@ public class OpenAi3V1ProjectGenerator {
           if (inputValue == null) {
             return;
           }
+
+          var projectInputFulfillment =
+              new ProjectInputFulfillment()
+                  .setCreationTime(Instant.now())
+                  .setProject(project)
+                  .setProjectInputValue(inputValue)
+                  .setHowProjectFulfills(c.howProjectFulfills)
+                  .setFulfillmentPercentage(c.fulfillmentPercentage)
+                  .setVisibleIndicator(c.assessmentApproach);
+
+          if (!DaoUtils.isInitialized(project.getProjectInputFulfillments())) {
+            project.setProjectInputFulfillments(new LinkedHashSet<>());
+          }
+          project.getProjectInputFulfillments().add(projectInputFulfillment);
+
           if (!DaoUtils.isInitialized(inputValue.getProjectInputFulfillments())) {
             inputValue.setProjectInputFulfillments(new LinkedHashSet<>());
           }
-          inputValue
-              .getProjectInputFulfillments()
-              .add(
-                  new ProjectInputFulfillment()
-                      .setCreationTime(Instant.now())
-                      .setProject(project)
-                      .setProjectInputValue(inputValue)
-                      .setHowProjectFulfills(c.howProjectFulfills)
-                      .setFulfillmentPercentage(c.fulfillmentPercentage)
-                      .setVisibleIndicator(c.assessmentApproach));
+          inputValue.getProjectInputFulfillments().add(projectInputFulfillment);
         });
-    project.setProjectInputFulfillments(
-        new LinkedHashSet<>(
-            project.getProjectInput().getProjectInputValues().stream()
-                .flatMap(v -> streamIfInitialized(v.getProjectInputFulfillments()))
-                .collect(toImmutableSet())));
     return project;
   }
 }

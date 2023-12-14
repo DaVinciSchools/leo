@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.davincischools.leo.database.utils.query_helper.QueryHelper.DEFAULT_PAGE_SIZE;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Streams;
 import jakarta.persistence.criteria.JoinType;
 import java.time.Instant;
@@ -57,11 +58,12 @@ public interface ProjectPostRepository
     checkNotNull(params);
 
     projectPost.notDeleted().fetch().requireId(params.getProjectPostIds());
-    projectPost
-        .join(ProjectPost_.userX, JoinType.LEFT)
-        .notDeleted()
-        .fetch()
-        .requireId(params.getUserXIds());
+    var userX =
+        projectPost
+            .join(ProjectPost_.userX, JoinType.LEFT)
+            .notDeleted()
+            .fetch()
+            .requireId(params.getUserXIds());
 
     if (params.getIncludeTags().orElse(false)) {
       projectPost
@@ -71,16 +73,22 @@ public interface ProjectPostRepository
     }
 
     if (params.getIncludeComments().orElse(false)) {
-      projectPost
-          .join(
-              ProjectPost_.projectPostComments,
-              JoinType.LEFT,
-              ProjectPostComment::getProjectPost,
-              ProjectPost::setProjectPostComments)
-          .notDeleted()
-          .join(ProjectPostComment_.userX, JoinType.LEFT)
-          .notDeleted()
-          .fetch();
+      var commentUserX =
+          projectPost
+              .join(
+                  ProjectPost_.projectPostComments,
+                  JoinType.LEFT,
+                  ProjectPostComment::getProjectPost,
+                  ProjectPost::setProjectPostComments)
+              .notDeleted()
+              .join(ProjectPostComment_.userX, JoinType.LEFT)
+              .notDeleted()
+              .fetch();
+      if (params.getExcludeCommentsByUserXIds().isPresent()) {
+        projectPost.where(
+            Predicate.not(
+                Predicate.in(commentUserX.getId(), params.getExcludeCommentsByUserXIds().get())));
+      }
     }
 
     var project =
