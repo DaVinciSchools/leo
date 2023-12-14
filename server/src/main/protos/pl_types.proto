@@ -38,7 +38,7 @@ message District {
 
 message KnowledgeAndSkill {
   enum Type {
-    UNSET = 0;
+    UNSET_TYPE = 0;
     EKS = 1;
     XQ_COMPETENCY = 2;
     CTE = 3;
@@ -58,7 +58,7 @@ message KnowledgeAndSkill {
 
 message Project {
   enum ThumbsState {
-    UNSET = 0;
+    UNSET_THUMBS_STATE = 0;
     THUMBS_UP = 1;
     THUMBS_DOWN = 2;
   }
@@ -123,10 +123,17 @@ message UserX {
 
 message ProjectDefinition {
   enum State {
-    UNSET = 0;
+    UNSET_STATE = 0;
     PROCESSING = 1;
     COMPLETED = 2;
     FAILED = 3;
+  }
+
+  enum ExistingProjectUseType {
+    UNSET_EXISTING_PROJECT_CONFIGURATION_TYPE = 0;
+    USE_CONFIGURATION = 1;
+    MORE_LIKE_THIS = 2;
+    SUB_PROJECTS = 3;
   }
 
   optional int32 id = 1;
@@ -135,6 +142,8 @@ message ProjectDefinition {
   optional bool template = 3;
   optional bool selected = 4;
   optional State state = 5;
+  optional int32 existing_project_id = 9;
+  optional ExistingProjectUseType existing_project_use_type = 10;
   // Sorted by position already.
   repeated ProjectInputValue inputs = 6;
   optional Assignment assignment = 8;
@@ -152,7 +161,7 @@ message ProjectInputValue {
 
 message ProjectInputCategory {
   enum ValueType {
-    UNSET = 0;
+    UNSET_VALUE_TYPE = 0;
     FREE_TEXT = 1;
     EKS = 2;
     XQ_COMPETENCY = 3;
@@ -184,7 +193,6 @@ message ProjectInputCategory {
   optional ValueType value_type = 7;
   optional int32 max_num_values = 8;
 
-  // Set for non-Free_TEXT value types.
   repeated Option options = 9;
 }
 
@@ -216,7 +224,7 @@ message ProjectPostRatingCategory {
 
 message ProjectPostRating {
   enum RatingType {
-    UNSET = 0;
+    UNSET_RATING_TYPE = 0;
     INITIAL_1_TO_5 = 1;
     GOAL_COMPLETE_PCT = 2;
   }

@@ -45,7 +45,7 @@ enum State {
   CONGRATULATIONS,
 }
 
-enum ExistingProjectSelection {
+enum ExistingProjectUseType {
   USE_CONFIGURATION,
   MORE_LIKE_THIS,
   SUB_PROJECTS,
@@ -101,10 +101,8 @@ export function ProjectBuilder(
     hiddenForm.useAutocompleteFormField<IProject | null>('project', {
       onChange: selectedExistingProjectUpdated,
     });
-  const [
-    selectedExistingProjectConfiguration,
-    setSelectedExistingProjectConfiguration,
-  ] = useState<ExistingProjectSelection | null>(null);
+  const [selectedExistingProjectUsetype, setSelectedExistingProjectUsetype] =
+    useState<ExistingProjectUseType | null>(null);
 
   // All states. But, filter out REGISTER depending on whether a user is already logged in.
   const steps = Object.values(State)
@@ -199,7 +197,7 @@ export function ProjectBuilder(
       setSelectExistingProject(false);
       setSortedExistingProjects(null);
       selectedExistingProject.setValue(null);
-      setSelectedExistingProjectConfiguration(null);
+      setSelectedExistingProjectUsetype(null);
     } else if (userX?.isAuthenticated) {
       createService(ProjectManagementService, 'ProjectManagementService')
         .getProjects({
@@ -212,7 +210,7 @@ export function ProjectBuilder(
           setSelectExistingProject(false);
           setSortedExistingProjects(response.projects.sort(PROJECT_SORTER));
           selectedExistingProject.setValue(null);
-          setSelectedExistingProjectConfiguration(null);
+          setSelectedExistingProjectUsetype(null);
         })
         .catch(global.setError);
     }
@@ -228,17 +226,17 @@ export function ProjectBuilder(
     if (step === State.GETTING_STARTED) {
       setSelectExistingProject(false);
       selectedExistingProject.setValue(null);
-      setSelectedExistingProjectConfiguration(null);
+      setSelectedExistingProjectUsetype(null);
     }
     if (step === State.PROJECT_DETAILS && selectedExistingProject) {
-      switch (selectedExistingProjectConfiguration) {
-        case ExistingProjectSelection.USE_CONFIGURATION:
+      switch (selectedExistingProjectUsetype) {
+        case ExistingProjectUseType.USE_CONFIGURATION:
           loadAndSetInputs(selectedExistingProject.getValue());
           break;
-        case ExistingProjectSelection.MORE_LIKE_THIS:
+        case ExistingProjectUseType.MORE_LIKE_THIS:
           loadAndSetInputs(selectedExistingProject.getValue());
           break;
-        case ExistingProjectSelection.SUB_PROJECTS:
+        case ExistingProjectUseType.SUB_PROJECTS:
           loadAndSetInputs();
       }
     }
@@ -247,10 +245,14 @@ export function ProjectBuilder(
 
   function startGeneratingProjects() {
     createService(ProjectManagementService, 'ProjectManagementService')
-      .generateAnonymousProjects({
-        inputValues: allInputs
-          .filter(i => i.selected)
-          .map(i => deepWritable(i.input)),
+      .generateProjects({
+        definition: {
+          inputs: allInputs
+            .filter(i => i.selected)
+            .map(i => deepWritable(i.input)),
+          existingProjectId: selectedExistingProject.getValue()?.id,
+          existingProjectUseType: selectedExistingProjectUsetype,
+        },
       })
       .then(response => {
         setProjectInputId(response.projectInputId ?? undefined);
@@ -443,17 +445,15 @@ export function ProjectBuilder(
                     <RadioGroup
                       defaultValue=""
                       name="radio-buttons-group"
-                      value={selectedExistingProjectConfiguration}
+                      value={selectedExistingProjectUsetype}
                       onChange={event => {
-                        setSelectedExistingProjectConfiguration(
-                          parseInt(
-                            event.target.value
-                          ) as ExistingProjectSelection
+                        setSelectedExistingProjectUsetype(
+                          parseInt(event.target.value) as ExistingProjectUseType
                         );
                       }}
                     >
                       <FormControlLabel
-                        value={ExistingProjectSelection.USE_CONFIGURATION}
+                        value={ExistingProjectUseType.USE_CONFIGURATION}
                         control={<Radio />}
                         style={{padding: '1em'}}
                         label={
@@ -471,7 +471,7 @@ export function ProjectBuilder(
                         }
                       />
                       <FormControlLabel
-                        value={ExistingProjectSelection.MORE_LIKE_THIS}
+                        value={ExistingProjectUseType.MORE_LIKE_THIS}
                         control={<Radio />}
                         style={{padding: '1em'}}
                         label={
@@ -489,7 +489,7 @@ export function ProjectBuilder(
                         }
                       />
                       <FormControlLabel
-                        value={ExistingProjectSelection.SUB_PROJECTS}
+                        value={ExistingProjectUseType.SUB_PROJECTS}
                         control={<Radio />}
                         style={{padding: '1em'}}
                         label={
@@ -527,7 +527,7 @@ export function ProjectBuilder(
                     className="project-builder-button"
                     disabled={
                       !selectedExistingProject ||
-                      selectedExistingProjectConfiguration == null
+                      selectedExistingProjectUsetype == null
                     }
                     onClick={() => setActiveStep(activeStep + 1)}
                   >
@@ -602,8 +602,8 @@ export function ProjectBuilder(
                   }}
                   className="project-builder-project-details-widget project-builder-project-details-ikigai-builder global-flex-column"
                 >
-                  {selectedExistingProjectConfiguration ===
-                  ExistingProjectSelection.USE_CONFIGURATION ? (
+                  {selectedExistingProjectUsetype ===
+                  ExistingProjectUseType.USE_CONFIGURATION ? (
                     <div className="project-builder-project-details-project-configuration">
                       <div style={{fontWeight: 'bold'}}>
                         Using an existing project as the configuration for this
@@ -617,8 +617,8 @@ export function ProjectBuilder(
                       projects. The new projects <u>will likely be unrelated</u>{' '}
                       to that project.
                     </div>
-                  ) : selectedExistingProjectConfiguration ===
-                    ExistingProjectSelection.MORE_LIKE_THIS ? (
+                  ) : selectedExistingProjectUsetype ===
+                    ExistingProjectUseType.MORE_LIKE_THIS ? (
                     <div className="project-builder-project-details-project-configuration">
                       <div style={{fontWeight: 'bold'}}>
                         Using an existing project to create similar projects.
@@ -631,8 +631,8 @@ export function ProjectBuilder(
                       projects. The new projects <u>should be similar</u> to
                       that project.
                     </div>
-                  ) : selectedExistingProjectConfiguration ===
-                    ExistingProjectSelection.SUB_PROJECTS ? (
+                  ) : selectedExistingProjectUsetype ===
+                    ExistingProjectUseType.SUB_PROJECTS ? (
                     <div className="project-builder-project-details-project-configuration">
                       <div style={{fontWeight: 'bold'}}>
                         Using an existing project to create subprojects.

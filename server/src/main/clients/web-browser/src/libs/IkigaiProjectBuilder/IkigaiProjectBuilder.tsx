@@ -412,7 +412,10 @@ export function IkigaiProjectBuilder(
             radiansOffset={0}
           >
             {props.inputs.map(i => {
-              switch (i.input?.category?.valueType ?? ValueType.UNSET) {
+              switch (
+                i.input?.category?.valueType ??
+                ValueType.UNSET_VALUE_TYPE
+              ) {
                 case pl_types.ProjectInputCategory.ValueType.FREE_TEXT:
                   return (
                     <FreeTextInput
