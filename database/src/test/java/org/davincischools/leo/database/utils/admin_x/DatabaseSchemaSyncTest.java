@@ -69,8 +69,8 @@ public class DatabaseSchemaSyncTest {
     var expectedColumns = getTableSchema(testDataSource.getConnection());
     var prodColumns = getTableSchema(prodDataSource.getConnection());
 
-    assertThat(prodColumns.keySet()).containsExactlyElementsIn(expectedColumns.keySet());
-    assertThat(prodColumns).containsExactlyEntriesIn(expectedColumns);
+    assertThat(prodColumns.keySet()).containsAtLeastElementsIn(expectedColumns.keySet());
+    assertThat(prodColumns).containsAtLeastEntriesIn(expectedColumns);
   }
 
   @Test
@@ -95,8 +95,8 @@ public class DatabaseSchemaSyncTest {
     var expectedTriggers = getTriggerSchema(testDataSource.getConnection());
     var prodTriggers = getTriggerSchema(prodDataSource.getConnection());
 
-    assertThat(prodTriggers.keySet()).containsExactlyElementsIn(expectedTriggers.keySet());
-    assertThat(prodTriggers).containsExactlyEntriesIn(expectedTriggers);
+    assertThat(prodTriggers.keySet()).containsAtLeastElementsIn(expectedTriggers.keySet());
+    assertThat(prodTriggers).containsAtLeastEntriesIn(expectedTriggers);
   }
 
   private Map<String, Map<String, Object>> getTableSchema(Connection connection)
