@@ -11,7 +11,6 @@ import {
 } from '@ant-design/icons';
 import {ReactNode, useRef, useState} from 'react';
 import {pl_types} from 'pl-pb';
-
 import IProject = pl_types.IProject;
 import ThumbsState = pl_types.Project.ThumbsState;
 
@@ -33,7 +32,9 @@ export function ProjectCard(props: {
       {props.thumbsState === ThumbsState.THUMBS_UP ? (
         <LikeTwoTone
           twoToneColor="#0000cc"
-          onClick={() => props.updateProject({thumbsState: ThumbsState.UNSET})}
+          onClick={() =>
+            props.updateProject({thumbsState: ThumbsState.UNSET_THUMBS_STATE})
+          }
         />
       ) : (
         <LikeOutlined
@@ -50,7 +51,9 @@ export function ProjectCard(props: {
       {props.thumbsState === ThumbsState.THUMBS_DOWN ? (
         <DislikeTwoTone
           twoToneColor="#0000cc"
-          onClick={() => props.updateProject({thumbsState: ThumbsState.UNSET})}
+          onClick={() =>
+            props.updateProject({thumbsState: ThumbsState.UNSET_THUMBS_STATE})
+          }
         />
       ) : (
         <DislikeOutlined
