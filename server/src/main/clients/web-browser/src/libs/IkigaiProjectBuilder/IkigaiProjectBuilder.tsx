@@ -15,13 +15,12 @@ import {Close} from '@mui/icons-material';
 import {Ikigai, VISIBLE_ALPHA} from '../../Ikigai/Ikigai';
 import {TitledPaper} from '../TitledPaper/TitledPaper';
 import {pl_types} from 'pl-pb';
-
-import IOption = pl_types.ProjectInputCategory.IOption;
-import ValueType = pl_types.ProjectInputCategory.ValueType;
 import {OPTION_SORTER, TEXT_SORTER} from '../sorters';
 import {getInputField} from '../form_utils/forms';
 import {addClassName} from '../tags';
 import Markdown from 'react-markdown';
+import IOption = pl_types.ProjectInputCategory.IOption;
+import ValueType = pl_types.ProjectInputCategory.ValueType;
 
 const MODAL_STYLE: Partial<CSSProperties> = {
   position: 'absolute',
@@ -422,7 +421,10 @@ export function IkigaiProjectBuilder(props: {
             radiansOffset={0}
           >
             {categoryElements.map(e => {
-              switch (e.category?.category?.valueType ?? ValueType.UNSET) {
+              switch (
+                e.category?.category?.valueType ??
+                ValueType.UNSET_VALUE_TYPE
+              ) {
                 case pl_types.ProjectInputCategory.ValueType.FREE_TEXT:
                   return (
                     <FreeTextInput

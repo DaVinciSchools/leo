@@ -132,7 +132,7 @@ public class ProjectManagementService {
               if (!switch (request.getKnowledgeAndSkill().getType()) {
                 case EKS -> userX.isAdminX() || userX.isTeacher();
                 case CTE, XQ_COMPETENCY -> userX.isAdminX();
-                case UNSET, UNRECOGNIZED -> throw new IllegalArgumentException(
+                case UNSET_TYPE, UNRECOGNIZED -> throw new IllegalArgumentException(
                     "Unknown knowledge and skill type: "
                         + request.getKnowledgeAndSkill().getType().name());
               }) {

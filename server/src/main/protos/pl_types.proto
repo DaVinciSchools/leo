@@ -38,7 +38,7 @@ message District {
 
 message KnowledgeAndSkill {
   enum Type {
-    UNSET = 0;
+    UNSET_TYPE = 0;
     EKS = 1;
     XQ_COMPETENCY = 2;
     CTE = 3;
@@ -58,7 +58,7 @@ message KnowledgeAndSkill {
 
 message Project {
   enum ThumbsState {
-    UNSET = 0;
+    UNSET_THUMBS_STATE = 0;
     THUMBS_UP = 1;
     THUMBS_DOWN = 2;
   }
@@ -123,7 +123,7 @@ message UserX {
 
 message ProjectDefinition {
   enum State {
-    UNSET = 0;
+    UNSET_STATE = 0;
     PROCESSING = 1;
     COMPLETED = 2;
     FAILED = 3;
@@ -152,7 +152,7 @@ message ProjectInputValue {
 
 message ProjectInputCategory {
   enum ValueType {
-    UNSET = 0;
+    UNSET_VALUE_TYPE = 0;
     FREE_TEXT = 1;
     EKS = 2;
     XQ_COMPETENCY = 3;
@@ -216,7 +216,7 @@ message ProjectPostRatingCategory {
 
 message ProjectPostRating {
   enum RatingType {
-    UNSET = 0;
+    UNSET_RATING_TYPE = 0;
     INITIAL_1_TO_5 = 1;
     GOAL_COMPLETE_PCT = 2;
   }

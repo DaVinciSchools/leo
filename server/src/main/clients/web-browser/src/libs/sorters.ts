@@ -29,7 +29,7 @@ export const KNOWLEDGE_AND_SKILL_SORTER = (
   a: DeepReadOnly<IKnowledgeAndSkill | null | undefined>,
   b: DeepReadOnly<IKnowledgeAndSkill | null | undefined>
 ) =>
-  (a?.type ?? Type.UNSET) - (b?.type ?? Type.UNSET) ||
+  (a?.type ?? Type.UNSET_TYPE) - (b?.type ?? Type.UNSET_TYPE) ||
   (a?.category ?? '').localeCompare(b?.category ?? '') ||
   (a?.name ?? '').localeCompare(b?.name ?? '') ||
   (a?.shortDescr ?? '').localeCompare(b?.shortDescr ?? '');

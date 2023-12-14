@@ -126,7 +126,9 @@ export function AllProjects() {
               longDescrHtml={project.longDescrHtml ?? 'undefined'}
               active={project.active ?? false}
               favorite={project.favorite ?? false}
-              thumbsState={project.thumbsState ?? ThumbsState.UNSET}
+              thumbsState={
+                project.thumbsState ?? ThumbsState.UNSET_THUMBS_STATE
+              }
               thumbsStateReason={project.thumbsStateReason ?? ''}
               showDetails={() => showProjectDetails(project)}
               updateProject={modifications =>
