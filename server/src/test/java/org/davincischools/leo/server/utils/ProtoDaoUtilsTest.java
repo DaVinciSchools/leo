@@ -1166,7 +1166,7 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toProjectDefinitionFromInputRoundTript() throws ParseException {
+  public void toProjectDefinitionFromInputRoundTrip() throws ParseException {
     // Options are pulled in separately from the translation.
     ProjectDefinition proto =
         TextFormat.parse(
@@ -1219,12 +1219,19 @@ public class ProtoDaoUtilsTest {
                   free_texts: "free_textA"
                   free_texts: "free_textB"
                 }
-                assignment: {
+                assignment {
                   id: 18
                   name: "assignment name"
                   short_descr: "assignment short"
                   long_descr_html: "assignment long"
                 }
+                existing_project {
+                  id: 19
+                  name: "existing project name"
+                  short_descr: "existing project short"
+                  long_descr_html: "existing project long"
+                }
+                existing_project_use_type: USE_CONFIGURATION
                 """,
             ProjectDefinition.class);
 
