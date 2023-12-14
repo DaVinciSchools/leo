@@ -25,6 +25,7 @@ import {DistrictAutocomplete} from '../common_fields/DistrictAutocomplete';
 import {MultiSchoolAutocomplete} from '../common_fields/MultiSchoolAutocomplete';
 import {MultiClassXAutocomplete} from '../common_fields/MultiClassXAutocomplete';
 import UserXManagementService = user_x_management.UserXManagementService;
+import {DeepReadonly} from '../misc';
 
 export interface EditorProfile extends IUserX {
   district: IDistrict | null;
@@ -49,8 +50,12 @@ export function ProfileEditor(props: {
   const [sortedDistricts, setSortedDistricts] = useState<readonly IDistrict[]>(
     []
   );
-  const [sortedSchools, setSortedSchools] = useState<readonly ISchool[]>([]);
-  const [sortedClassXs, setSortedClassXs] = useState<readonly IClassX[]>([]);
+  const [sortedSchools, setSortedSchools] = useState<DeepReadonly<ISchool[]>>(
+    []
+  );
+  const [sortedClassXs, setSortedClassXs] = useState<DeepReadonly<IClassX[]>>(
+    []
+  );
 
   props.profileForm.useNumberFormField('userXId');
 
@@ -117,7 +122,7 @@ export function ProfileEditor(props: {
       disabled: global?.userX?.isAdminX !== true,
     });
   const profileSchools = props.profileForm.useAutocompleteFormField<
-    readonly ISchool[]
+    DeepReadonly<ISchool[]>
   >('schools', {
     isAutocomplete: {
       isMultiple: true,
@@ -125,7 +130,7 @@ export function ProfileEditor(props: {
     onChange: refreshClassXs,
   });
   const profileClassXs = props.profileForm.useAutocompleteFormField<
-    readonly IClassX[]
+    DeepReadonly<IClassX[]>
   >('classXs', {
     isAutocomplete: {
       isMultiple: true,

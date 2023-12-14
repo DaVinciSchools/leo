@@ -36,22 +36,25 @@ import {SearchForUserXModal} from '../../../libs/SearchForUserX/SearchForUserXMo
 export function OverviewTab() {
   const global = useContext(GlobalStateContext);
 
-  const [projectPosts, setProjectPosts] = useState<readonly IProjectPost[]>([]);
+  const [projectPosts, setProjectPosts] = useState<
+    DeepReadonly<IProjectPost[]>
+  >([]);
 
   const filterForm = useFormFields();
 
   // Maintain school filters.
 
-  const [schoolOptions, setSchoolOptions] = useState<readonly ISchool[]>([]);
-  const schoolFilter = filterForm.useAutocompleteFormField<readonly ISchool[]>(
-    'schoolFilter',
-    {
-      isAutocomplete: {
-        isMultiple: true,
-      },
-      disabled: !global.userX,
-    }
+  const [schoolOptions, setSchoolOptions] = useState<DeepReadonly<ISchool[]>>(
+    []
   );
+  const schoolFilter = filterForm.useAutocompleteFormField<
+    DeepReadonly<ISchool[]>
+  >('schoolFilter', {
+    isAutocomplete: {
+      isMultiple: true,
+    },
+    disabled: !global.userX,
+  });
 
   useEffect(() => {
     if (!global.userX) {
@@ -73,15 +76,16 @@ export function OverviewTab() {
 
   // Maintain classX filters.
 
-  const [classXOptions, setClassXOptions] = useState<readonly IClassX[]>([]);
-  const classXFilter = filterForm.useAutocompleteFormField<readonly IClassX[]>(
-    'classXFilter',
-    {
-      isAutocomplete: {
-        isMultiple: true,
-      },
-    }
+  const [classXOptions, setClassXOptions] = useState<DeepReadonly<IClassX[]>>(
+    []
   );
+  const classXFilter = filterForm.useAutocompleteFormField<
+    DeepReadonly<IClassX[]>
+  >('classXFilter', {
+    isAutocomplete: {
+      isMultiple: true,
+    },
+  });
 
   useEffect(() => {
     if ((schoolFilter.getValue()?.length ?? 0) === 0) {

@@ -29,7 +29,7 @@ import {useContext, useEffect, useState} from 'react';
 import {useDelayedAction} from '../../../libs/delayed_action';
 import {useFormFields} from '../../../libs/form_utils/forms';
 import {KnowledgeAndSkillModal} from '../../../libs/KnowledgeAndSkillModal/KnowledgeAndSkillModal';
-import {replaceInPlace, replaceOrAddInPlace} from '../../../libs/misc';
+import {replaceInNewArray, replaceOrAddInPlace} from '../../../libs/misc';
 import ClassXManagementService = class_x_management_service.ClassXManagementService;
 import IClassX = pl_types.IClassX;
 import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
@@ -57,9 +57,9 @@ export function TeacherEditClassXs() {
       if (selectedClass?.id != null) {
         const newClass = classFormFields.getValuesObject(true, selectedClass);
         setSortedClasses(
-          replaceInPlace(sortedClasses.slice(), newClass, e => e?.id).sort(
-            CLASS_X_SORTER
-          )
+          replaceInNewArray(sortedClasses, newClass, e => e?.id)
+            .slice()
+            .sort(CLASS_X_SORTER)
         );
       }
     },
@@ -424,7 +424,7 @@ export function TeacherEditClassXs() {
                   );
                 } else {
                   classEks.setValue(
-                    replaceInPlace(
+                    replaceInNewArray(
                       classEks.getValue()?.slice() ?? [],
                       response.knowledgeAndSkill!,
                       e => e.id

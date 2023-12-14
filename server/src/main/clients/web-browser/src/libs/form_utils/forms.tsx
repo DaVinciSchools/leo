@@ -3,17 +3,19 @@
 import {InputAdornment} from '@mui/material';
 import {CheckboxProps} from '@mui/material/Checkbox/Checkbox';
 import {
+  cloneElement,
   DetailedHTMLProps,
   FormHTMLAttributes,
   ReactElement,
   RefObject,
+  SyntheticEvent,
   useEffect,
   useRef,
   useState,
 } from 'react';
 import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
-import {ReactQuillProps} from 'react-quill';
+import ReactQuill, {ReactQuillProps} from 'react-quill';
 import {Writable} from '../misc';
 
 const MAX_ZIP_CODE_LENGTH = 10;
@@ -22,6 +24,7 @@ const MAX_PASSWORD_LENGTH = 50;
 
 const PASSWORD_PATTERN = RegExp(
   `^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{${MIN_PASSWORD_LENGTH},${MAX_PASSWORD_LENGTH}}$`
+  // The previous line is not parsed correctly in Chrome. So this character fixes it: `
 );
 const NUMBER_PATTERN = RegExp('^-?[0-9.]+([eE][+-][0-9]+)?');
 const INTEGER_PATTERN = RegExp('^-?[0-9]+');
@@ -51,12 +54,18 @@ export interface FormFieldMetadata {
   };
   onChange?: (formFields: FormFields, formField: FormField<any>) => void;
   disabled?: boolean;
+  fieldState?: FieldState;
 }
 
 export interface IFormAutocompleteParams<T> {
   value: Writable<T>;
-  onChange: (event: React.SyntheticEvent, value: Readonly<T>) => void;
+  onChange: (event: SyntheticEvent, value: Readonly<T>) => void;
   disabled: boolean;
+}
+
+export enum FieldState {
+  READ_ONLY,
+  EDITING,
 }
 
 export interface FormField<T> {
@@ -67,6 +76,11 @@ export interface FormField<T> {
 
   readonly stringValue: string;
   setStringValue: (value: string) => void;
+
+  inlineEditableField: (
+    editing: (enabled: boolean) => ReactElement,
+    readOnly?: () => ReactElement
+  ) => ReactElement;
 
   readonly error: string;
   setError: (message: string) => void;
@@ -83,7 +97,7 @@ export interface FormField<T> {
 }
 
 interface InternalFormField<T> extends FormField<T> {
-  fieldRef: RefObject<HTMLDivElement | HTMLButtonElement>;
+  fieldRef: RefObject<HTMLDivElement | HTMLButtonElement | ReactQuill>;
   fieldMetadata?: FormFieldMetadata;
 
   reset: () => void;
@@ -96,6 +110,7 @@ interface InternalFormField<T> extends FormField<T> {
 export type FormFieldsMetadata = {
   onChange?: (formFields: FormFields, formField: FormField<any>) => void;
   disabled?: boolean;
+  fieldState?: FieldState;
 };
 
 export interface FormFields {
@@ -234,7 +249,10 @@ export function useFormFields(
     );
     const [error, setError] = useState('');
     const [evaluateField, setEvaluateField] = useState(false);
-    const fieldRef = useRef<HTMLDivElement | HTMLButtonElement>(null);
+    const [fieldState, setFieldState] = useState<FieldState | undefined>();
+    const fieldRef = useRef<HTMLDivElement | HTMLButtonElement | ReactQuill>(
+      null
+    );
 
     useEffect(() => {
       fieldMetadata?.onChange?.(formFields, formField);
@@ -377,7 +395,7 @@ export function useFormFields(
         value: Array.isArray(autocompleteValue)
           ? (autocompleteValue.slice() as unknown as Writable<T>)
           : autocompleteValue,
-        onChange: (e: React.SyntheticEvent, value: Readonly<T>) => {
+        onChange: (_e: SyntheticEvent, value: Readonly<T>) => {
           setAutocompleteValue(
             (Array.isArray(value) ? value.slice() : value) as T
           );
@@ -460,6 +478,87 @@ export function useFormFields(
       }
     }
 
+    function isParentOf(child: Element | null, parent: Element | null) {
+      // eslint-disable-next-line eqeqeq
+      while (child != null && parent != null && child != parent) {
+        child = child.parentElement;
+      }
+      // eslint-disable-next-line eqeqeq
+      return parent != null && child == parent;
+    }
+
+    function inlineEditableField(
+      editing: (enabled: boolean) => ReactElement,
+      readOnly?: () => ReactElement
+    ): ReactElement {
+      const divRef = useRef<HTMLDivElement>(null);
+      const [lastIsEditing, setLastIsEditing] = useState(false);
+
+      const isEditing =
+        (fieldState ?? formFieldsMetadata?.fieldState ?? FieldState.EDITING) ===
+        FieldState.EDITING;
+
+      if (isEditing !== lastIsEditing) {
+        setLastIsEditing(isEditing);
+        // Ensure that the DOM model has been fully updated with setTimeout.
+        setTimeout(() => {
+          if (isEditing && fieldRef.current != null) {
+            if (fieldRef.current instanceof ReactQuill) {
+              fieldRef.current.focus();
+              fieldRef.current.setEditorSelection(
+                fieldRef.current.getEditor(),
+                {
+                  index: 0,
+                  length: fieldRef.current.getEditor().getLength(),
+                }
+              );
+            } else if (fieldRef.current instanceof HTMLElement) {
+              const field = getInputField(fieldRef.current);
+              if (field != null) {
+                field.focus();
+                field.setSelectionRange(0, field.value.length);
+              }
+            }
+          }
+        }, 0);
+      }
+
+      return (
+        <div
+          ref={divRef}
+          onBlur={e => {
+            // For ReactQuill, a blur event is sent when clicking on toolbar buttons.
+            // Then a blur event is sent again when going back to the editor. In both
+            // cases, the target and related target are under this div. So, we don't
+            // change the field state if both are under the div.
+            if (
+              !isParentOf(e.target, divRef.current) ||
+              !isParentOf(e.relatedTarget, divRef.current)
+            ) {
+              setFieldState(FieldState.READ_ONLY);
+            }
+          }}
+          onMouseDown={() => {
+            setFieldState(FieldState.EDITING);
+          }}
+          onKeyUp={e => {
+            if (e.key === 'Escape') {
+              setFieldState(FieldState.READ_ONLY);
+            }
+          }}
+        >
+          {cloneElement(
+            readOnly == null
+              ? editing(isEditing)
+              : isEditing
+              ? editing(true)
+              : readOnly(),
+            {ref: fieldRef}
+          )}
+        </div>
+      );
+    }
+
     function verifyOkOrSetError(finalCheck: boolean): boolean {
       const error = calculateError(finalCheck);
       if (error) {
@@ -475,96 +574,105 @@ export function useFormFields(
     }
 
     function calculateError(finalCheck: boolean): string | undefined {
-      const input = getInputField(fieldRef.current);
-      if (input == null) {
-        // We don't have a field to check yet.
-        return;
-      }
+      if (fieldRef.current instanceof ReactQuill) {
+        if (
+          fieldMetadata?.maxLength != null &&
+          stringValue.length > fieldMetadata?.maxLength
+        ) {
+          return `This field must have less than ${fieldMetadata?.maxLength} character(s).`;
+        }
+      } else {
+        const input = getInputField(fieldRef.current);
+        if (input == null) {
+          // We don't have a field to check yet.
+          return;
+        }
 
-      if (
-        ![
-          'checkbox',
-          'email',
-          'number',
-          'password',
-          'text',
-          'textarea',
-        ].includes(input.type)
-      ) {
-        throw new Error(`Input type '${input.type}' is not recognized.`);
-      }
+        if (
+          ![
+            'checkbox',
+            'email',
+            'number',
+            'password',
+            'text',
+            'textarea',
+          ].includes(input.type)
+        ) {
+          throw new Error(`Input type '${input.type}' is not recognized.`);
+        }
 
-      if (
-        (input.type === 'password' || fieldMetadata?.isPassword) &&
-        fieldMetadata?.isPassword?.skipPasswordCheck !== true &&
-        stringValue !== '' &&
-        !PASSWORD_PATTERN.exec(stringValue)
-      ) {
-        return PASSWORD_ERROR_MESSAGE;
-      }
+        if (
+          (input.type === 'password' || fieldMetadata?.isPassword) &&
+          fieldMetadata?.isPassword?.skipPasswordCheck !== true &&
+          stringValue !== '' &&
+          !PASSWORD_PATTERN.exec(stringValue)
+        ) {
+          return PASSWORD_ERROR_MESSAGE;
+        }
 
-      if (finalCheck) {
-        if (input.required && stringValue.trim() === '') {
-          return 'This field is required.';
+        if (finalCheck) {
+          if (input.required && stringValue.trim() === '') {
+            return 'This field is required.';
+          }
+          if (
+            input.minLength > 0 &&
+            stringValue.length < input.minLength &&
+            stringValue !== ''
+          ) {
+            return `This field must have at least ${input.minLength} character(s).`;
+          }
+          if (
+            input.maxLength >= 0 &&
+            stringValue.length > input.maxLength &&
+            stringValue !== ''
+          ) {
+            return `This field must have less than ${input.maxLength} character(s).`;
+          }
+        }
+
+        if (stringValue.trim() === '' && (!input.required || !finalCheck)) {
+          return;
+        }
+
+        if (input.type === 'number') {
+          if (NUMBER_PATTERN.exec(stringValue) == null) {
+            return 'This field must be a number.';
+          }
+          if (
+            fieldMetadata?.isInteger &&
+            INTEGER_PATTERN.exec(stringValue) == null
+          ) {
+            return 'This field must be an integer.';
+          }
+          const value = getValue() as number;
+          if (
+            'min' in input &&
+            input.min.length > 0 &&
+            (INTEGER_PATTERN.exec(input.min) != null
+              ? parseInt(input.min)
+              : parseFloat(input.min)) > value
+          ) {
+            return `This field must be greater than or equal to ${input.min}.`;
+          }
+          if (
+            'max' in input &&
+            input.max.length > 0 &&
+            (INTEGER_PATTERN.exec(input.max) != null
+              ? parseInt(input.max)
+              : parseFloat(input.max)) < value
+          ) {
+            return `This field must be less than or equal to ${input.max}.`;
+          }
+        }
+        if (input.type === 'email' && EMAIL_PATTERN.exec(stringValue) == null) {
+          return 'This field is not a valid e-mail address.';
         }
         if (
-          input.minLength > 0 &&
-          stringValue.length < input.minLength &&
-          stringValue !== ''
+          fieldMetadata?.isZipCode &&
+          ZIP_CODE_PATTERN.exec(stringValue) == null
         ) {
-          return `This field must have at least ${input.minLength} character(s).`;
+          return 'This field must be 5 digits optionally followed by a dash and 4 digits.';
         }
-        if (
-          input.maxLength >= 0 &&
-          stringValue.length > input.maxLength &&
-          stringValue !== ''
-        ) {
-          return `This field must have less than ${input.maxLength} character(s).`;
-        }
-      }
-
-      if (stringValue.trim() === '' && (!input.required || !finalCheck)) {
-        return;
-      }
-
-      if (input.type === 'number') {
-        if (NUMBER_PATTERN.exec(stringValue) == null) {
-          return 'This field must be a number.';
-        }
-        if (
-          fieldMetadata?.isInteger &&
-          INTEGER_PATTERN.exec(stringValue) == null
-        ) {
-          return 'This field must be an integer.';
-        }
-        const value = getValue() as number;
-        if (
-          'min' in input &&
-          input.min.length > 0 &&
-          (INTEGER_PATTERN.exec(input.min) != null
-            ? parseInt(input.min)
-            : parseFloat(input.min)) > value
-        ) {
-          return `This field must be greater than or equal to ${input.min}.`;
-        }
-        if (
-          'max' in input &&
-          input.max.length > 0 &&
-          (INTEGER_PATTERN.exec(input.max) != null
-            ? parseInt(input.max)
-            : parseFloat(input.max)) < value
-        ) {
-          return `This field must be less than or equal to ${input.max}.`;
-        }
-      }
-      if (input.type === 'email' && EMAIL_PATTERN.exec(stringValue) == null) {
-        return 'This field is not a valid e-mail address.';
-      }
-      if (
-        fieldMetadata?.isZipCode &&
-        ZIP_CODE_PATTERN.exec(stringValue) == null
-      ) {
-        return 'This field must be 5 digits optionally followed by a dash and 4 digits.';
       }
       return;
     }
@@ -577,6 +685,8 @@ export function useFormFields(
 
       stringValue,
       setStringValue,
+
+      inlineEditableField,
 
       error,
       setError,
@@ -621,6 +731,10 @@ export function useFormFields(
     )[] = [];
 
     for (const field of fields.values()) {
+      if (field.fieldRef.current instanceof ReactQuill) {
+        continue;
+      }
+
       if (
         field.fieldMetadata?.isPassword != null &&
         field?.fieldMetadata?.isPassword?.skipPasswordCheck !== true
@@ -662,10 +776,15 @@ export function useFormFields(
     });
 
     if (errorField) {
-      const input = getInputField(errorField.fieldRef.current);
-      if (input != null) {
-        input.scrollIntoView(true);
-        input.focus();
+      if (errorField.fieldRef.current instanceof ReactQuill) {
+        errorField.fieldRef.current?.editor?.root?.scrollIntoView();
+        errorField.fieldRef.current?.editor?.root?.focus();
+      } else {
+        const input = getInputField(errorField.fieldRef.current);
+        if (input != null) {
+          input.scrollIntoView(true);
+          input.focus();
+        }
       }
     }
 

@@ -11,10 +11,11 @@ import {
 import {useEffect, useState} from 'react';
 import {FormField} from '../form_utils/forms';
 import {addClassName} from '../tags';
+import {DeepReadonly} from '../misc';
 
 export function MultiClassXAutocomplete(props: {
-  sortedClassXs: readonly IClassX[];
-  formField: FormField<readonly IClassX[]>;
+  sortedClassXs: DeepReadonly<IClassX[]>;
+  formField: FormField<DeepReadonly<IClassX[]>>;
   InputLabelProps?: Partial<InputLabelProps>;
   placeholder?: (hasOptions: boolean) => string;
 }) {
@@ -74,7 +75,7 @@ export function MultiClassXAutocomplete(props: {
           }
         />
       )}
-      renderTags={(classXs: readonly IClassX[], getTagProps) =>
+      renderTags={(classXs: DeepReadonly<IClassX[]>, getTagProps) =>
         classXs.map((option, index) => (
           <Chip
             {...addClassName(getTagProps({index}), 'global-tags')}

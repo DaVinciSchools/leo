@@ -91,7 +91,7 @@ export function MyProjects() {
     1500
   );
 
-  // Post editor tab.
+  // ProjectPost editor tab.
 
   const [sortedTags, setSortedTags] = useState<readonly string[]>([]);
   const postForm = useFormFields({
@@ -287,7 +287,7 @@ export function MyProjects() {
               },
               {
                 key: TabValue.CREATE_POST,
-                label: 'Create Post',
+                label: 'Create ProjectPost',
                 content: (
                   <>
                     <div className="global-flex-column">
