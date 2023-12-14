@@ -357,6 +357,10 @@ public class UserXManagementService {
                     db.getDistrictRepository().findByName("Wiseburn Unified School District");
                 isStudent = request.getEmailAddress().endsWith("student.davincischools.org");
                 isTeacher = !isStudent;
+              } else if (request.getEmailAddress().endsWith("summitps.org")) {
+                district = db.getDistrictRepository().findByName("Summit Public Schools");
+                isStudent = request.getEmailAddress().endsWith("mysummitps.org");
+                isTeacher = !isStudent;
               }
 
               Interest interest =
