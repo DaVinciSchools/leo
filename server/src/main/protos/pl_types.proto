@@ -129,12 +129,21 @@ message ProjectDefinition {
     FAILED = 3;
   }
 
+  enum ExistingProjectUseType {
+    UNSET_EXISTING_PROJECT_CONFIGURATION_TYPE = 0;
+    USE_CONFIGURATION = 1;
+    MORE_LIKE_THIS = 2;
+    SUB_PROJECTS = 3;
+  }
+
   optional int32 id = 1;
   optional string name = 2;
   optional int32 input_id = 7;
   optional bool template = 3;
   optional bool selected = 4;
   optional State state = 5;
+  optional Project existing_project = 9;
+  optional ExistingProjectUseType existing_project_use_type = 10;
   // Sorted by position already.
   repeated ProjectInputValue inputs = 6;
   optional Assignment assignment = 8;

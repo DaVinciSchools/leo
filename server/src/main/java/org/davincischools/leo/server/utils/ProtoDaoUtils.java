@@ -39,6 +39,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.ClassX;
@@ -76,6 +78,7 @@ import org.hibernate.LazyInitializationException;
 
 public class ProtoDaoUtils {
 
+  private static final Logger logger = LogManager.getLogger();
   private static final AtomicInteger positionCounter = new AtomicInteger(0);
 
   @SuppressWarnings("unchecked")
@@ -154,7 +157,10 @@ public class ProtoDaoUtils {
         org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.EXISTING_PROJECT_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition
+            .EXISTING_PROJECT_USE_TYPE_FIELD_NUMBER);
   }
 
   public static Optional<org.davincischools.leo.protos.pl_types.ProjectDefinition.Builder>
@@ -168,6 +174,8 @@ public class ProtoDaoUtils {
           builder.setInputId(projectInput.getId());
           toProjectDefinitionProto(projectInput.getProjectDefinition(), () -> builder);
           toAssignmentProto(projectInput.getAssignment(), false, builder::getAssignmentBuilder);
+          toProjectProto(
+              projectInput.getExistingProject(), true, builder::getExistingProjectBuilder);
 
           Map<Integer, org.davincischools.leo.protos.pl_types.ProjectInputValue.Builder>
               categoryIdToProjectInputValue = new HashMap<>();
@@ -207,7 +215,8 @@ public class ProtoDaoUtils {
         org.davincischools.leo.protos.pl_types.ProjectDefinition.TEMPLATE_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.EXISTING_PROJECT_FIELD_NUMBER);
   }
 
   public static Optional<org.davincischools.leo.database.daos.ProjectDefinition>
@@ -234,7 +243,10 @@ public class ProtoDaoUtils {
         org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.STATE_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.EXISTING_PROJECT_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition
+            .EXISTING_PROJECT_USE_TYPE_FIELD_NUMBER);
   }
 
   public static Optional<org.davincischools.leo.database.daos.ProjectInput> toProjectInputDao(
@@ -247,6 +259,7 @@ public class ProtoDaoUtils {
           dao.setId(projectDefinition.getInputId());
           toProjectDefinitionDao(projectDefinition).ifPresent(dao::setProjectDefinition);
           toAssignmentDao(projectDefinition.getAssignment()).ifPresent(dao::setAssignment);
+          toProjectDao(projectDefinition.getExistingProject()).ifPresent(dao::setExistingProject);
 
           Map<Integer, ProjectDefinitionCategory> idToProjectDefinitionCategory =
               Maps.uniqueIndex(
@@ -302,7 +315,8 @@ public class ProtoDaoUtils {
         org.davincischools.leo.protos.pl_types.ProjectDefinition.TEMPLATE_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.ASSIGNMENT_FIELD_NUMBER,
+        org.davincischools.leo.protos.pl_types.ProjectDefinition.EXISTING_PROJECT_FIELD_NUMBER);
   }
 
   public static Optional<org.davincischools.leo.protos.pl_types.ProjectInputCategory.Builder>
@@ -1048,6 +1062,7 @@ public class ProtoDaoUtils {
     return translateToProto(tag, newBuilder, builder -> {});
   }
 
+  @SuppressWarnings({"rawtypes", "unchecked"})
   public static <M extends MessageOrBuilder, D> Optional<D> translateToDao(
       @Nullable M fromMessage,
       Supplier<D> newDao,
@@ -1186,7 +1201,9 @@ public class ProtoDaoUtils {
                       continue;
                     }
 
-                    throw new IOException("Cannot map the following field: " + field.getFullName());
+                    logger
+                        .atWarn()
+                        .log("No mapping from {} to {}.", field.getFullName(), daoClass.getName());
                   }
 
                   // Check for an enum field, it needs to be translated to a string.
@@ -1196,11 +1213,23 @@ public class ProtoDaoUtils {
                         (message, dao) -> {
                           try {
                             if (message.hasField(field)) {
-                              var enumValue = ((EnumValueDescriptor) message.getField(field));
-                              setMethod
-                                  .get()
-                                  .invoke(
-                                      dao, enumValue.getNumber() != 0 ? enumValue.getName() : null);
+                              var protoEnumValue = ((EnumValueDescriptor) message.getField(field));
+                              if (protoEnumValue.getNumber() != 0) {
+                                var parameterType = setMethod.get().getParameterTypes()[0];
+                                if (Enum.class.isAssignableFrom(parameterType)) {
+                                  setMethod
+                                      .get()
+                                      .invoke(
+                                          dao,
+                                          Enum.valueOf(
+                                              (Class<Enum>) parameterType,
+                                              protoEnumValue.getName()));
+                                } else {
+                                  setMethod.get().invoke(dao, protoEnumValue.getName());
+                                }
+                              } else {
+                                setMethod.get().invoke(dao, null);
+                              }
                             }
                           } catch (Exception e) {
                             throw new RuntimeException(
@@ -1408,14 +1437,32 @@ public class ProtoDaoUtils {
                         field.getNumber(),
                         (dao, message) -> {
                           try {
-                            String daoValue = (String) getMethod.get().invoke(dao);
-                            if (daoValue != null) {
-                              var enumValue = field.getEnumType().findValueByName(daoValue);
-                              if (enumValue == null) {
-                                throw new RuntimeException(
-                                    "Enum value does not exist: " + daoValue);
+                            var returnType = getMethod.get().getReturnType();
+                            if (Enum.class.isAssignableFrom(returnType)) {
+                              var daoValue = (Enum<?>) getMethod.get().invoke(dao);
+                              if (daoValue != null) {
+                                var enumValue =
+                                    field.getEnumType().findValueByName(daoValue.name());
+                                if (enumValue == null) {
+                                  throw new RuntimeException(
+                                      "Enum value does not exist: " + daoValue.name());
+                                }
+                                message.setField(field, enumValue);
+                              } else {
+                                message.clearField(field);
                               }
-                              message.setField(field, enumValue);
+                            } else {
+                              String daoValue = (String) getMethod.get().invoke(dao);
+                              if (daoValue != null) {
+                                var enumValue = field.getEnumType().findValueByName(daoValue);
+                                if (enumValue == null) {
+                                  throw new RuntimeException(
+                                      "Enum value does not exist: " + daoValue);
+                                }
+                                message.setField(field, enumValue);
+                              } else {
+                                message.clearField(field);
+                              }
                             }
                           } catch (Exception e) {
                             throw new RuntimeException(

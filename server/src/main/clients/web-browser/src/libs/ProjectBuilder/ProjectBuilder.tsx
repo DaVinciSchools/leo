@@ -23,12 +23,12 @@ import {login} from '../authentication';
 import {pl_types, project_management, user_x_management} from 'pl-pb';
 import {useNavigate} from 'react-router';
 import {ProjectsAutocomplete} from '../common_fields/ProjectsAutocomplete';
-import {DeepReadOnly} from '../misc';
 import {PROJECT_SORTER} from '../sorters';
 import {useFormFields} from '../form_utils/forms';
 import ProjectManagementService = project_management.ProjectManagementService;
 import UserXManagementService = user_x_management.UserXManagementService;
 import IProject = pl_types.IProject;
+import ExistingProjectUseType = pl_types.ProjectDefinition.ExistingProjectUseType;
 
 enum State {
   GETTING_STARTED,
@@ -36,12 +36,6 @@ enum State {
   PROJECT_DETAILS,
   REGISTER,
   CONGRATULATIONS,
-}
-
-enum ExistingProjectSelection {
-  USE_CONFIGURATION,
-  MORE_LIKE_THIS,
-  SUB_PROJECTS,
 }
 
 const STATE_LABELS = new Map<State, string>([
@@ -59,6 +53,7 @@ export function ProjectBuilder(props: {
   const global = useContext(GlobalStateContext);
   const userX = global.optionalUserX();
   const navigate = useNavigate();
+  const hiddenForm = useFormFields();
 
   const [allInputValues, setAllInputValues] = useState<
     readonly pl_types.IProjectInputValue[]
@@ -77,10 +72,10 @@ export function ProjectBuilder(props: {
   const [sortedExistingProjects, setSortedExistingProjects] = useState<
     readonly IProject[]
   >([]);
-  const [selectedExistingProject, setSelectedExistingProject] =
-    useState<DeepReadOnly<IProject | null>>(null);
-  const [selectedProjectConfiguration, setSelectedProjectConfiguration] =
-    useState<ExistingProjectSelection | null>(null);
+  const selectedExistingProject =
+    hiddenForm.useAutocompleteFormField<IProject | null>('project');
+  const [selectedExistingProjectUseType, setSelectedExistingProjectUseType] =
+    useState<ExistingProjectUseType | null>(null);
 
   // All states. But, filter out REGISTER depending on whether a user is already logged in.
   const steps = Object.values(State)
@@ -90,34 +85,25 @@ export function ProjectBuilder(props: {
     .map(i => i as State);
   const [activeStep, internalSetActiveStep] = useState(State.GETTING_STARTED);
 
-  const hiddenForm = useFormFields({
-    onChange: () => {
-      setSelectedExistingProject(hiddenProject.getValue() ?? null);
-    },
-  });
-  const hiddenProject = hiddenForm.useAutocompleteFormField<IProject | null>(
-    'project'
-  );
-
-  function copySelectedProjectConfiguration() {
+  function copySelectedProjectUseType() {
     // TODO: copy existing project configuration.
   }
 
   function setActiveStep(step: State) {
     if (step === State.GETTING_STARTED) {
       setSelectExistingProject(false);
-      hiddenProject.setValue(null);
-      setSelectedProjectConfiguration(null);
+      selectedExistingProject.setValue(null);
+      setSelectedExistingProjectUseType(null);
     }
-    if (step === State.PROJECT_DETAILS && selectedExistingProject) {
-      switch (selectedProjectConfiguration) {
-        case ExistingProjectSelection.USE_CONFIGURATION:
-          copySelectedProjectConfiguration();
+    if (step === State.PROJECT_DETAILS && selectedExistingProject.getValue()) {
+      switch (selectedExistingProjectUseType) {
+        case ExistingProjectUseType.USE_CONFIGURATION:
+          copySelectedProjectUseType();
           break;
-        case ExistingProjectSelection.MORE_LIKE_THIS:
-          copySelectedProjectConfiguration();
+        case ExistingProjectUseType.MORE_LIKE_THIS:
+          copySelectedProjectUseType();
           break;
-        case ExistingProjectSelection.SUB_PROJECTS:
+        case ExistingProjectUseType.SUB_PROJECTS:
       }
     }
     internalSetActiveStep(step);
@@ -161,6 +147,8 @@ export function ProjectBuilder(props: {
       .generateProjects({
         definition: {
           inputs: values.slice(),
+          existingProject: selectedExistingProject.getValue(),
+          existingProjectUseType: selectedExistingProjectUseType ?? undefined,
         },
       })
       .then(response => {
@@ -294,7 +282,7 @@ export function ProjectBuilder(props: {
                 >
                   Create a custom
                   <br />
-                  ikigai project
+                  Ikigai project
                 </Button>
                 <Button
                   variant="contained"
@@ -330,7 +318,7 @@ export function ProjectBuilder(props: {
                   >
                     <ProjectsAutocomplete
                       sortedProjects={sortedExistingProjects}
-                      formField={hiddenProject}
+                      formField={selectedExistingProject}
                       style={{width: '100%'}}
                     />
                   </div>
@@ -346,17 +334,15 @@ export function ProjectBuilder(props: {
                     <RadioGroup
                       defaultValue=""
                       name="radio-buttons-group"
-                      value={selectedProjectConfiguration}
+                      value={selectedExistingProjectUseType}
                       onChange={event => {
-                        setSelectedProjectConfiguration(
-                          parseInt(
-                            event.target.value
-                          ) as ExistingProjectSelection
+                        setSelectedExistingProjectUseType(
+                          parseInt(event.target.value) as ExistingProjectUseType
                         );
                       }}
                     >
                       <FormControlLabel
-                        value={ExistingProjectSelection.USE_CONFIGURATION}
+                        value={ExistingProjectUseType.USE_CONFIGURATION}
                         control={<Radio />}
                         style={{padding: '1em'}}
                         label={
@@ -374,7 +360,7 @@ export function ProjectBuilder(props: {
                         }
                       />
                       <FormControlLabel
-                        value={ExistingProjectSelection.MORE_LIKE_THIS}
+                        value={ExistingProjectUseType.MORE_LIKE_THIS}
                         control={<Radio />}
                         style={{padding: '1em'}}
                         label={
@@ -392,7 +378,7 @@ export function ProjectBuilder(props: {
                         }
                       />
                       <FormControlLabel
-                        value={ExistingProjectSelection.SUB_PROJECTS}
+                        value={ExistingProjectUseType.SUB_PROJECTS}
                         control={<Radio />}
                         style={{padding: '1em'}}
                         label={
@@ -429,8 +415,8 @@ export function ProjectBuilder(props: {
                     variant="contained"
                     className="project-builder-button"
                     disabled={
-                      !selectedExistingProject ||
-                      selectedProjectConfiguration == null
+                      !selectedExistingProject.getValue() ||
+                      selectedExistingProjectUseType == null
                     }
                     onClick={() => setActiveStep(activeStep + 1)}
                   >
@@ -505,8 +491,8 @@ export function ProjectBuilder(props: {
                   }}
                   className="project-builder-project-details-widget project-builder-project-details-ikigai-builder global-flex-column"
                 >
-                  {selectedProjectConfiguration ===
-                  ExistingProjectSelection.USE_CONFIGURATION ? (
+                  {selectedExistingProjectUseType ===
+                  ExistingProjectUseType.USE_CONFIGURATION ? (
                     <div className="project-builder-project-details-project-configuration">
                       <div style={{fontWeight: 'bold'}}>
                         Using an existing project as the configuration for this
@@ -514,35 +500,38 @@ export function ProjectBuilder(props: {
                       </div>
                       The initial configuration below is from the{' '}
                       <u>
-                        {selectedExistingProject?.name ?? '[Unknown Project]'}
+                        {selectedExistingProject?.getValue()?.name ??
+                          '[Unknown Project]'}
                       </u>{' '}
                       project. Modify it, if desired, before generating new
                       projects. The new projects <u>will likely be unrelated</u>{' '}
                       to that project.
                     </div>
-                  ) : selectedProjectConfiguration ===
-                    ExistingProjectSelection.MORE_LIKE_THIS ? (
+                  ) : selectedExistingProjectUseType ===
+                    ExistingProjectUseType.MORE_LIKE_THIS ? (
                     <div className="project-builder-project-details-project-configuration">
                       <div style={{fontWeight: 'bold'}}>
                         Using an existing project to create similar projects.
                       </div>
                       The initial configuration below is from the{' '}
                       <u>
-                        {selectedExistingProject?.name ?? '[Unknown Project]'}
+                        {selectedExistingProject?.getValue()?.name ??
+                          '[Unknown Project]'}
                       </u>{' '}
                       project. Modify it, if desired, before generating new
                       projects. The new projects <u>should be similar</u> to
                       that project.
                     </div>
-                  ) : selectedProjectConfiguration ===
-                    ExistingProjectSelection.SUB_PROJECTS ? (
+                  ) : selectedExistingProjectUseType ===
+                    ExistingProjectUseType.SUB_PROJECTS ? (
                     <div className="project-builder-project-details-project-configuration">
                       <div style={{fontWeight: 'bold'}}>
                         Using an existing project to create subprojects.
                       </div>
                       The initial configuration below is from the{' '}
                       <u>
-                        {selectedExistingProject?.name ?? '[Unknown Project]'}
+                        {selectedExistingProject?.getValue()?.name ??
+                          '[Unknown Project]'}
                       </u>{' '}
                       project. Modify it, if desired, before generating new
                       subprojects. The new subprojects <u>will be a part of</u>{' '}
