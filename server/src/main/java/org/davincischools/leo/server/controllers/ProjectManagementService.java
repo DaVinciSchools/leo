@@ -1,6 +1,7 @@
 package org.davincischools.leo.server.controllers;
 
 import static org.davincischools.leo.database.utils.DaoUtils.listIfInitialized;
+import static org.davincischools.leo.database.utils.DaoUtils.removeTransientValues;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.addProjectInputCategoryOptions;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.enumNameOrNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
@@ -55,7 +56,6 @@ import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillRequest;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillResponse;
 import org.davincischools.leo.protos.task_service.GenerateProjectsTask;
-import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.Anonymous;
@@ -63,9 +63,9 @@ import org.davincischools.leo.server.utils.http_user_x.Authenticated;
 import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.davincischools.leo.server.utils.task_queue.workers.ProjectGeneratorWorker;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai.OpenAi3V3ProjectGenerator;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -175,7 +175,7 @@ public class ProjectManagementService {
               // Get the definition.
               org.davincischools.leo.database.daos.ProjectDefinition definition;
               if (request.getDefinition().getId() == 0) {
-                definition = createProjectDefinition(userX, request.getDefinition());
+                definition = createAndSaveProjectDefinition(userX, request.getDefinition());
               } else {
                 definition =
                     Iterables.getOnlyElement(
@@ -194,10 +194,11 @@ public class ProjectManagementService {
               }
 
               // Save project input.
-              var projectInput = createProjectInput(userX, request.getDefinition());
-              projectInputRef.set(db.getProjectInputRepository().save(projectInput));
-              db.getProjectInputValueRepository().saveAll(projectInput.getProjectInputValues());
+              var projectInput =
+                  createAndSaveProjectInput(userX, request.getDefinition(), definition);
+              projectInputRef.set(projectInput);
 
+              // Submit the task to generate projects.
               projectGeneratorWorker.submitTask(
                   GenerateProjectsTask.newBuilder().setProjectInputId(projectInput.getId()).build(),
                   Duration.ofSeconds(5));
@@ -217,7 +218,8 @@ public class ProjectManagementService {
         .finish();
   }
 
-  private org.davincischools.leo.database.daos.ProjectDefinition createProjectDefinition(
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  protected org.davincischools.leo.database.daos.ProjectDefinition createAndSaveProjectDefinition(
       HttpUserX userX, ProjectDefinition definition) {
     var definitionDao =
         new org.davincischools.leo.database.daos.ProjectDefinition()
@@ -229,37 +231,39 @@ public class ProjectManagementService {
             .setUserX(userX.getUserXOrNull());
 
     // Create the definition categories.
-    var categories =
-        definition.getInputsList().stream()
-            .map(
-                input ->
-                    new ProjectDefinitionCategory()
-                        .setCreationTime(Instant.now())
-                        .setProjectDefinition(definitionDao)
-                        .setPosition((float) positionCounter.incrementAndGet())
-                        .setMaxNumValues(input.getCategory().getMaxNumValues())
-                        .setProjectDefinitionCategoryType(
-                            new ProjectDefinitionCategoryType()
-                                .setId(input.getCategory().getTypeId())))
-            .toList();
-    definitionDao.setProjectDefinitionCategories(new LinkedHashSet<>(categories));
+    definitionDao.setProjectDefinitionCategories(
+        new LinkedHashSet<>(
+            definition.getInputsList().stream()
+                .map(
+                    input ->
+                        new ProjectDefinitionCategory()
+                            .setCreationTime(Instant.now())
+                            .setProjectDefinition(definitionDao)
+                            .setPosition((float) positionCounter.incrementAndGet())
+                            .setMaxNumValues(input.getCategory().getMaxNumValues())
+                            .setProjectDefinitionCategoryType(
+                                new ProjectDefinitionCategoryType()
+                                    .setId(input.getCategory().getTypeId())))
+                .toList()));
 
-    // Save the definition & categories.
-    db.getProjectDefinitionRepository().save(definitionDao);
-    db.getProjectDefinitionCategoryRepository()
-        .saveAll(definitionDao.getProjectDefinitionCategories());
+    removeTransientValues(definitionDao, db.getProjectDefinitionRepository()::save);
+    removeTransientValues(
+        definitionDao.getProjectDefinitionCategories(),
+        db.getProjectDefinitionCategoryRepository()::saveAll);
 
     return definitionDao;
   }
 
-  @NotNull
-  private ProjectInput createProjectInput(
-      HttpUserX userX, org.davincischools.leo.protos.pl_types.ProjectDefinition definition) {
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  protected ProjectInput createAndSaveProjectInput(
+      HttpUserX userX,
+      org.davincischools.leo.protos.pl_types.ProjectDefinition definition,
+      org.davincischools.leo.database.daos.ProjectDefinition definitionDao) {
     // Convert request to ProjectInput.
     var projectInput =
         new ProjectInput()
             .setCreationTime(Instant.now())
-            .setProjectDefinition(ProtoDaoUtils.toProjectDefinitionDao(definition).orElseThrow())
+            .setProjectDefinition(definitionDao)
             .setUserX(userX.getUserXOrNull())
             .setAssignment(
                 definition.getAssignment().hasId()
@@ -320,6 +324,11 @@ public class ProjectManagementService {
         }
       }
     }
+
+    removeTransientValues(projectInput, db.getProjectInputRepository()::save);
+    removeTransientValues(
+        projectInput.getProjectInputValues(), db.getProjectInputValueRepository()::saveAll);
+
     return projectInput;
   }
 
