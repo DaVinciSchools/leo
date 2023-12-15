@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -51,7 +52,7 @@ public class HttpServletProxy {
     }
 
     public String rewriteForClient(String str) {
-      return str.replaceAll(springHostPort, externalHostPort);
+      return str.replaceAll(Pattern.quote(springHostPort), externalHostPort);
     }
 
     public String rewriteForSpring(String str) {
