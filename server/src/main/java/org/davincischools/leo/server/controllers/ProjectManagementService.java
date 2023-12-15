@@ -15,21 +15,14 @@ import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
 import com.google.common.collect.Iterables;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-import org.davincischools.leo.database.daos.Assignment;
-import org.davincischools.leo.database.daos.ExistingProjectUseType;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
-import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectInput;
-import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
@@ -56,6 +49,7 @@ import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillRequest;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillResponse;
 import org.davincischools.leo.protos.task_service.GenerateProjectsTask;
+import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.Anonymous;
@@ -169,15 +163,16 @@ public class ProjectManagementService {
 
     var projectInputRef = new AtomicReference<ProjectInput>();
     return httpExecutors
-        .start(optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()))
+        .start(optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()).toBuilder())
         .andThen(
             (request, log) -> {
               // Get the definition.
-              org.davincischools.leo.database.daos.ProjectDefinition definition;
+              org.davincischools.leo.database.daos.ProjectDefinition definitionDao;
               if (request.getDefinition().getId() == 0) {
-                definition = createAndSaveProjectDefinition(userX, request.getDefinition());
+                definitionDao =
+                    createAndSaveProjectDefinition(userX, request.getDefinitionBuilder());
               } else {
-                definition =
+                definitionDao =
                     Iterables.getOnlyElement(
                         db.getProjectDefinitionRepository()
                             .getProjectDefinitions(
@@ -188,14 +183,14 @@ public class ProjectManagementService {
 
               // Verify that the categories match.
               if (request.getDefinition().getInputsCount()
-                  != listIfInitialized(definition.getProjectDefinitionCategories()).size()) {
+                  != listIfInitialized(definitionDao.getProjectDefinitionCategories()).size()) {
                 throw new IllegalArgumentException(
                     "Incorrect number of input categories: " + request);
               }
 
               // Save project input.
               var projectInput =
-                  createAndSaveProjectInput(userX, request.getDefinition(), definition);
+                  createAndSaveProjectInput(userX, definitionDao, request.getDefinitionBuilder());
               projectInputRef.set(projectInput);
 
               // Submit the task to generate projects.
@@ -220,36 +215,25 @@ public class ProjectManagementService {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   protected org.davincischools.leo.database.daos.ProjectDefinition createAndSaveProjectDefinition(
-      HttpUserX userX, ProjectDefinition definition) {
+      HttpUserX userX, ProjectDefinition.Builder definitionProto) {
+    // Create the definition dao.
     var definitionDao =
-        new org.davincischools.leo.database.daos.ProjectDefinition()
-            .setCreationTime(Instant.now())
-            .setName(
-                definition.hasName()
-                    ? definition.getName()
-                    : "Anonymously Created Project Definition")
+        ProtoDaoUtils.toProjectDefinitionDao(definitionProto)
+            .orElseThrow()
             .setUserX(userX.getUserXOrNull());
 
-    // Create the definition categories.
-    definitionDao.setProjectDefinitionCategories(
-        new LinkedHashSet<>(
-            definition.getInputsList().stream()
-                .map(
-                    input ->
-                        new ProjectDefinitionCategory()
-                            .setCreationTime(Instant.now())
-                            .setProjectDefinition(definitionDao)
-                            .setPosition((float) positionCounter.incrementAndGet())
-                            .setMaxNumValues(input.getCategory().getMaxNumValues())
-                            .setProjectDefinitionCategoryType(
-                                new ProjectDefinitionCategoryType()
-                                    .setId(input.getCategory().getTypeId())))
-                .toList()));
-
+    // Save the daos.
     removeTransientValues(definitionDao, db.getProjectDefinitionRepository()::save);
     removeTransientValues(
         definitionDao.getProjectDefinitionCategories(),
         db.getProjectDefinitionCategoryRepository()::saveAll);
+
+    // Copy the ids back into the proto.
+    definitionProto.setId(definitionDao.getId());
+    int i = 0;
+    for (var categoryDao : definitionDao.getProjectDefinitionCategories()) {
+      definitionProto.getInputsBuilder(i++).getCategoryBuilder().setId(categoryDao.getId());
+    }
 
     return definitionDao;
   }
@@ -257,79 +241,25 @@ public class ProjectManagementService {
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   protected ProjectInput createAndSaveProjectInput(
       HttpUserX userX,
-      org.davincischools.leo.protos.pl_types.ProjectDefinition definition,
-      org.davincischools.leo.database.daos.ProjectDefinition definitionDao) {
+      org.davincischools.leo.database.daos.ProjectDefinition definitionDao,
+      ProjectDefinition.Builder definition) {
     // Convert request to ProjectInput.
-    var projectInput =
-        new ProjectInput()
-            .setCreationTime(Instant.now())
-            .setProjectDefinition(definitionDao)
+    var projectInputDao =
+        ProtoDaoUtils.toProjectInputDao(definition)
+            .orElseThrow()
             .setUserX(userX.getUserXOrNull())
-            .setAssignment(
-                definition.getAssignment().hasId()
-                    ? new Assignment().setId(definition.getAssignment().getId())
-                    : null)
             .setState(State.PROCESSING.name())
-            .setExistingProject(
-                definition.hasExistingProject()
-                    ? new Project().setId(definition.getExistingProject().getId())
-                    : null)
-            .setExistingProjectUseType(
-                definition.hasExistingProjectUseType()
-                    ? ExistingProjectUseType.valueOf(definition.getExistingProjectUseType().name())
-                    : null);
+            .setProjectDefinition(definitionDao);
 
-    // Convert request inputs to ProjectInputValues.
-    projectInput.setProjectInputValues(new LinkedHashSet<>());
-    for (int i = 0; i < definition.getInputsCount(); ++i) {
-      // Get category at index i.
-      var inputs = definition.getInputs(i);
-      Supplier<ProjectInputValue> newProjectInputValue =
-          () ->
-              new ProjectInputValue()
-                  .setCreationTime(Instant.now())
-                  .setProjectInput(projectInput)
-                  .setProjectDefinitionCategory(
-                      new ProjectDefinitionCategory().setId(inputs.getCategory().getId()))
-                  .setPosition((float) positionCounter.incrementAndGet());
-
-      // Get inputs at index i.
-      switch (inputs.getCategory().getValueType()) {
-        case FREE_TEXT -> {
-          projectInput
-              .getProjectInputValues()
-              .addAll(
-                  inputs.getFreeTextsList().stream()
-                      .map(t -> newProjectInputValue.get().setFreeTextValue(t))
-                      .toList());
-        }
-        case MOTIVATION -> {
-          projectInput
-              .getProjectInputValues()
-              .addAll(
-                  db.getMotivationRepository().findAllByIds(inputs.getSelectedIdsList()).stream()
-                      .map(m -> newProjectInputValue.get().setMotivationValue(m))
-                      .toList());
-        }
-        default -> {
-          projectInput
-              .getProjectInputValues()
-              .addAll(
-                  db
-                      .getKnowledgeAndSkillRepository()
-                      .findAllById(inputs.getSelectedIdsList())
-                      .stream()
-                      .map(ks -> newProjectInputValue.get().setKnowledgeAndSkillValue(ks))
-                      .toList());
-        }
-      }
-    }
-
-    removeTransientValues(projectInput, db.getProjectInputRepository()::save);
+    // Save the daos.
+    removeTransientValues(projectInputDao, db.getProjectInputRepository()::save);
     removeTransientValues(
-        projectInput.getProjectInputValues(), db.getProjectInputValueRepository()::saveAll);
+        projectInputDao.getProjectInputValues(), db.getProjectInputValueRepository()::saveAll);
 
-    return projectInput;
+    // Copy the ids back into the proto.
+    definition.setInputId(projectInputDao.getId());
+
+    return projectInputDao;
   }
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjects")

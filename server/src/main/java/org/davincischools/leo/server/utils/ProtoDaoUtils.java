@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -228,14 +227,18 @@ public class ProtoDaoUtils {
         () ->
             new org.davincischools.leo.database.daos.ProjectDefinition()
                 .setCreationTime(Instant.now()),
-        dao ->
-            dao.setProjectDefinitionCategories(
-                projectDefinition.getInputsList().stream()
-                    .map(org.davincischools.leo.protos.pl_types.ProjectInputValue::getCategory)
-                    .map(ProtoDaoUtils::toProjectDefinitionCategoryDao)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(toSet())),
+        dao -> {
+          dao.setProjectDefinitionCategories(
+              new LinkedHashSet<>(
+                  projectDefinition.getInputsList().stream()
+                      .map(org.davincischools.leo.protos.pl_types.ProjectInputValue::getCategory)
+                      .map(ProtoDaoUtils::toProjectDefinitionCategoryDao)
+                      .filter(Optional::isPresent)
+                      .map(Optional::get)
+                      .toList()));
+          dao.getProjectDefinitionCategories()
+              .forEach(category -> category.setProjectDefinition(dao));
+        },
         org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUT_ID_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.INPUTS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.SELECTED_FIELD_NUMBER,
@@ -304,7 +307,7 @@ public class ProtoDaoUtils {
                               .toList());
                     }
                   });
-          dao.setProjectInputValues(new HashSet<>(projectInputValues));
+          dao.setProjectInputValues(new LinkedHashSet<>(projectInputValues));
         },
         org.davincischools.leo.protos.pl_types.ProjectDefinition.ID_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.ProjectDefinition.NAME_FIELD_NUMBER,
@@ -494,11 +497,12 @@ public class ProtoDaoUtils {
                 .setPosition((float) positionCounter.incrementAndGet()),
         dao ->
             dao.setProjectMilestoneSteps(
-                milestone.getStepsList().stream()
-                    .map(ProtoDaoUtils::toProjectMilestoneStepDao)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(toSet())),
+                new LinkedHashSet<>(
+                    milestone.getStepsList().stream()
+                        .map(ProtoDaoUtils::toProjectMilestoneStepDao)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .toList())),
         org.davincischools.leo.protos.pl_types.Project.Milestone.STEPS_FIELD_NUMBER);
   }
 
@@ -510,11 +514,12 @@ public class ProtoDaoUtils {
         dao -> {
           toAssignmentDao(project.getAssignment()).ifPresent(dao::setAssignment);
           dao.setProjectMilestones(
-              project.getMilestonesList().stream()
-                  .map(ProtoDaoUtils::toProjectMilestoneDao)
-                  .filter(Optional::isPresent)
-                  .map(Optional::get)
-                  .collect(toSet()));
+              new LinkedHashSet<>(
+                  project.getMilestonesList().stream()
+                      .map(ProtoDaoUtils::toProjectMilestoneDao)
+                      .filter(Optional::isPresent)
+                      .map(Optional::get)
+                      .toList()));
           toProjectInputDao(project.getProjectDefinition()).ifPresent(dao::setProjectInput);
         },
         org.davincischools.leo.protos.pl_types.Project.ASSIGNMENT_FIELD_NUMBER,
@@ -556,17 +561,19 @@ public class ProtoDaoUtils {
           dao.setUserX(toUserXDao(projectPost.getUserX()).orElse(null));
           dao.setProject(toProjectDao(projectPost.getProject()).orElse(null));
           dao.setTags(
-              projectPost.getTagsList().stream()
-                  .map(ProtoDaoUtils::toTagDao)
-                  .filter(Optional::isPresent)
-                  .map(Optional::get)
-                  .collect(toSet()));
+              new LinkedHashSet<>(
+                  projectPost.getTagsList().stream()
+                      .map(ProtoDaoUtils::toTagDao)
+                      .filter(Optional::isPresent)
+                      .map(Optional::get)
+                      .toList()));
           dao.setProjectPostComments(
-              projectPost.getCommentsList().stream()
-                  .map(ProtoDaoUtils::toProjectPostCommentDao)
-                  .filter(Optional::isPresent)
-                  .map(Optional::get)
-                  .collect(toSet()));
+              new LinkedHashSet<>(
+                  projectPost.getCommentsList().stream()
+                      .map(ProtoDaoUtils::toProjectPostCommentDao)
+                      .filter(Optional::isPresent)
+                      .map(Optional::get)
+                      .toList()));
           if (projectPost.getRatingCategoriesCount() > 0) {
             if (!isInitialized(dao.getProject().getProjectInputFulfillments())) {
               dao.getProject().setProjectInputFulfillments(new LinkedHashSet<>());
@@ -601,11 +608,12 @@ public class ProtoDaoUtils {
                     });
 
             var ratings =
-                projectPost.getRatingsList().stream()
-                    .map(ProtoDaoUtils::toProjectPostRatingDao)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(toSet());
+                new LinkedHashSet<>(
+                    projectPost.getRatingsList().stream()
+                        .map(ProtoDaoUtils::toProjectPostRatingDao)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .toList());
             var idToProjectInputFulfillments =
                 new HashMap<>(
                     Maps.uniqueIndex(
@@ -883,23 +891,25 @@ public class ProtoDaoUtils {
         dao -> {
           toClassXDao(assignment.getClassX()).ifPresent(dao::setClassX);
           dao.setAssignmentKnowledgeAndSkills(
-              assignment.getKnowledgeAndSkillsList().stream()
-                  .map(ProtoDaoUtils::toKnowledgeAndSkillDao)
-                  .filter(Optional::isPresent)
-                  .map(Optional::get)
-                  .map(ks -> AssignmentKnowledgeAndSkillRepository.create(dao, ks))
-                  .collect(toSet()));
+              new LinkedHashSet<>(
+                  assignment.getKnowledgeAndSkillsList().stream()
+                      .map(ProtoDaoUtils::toKnowledgeAndSkillDao)
+                      .filter(Optional::isPresent)
+                      .map(Optional::get)
+                      .map(ks -> AssignmentKnowledgeAndSkillRepository.create(dao, ks))
+                      .toList()));
           dao.setAssignmentProjectDefinitions(
-              assignment.getProjectDefinitionsList().stream()
-                  .map(
-                      projectDefinition ->
-                          new AssignmentProjectDefinition()
-                              .setAssignment(dao)
-                              .setSelected(
-                                  projectDefinition.getSelected() ? Instant.now() : Instant.MIN)
-                              .setProjectDefinition(
-                                  toProjectDefinitionDao(projectDefinition).orElse(null)))
-                  .collect(toSet()));
+              new LinkedHashSet<>(
+                  assignment.getProjectDefinitionsList().stream()
+                      .map(
+                          projectDefinition ->
+                              new AssignmentProjectDefinition()
+                                  .setAssignment(dao)
+                                  .setSelected(
+                                      projectDefinition.getSelected() ? Instant.now() : Instant.MIN)
+                                  .setProjectDefinition(
+                                      toProjectDefinitionDao(projectDefinition).orElse(null)))
+                      .toList()));
         },
         org.davincischools.leo.protos.pl_types.Assignment.KNOWLEDGE_AND_SKILLS_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.Assignment.CLASS_X_FIELD_NUMBER,
@@ -949,11 +959,12 @@ public class ProtoDaoUtils {
         dao -> {
           toSchoolDao(classX.getSchool()).ifPresent(dao::setSchool);
           dao.setAssignments(
-              classX.getAssignmentsList().stream()
-                  .map(ProtoDaoUtils::toAssignmentDao)
-                  .filter(Optional::isPresent)
-                  .map(Optional::get)
-                  .collect(toSet()));
+              new LinkedHashSet<>(
+                  classX.getAssignmentsList().stream()
+                      .map(ProtoDaoUtils::toAssignmentDao)
+                      .filter(Optional::isPresent)
+                      .map(Optional::get)
+                      .toList()));
           dao.setClassXKnowledgeAndSkills(
               createJoinTableRows(
                   dao,
