@@ -64,6 +64,40 @@ export function removeInPlace<T>(
   return values;
 }
 
+export function modifyInDeepReadOnly<T, K>(
+  values: DeepReadOnly<T[]>,
+  oldValue: DeepReadOnly<T>,
+  processFn: (value: DeepWritable<T>) => void,
+  toKey: (value: DeepReadOnly<T>) => K
+): DeepReadOnly<T[]> {
+  const oldKey = toKey(oldValue);
+  const index = values.findIndex(value => toKey(value) === oldKey);
+  if (index !== -1) {
+    const newValues = values.slice();
+    const newValue = deepClone(newValues[index]);
+    processFn(newValue);
+    newValues[index] = deepReadOnly(newValue);
+    return newValues;
+  }
+  return values;
+}
+
+export function replaceInDeepReadOnly<T, K>(
+  values: DeepReadOnly<T[]>,
+  newValue: DeepReadOnly<T>,
+  toKey: (value: DeepReadOnly<T>) => K
+): DeepReadOnly<T>[] {
+  const key = toKey(newValue);
+  const index = values.findIndex(value => toKey(value) === key);
+  if (index !== -1) {
+    const newValues = values.slice();
+    newValues[index] = newValue;
+    return newValues;
+  } else {
+    return values.slice();
+  }
+}
+
 export type Writable<T> = {-readonly [P in keyof T]: T[P]};
 
 export function isTextEmpty(text: string | null | undefined) {
@@ -130,6 +164,17 @@ export type DeepReadOnly<T> = T extends
   ? ReadonlySet<DeepReadOnly<E>>
   : {readonly [K in keyof T]: DeepReadOnly<T[K]>};
 
-export function deepReadOnly<T>(value: T | DeepWritable<T>): DeepReadOnly<T> {
+export function deepReadOnly<T>(value: T | DeepWritable<T>) {
   return value as DeepReadOnly<T>;
+}
+
+export function deepClone<T>(value: T | DeepReadOnly<T>) {
+  return structuredClone(deepWritable(value)) as DeepWritable<T>;
+}
+
+// Proto types are mutable by default. So, to store a DeepReadOnly value in a proto
+// we need to make it DeepWritable first. Use this rather than deepWritable() to
+// document that we are converting it just to store in a proto.
+export function toProto<T>(value: T | DeepReadOnly<T>) {
+  return value as DeepWritable<T>;
 }
