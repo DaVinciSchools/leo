@@ -16,9 +16,10 @@ import {Ikigai, VISIBLE_ALPHA} from '../../Ikigai/Ikigai';
 import {TitledPaper} from '../TitledPaper/TitledPaper';
 import {pl_types} from 'pl-pb';
 import {OPTION_SORTER, TEXT_SORTER} from '../sorters';
-import {getInputField} from '../form_utils/forms';
 import {addClassName} from '../tags';
 import Markdown from 'react-markdown';
+import {deepClone, DeepReadOnly} from '../misc';
+import {getCategoryId, ProjectInput} from '../ProjectBuilder/ProjectBuilder';
 import IOption = pl_types.ProjectInputCategory.IOption;
 import ValueType = pl_types.ProjectInputCategory.ValueType;
 
@@ -35,95 +36,85 @@ const MODAL_PAPER_PROPS: PaperProps = {
   elevation: 24,
 };
 
-interface CategoryElement {
-  category: pl_types.IProjectInputValue;
-  htmlId: string;
-  hue: number;
-  stringValues: readonly string[];
-  optionValues: readonly IOption[];
-}
-
-function FreeTextInput(props: {
-  id: string;
-  hue: number;
-  title: string;
-  description: string;
-  hint: string;
-  placeholder: string;
-  options: readonly IOption[];
-  values: readonly string[];
-  onValuesUpdated: (values: readonly string[]) => void;
-  maxNumberOfValues: number;
-}) {
+function FreeTextInput(
+  props: DeepReadOnly<{
+    input: ProjectInput;
+    setInput: (input: DeepReadOnly<ProjectInput>) => void;
+  }>
+) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedValues, setSelectedValues] = useState<readonly string[]>([]);
-  const [optionValues, setOptionValues] = useState<readonly string[]>([]);
+  const [values, setValues] = useState<DeepReadOnly<string[]>>([]);
+  const [options, setOptions] = useState<DeepReadOnly<string[]>>([]);
   const inputRef = useRef<HTMLInputElement>();
 
-  useEffect(
-    () =>
-      setOptionValues(
-        props.options.map(e => e?.name ?? 'undefined').sort(TEXT_SORTER)
-      ),
-    [props.options]
-  );
+  function resetSelectedValues() {
+    setValues((props.input?.input?.freeTexts ?? []).slice().sort(TEXT_SORTER));
+  }
 
   function onClick() {
-    setSelectedValues(props.values.slice().sort(TEXT_SORTER));
+    resetSelectedValues();
     setModalOpen(true);
   }
 
   function onCancel() {
     setModalOpen(false);
+    resetSelectedValues();
   }
 
   function onSave() {
     setModalOpen(false);
-    const unenteredValue = getInputField(inputRef.current)?.value;
-    props.onValuesUpdated([
-      ...new Set(
-        selectedValues
-          .concat(unenteredValue ? [unenteredValue] : [])
-          .map(e => e.trim())
-          .filter(e => e !== '')
-      ),
-    ]);
+    saveValues(values);
   }
+
+  function saveValues(newValues: DeepReadOnly<string[]>) {
+    setValues(newValues);
+    const newInput = deepClone(props.input);
+    newInput.input.freeTexts = [...newValues];
+    props.setInput(newInput);
+  }
+
+  useEffect(() => {
+    setOptions(
+      props.input?.input?.category?.options
+        ?.map(e => e.name ?? '')
+        ?.sort(TEXT_SORTER) ?? []
+    );
+    resetSelectedValues();
+  }, [props.input?.input?.category?.options]);
 
   return (
     <>
       <div
-        id={props.id}
+        id={getCategoryId(props.input.input?.category).toString()}
         onClick={onClick}
         className="ikigai-project-builder-panel"
       >
         <div className="ikigai-project-builder-title">
-          <Markdown className="global-markdown">{props.title}</Markdown>
+          <Markdown className="global-markdown">
+            {props.input.input?.category?.name ?? ''}
+          </Markdown>
         </div>
-        {props.values.length === 0 && (
+        {(props.input.input?.freeTexts?.length ?? 0) === 0 && (
           <div className="ikigai-project-builder-hint">
-            <Markdown className="global-markdown">{props.hint}</Markdown>
+            <Markdown className="global-markdown">
+              {props.input.input?.category?.hint ?? 'Enter a value'}
+            </Markdown>
           </div>
         )}
         <div>
-          {props.values.length > 0 &&
-            props.values
-              .slice()
-              .sort(TEXT_SORTER)
-              .map(value => (
-                <Chip
-                  key={value}
-                  label={value}
-                  className="ikigai-project-builder-chip-values"
-                  size="small"
-                  variant="outlined"
-                  onDelete={() => {
-                    props.onValuesUpdated(
-                      props.values.filter(e => e !== value)
-                    );
-                  }}
-                />
-              ))}
+          {(props.input?.input?.freeTexts ?? [])
+            .slice()
+            .sort(TEXT_SORTER)
+            .map(value => (
+              <Chip
+                key={value}
+                label={value}
+                className="ikigai-project-builder-chip-values"
+                size="small"
+                variant="outlined"
+                onDelete={() => saveValues(values.filter(e => e !== value))}
+              />
+            ))}
         </div>
       </div>
       <Modal
@@ -132,9 +123,13 @@ function FreeTextInput(props: {
         className="ikigai-project-builder"
       >
         <TitledPaper
-          title={<Markdown className="global-markdown">{props.title}</Markdown>}
-          headerColor={`hsla(${props.hue}, 100%, 75%, ${VISIBLE_ALPHA})`}
-          highlightColor={`hsla(${props.hue}, 100%, 75%, 100%)`}
+          title={
+            <Markdown className="global-markdown">
+              {props.input.input?.category?.name ?? ''}
+            </Markdown>
+          }
+          headerColor={`hsla(${props.input.highlightHue}, 100%, 75%, ${VISIBLE_ALPHA})`}
+          highlightColor={`hsla(${props.input.highlightHue}, 100%, 75%, 100%)`}
           titleStyle={MODAL_STYLE}
           paperProps={MODAL_PAPER_PROPS}
           icon={
@@ -147,7 +142,7 @@ function FreeTextInput(props: {
             <div>
               <div style={{paddingBottom: '1em'}}>
                 <Markdown className="global-markdown">
-                  {props.description}
+                  {props.input.input?.category?.inputDescr ?? ''}
                 </Markdown>
               </div>
               <Autocomplete
@@ -155,18 +150,19 @@ function FreeTextInput(props: {
                 multiple
                 freeSolo
                 autoFocus
-                value={selectedValues.slice()}
+                value={values.slice()}
                 renderInput={params => (
                   <TextField
                     {...params}
-                    label={props.placeholder}
+                    label={props.input.input?.category?.name ?? ''}
+                    placeholder={props.input.input?.category?.placeholder ?? ''}
                     variant="standard"
                   />
                 )}
-                options={optionValues}
+                options={options}
                 renderOption={(props, option) => <li {...props}>{option}</li>}
-                onChange={(e, options) => {
-                  setSelectedValues(options.slice().sort(TEXT_SORTER));
+                onChange={(_, options) => {
+                  setValues(options.slice().sort(TEXT_SORTER));
                 }}
                 renderTags={(tagValue, getTagProps) =>
                   tagValue.map((option, index) => (
@@ -194,69 +190,97 @@ function FreeTextInput(props: {
   );
 }
 
-function DropdownSelectInput(props: {
-  id: string;
-  hue: number;
-  title: string;
-  description: string;
-  hint: string;
-  placeholder: string;
-  options: IOption[];
-  values: IOption[];
-  onValuesUpdated: (values: IOption[]) => void;
-  maxNumberOfValues: number;
-}) {
+function DropdownSelectInput(
+  props: DeepReadOnly<{
+    input: ProjectInput;
+    setInput: (input: DeepReadOnly<ProjectInput>) => void;
+  }>
+) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedValues, setSelectedValues] = useState<IOption[]>([]);
+  const [options, setOptions] = useState<DeepReadOnly<IOption[]>>([]);
+  const [optionsById, setOptionsById] = useState(new Map<number, IOption>());
+  const [selectedOptions, setSelectedOptions] = useState<
+    DeepReadOnly<IOption[]>
+  >([]);
+
+  function resetSelectedOptions() {
+    setSelectedOptions([
+      ...(props.input?.input?.selectedIds
+        ?.map(i => optionsById.get(i)!)
+        ?.filter(v => v != null) ?? []),
+    ]);
+  }
 
   function onClick() {
-    setSelectedValues([...props.values.sort(OPTION_SORTER)]);
+    resetSelectedOptions();
     setModalOpen(true);
   }
 
   function onCancel() {
     setModalOpen(false);
+    resetSelectedOptions();
   }
 
   function onSave() {
     setModalOpen(false);
-    props.onValuesUpdated([...selectedValues]);
+    saveValues(selectedOptions);
   }
+
+  function saveValues(newOptions: DeepReadOnly<IOption[]>) {
+    setSelectedOptions(newOptions);
+    const newInput = deepClone(props.input);
+    newInput.input.selectedIds = [...newOptions.map(v => v.id!)];
+    props.setInput(newInput);
+  }
+
+  useEffect(() => {
+    setOptions(
+      props.input?.input?.category?.options?.slice()?.sort(OPTION_SORTER) ?? []
+    );
+    setOptionsById(
+      new Map(props.input?.input?.category?.options?.map(o => [o.id!, o]) ?? [])
+    );
+    resetSelectedOptions();
+  }, [props.input?.input?.category?.options]);
 
   return (
     <>
       <div
-        id={props.id}
+        id={getCategoryId(props.input.input?.category).toString()}
         onClick={onClick}
         className="ikigai-project-builder-panel"
       >
         <div className="ikigai-project-builder-title">
-          <Markdown className="global-markdown">{props.title}</Markdown>
+          <Markdown className="global-markdown">
+            {props.input.input?.category?.name ?? ''}
+          </Markdown>
         </div>
-        {props.values.length === 0 && (
+        {(props.input.input?.selectedIds?.length ?? 0) === 0 && (
           <span className="ikigai-project-builder-hint">
-            <Markdown className="global-markdown">{props.hint}</Markdown>
+            <Markdown className="global-markdown">
+              {props.input.input?.category?.hint ?? 'Enter a value'}
+            </Markdown>
           </span>
         )}
         <div>
-          {props.values.length > 0 &&
-            props.values
-              .slice()
-              .sort(OPTION_SORTER)
-              .map(value => (
-                <Chip
-                  key={value.name ?? 'undefined'}
-                  label={value.name ?? 'undefined'}
-                  className="ikigai-project-builder-chip-values"
-                  size="small"
-                  variant="outlined"
-                  onDelete={() => {
-                    props.onValuesUpdated(
-                      props.values.filter(e => e.id !== value.id)
-                    );
-                  }}
-                />
-              ))}
+          {(props.input?.input?.selectedIds ?? [])
+            .map(i => optionsById.get(i))
+            .filter(v => v != null)
+            // A little help for the null checks.
+            .map(v => v!)
+            .sort(OPTION_SORTER)
+            .map(value => (
+              <Chip
+                key={value.name ?? ''}
+                label={value.name ?? ''}
+                className="ikigai-project-builder-chip-values"
+                size="small"
+                variant="outlined"
+                onDelete={() => {
+                  saveValues(selectedOptions.filter(e => e.id !== value.id));
+                }}
+              />
+            ))}
         </div>
       </div>
       <Modal
@@ -265,9 +289,13 @@ function DropdownSelectInput(props: {
         className="ikigai-project-builder"
       >
         <TitledPaper
-          title={<Markdown className="global-markdown">{props.title}</Markdown>}
-          headerColor={`hsla(${props.hue}, 100%, 75%, ${VISIBLE_ALPHA})`}
-          highlightColor={`hsla(${props.hue}, 100%, 75%, 100%)`}
+          title={
+            <Markdown className="global-markdown">
+              {props.input.input?.category?.name ?? ''}
+            </Markdown>
+          }
+          headerColor={`hsla(${props.input.highlightHue}, 100%, 75%, ${VISIBLE_ALPHA})`}
+          highlightColor={`hsla(${props.input.highlightHue}, 100%, 75%, 100%)`}
           titleStyle={MODAL_STYLE}
           paperProps={MODAL_PAPER_PROPS}
           icon={
@@ -280,7 +308,7 @@ function DropdownSelectInput(props: {
             <div>
               <div style={{paddingBottom: '1em'}}>
                 <Markdown className="global-markdown">
-                  {props.description}
+                  {props.input.input?.category?.inputDescr ?? ''}
                 </Markdown>
               </div>
               <Autocomplete
@@ -288,46 +316,48 @@ function DropdownSelectInput(props: {
                 autoHighlight
                 autoFocus
                 disableCloseOnSelect
-                value={selectedValues}
+                value={selectedOptions.slice()}
                 groupBy={option => option.category ?? ''}
                 renderInput={params => (
                   <TextField
                     {...params}
-                    label={props.placeholder}
+                    label={props.input.input?.category?.name ?? ''}
+                    placeholder={props.input.input?.category?.placeholder ?? ''}
                     variant="standard"
                   />
                 )}
-                options={props.options.slice().sort(OPTION_SORTER)}
+                options={options}
                 renderOption={(props, option, {selected}) => (
                   <li {...props}>
                     <Checkbox style={{marginRight: 8}} checked={selected} />
-                    {option?.name ?? 'undefined'}
-                    {option?.shortDescr && (
+                    {option.name ?? ''}
+                    {option.shortDescr && (
                       <>
                         :&nbsp;
-                        <i>{option?.shortDescr ?? 'undefined'}</i>
+                        <i>{option.shortDescr ?? ''}</i>
                       </>
                     )}
                   </li>
                 )}
                 getOptionLabel={option =>
-                  (option?.name ?? 'undefined') +
-                  ' ' +
-                  (option?.shortDescr ?? 'undefined')
+                  (option.name ?? '') + ' ' + (option.shortDescr ?? '')
                 }
-                onChange={(e, options) => {
-                  setSelectedValues(options.slice().sort(OPTION_SORTER));
+                onChange={(_, options) => {
+                  setSelectedOptions(options.slice().sort(OPTION_SORTER));
                 }}
-                renderTags={(tagValue, getTagProps) =>
-                  tagValue.map((option, index) => (
+                renderTags={tagValue =>
+                  tagValue.map(option => (
                     <Chip
-                      label={option.name ?? 'undefined'}
+                      key={option.id ?? 0}
+                      label={option.name ?? ''}
+                      className="ikigai-project-builder-chip-values"
                       size="small"
                       variant="outlined"
-                      {...addClassName(
-                        getTagProps({index}),
-                        'ikigai-project-builder-chip-values'
-                      )}
+                      onDelete={() =>
+                        saveValues(
+                          selectedOptions.filter(e => e.id !== option.id)
+                        )
+                      }
                     />
                   ))
                 }
@@ -344,145 +374,72 @@ function DropdownSelectInput(props: {
   );
 }
 
-export function IkigaiProjectBuilder(props: {
-  id: string;
-  categoryStyle?: Partial<CSSProperties>;
-  categories: pl_types.IProjectInputValue[];
-  noCategoriesText?: ReactNode;
-  categoryDiameter: (width: number, height: number) => number;
-  distanceToCategoryCenter: (width: number, height: number) => number;
-  enabled: boolean;
-  onSpinClick: (configuration: pl_types.IProjectInputValue[]) => void;
-  style?: Partial<CSSProperties>;
-}) {
-  const [categoryElements, setCategoryElements] = useState<CategoryElement[]>(
-    []
-  );
-
-  useEffect(() => {
-    const newCategoryElements: CategoryElement[] = [];
-    for (let i = 0; i < props.categories.length; ++i) {
-      const category = props.categories[i];
-      const optionsIndex = new Map(
-        (category.category?.options ?? []).map(e => [e.id, e])
-      );
-      newCategoryElements.push({
-        category: category,
-        htmlId:
-          props.id +
-          '.' +
-          (category?.category?.id ?? 'undefined') +
-          '.' +
-          (category?.category?.typeId ?? 'undefined'),
-        hue: i * (360 / props.categories.length),
-        stringValues: category.freeTexts ?? [],
-        optionValues:
-          (category.selectedIds
-            ?.map(k => optionsIndex.get(k))
-            ?.filter(e => e != null) as IOption[]) ?? [],
-      });
-    }
-    setCategoryElements(newCategoryElements);
-  }, [props.categories]);
-
+export function IkigaiProjectBuilder(
+  props: DeepReadOnly<{
+    inputs: ProjectInput[];
+    setInput: (input: DeepReadOnly<ProjectInput>) => void;
+    noInputsText?: ReactNode;
+    inputDiameter: (width: number, height: number) => number;
+    distanceToInputCenter: (width: number, height: number) => number;
+    enabled: boolean;
+    onSpinClick: (inputs: DeepReadOnly<ProjectInput[]>) => void;
+    style?: Partial<CSSProperties>;
+  }>
+) {
   return (
     <>
       <div style={props.style ?? {}} className="ikigai-project-builder">
-        {(props?.categories?.length ?? 0) > 0 && (
+        {(props?.inputs?.length ?? 0) > 0 && (
           <Ikigai
-            id={props.id}
-            categoryDiameter={(width, height) =>
-              (Math.min(width, height) / 2) * 0.95
-            }
-            distanceToCategoryCenter={(width, height) =>
-              (Math.min(width, height) / 4) * 0.85
-            }
+            id="ikigai"
+            categoryDiameter={props.inputDiameter}
+            distanceToCategoryCenter={props.distanceToInputCenter}
             radians={0}
             enabled={true}
             processing={false}
-            categoryElementIds={categoryElements.map(e => e.htmlId)}
+            categoryElementIds={props.inputs.map(i =>
+              getCategoryId(i.input?.category).toString()
+            )}
             showSpinButton={
-              categoryElements.length > 0 &&
-              categoryElements.every(
-                e => e.stringValues.length > 0 || e.optionValues.length > 0
+              props.inputs.length > 0 &&
+              props.inputs.every(
+                e =>
+                  (e.input?.selectedIds?.length ?? 0) > 0 ||
+                  (e.input?.freeTexts?.length ?? 0) > 0
               )
             }
-            onSpinClick={() =>
-              props.onSpinClick(
-                categoryElements.map(c => {
-                  c.category.freeTexts = [...(c.stringValues ?? [])];
-                  c.category.selectedIds = (c.optionValues ?? []).map(
-                    o => o.id!
-                  );
-                  return c.category;
-                })
-              )
-            }
+            onSpinClick={() => props.onSpinClick(props.inputs)}
             radiansOffset={0}
           >
-            {categoryElements.map(e => {
+            {props.inputs.map(i => {
               switch (
-                e.category?.category?.valueType ??
+                i.input?.category?.valueType ??
                 ValueType.UNSET_VALUE_TYPE
               ) {
                 case pl_types.ProjectInputCategory.ValueType.FREE_TEXT:
                   return (
                     <FreeTextInput
-                      id={e.htmlId}
-                      key={e.htmlId}
-                      hue={e.hue}
-                      title={e.category?.category?.name ?? 'undefined'}
-                      description={
-                        e.category?.category?.inputDescr ?? 'undefined'
-                      }
-                      hint={e.category?.category?.hint ?? 'undefined'}
-                      placeholder={
-                        e.category?.category?.placeholder ?? 'undefined'
-                      }
-                      onValuesUpdated={values => {
-                        e.stringValues = [...values];
-                        setCategoryElements([...categoryElements]);
-                      }}
-                      maxNumberOfValues={
-                        e.category?.category?.maxNumValues ?? 1
-                      }
-                      values={e.stringValues}
-                      options={e.category?.category?.options ?? []}
+                      key={getCategoryId(i.input?.category)}
+                      input={i}
+                      setInput={props.setInput}
                     />
                   );
                 default:
                   return (
                     <DropdownSelectInput
-                      id={e.htmlId}
-                      key={e.htmlId}
-                      hue={e.hue}
-                      title={e.category?.category?.name ?? 'undefined'}
-                      description={
-                        e.category?.category?.inputDescr ?? 'undefined'
-                      }
-                      hint={e.category?.category?.hint ?? 'undefined'}
-                      placeholder={
-                        e.category?.category?.placeholder ?? 'undefined'
-                      }
-                      onValuesUpdated={values => {
-                        e.optionValues = [...values];
-                        setCategoryElements([...categoryElements]);
-                      }}
-                      maxNumberOfValues={
-                        e.category?.category?.maxNumValues ?? 1
-                      }
-                      values={e.optionValues.slice()}
-                      options={e.category?.category?.options ?? []}
+                      key={getCategoryId(i.input?.category)}
+                      input={i}
+                      setInput={props.setInput}
                     />
                   );
               }
             })}
           </Ikigai>
         )}
-        {(props?.categories?.length ?? 0) === 0 && (
+        {(props?.inputs?.length ?? 0) === 0 && (
           <div className="ikigai-project-builder-no-categories">
             <span>
-              {props.noCategoriesText ??
+              {props.noInputsText ??
                 'There are no categories for the Ikigai diagram.'}
             </span>
           </div>

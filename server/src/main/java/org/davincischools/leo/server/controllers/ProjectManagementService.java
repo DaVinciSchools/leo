@@ -220,6 +220,7 @@ public class ProjectManagementService {
     var definitionDao =
         ProtoDaoUtils.toProjectDefinitionDao(definitionProto)
             .orElseThrow()
+            .setName("New Project Definition")
             .setUserX(userX.getUserXOrNull());
 
     // Save the daos.
