@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -182,11 +183,21 @@ public class DaoUtils {
     return (T) newDao;
   }
 
-  public static <T> T removeTransientValues(T dao, Consumer<T> processor) {
-    T nonTransientDao = removeTransientValues(dao);
-    processor.accept(nonTransientDao);
-    copyId(nonTransientDao, dao);
-    return dao;
+  @SuppressWarnings("unchecked")
+  public static <T> T removeTransientValues(T daoOrIterableDaos, Consumer<T> processor) {
+    if (daoOrIterableDaos instanceof Iterable) {
+      List<Object> daos = Lists.newArrayList((Iterable<Object>) daoOrIterableDaos);
+      List<Object> nonTransientDaos = daos.stream().map(DaoUtils::removeTransientValues).toList();
+      processor.accept((T) nonTransientDaos);
+      for (int i = 0; i < daos.size(); i++) {
+        copyId(nonTransientDaos.get(i), daos.get(i));
+      }
+    } else {
+      T nonTransientDao = removeTransientValues(daoOrIterableDaos);
+      processor.accept(nonTransientDao);
+      copyId(nonTransientDao, daoOrIterableDaos);
+    }
+    return daoOrIterableDaos;
   }
 
   public static void copyId(Object from, Object to) {
