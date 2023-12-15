@@ -13,7 +13,6 @@ service ProjectManagementService {
   rpc UpsertKnowledgeAndSkill (UpsertKnowledgeAndSkillRequest) returns (UpsertKnowledgeAndSkillResponse) {}
 
   rpc GenerateProjects (GenerateProjectsRequest) returns (GenerateProjectsResponse) {}
-  rpc GenerateAnonymousProjects (GenerateAnonymousProjectsRequest) returns (GenerateAnonymousProjectsResponse) {}
   rpc RegisterAnonymousProjects (RegisterAnonymousProjectsRequest) returns (RegisterAnonymousProjectsResponse) {}
 
   rpc GetProjectInputs (GetProjectInputsRequest) returns (GetProjectInputsResponse) {}
@@ -30,8 +29,9 @@ message GetMotivationsResponse {
 }
 
 message GenerateProjectsRequest {
-  optional int32 assignment_id = 1;
   optional pl_types.ProjectDefinition definition = 2;
+
+  reserved 1;
 }
 
 message GenerateProjectsResponse {
@@ -83,14 +83,6 @@ message GetProjectDefinitionCategoryTypesRequest {
 
 message GetProjectDefinitionCategoryTypesResponse {
   repeated pl_types.ProjectInputCategory input_categories = 1;
-}
-
-message GenerateAnonymousProjectsRequest {
-  repeated pl_types.ProjectInputValue input_values = 1;
-}
-
-message GenerateAnonymousProjectsResponse {
-  optional int32 project_input_id = 1;
 }
 
 message RegisterAnonymousProjectsRequest {

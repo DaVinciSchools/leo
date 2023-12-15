@@ -1,6 +1,7 @@
 package org.davincischools.leo.server.controllers;
 
 import static org.davincischools.leo.database.utils.DaoUtils.listIfInitialized;
+import static org.davincischools.leo.database.utils.DaoUtils.removeTransientValues;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.addProjectInputCategoryOptions;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.enumNameOrNull;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.listOrNull;
@@ -14,19 +15,14 @@ import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
 import com.google.common.collect.Iterables;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
-import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.ProjectInput;
-import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
@@ -36,8 +32,6 @@ import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectsParams;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition;
-import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsRequest;
-import org.davincischools.leo.protos.project_management.GenerateAnonymousProjectsResponse;
 import org.davincischools.leo.protos.project_management.GenerateProjectsRequest;
 import org.davincischools.leo.protos.project_management.GenerateProjectsResponse;
 import org.davincischools.leo.protos.project_management.GetKnowledgeAndSkillsRequest;
@@ -63,9 +57,9 @@ import org.davincischools.leo.server.utils.http_user_x.Authenticated;
 import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.davincischools.leo.server.utils.task_queue.workers.ProjectGeneratorWorker;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai.OpenAi3V3ProjectGenerator;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -167,112 +161,109 @@ public class ProjectManagementService {
       return userX.returnForbidden(GenerateProjectsResponse.getDefaultInstance());
     }
 
-    var projectInputRef = new AtomicReference<ProjectInput>();
+    var projectInputDaoRef = new AtomicReference<ProjectInput>();
     return httpExecutors
-        .start(optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()))
+        .start(optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()).toBuilder())
         .andThen(
             (request, log) -> {
-              // Load the official definition.
-              var definition =
-                  Iterables.getOnlyElement(
-                      db.getProjectDefinitionRepository()
-                          .getProjectDefinitions(
-                              new GetProjectDefinitionsParams()
-                                  .setProjectDefinitionIds(
-                                      List.of(request.getDefinition().getId()))));
+              // Create or load the the project definition.
+              org.davincischools.leo.database.daos.ProjectDefinition definitionDao;
+              if (request.getDefinition().getId() == 0) {
+                definitionDao =
+                    createAndSaveProjectDefinition(userX, request.getDefinitionBuilder());
+              } else {
+                definitionDao =
+                    Iterables.getOnlyElement(
+                        db.getProjectDefinitionRepository()
+                            .getProjectDefinitions(
+                                new GetProjectDefinitionsParams()
+                                    .setProjectDefinitionIds(
+                                        List.of(request.getDefinition().getId()))));
+              }
 
               // Verify that the categories match.
               if (request.getDefinition().getInputsCount()
-                  != listIfInitialized(definition.getProjectDefinitionCategories()).size()) {
+                  != listIfInitialized(definitionDao.getProjectDefinitionCategories()).size()) {
                 throw new IllegalArgumentException(
                     "Incorrect number of input categories: " + request);
               }
 
-              // Save project input.
-              var projectInput = createProjectInput(userX, request.getDefinition());
-              projectInputRef.set(db.getProjectInputRepository().save(projectInput));
-              db.getProjectInputValueRepository().saveAll(projectInput.getProjectInputValues());
+              // Create and save the project input.
+              var projectInputDao =
+                  createAndSaveProjectInput(userX, definitionDao, request.getDefinitionBuilder());
+              projectInputDaoRef.set(projectInputDao);
 
+              // Submit a task to generate the projects from it.
               projectGeneratorWorker.submitTask(
-                  GenerateProjectsTask.newBuilder().setProjectInputId(projectInput.getId()).build(),
+                  GenerateProjectsTask.newBuilder()
+                      .setProjectInputId(projectInputDao.getId())
+                      .build(),
+                  // Wait a few seconds for the commit to finish.
                   Duration.ofSeconds(5));
 
               return GenerateProjectsResponse.newBuilder()
-                  .setProjectInputId(projectInput.getId())
+                  .setProjectInputId(projectInputDao.getId())
                   .build();
             })
         .onError(
             (error, log) -> {
-              if (projectInputRef.get() != null) {
+              if (projectInputDaoRef.get() != null) {
                 db.getProjectInputRepository()
-                    .updateState(projectInputRef.get().getId(), State.FAILED.name());
+                    .updateState(projectInputDaoRef.get().getId(), State.FAILED.name());
               }
               return Optional.empty();
             })
         .finish();
   }
 
-  @NotNull
-  private ProjectInput createProjectInput(
-      HttpUserX userX, org.davincischools.leo.protos.pl_types.ProjectDefinition definition) {
-    // Convert request to ProjectInput.
-    var projectInput =
-        new ProjectInput()
-            .setCreationTime(Instant.now())
-            .setProjectDefinition(ProtoDaoUtils.toProjectDefinitionDao(definition).orElseThrow())
-            .setUserX(userX.getUserXOrNull())
-            .setAssignment(
-                definition.getAssignment().hasId()
-                    ? new Assignment().setId(definition.getAssignment().getId())
-                    : null)
-            .setState(State.PROCESSING.name());
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  protected org.davincischools.leo.database.daos.ProjectDefinition createAndSaveProjectDefinition(
+      HttpUserX userX, ProjectDefinition.Builder definitionProto) {
+    // Create the definition dao.
+    var definitionDao =
+        ProtoDaoUtils.toProjectDefinitionDao(definitionProto)
+            .orElseThrow()
+            .setName("Untitled Project Definition")
+            .setUserX(userX.getUserXOrNull());
 
-    // Convert request inputs to ProjectInputValues.
-    projectInput.setProjectInputValues(new LinkedHashSet<>());
-    for (int i = 0; i < definition.getInputsCount(); ++i) {
-      // Get category at index i.
-      var inputs = definition.getInputs(i);
-      Supplier<ProjectInputValue> newProjectInputValue =
-          () ->
-              new ProjectInputValue()
-                  .setCreationTime(Instant.now())
-                  .setProjectInput(projectInput)
-                  .setProjectDefinitionCategory(
-                      new ProjectDefinitionCategory().setId(inputs.getCategory().getId()))
-                  .setPosition((float) positionCounter.incrementAndGet());
+    // Save the daos.
+    removeTransientValues(definitionDao, db.getProjectDefinitionRepository()::save);
+    removeTransientValues(
+        definitionDao.getProjectDefinitionCategories(),
+        db.getProjectDefinitionCategoryRepository()::saveAll);
 
-      // Get inputs at index i.
-      switch (inputs.getCategory().getValueType()) {
-        case FREE_TEXT -> {
-          projectInput
-              .getProjectInputValues()
-              .addAll(
-                  inputs.getFreeTextsList().stream()
-                      .map(t -> newProjectInputValue.get().setFreeTextValue(t))
-                      .toList());
-        }
-        case MOTIVATION -> {
-          projectInput
-              .getProjectInputValues()
-              .addAll(
-                  db.getMotivationRepository().findAllByIds(inputs.getSelectedIdsList()).stream()
-                      .map(m -> newProjectInputValue.get().setMotivationValue(m))
-                      .toList());
-        }
-        default -> {
-          projectInput
-              .getProjectInputValues()
-              .addAll(
-                  db
-                      .getKnowledgeAndSkillRepository()
-                      .findAllById(inputs.getSelectedIdsList())
-                      .stream()
-                      .map(ks -> newProjectInputValue.get().setKnowledgeAndSkillValue(ks))
-                      .toList());
-        }
-      }
+    // Copy the ids back into the proto.
+    definitionProto.setId(definitionDao.getId());
+    int i = 0;
+    for (var categoryDao : definitionDao.getProjectDefinitionCategories()) {
+      definitionProto.getInputsBuilder(i++).getCategoryBuilder().setId(categoryDao.getId());
     }
-    return projectInput;
+
+    return definitionDao;
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  protected ProjectInput createAndSaveProjectInput(
+      HttpUserX userX,
+      org.davincischools.leo.database.daos.ProjectDefinition definitionDao,
+      ProjectDefinition.Builder definition) {
+    // Convert request to ProjectInput.
+    var projectInputDao =
+        ProtoDaoUtils.toProjectInputDao(definition)
+            .orElseThrow()
+            .setUserX(userX.getUserXOrNull())
+            .setState(State.PROCESSING.name())
+            .setProjectDefinition(definitionDao);
+
+    // Save the daos.
+    removeTransientValues(projectInputDao, db.getProjectInputRepository()::save);
+    removeTransientValues(
+        projectInputDao.getProjectInputValues(), db.getProjectInputValueRepository()::saveAll);
+
+    // Copy the ids back into the proto.
+    definition.setInputId(projectInputDao.getId());
+
+    return projectInputDao;
   }
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetProjects")
@@ -489,80 +480,6 @@ public class ProjectManagementService {
         .finish();
   }
 
-  @PostMapping(value = "/api/protos/ProjectManagementService/GenerateAnonymousProjects")
-  @ResponseBody
-  @Transactional
-  public GenerateAnonymousProjectsResponse generateAnonymousProjects(
-      @Anonymous HttpUserX userX,
-      @RequestBody Optional<GenerateAnonymousProjectsRequest> optionalRequest,
-      HttpExecutors httpExecutors)
-      throws HttpExecutorException {
-    var projectInputRef = new AtomicReference<ProjectInput>();
-    return httpExecutors
-        .start(optionalRequest.orElse(GenerateAnonymousProjectsRequest.getDefaultInstance()))
-        .andThen(
-            (request, log) -> {
-              // Create the definition.
-              var definition =
-                  new org.davincischools.leo.database.daos.ProjectDefinition()
-                      .setCreationTime(Instant.now())
-                      .setName("Anonymously Created Project Definition")
-                      .setUserX(userX.getUserXOrNull());
-
-              // Create the definition categories.
-              var categories =
-                  request.getInputValuesList().stream()
-                      .map(
-                          input ->
-                              new ProjectDefinitionCategory()
-                                  .setCreationTime(Instant.now())
-                                  .setProjectDefinition(definition)
-                                  .setPosition((float) positionCounter.incrementAndGet())
-                                  .setMaxNumValues(input.getCategory().getMaxNumValues())
-                                  .setProjectDefinitionCategoryType(
-                                      new ProjectDefinitionCategoryType()
-                                          .setId(input.getCategory().getTypeId())))
-                      .toList();
-              definition.setProjectDefinitionCategories(new LinkedHashSet<>(categories));
-
-              // Save the definition & categories.
-              db.getProjectDefinitionRepository().save(definition);
-              db.getProjectDefinitionCategoryRepository()
-                  .saveAll(definition.getProjectDefinitionCategories());
-
-              // Build definition proto.
-              var definitionProto =
-                  toProjectDefinitionProto(definition, ProjectDefinition::newBuilder).orElseThrow();
-              definitionProto.clearInputs();
-              for (int i = 0; i < categories.size(); ++i) {
-                var input = request.getInputValues(i).toBuilder();
-                input.getCategoryBuilder().setId(categories.get(i).getId());
-                definitionProto.addInputs(input);
-              }
-
-              // Save project input.
-              var projectInput = createProjectInput(userX, definitionProto.build());
-              projectInputRef.set(db.getProjectInputRepository().save(projectInput));
-              db.getProjectInputValueRepository().saveAll(projectInput.getProjectInputValues());
-              projectGeneratorWorker.submitTask(
-                  GenerateProjectsTask.newBuilder().setProjectInputId(projectInput.getId()).build(),
-                  Duration.ofSeconds(5));
-
-              return GenerateAnonymousProjectsResponse.newBuilder()
-                  .setProjectInputId(projectInput.getId())
-                  .build();
-            })
-        .onError(
-            (error, log) -> {
-              if (projectInputRef.get() != null) {
-                db.getProjectInputRepository()
-                    .updateState(projectInputRef.get().getId(), State.FAILED.name());
-              }
-              return Optional.empty();
-            })
-        .finish();
-  }
-
   @PostMapping(value = "/api/protos/ProjectManagementService/RegisterAnonymousProjects")
   @ResponseBody
   public RegisterAnonymousProjectsResponse registerAnonymousProjects(
@@ -581,9 +498,11 @@ public class ProjectManagementService {
                       .findById(request.getProjectInputId())
                       .orElseThrow();
               db.getProjectInputRepository()
-                  .updateUserX(request.getProjectInputId(), userX.get().get().getId());
+                  .updateUserX(
+                      request.getProjectInputId(),
+                      Objects.requireNonNull(userX.getUserXIdOrNull()));
               db.getProjectDefinitionRepository()
-                  .updateUserX(input.getProjectDefinition().getId(), userX.get().get().getId());
+                  .updateUserX(input.getProjectDefinition().getId(), userX.getUserXIdOrNull());
 
               return response.build();
             })
