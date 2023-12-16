@@ -47,7 +47,7 @@ public class DaoUtils {
   private static final Logger logger = LogManager.getLogger();
 
   private static final Map<Class<?>, Optional<DaoShallowCopyMethods>> daoShallowCopyMethods =
-      new HashMap<>();
+      Collections.synchronizedMap(new HashMap<>());
 
   private static Optional<DaoShallowCopyMethods> getDaoShallowCopyMethods(Object dao) {
     checkNotNull(dao);
@@ -232,6 +232,14 @@ public class DaoUtils {
     deleteAll.accept(
         Streams.stream(oldValues).filter(e -> !newIds.contains(toId.apply(e))).toList());
     saveAll.accept(Streams.stream(newValues).filter(e -> !oldIds.contains(toId.apply(e))).toList());
+  }
+
+  public static Optional<Object> getId(@Nullable Object entity) {
+    if (entity == null) {
+      return Optional.empty();
+    }
+    var methods = getDaoShallowCopyMethods(entity);
+    return methods.map(shallowCopyMethods -> shallowCopyMethods.getId().apply(entity));
   }
 
   public static <T> boolean isInitialized(@Nullable T entity) {
