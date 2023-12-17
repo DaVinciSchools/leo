@@ -67,6 +67,7 @@ import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillReposi
 import org.davincischools.leo.database.utils.repos.ProjectPostCommentRepository.FullProjectPostComment;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.davincischools.leo.protos.pl_types.ClassX.Builder;
+import org.davincischools.leo.protos.pl_types.ProjectDefinition;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.ValueType;
@@ -256,7 +257,7 @@ public class ProtoDaoUtils {
         () ->
             new org.davincischools.leo.database.daos.ProjectInput().setCreationTime(Instant.now()),
         dao -> {
-          dao.setId(projectDefinition.getInputId());
+          dao.setId(valueOrNull(projectDefinition, ProjectDefinition.INPUT_ID_FIELD_NUMBER));
           toProjectDefinitionDao(projectDefinition).ifPresent(dao::setProjectDefinition);
           toAssignmentDao(projectDefinition.getAssignment()).ifPresent(dao::setAssignment);
           toProjectDao(projectDefinition.getExistingProject()).ifPresent(dao::setExistingProject);
