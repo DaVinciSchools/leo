@@ -166,7 +166,7 @@ public class ProjectManagementService {
         .start(optionalRequest.orElse(GenerateProjectsRequest.getDefaultInstance()).toBuilder())
         .andThen(
             (request, log) -> {
-              // Create or load the the project definition.
+              // Create or load the project definition.
               org.davincischools.leo.database.daos.ProjectDefinition definitionDao;
               if (request.getDefinition().getId() == 0) {
                 definitionDao =
@@ -225,6 +225,11 @@ public class ProjectManagementService {
             .orElseThrow()
             .setName("Untitled Project Definition")
             .setUserX(userX.getUserXOrNull());
+
+    // We need to remove any existing ids so that they entities are created and not overwritten.
+    // Ids will be present if we used an existing project to start this one.
+    definitionDao.setId(null);
+    definitionDao.getProjectDefinitionCategories().forEach(c -> c.setId(null));
 
     // Save the daos.
     removeTransientValues(definitionDao, db.getProjectDefinitionRepository()::save);
