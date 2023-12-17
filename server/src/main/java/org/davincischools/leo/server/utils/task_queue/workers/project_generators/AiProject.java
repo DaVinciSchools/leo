@@ -7,17 +7,14 @@ import static org.davincischools.leo.database.utils.DaoUtils.streamIfInitialized
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectInputFulfillment;
 import org.davincischools.leo.database.daos.ProjectInputValue;
@@ -29,6 +26,8 @@ import org.davincischools.leo.server.utils.task_queue.workers.project_generators
 import org.jetbrains.annotations.NotNull;
 
 public class AiProject {
+
+  private static final Logger logger = LogManager.getLogger();
 
   public static class AiProjects {
     @JsonPropertyDescription("The resulting list of projects.")
@@ -100,11 +99,7 @@ public class AiProject {
   @JsonProperty(required = true)
   public List<CriteriaFulfillment> criteriaFulfillment;
 
-  public static AiProject projectToAiProject(
-      Project project, Optional<Map<Integer, Integer>> criteriaNumberToInputValueId) {
-    var inputValueIdToCriteriaNumber =
-        HashBiMap.create(criteriaNumberToInputValueId.orElse(new HashMap<>())).inverse();
-
+  public static AiProject projectToAiProject(Project project) {
     var aiProject = new AiProject();
     aiProject.name = project.getName();
     aiProject.shortDescr = project.getShortDescr();
@@ -128,9 +123,7 @@ public class AiProject {
         .forEach(
             i -> {
               var criteriaFulfillment = new AiProject.CriteriaFulfillment();
-              criteriaFulfillment.criteriaNumber =
-                  inputValueIdToCriteriaNumber.getOrDefault(
-                      i.getProjectInputValue().getId(), i.getProjectInputValue().getId());
+              criteriaFulfillment.criteriaNumber = i.getProjectInputValue().getId();
               criteriaFulfillment.howProjectFulfills = i.getHowProjectFulfills();
               criteriaFulfillment.fulfillmentPercentage = i.getFulfillmentPercentage();
               criteriaFulfillment.assessmentApproach = i.getVisibleIndicator();
@@ -186,9 +179,16 @@ public class AiProject {
             ProjectInputValue::getId);
     aiProject.criteriaFulfillment.forEach(
         criteria -> {
-          var inputValueId =
-              initialChatMessage.criteriaIdToProjectInputValueId().get(criteria.criteriaNumber);
-          var inputValue = Objects.requireNonNull(inputValuesById.get(inputValueId));
+          var inputValue = inputValuesById.get(criteria.criteriaNumber);
+          if (inputValue == null) {
+            logger
+                .atError()
+                .log(
+                    "Unable to find input value with id {} for project input {}.",
+                    criteria.criteriaNumber,
+                    generatorInput.getProjectInput().getId());
+            return;
+          }
 
           var projectInputFulfillment =
               new ProjectInputFulfillment()

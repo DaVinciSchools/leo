@@ -14,7 +14,6 @@ import com.theokanning.openai.service.OpenAiService;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.AiProject;
@@ -63,9 +62,7 @@ public class OpenAi3V3ProjectGenerator implements ProjectGenerator {
       ObjectMapper jsonObjectMapper = new ObjectMapper();
       String projectJson =
           jsonObjectMapper.writeValueAsString(
-              AiProject.projectToAiProject(
-                  generatorInput.getFillInProject(),
-                  Optional.of(initialChatMessage.criteriaIdToProjectInputValueId())));
+              AiProject.projectToAiProject(generatorInput.getFillInProject()));
 
       messages.add(
           new ChatMessage(
