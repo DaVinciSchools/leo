@@ -11,6 +11,7 @@
     <option name="SPRING_BOOT_MAIN_CLASS" value="org.davincischools.leo.server.ServerApplication" />
     <method v="2">
       <option name="Make" enabled="true" />
+      <option name="MakeProject" enabled="true" />
     </method>
   </configuration>
 </component>

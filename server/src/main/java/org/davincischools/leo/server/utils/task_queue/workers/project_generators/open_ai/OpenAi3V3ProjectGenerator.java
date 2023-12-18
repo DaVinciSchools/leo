@@ -1,5 +1,10 @@
 package org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static org.davincischools.leo.server.utils.HtmlUtils.stripOutHtml;
+import static org.davincischools.leo.server.utils.TextUtils.quoteAndEscape;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.theokanning.openai.client.OpenAiApi;
@@ -14,73 +19,72 @@ import com.theokanning.openai.service.OpenAiService;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.davincischools.leo.database.daos.ExistingProjectUseType;
 import org.davincischools.leo.database.daos.Project;
+import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.AiProject;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.AiProject.AiProjects;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.ProjectGenerator;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.ProjectGeneratorInput;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai.OpenAi3V1ProjectGenerator.InitialChatMessage;
 
-@Service
 public class OpenAi3V3ProjectGenerator implements ProjectGenerator {
 
-  private final OpenAiUtils openAiUtils;
+  private static final Logger logger = LogManager.getLogger();
 
-  OpenAi3V3ProjectGenerator(@Autowired OpenAiUtils openAiUtils) {
+  // The parameters below should generally be set in the same order.
+  private final OpenAiUtils openAiUtils;
+  private int numberOfProjects;
+  private ProjectGeneratorInput generatorInput;
+  private InitialChatMessage initialChatMessage;
+  private ChatFunction describeProjectFn;
+  private FunctionExecutor functionExecutor;
+  private final List<ChatMessage> messages = new ArrayList<>();
+
+  // This class should be used one time and then discarded.
+  public OpenAi3V3ProjectGenerator(OpenAiUtils openAiUtils) {
     this.openAiUtils = openAiUtils;
   }
 
+  @Override
   public List<Project> generateProjects(ProjectGeneratorInput generatorInput, int numberOfProjects)
       throws JsonProcessingException {
+    checkNotNull(generatorInput);
+    checkState(this.generatorInput == null);
 
-    var initialChatMessage = OpenAi3V1ProjectGenerator.getInitialChatMessage(generatorInput);
+    this.numberOfProjects = numberOfProjects;
+    this.generatorInput = generatorInput;
 
-    var describeProjectFn =
-        generatorInput.getFillInProject() != null
-            ? ChatFunction.builder()
-                .name("describe_project")
-                .description(
-                    "Describe the project with the missing information that a student can"
-                        + " do that meet the given criteria.")
-                .executor(AiProject.class, a -> a)
-                .build()
-            : ChatFunction.builder()
-                .name("describe_projects")
-                .description(
-                    "Describe projects that a student can do that meet the given criteria.")
-                .executor(AiProjects.class, a -> a)
-                .build();
-    var functionExecutor = new FunctionExecutor(List.of(describeProjectFn));
-
-    var messages = new ArrayList<ChatMessage>();
+    initialChatMessage = OpenAi3V1ProjectGenerator.getInitialChatMessage(generatorInput);
     messages.add(initialChatMessage.chatMessage());
 
-    if (generatorInput.getFillInProject() != null) {
-      // Convert the existing project to JSON.
-      ObjectMapper jsonObjectMapper = new ObjectMapper();
-      String projectJson =
-          jsonObjectMapper.writeValueAsString(
-              AiProject.projectToAiProject(generatorInput.getFillInProject()));
+    describeProjectFn =
+        ChatFunction.builder()
+            .name("describe_projects")
+            .description("Describe the projects that result from the query.")
+            .executor(AiProjects.class, a -> a)
+            .build();
+    functionExecutor = new FunctionExecutor(List.of(describeProjectFn));
 
-      messages.add(
-          new ChatMessage(
-              ChatMessageRole.ASSISTANT.value(),
-              "You have already created a partial project description. This description's"
-                  + " fields map to the function executor's output fields: "
-                  + projectJson));
-      messages.add(
-          new ChatMessage(
-              ChatMessageRole.USER.value(),
-              "Fill in the missing project information for the partial project description."
-                  + " Return the complete project description with all fields populated."));
+    if (generatorInput.getFillInProject() != null) {
+      configureFulfillmentQuery();
+    } else if (generatorInput.getExistingProject() != null) {
+      switch (generatorInput.getExistingProjectUseType()) {
+        case SUB_PROJECTS:
+          configureSubProjectsQuery();
+          break;
+        case MORE_LIKE_THIS:
+          configureMoreLikeThisQuery();
+          break;
+        case USE_CONFIGURATION:
+          configureGenericQuery();
+          break;
+      }
     } else {
-      messages.add(
-          new ChatMessage(
-              ChatMessageRole.USER.value(),
-              String.format(
-                  "Provide %s projects that would fit the system criteria.", numberOfProjects)));
+      configureGenericQuery();
     }
 
     ChatCompletionRequest chatCompletionRequest =
@@ -100,7 +104,10 @@ public class OpenAi3V3ProjectGenerator implements ProjectGenerator {
     var retrofit = OpenAiService.defaultRetrofit(okHttpClient, OpenAiService.defaultObjectMapper());
     OpenAiService openAiService = new OpenAiService(retrofit.create(OpenAiApi.class));
     try {
-      return openAiService.createChatCompletion(chatCompletionRequest).getChoices().stream()
+      var chatCompletionResponse = openAiService.createChatCompletion(chatCompletionRequest);
+      logger.atDebug().log("Chat completion request: {}", chatCompletionRequest);
+      logger.atDebug().log("Chat completion response: {}", chatCompletionResponse);
+      return chatCompletionResponse.getChoices().stream()
           .map(ChatCompletionChoice::getMessage)
           .map(ChatMessage::getFunctionCall)
           .map(functionExecutor::execute)
@@ -108,12 +115,109 @@ public class OpenAi3V3ProjectGenerator implements ProjectGenerator {
           .flatMap(p -> p.projects.stream())
           .map(p -> AiProject.aiProjectToProject(generatorInput, initialChatMessage, p))
           .toList();
+    } catch (Exception e) {
+      logger.atError().withThrowable(e).log("Failed to generate projects: {}", messages);
+      throw new RuntimeException(e);
     } finally {
       try {
         openAiService.shutdownExecutor();
       } catch (NullPointerException e) {
-        // An otherwise successful transaction throws an NPE.
+        // An otherwise successful transaction throws an NPE for some reason.
       }
     }
+  }
+
+  private void configureGenericQuery() {
+    checkState(generatorInput != null);
+    checkState(initialChatMessage != null);
+
+    checkState(generatorInput.getFillInProject() == null);
+    checkState(
+        generatorInput.getExistingProject() == null
+            || generatorInput.getExistingProjectUseType()
+                == ExistingProjectUseType.USE_CONFIGURATION);
+
+    messages.add(
+        new ChatMessage(
+            ChatMessageRole.USER.value(),
+            String.format(
+                "Provide %s projects that would fulfill the system criteria.", numberOfProjects)));
+  }
+
+  private void configureFulfillmentQuery() throws JsonProcessingException {
+    checkState(generatorInput != null);
+    checkState(initialChatMessage != null);
+
+    checkState(generatorInput.getFillInProject() != null);
+
+    // Convert the existing project to JSON.
+    String projectJson =
+        new ObjectMapper()
+            .writeValueAsString(AiProject.projectToAiProject(generatorInput.getFillInProject()));
+
+    messages.add(
+        new ChatMessage(
+            ChatMessageRole.ASSISTANT.value(),
+            "You have already created an existing project that meets the given criteria."
+                + " But, some of its details are missing. The project is described in the"
+                + " following JSON. All of the JSON fields represent the same information as"
+                + " in the function output: "
+                + projectJson));
+  }
+
+  private void configureSubProjectsQuery() throws JsonProcessingException {
+    checkState(generatorInput != null);
+    checkState(initialChatMessage != null);
+
+    checkState(generatorInput.getFillInProject() == null);
+    checkState(generatorInput.getExistingProject() != null);
+    checkState(generatorInput.getExistingProjectUseType() == ExistingProjectUseType.SUB_PROJECTS);
+
+    messages.add(
+        new ChatMessage(
+            ChatMessageRole.USER.value(),
+            String.format(
+                "You have already created an existing \"parent\" project that is to %s Create %s"
+                    + " sub-projects that are related to the parent project and possibly help the"
+                    + " student complete some part of the parent project. But that also meet the"
+                    + " new system criteria.",
+                summarizeExistingProject(generatorInput.getExistingProject()), numberOfProjects)));
+  }
+
+  private void configureMoreLikeThisQuery() throws JsonProcessingException {
+    checkState(generatorInput != null);
+    checkState(initialChatMessage != null);
+
+    checkState(generatorInput.getFillInProject() == null);
+    checkState(generatorInput.getExistingProject() != null);
+    checkState(generatorInput.getExistingProjectUseType() == ExistingProjectUseType.MORE_LIKE_THIS);
+
+    messages.add(
+        new ChatMessage(
+            ChatMessageRole.USER.value(),
+            String.format(
+                "You have already crated an \"existing\" project that is to %s Create %s projects"
+                    + " that are strongly related to the existing project. But, that meet the new"
+                    + " system criteria.",
+                summarizeExistingProject(generatorInput.getExistingProject()), numberOfProjects)));
+  }
+
+  private String summarizeExistingProject(Project project) {
+    StringBuilder sb =
+        new StringBuilder() /*"The project that is to "*/
+            .append(quoteAndEscape(stripOutHtml(project.getLongDescrHtml())))
+            .append(". ");
+
+    sb.append("Its milestones are ");
+    int i = 0;
+    for (var milestone : DaoUtils.listIfInitialized(project.getProjectMilestones())) {
+      sb.append(i > 0 ? ", " : "")
+          .append(++i)
+          .append(") ")
+          .append(quoteAndEscape(milestone.getName()));
+    }
+    sb.append(".");
+
+    return sb.toString();
   }
 }

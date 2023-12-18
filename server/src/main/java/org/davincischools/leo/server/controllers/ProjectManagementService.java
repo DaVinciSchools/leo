@@ -48,6 +48,7 @@ import org.davincischools.leo.protos.project_management.UpdateProjectRequest;
 import org.davincischools.leo.protos.project_management.UpdateProjectResponse;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillRequest;
 import org.davincischools.leo.protos.project_management.UpsertKnowledgeAndSkillResponse;
+import org.davincischools.leo.protos.task_service.GenerateDerivedProjectsTask;
 import org.davincischools.leo.protos.task_service.GenerateProjectsTask;
 import org.davincischools.leo.server.utils.ProtoDaoUtils;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutorException;
@@ -55,8 +56,8 @@ import org.davincischools.leo.server.utils.http_executor.HttpExecutors;
 import org.davincischools.leo.server.utils.http_user_x.Anonymous;
 import org.davincischools.leo.server.utils.http_user_x.Authenticated;
 import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
+import org.davincischools.leo.server.utils.task_queue.workers.GenerateDerivedProjectsWorker;
 import org.davincischools.leo.server.utils.task_queue.workers.ProjectGeneratorWorker;
-import org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai.OpenAi3V3ProjectGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Propagation;
@@ -72,7 +73,7 @@ public class ProjectManagementService {
 
   @Autowired Database db;
   @Autowired ProjectGeneratorWorker projectGeneratorWorker;
-  @Autowired OpenAi3V3ProjectGenerator openAi3V3ProjectGenerator;
+  @Autowired GenerateDerivedProjectsWorker derivedProjectsGeneratorWorker;
 
   @PostMapping(value = "/api/protos/ProjectManagementService/GetKnowledgeAndSkills")
   @ResponseBody
@@ -194,12 +195,22 @@ public class ProjectManagementService {
               projectInputDaoRef.set(projectInputDao);
 
               // Submit a task to generate the projects from it.
-              projectGeneratorWorker.submitTask(
-                  GenerateProjectsTask.newBuilder()
-                      .setProjectInputId(projectInputDao.getId())
-                      .build(),
-                  // Wait a few seconds for the commit to finish.
-                  Duration.ofSeconds(5));
+              if (projectInputDao.getExistingProject() != null) {
+                derivedProjectsGeneratorWorker.submitTask(
+                    GenerateDerivedProjectsTask.newBuilder()
+                        .setProjectInputId(projectInputDao.getId())
+                        .setExistingProjectId(projectInputDao.getExistingProject().getId())
+                        .build(),
+                    // Wait a few seconds for the transaction to finish.
+                    Duration.ofSeconds(5));
+              } else {
+                projectGeneratorWorker.submitTask(
+                    GenerateProjectsTask.newBuilder()
+                        .setProjectInputId(projectInputDao.getId())
+                        .build(),
+                    // Wait a few seconds for the transaction to finish.
+                    Duration.ofSeconds(5));
+              }
 
               return GenerateProjectsResponse.newBuilder()
                   .setProjectInputId(projectInputDao.getId())

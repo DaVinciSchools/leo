@@ -204,17 +204,6 @@ export function ProjectBuilder(
 
     // Place the project's inputs at the beginning of the inputs list.
     if (selectedExistingProject.getValue() != null) {
-      switch (selectedExistingProjectUseType) {
-        case ExistingProjectUseType.USE_CONFIGURATION:
-          break;
-        case ExistingProjectUseType.MORE_LIKE_THIS:
-          break;
-        case ExistingProjectUseType.SUB_PROJECTS:
-          // We don't need to load the existing values in this case.
-          setAllInputs(demoInputs);
-          return;
-      }
-
       // We will exclude the demoInputs that are going to be replaced by the project's inputs.
       const demoInputIdsToFilterOut = new Set(
         (
@@ -625,8 +614,8 @@ export function ProjectBuilder(
                   ExistingProjectUseType.USE_CONFIGURATION ? (
                     <div className="project-builder-project-details-project-configuration">
                       <div style={{fontWeight: 'bold'}}>
-                        Using an existing project as the configuration for this
-                        one.
+                        Using an existing project as the initial configuration
+                        for this one.
                       </div>
                       The initial configuration below is from the{' '}
                       <u>
@@ -641,7 +630,8 @@ export function ProjectBuilder(
                     ExistingProjectUseType.MORE_LIKE_THIS ? (
                     <div className="project-builder-project-details-project-configuration">
                       <div style={{fontWeight: 'bold'}}>
-                        Using an existing project to create similar projects.
+                        Using an existing project to create more projects like
+                        it.
                       </div>
                       The initial configuration below is from the{' '}
                       <u>
@@ -656,19 +646,18 @@ export function ProjectBuilder(
                     ExistingProjectUseType.SUB_PROJECTS ? (
                     <div className="project-builder-project-details-project-configuration">
                       <div style={{fontWeight: 'bold'}}>
-                        Using an existing project to create subprojects.
+                        Using an existing project to create sub-projects.
                       </div>
                       The{' '}
                       <u>
                         {selectedExistingProject?.getValue()?.name ??
                           '[Unknown Project]'}
                       </u>{' '}
-                      project will be a larger project and this will generate
-                      sub-projects for it. Create a new configuration for the
-                      sub-projects. The new sub-projects{' '}
-                      <u>will be a part of</u> that larger project. But, they
-                      will focus on achieving the goals in the new
-                      configuration's goals.
+                      project will be a "parent" project. The configuration
+                      below will be used to generate sub-projects for it. The
+                      sub-projects <u>will be a part of</u> that larger project.
+                      But, they will focus on achieving the goals in the new
+                      configuration below.
                     </div>
                   ) : (
                     <></>

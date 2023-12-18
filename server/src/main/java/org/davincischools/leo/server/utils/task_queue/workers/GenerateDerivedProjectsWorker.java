@@ -1,15 +1,16 @@
 package org.davincischools.leo.server.utils.task_queue.workers;
 
-import static org.davincischools.leo.database.utils.DaoUtils.listIfInitialized;
+import static org.davincischools.leo.database.utils.DaoUtils.getId;
 
 import com.google.common.collect.Iterables;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectsParams;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
-import org.davincischools.leo.protos.task_service.FillInMissingProjectInfoTask;
+import org.davincischools.leo.protos.task_service.GenerateDerivedProjectsTask;
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.task_queue.DefaultTaskMetadata;
 import org.davincischools.leo.server.utils.task_queue.TaskQueue;
@@ -19,14 +20,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public final class FillInMissingProjectInfoWorker
-    extends TaskQueue<FillInMissingProjectInfoTask, DefaultTaskMetadata> {
+public class GenerateDerivedProjectsWorker
+    extends TaskQueue<GenerateDerivedProjectsTask, DefaultTaskMetadata> {
 
   private final Database db;
   private final OpenAiUtils openAiUtils;
 
-  public FillInMissingProjectInfoWorker(
-      @Autowired Database db, @Autowired OpenAiUtils openAiUtils) {
+  public GenerateDerivedProjectsWorker(@Autowired Database db, @Autowired OpenAiUtils openAiUtils) {
     super(15);
     this.db = db;
     this.openAiUtils = openAiUtils;
@@ -39,28 +39,42 @@ public final class FillInMissingProjectInfoWorker
 
   @Override
   protected void scanForTasks() {
-    db.getProjectRepository()
-        .getProjects(new GetProjectsParams().setIncludeFulfillments(true).setIncludeInactive(true))
+    db.getProjectInputRepository()
+        .getProjectInputs(new GetProjectInputsParams().setIncludeProcessing(true))
         .forEach(
-            p -> {
-              if (listIfInitialized(p.getProjectInputFulfillments()).isEmpty()) {
+            projectInput -> {
+              if (Objects.equals(projectInput.getState(), State.PROCESSING.name())
+                  && getId(projectInput.getExistingProject()).isPresent()) {
                 submitTask(
-                    FillInMissingProjectInfoTask.newBuilder().setProjectId(p.getId()).build());
+                    GenerateDerivedProjectsTask.newBuilder()
+                        .setProjectInputId(projectInput.getId())
+                        .setExistingProjectId(projectInput.getExistingProject().getId())
+                        .build());
               }
             });
   }
 
   @Override
-  protected boolean processTask(FillInMissingProjectInfoTask task, DefaultTaskMetadata metadata)
+  protected boolean processTask(GenerateDerivedProjectsTask task, DefaultTaskMetadata metadata)
       throws IOException {
 
-    // Get the project.
+    var generatorInput =
+        ProjectGeneratorInput.getProjectGeneratorInput(db, task.getProjectInputId());
+    if (generatorInput == null) {
+      throw new IllegalArgumentException("Unable to create project generator input.");
+    }
+    if (!Objects.equals(generatorInput.getProjectInput().getState(), State.PROCESSING.name())
+        || getId(generatorInput.getProjectInput().getExistingProject()).isEmpty()) {
+      return false;
+    }
+
+    // Get the existing project.
     var existingProject =
         Iterables.getOnlyElement(
             db.getProjectRepository()
                 .getProjects(
                     new GetProjectsParams()
-                        .setProjectIds(List.of(task.getProjectId()))
+                        .setProjectIds(List.of(task.getExistingProjectId()))
                         .setIncludeInputs(
                             new GetProjectInputsParams()
                                 .setIncludeProcessing(true)
@@ -72,24 +86,21 @@ public final class FillInMissingProjectInfoWorker
     if (existingProject == null) {
       throw new IllegalArgumentException("Existing project not found.");
     }
-    if (!listIfInitialized(existingProject.getProjectInputFulfillments()).isEmpty()) {
-      return false;
-    }
 
-    // Recreate the state that was used to generate the project.
-    var generatorInput =
-        ProjectGeneratorInput.getProjectGeneratorInput(
-            db, existingProject.getProjectInput().getId());
-    if (generatorInput == null) {
-      throw new IllegalArgumentException("Unable to create project generator input.");
-    }
-    generatorInput.setExistingProject(null);
-    generatorInput.setFillInProject(existingProject);
+    generatorInput
+        .setExistingProject(existingProject)
+        .setExistingProjectUseType(generatorInput.getProjectInput().getExistingProjectUseType());
 
-    var projects = new OpenAi3V3ProjectGenerator(openAiUtils).generateProjects(generatorInput, 1);
+    var projects = new OpenAi3V3ProjectGenerator(openAiUtils).generateProjects(generatorInput, 5);
     db.getProjectRepository().deeplySaveProjects(db, projects);
     db.getProjectInputRepository()
         .updateState(generatorInput.getProjectInput().getId(), State.COMPLETED.name());
     return true;
+  }
+
+  @Override
+  protected void taskFailed(
+      GenerateDerivedProjectsTask task, DefaultTaskMetadata metadata, Throwable t) {
+    db.getProjectInputRepository().updateState(task.getProjectInputId(), State.FAILED.name());
   }
 }

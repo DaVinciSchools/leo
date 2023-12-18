@@ -1,10 +1,14 @@
 package org.davincischools.leo.server.utils.task_queue.workers;
 
+import static org.davincischools.leo.database.utils.DaoUtils.getId;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.Objects;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
 import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.protos.task_service.GenerateProjectsTask;
+import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.task_queue.DefaultTaskMetadata;
 import org.davincischools.leo.server.utils.task_queue.TaskQueue;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.ProjectGeneratorInput;
@@ -16,13 +20,12 @@ import org.springframework.stereotype.Component;
 public class ProjectGeneratorWorker extends TaskQueue<GenerateProjectsTask, DefaultTaskMetadata> {
 
   private final Database db;
-  private final OpenAi3V3ProjectGenerator openAiGenerator;
+  private final OpenAiUtils openAiUtils;
 
-  protected ProjectGeneratorWorker(
-      @Autowired Database db, @Autowired OpenAi3V3ProjectGenerator openAiGenerator) {
+  protected ProjectGeneratorWorker(@Autowired Database db, @Autowired OpenAiUtils openAiUtils) {
     super(20);
     this.db = db;
-    this.openAiGenerator = openAiGenerator;
+    this.openAiUtils = openAiUtils;
   }
 
   @Override
@@ -35,11 +38,15 @@ public class ProjectGeneratorWorker extends TaskQueue<GenerateProjectsTask, Defa
     db.getProjectInputRepository()
         .getProjectInputs(new GetProjectInputsParams().setIncludeProcessing(true))
         .forEach(
-            projectInput ->
+            projectInput -> {
+              if (Objects.equals(projectInput.getState(), State.PROCESSING.name())
+                  && getId(projectInput.getExistingProject()).isEmpty()) {
                 submitTask(
                     GenerateProjectsTask.newBuilder()
                         .setProjectInputId(projectInput.getId())
-                        .build()));
+                        .build());
+              }
+            });
   }
 
   @Override
@@ -51,11 +58,12 @@ public class ProjectGeneratorWorker extends TaskQueue<GenerateProjectsTask, Defa
     if (generatorInput == null) {
       throw new IllegalArgumentException("Unable to create project generator input.");
     }
-    if (State.valueOf(generatorInput.getProjectInput().getState()) != State.PROCESSING) {
+    if (!(Objects.equals(generatorInput.getProjectInput().getState(), State.PROCESSING.name())
+        && getId(generatorInput.getProjectInput().getExistingProject()).isEmpty())) {
       return false;
     }
 
-    var projects = openAiGenerator.generateProjects(generatorInput, 5);
+    var projects = new OpenAi3V3ProjectGenerator(openAiUtils).generateProjects(generatorInput, 5);
     db.getProjectRepository().deeplySaveProjects(db, projects);
     db.getProjectInputRepository()
         .updateState(generatorInput.getProjectInput().getId(), State.COMPLETED.name());
