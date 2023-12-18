@@ -121,6 +121,13 @@ public interface ProjectInputRepository
       }
     }
 
+    if (params.getIncludeExistingProject().isPresent()) {
+      ProjectRepository.configureQuery(
+              projectInput.join(ProjectInput_.existingProject, JoinType.LEFT),
+              params.getIncludeExistingProject().get())
+          .notDeleted();
+    }
+
     return projectInput;
   }
 }

@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="React Server" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/package.json" />
+    <command value="start" />
+    <node-interpreter value="wsl://Ubuntu-22.04@/usr/bin/node" />
+    <package-manager value="npm" />
+    <envs>
+      <env name="BROWSER" value="none" />
+    </envs>
+    <method v="2">
+      <option name="LaunchBrowser.Before.Run" browser="e4fec08c-2e8b-49ce-8c47-1c5acc490cfd" url="http://localhost:8080" withDebugger="true" />
+    </method>
+  </configuration>
+</component>

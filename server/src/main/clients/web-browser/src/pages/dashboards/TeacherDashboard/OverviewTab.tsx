@@ -21,7 +21,7 @@ import {SCHOOL_SORTER} from '../../../libs/sorters';
 import {MultiClassXAutocomplete} from '../../../libs/common_fields/MultiClassXAutocomplete';
 import {FilterAltTwoTone} from '@mui/icons-material';
 import {PostsFeed} from '../../../libs/PostsFeed/PostsFeed';
-import {DeepReadonly} from '../../../libs/misc';
+import {DeepReadOnly} from '../../../libs/misc';
 import {Button} from '@mui/material';
 import {SearchForUserXModal} from '../../../libs/SearchForUserX/SearchForUserXModal';
 import IClassX = pl_types.IClassX;
@@ -101,7 +101,7 @@ export function OverviewTab() {
   // Maintain userX filters.
 
   const [userXFilter, setUserXFilter] = useState<
-    DeepReadonly<IFullUserXDetails>[]
+    DeepReadOnly<IFullUserXDetails>[]
   >([]);
   const [showSearchForStudent, setShowSearchForStudent] =
     useState<boolean>(false);
@@ -142,7 +142,7 @@ export function OverviewTab() {
                     sortedClassXs={classXOptions}
                     formField={classXFilter}
                     placeholder={hasOptions =>
-                      hasOptions ? 'Filter by Class' : 'Select Schools'
+                      hasOptions ? 'Filter by Class' : 'Select Schools First'
                     }
                     InputLabelProps={{shrink: true}}
                   />

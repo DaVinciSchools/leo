@@ -1,18 +1,18 @@
 import {Post} from '../Post/Post';
 import {pl_types, post_service} from 'pl-pb';
-import IProjectPost = pl_types.IProjectPost;
 import {useContext, useEffect, useRef, useState} from 'react';
 import {createService} from '../protos';
-import PostService = post_service.PostService;
 import {GlobalStateContext} from '../GlobalState';
+import {DeepReadOnly, replaceInPlace} from '../misc';
+import IProjectPost = pl_types.IProjectPost;
+import PostService = post_service.PostService;
 import IGetProjectPostsRequest = post_service.IGetProjectPostsRequest;
-import {DeepReadonly, replaceInPlace} from '../misc';
 
 const PAGE_SIZE = 25;
 
 export function PostsFeed(props: {
-  posts?: DeepReadonly<IProjectPost[]>;
-  request?: DeepReadonly<IGetProjectPostsRequest>;
+  posts?: DeepReadOnly<IProjectPost[]>;
+  request?: DeepReadOnly<IGetProjectPostsRequest>;
   paged?: boolean;
 }) {
   const global = useContext(GlobalStateContext);
@@ -22,7 +22,7 @@ export function PostsFeed(props: {
     'PostsFeed: requires posts or request.'
   );
 
-  const [posts, setPosts] = useState<DeepReadonly<IProjectPost>[]>([]);
+  const [posts, setPosts] = useState<DeepReadOnly<IProjectPost>[]>([]);
   // This request is expensive. So, verify that the request has changed before issuing it again.
   const lastGetProjectsPostRequest = useRef('');
   const [pageToLoad, setPageToLoad] = useState(0);
@@ -60,7 +60,7 @@ export function PostsFeed(props: {
   }, [props.posts, props.request]);
 
   function loadNextPage(
-    posts: DeepReadonly<IProjectPost[]>,
+    posts: DeepReadOnly<IProjectPost[]>,
     pageToLoad: number
   ) {
     console.assert(props.request);

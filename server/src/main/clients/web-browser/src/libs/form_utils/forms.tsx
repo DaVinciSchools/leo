@@ -7,6 +7,7 @@ import {
   FormHTMLAttributes,
   ReactElement,
   RefObject,
+  SyntheticEvent,
   useEffect,
   useRef,
   useState,
@@ -32,7 +33,7 @@ const PASSWORD_ERROR_MESSAGE =
   'Passwords must have 8+ characters, a number, and a lower and upper case letter.';
 const PASSWORDS_DO_NOT_MATCH = 'Passwords do not match.';
 
-export interface FormFieldMetadata {
+export interface FormFieldMetadata<T> {
   isPassword?: {
     skipPasswordCheck?: boolean;
   };
@@ -49,13 +50,13 @@ export interface FormFieldMetadata {
     isFreeSolo?: boolean;
     isMultiple?: boolean;
   };
-  onChange?: (formFields: FormFields, formField: FormField<any>) => void;
+  onChange?: (formField: FormField<T>, formFields: FormFields) => void;
   disabled?: boolean;
 }
 
 export interface IFormAutocompleteParams<T> {
   value: Writable<T>;
-  onChange: (event: React.SyntheticEvent, value: Readonly<T>) => void;
+  onChange: (event: SyntheticEvent, value: Readonly<T>) => void;
   disabled: boolean;
 }
 
@@ -84,7 +85,7 @@ export interface FormField<T> {
 
 interface InternalFormField<T> extends FormField<T> {
   fieldRef: RefObject<HTMLDivElement | HTMLButtonElement>;
-  fieldMetadata?: FormFieldMetadata;
+  fieldMetadata?: FormFieldMetadata<T>;
 
   reset: () => void;
 
@@ -93,30 +94,30 @@ interface InternalFormField<T> extends FormField<T> {
   calculateError: (finalCheck: boolean) => string | undefined;
 }
 
-export type FormFieldsMetadata = {
-  onChange?: (formFields: FormFields, formField: FormField<any>) => void;
+export type FormFieldsMetadata<T> = {
+  onChange?: (formField: FormField<T>, formFields: FormFields) => void;
   disabled?: boolean;
 };
 
 export interface FormFields {
   useStringFormField(
     name: string,
-    fieldMetadata?: FormFieldMetadata
+    fieldMetadata?: FormFieldMetadata<string>
   ): FormField<string>;
 
   useNumberFormField(
     name: string,
-    fieldMetadata?: FormFieldMetadata
+    fieldMetadata?: FormFieldMetadata<number>
   ): FormField<number>;
 
   useBooleanFormField(
     name: string,
-    fieldMetadata?: FormFieldMetadata
+    fieldMetadata?: FormFieldMetadata<boolean>
   ): FormField<boolean>;
 
   useAutocompleteFormField<T>(
     name: string,
-    fieldMetadata?: FormFieldMetadata
+    fieldMetadata?: FormFieldMetadata<T>
   ): FormField<T>;
 
   formParams(): DetailedHTMLProps<
@@ -139,7 +140,7 @@ export interface FormFields {
 }
 
 export function useFormFields(
-  formFieldsMetadata?: FormFieldsMetadata
+  formFieldsMetadata?: FormFieldsMetadata<any>
 ): FormFields {
   const fields: Map<string, InternalFormField<any>> = new Map();
   const formRef = useRef<HTMLFormElement>(null);
@@ -148,7 +149,7 @@ export function useFormFields(
 
   function useStringFormField(
     name: string,
-    fieldMetadata?: FormFieldMetadata
+    fieldMetadata?: FormFieldMetadata<string>
   ): FormField<string> {
     if (
       fieldMetadata?.isInteger ||
@@ -166,7 +167,7 @@ export function useFormFields(
 
   function useNumberFormField(
     name: string,
-    fieldMetadata?: FormFieldMetadata
+    fieldMetadata?: FormFieldMetadata<number>
   ): FormField<number> {
     fieldMetadata = {...fieldMetadata};
     fieldMetadata.isInteger = fieldMetadata.isInteger ?? {};
@@ -186,7 +187,7 @@ export function useFormFields(
 
   function useBooleanFormField(
     name: string,
-    fieldMetadata?: FormFieldMetadata
+    fieldMetadata?: FormFieldMetadata<boolean>
   ): FormField<boolean> {
     fieldMetadata = {...fieldMetadata};
     fieldMetadata.isBoolean = true;
@@ -206,7 +207,7 @@ export function useFormFields(
 
   function useAutocompleteFormField<T>(
     name: string,
-    fieldMetadata?: FormFieldMetadata
+    fieldMetadata?: FormFieldMetadata<T>
   ): FormField<T> {
     fieldMetadata = {...fieldMetadata};
     fieldMetadata.isAutocomplete = fieldMetadata.isAutocomplete ?? {};
@@ -226,7 +227,7 @@ export function useFormFields(
 
   function useFormField<T>(
     name: string,
-    fieldMetadata?: FormFieldMetadata
+    fieldMetadata?: FormFieldMetadata<T>
   ): FormField<T> {
     const [stringValue, setStringValue] = useState('');
     const [autocompleteValue, setAutocompleteValue] = useState<T>(
@@ -237,8 +238,8 @@ export function useFormFields(
     const fieldRef = useRef<HTMLDivElement | HTMLButtonElement>(null);
 
     useEffect(() => {
-      fieldMetadata?.onChange?.(formFields, formField);
-      formFieldsMetadata?.onChange?.(formFields, formField);
+      fieldMetadata?.onChange?.(formField, formFields);
+      formFieldsMetadata?.onChange?.(formField, formFields);
     }, [stringValue, autocompleteValue]);
 
     useEffect(() => {
@@ -377,7 +378,7 @@ export function useFormFields(
         value: Array.isArray(autocompleteValue)
           ? (autocompleteValue.slice() as unknown as Writable<T>)
           : autocompleteValue,
-        onChange: (e: React.SyntheticEvent, value: Readonly<T>) => {
+        onChange: (ignore: SyntheticEvent, value: Readonly<T>) => {
           setAutocompleteValue(
             (Array.isArray(value) ? value.slice() : value) as T
           );

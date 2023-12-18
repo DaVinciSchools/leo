@@ -12,24 +12,32 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.davincischools.leo.database.daos.ExistingProjectUseType;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetAssignmentsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
+import org.davincischools.leo.database.utils.repos.GetProjectsParams;
 
 @Getter
 @Setter
 @Accessors(chain = true)
+@NoArgsConstructor
 @AllArgsConstructor
 public class ProjectGeneratorInput {
 
   private ProjectInput projectInput;
   /* Ordered project input values grouped by ordered categories. */
-  private List<ProjectDefinitionCategoryInputValues> sortedProjectInputs;
+  private final List<ProjectDefinitionCategoryInputValues> sortedProjectInputs = new ArrayList<>();
+
   private Project fillInProject;
+
+  private Project existingProject;
+  private ExistingProjectUseType existingProjectUseType;
 
   public static @Nullable ProjectGeneratorInput getProjectGeneratorInput(
       Database db, int projectInputId) {
@@ -40,14 +48,19 @@ public class ProjectGeneratorInput {
                     new GetProjectInputsParams()
                         .setProjectInputIds(List.of(projectInputId))
                         .setIncludeProcessing(true)
+                        .setIncludeComplete(true)
                         .setIncludeAssignment(
-                            new GetAssignmentsParams().setIncludeKnowledgeAndSkills(true))),
+                            new GetAssignmentsParams().setIncludeKnowledgeAndSkills(true))
+                        .setIncludeExistingProject(
+                            new GetProjectsParams()
+                                .setIncludeInactive(true)
+                                .setIncludeMilestones(true))),
             null);
     if (projectInput == null) {
       return null;
     }
 
-    var generatorInput = new ProjectGeneratorInput(projectInput, new ArrayList<>(), null);
+    var generatorInput = new ProjectGeneratorInput().setProjectInput(projectInput);
     sortByPosition(
             listIfInitialized(projectInput.getProjectDefinition().getProjectDefinitionCategories()))
         .forEach(

@@ -38,7 +38,7 @@ message District {
 
 message KnowledgeAndSkill {
   enum Type {
-    UNSET = 0;
+    UNSET_TYPE = 0;
     EKS = 1;
     XQ_COMPETENCY = 2;
     CTE = 3;
@@ -58,7 +58,7 @@ message KnowledgeAndSkill {
 
 message Project {
   enum ThumbsState {
-    UNSET = 0;
+    UNSET_THUMBS_STATE = 0;
     THUMBS_UP = 1;
     THUMBS_DOWN = 2;
   }
@@ -73,6 +73,7 @@ message Project {
   optional bool archived = 8;
   optional bool active = 10;
   optional Assignment assignment = 11;
+  optional ProjectDefinition project_definition = 13;
 
   // The below fields are only populated for requests that include details.
 
@@ -122,10 +123,17 @@ message UserX {
 
 message ProjectDefinition {
   enum State {
-    UNSET = 0;
+    UNSET_STATE = 0;
     PROCESSING = 1;
     COMPLETED = 2;
     FAILED = 3;
+  }
+
+  enum ExistingProjectUseType {
+    UNSET_EXISTING_PROJECT_CONFIGURATION_TYPE = 0;
+    USE_CONFIGURATION = 1;
+    MORE_LIKE_THIS = 2;
+    SUB_PROJECTS = 3;
   }
 
   optional int32 id = 1;
@@ -134,6 +142,8 @@ message ProjectDefinition {
   optional bool template = 3;
   optional bool selected = 4;
   optional State state = 5;
+  optional Project existing_project = 9;
+  optional ExistingProjectUseType existing_project_use_type = 10;
   // Sorted by position already.
   repeated ProjectInputValue inputs = 6;
   optional Assignment assignment = 8;
@@ -151,7 +161,7 @@ message ProjectInputValue {
 
 message ProjectInputCategory {
   enum ValueType {
-    UNSET = 0;
+    UNSET_VALUE_TYPE = 0;
     FREE_TEXT = 1;
     EKS = 2;
     XQ_COMPETENCY = 3;
@@ -164,7 +174,9 @@ message ProjectInputCategory {
     optional string name = 2;
     optional string category = 4;
     optional string short_descr = 3;
-    optional int32 user_x_id = 5;
+    optional UserX user_x = 6;
+
+    reserved 5;
   }
 
   // ProjectDefinitionCategory.id
@@ -213,7 +225,7 @@ message ProjectPostRatingCategory {
 
 message ProjectPostRating {
   enum RatingType {
-    UNSET = 0;
+    UNSET_RATING_TYPE = 0;
     INITIAL_1_TO_5 = 1;
     GOAL_COMPLETE_PCT = 2;
   }

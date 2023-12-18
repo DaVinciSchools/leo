@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {ChangeEvent, useState} from 'react';
 import {createSearchParams, Link} from 'react-router-dom';
 import './Venn.scss';
 
@@ -15,7 +15,7 @@ function Dropdown({
   setValue: (value: string) => void;
   setFocused: (focused: boolean) => void;
 }) {
-  const handleInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInput = (event: ChangeEvent<HTMLInputElement>) => {
     setValue(event.target.value);
   };
 

@@ -59,3 +59,8 @@ message FillInMissingProjectInfoTask {
 message GenerateProjectsTask {
   optional int32 project_input_id = 1;
 }
+
+message GenerateDerivedProjectsTask {
+  optional int32 project_input_id = 1;
+  optional int32 existing_project_id = 2;
+}

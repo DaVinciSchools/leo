@@ -13,10 +13,8 @@ service ProjectManagementService {
   rpc UpsertKnowledgeAndSkill (UpsertKnowledgeAndSkillRequest) returns (UpsertKnowledgeAndSkillResponse) {}
 
   rpc GenerateProjects (GenerateProjectsRequest) returns (GenerateProjectsResponse) {}
-  rpc GenerateAnonymousProjects (GenerateAnonymousProjectsRequest) returns (GenerateAnonymousProjectsResponse) {}
   rpc RegisterAnonymousProjects (RegisterAnonymousProjectsRequest) returns (RegisterAnonymousProjectsResponse) {}
 
-  rpc GetProjectDefinitions (GetProjectDefinitionsRequest) returns (GetProjectDefinitionsResponse) {}
   rpc GetProjectInputs (GetProjectInputsRequest) returns (GetProjectInputsResponse) {}
   rpc GetProjects (GetProjectsRequest) returns (GetProjectsResponse) {}
 
@@ -31,8 +29,9 @@ message GetMotivationsResponse {
 }
 
 message GenerateProjectsRequest {
-  optional int32 assignment_id = 1;
   optional pl_types.ProjectDefinition definition = 2;
+
+  reserved 1;
 }
 
 message GenerateProjectsResponse {
@@ -57,6 +56,7 @@ message GetProjectsRequest {
   optional bool include_inactive = 3;
   optional bool include_tags = 4;
   optional bool include_inputs = 5;
+  optional bool include_input_options = 9;
   optional bool include_fulfillments = 6;
   optional bool include_assignment = 7;
   optional bool include_milestones = 8;
@@ -77,29 +77,12 @@ message UpdateProjectResponse {
   optional pl_types.Project project = 1;
 }
 
-message GetProjectDefinitionsRequest {
-  repeated int32 project_definition_ids = 1;
-  repeated int32 assignment_ids = 2;
-}
-
-message GetProjectDefinitionsResponse {
-  repeated pl_types.ProjectDefinition definitions = 1;
-}
-
 message GetProjectDefinitionCategoryTypesRequest {
   optional bool include_demos = 1;
 }
 
 message GetProjectDefinitionCategoryTypesResponse {
   repeated pl_types.ProjectInputCategory input_categories = 1;
-}
-
-message GenerateAnonymousProjectsRequest {
-  repeated pl_types.ProjectInputValue input_values = 1;
-}
-
-message GenerateAnonymousProjectsResponse {
-  optional int32 project_input_id = 1;
 }
 
 message RegisterAnonymousProjectsRequest {

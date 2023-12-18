@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,7 +47,7 @@ public class DaoUtils {
   private static final Logger logger = LogManager.getLogger();
 
   private static final Map<Class<?>, Optional<DaoShallowCopyMethods>> daoShallowCopyMethods =
-      new HashMap<>();
+      Collections.synchronizedMap(new HashMap<>());
 
   private static Optional<DaoShallowCopyMethods> getDaoShallowCopyMethods(Object dao) {
     checkNotNull(dao);
@@ -182,11 +184,25 @@ public class DaoUtils {
     return (T) newDao;
   }
 
-  public static <T> T removeTransientValues(T dao, Consumer<T> processor) {
-    T nonTransientDao = removeTransientValues(dao);
-    processor.accept(nonTransientDao);
-    copyId(nonTransientDao, dao);
-    return dao;
+  @SuppressWarnings("unchecked")
+  public static <T> T removeTransientValues(T daoOrIterableDaos, Consumer<T> processor) {
+    if (daoOrIterableDaos instanceof Iterable) {
+      List<Object> daos = Lists.newArrayList((Iterable<Object>) daoOrIterableDaos);
+      List<Object> nonTransientDaos = daos.stream().map(DaoUtils::removeTransientValues).toList();
+      if (daoOrIterableDaos instanceof Set) {
+        processor.accept((T) new LinkedHashSet<>(nonTransientDaos));
+      } else {
+        processor.accept((T) nonTransientDaos);
+      }
+      for (int i = 0; i < daos.size(); i++) {
+        copyId(nonTransientDaos.get(i), daos.get(i));
+      }
+    } else {
+      T nonTransientDao = removeTransientValues(daoOrIterableDaos);
+      processor.accept(nonTransientDao);
+      copyId(nonTransientDao, daoOrIterableDaos);
+    }
+    return daoOrIterableDaos;
   }
 
   public static void copyId(Object from, Object to) {
@@ -216,6 +232,14 @@ public class DaoUtils {
     deleteAll.accept(
         Streams.stream(oldValues).filter(e -> !newIds.contains(toId.apply(e))).toList());
     saveAll.accept(Streams.stream(newValues).filter(e -> !oldIds.contains(toId.apply(e))).toList());
+  }
+
+  public static Optional<Object> getId(@Nullable Object entity) {
+    if (entity == null) {
+      return Optional.empty();
+    }
+    var methods = getDaoShallowCopyMethods(entity);
+    return methods.map(shallowCopyMethods -> shallowCopyMethods.getId().apply(entity));
   }
 
   public static <T> boolean isInitialized(@Nullable T entity) {

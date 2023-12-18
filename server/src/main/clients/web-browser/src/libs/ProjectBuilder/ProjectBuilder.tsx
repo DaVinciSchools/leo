@@ -1,8 +1,25 @@
 import './ProjectBuilder.scss';
 
 import Modal from '@mui/material/Modal';
-import {Backdrop, Box, Button, Step, StepButton, Stepper} from '@mui/material';
-import {CSSProperties, ReactNode, useContext, useEffect, useState} from 'react';
+import {
+  Backdrop,
+  Box,
+  Button,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  Step,
+  StepButton,
+  Stepper,
+} from '@mui/material';
+import {
+  CSSProperties,
+  ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {GlobalStateContext} from '../GlobalState';
 import {IkigaiProjectBuilder} from '../IkigaiProjectBuilder/IkigaiProjectBuilder';
 import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectConfigurer';
@@ -12,12 +29,25 @@ import {createService} from '../protos';
 import {login} from '../authentication';
 import {pl_types, project_management, user_x_management} from 'pl-pb';
 import {useNavigate} from 'react-router';
-
+import {ProjectsAutocomplete} from '../common_fields/ProjectsAutocomplete';
+import {
+  deepClone,
+  deepReadOnly,
+  DeepReadOnly,
+  deepWritable,
+  replaceInDeepReadOnly,
+  toProto,
+} from '../misc';
+import {PROJECT_SORTER} from '../sorters';
+import {FormField, useFormFields} from '../form_utils/forms';
 import ProjectManagementService = project_management.ProjectManagementService;
 import UserXManagementService = user_x_management.UserXManagementService;
+import IProject = pl_types.IProject;
+import ExistingProjectUseType = pl_types.ProjectDefinition.ExistingProjectUseType;
 
 enum State {
   GETTING_STARTED,
+  EXISTING_PROJECT,
   PROJECT_DETAILS,
   REGISTER,
   CONGRATULATIONS,
@@ -25,61 +55,211 @@ enum State {
 
 const STATE_LABELS = new Map<State, string>([
   [State.GETTING_STARTED, 'Getting Started'],
+  [State.EXISTING_PROJECT, 'Existing Project'],
   [State.PROJECT_DETAILS, 'Project Details'],
   [State.REGISTER, 'Log in / Register'],
   [State.CONGRATULATIONS, 'Congratulations!'],
 ]);
 
-export function ProjectBuilder(props: {
-  noCategoriesText: ReactNode;
-  style?: Partial<CSSProperties>;
-}) {
+export interface ProjectInput {
+  input: DeepReadOnly<pl_types.IProjectInputValue>;
+  selected: boolean;
+  highlightHue: number;
+}
+
+export function getCategoryId(
+  category?: DeepReadOnly<pl_types.IProjectInputCategory | null>
+) {
+  return category?.id ?? -(category?.typeId ?? 0);
+}
+
+export function ProjectBuilder(
+  props: DeepReadOnly<{
+    noCategoriesText: ReactNode;
+    style?: Partial<CSSProperties>;
+  }>
+) {
   const global = useContext(GlobalStateContext);
   const userX = global.optionalUserX();
   const navigate = useNavigate();
+  const hiddenForm = useFormFields();
 
-  const [allInputValues, setAllInputValues] = useState<
-    readonly pl_types.IProjectInputValue[]
-  >([]);
-  const [inputValues, setInputValues] = useState<
-    readonly pl_types.IProjectInputValue[]
-  >([]);
   const [projectInputId, setProjectInputId] = useState<number | undefined>();
+  const [demoInputs, setDemoInputs] = useState<DeepReadOnly<ProjectInput[]>>(
+    []
+  );
+  const demoInputsLoaded = useRef(false);
+  const [allInputs, internalSetAllInputs] = useState<
+    DeepReadOnly<ProjectInput[]>
+  >([]);
 
   const [loginUserXVisible, setLoginUserXVisible] = useState(false);
   const [registerUserXVisible, setRegisterUserXVisible] = useState(false);
   const [accountAlreadyExistsVisible, setAccountAlreadyExistsVisible] =
     useState(false);
 
+  const [selectExistingProject, setSelectExistingProject] = useState(false);
+  const [sortedExistingProjects, setSortedExistingProjects] = useState<
+    DeepReadOnly<IProject[]>
+  >([]);
+  const selectedExistingProject =
+    hiddenForm.useAutocompleteFormField<DeepReadOnly<IProject | null>>(
+      'project'
+    );
+  const [selectedExistingProjectUseType, setSelectedExistingProjectUseType] =
+    useState<ExistingProjectUseType | null>(null);
+
   // All states. But, filter out REGISTER depending on whether a user is already logged in.
-  const steps: State[] = Object.values(State)
+  const steps = Object.values(State)
     .filter(i => typeof i === 'number')
+    .filter(i => selectExistingProject || i !== State.EXISTING_PROJECT)
     .filter(i => !userX?.isAuthenticated || i !== State.REGISTER)
     .map(i => i as State);
-  const [activeStep, setActiveStep] = useState(State.GETTING_STARTED);
+  const [activeStep, internalSetActiveStep] = useState(State.GETTING_STARTED);
 
-  useEffect(() => {
-    if (allInputValues.length === 0) {
+  function setAllInputs(newInputs: DeepReadOnly<ProjectInput[]>) {
+    // Color selected inputs.
+    const newAllInputs: DeepReadOnly<ProjectInput>[] = [];
+    const selectedInputsCount = newInputs.filter(i => i.selected).length;
+    let selectedCountIndex = 0;
+    newInputs.forEach(i => {
+      if (i.selected) {
+        const newI = deepClone(i);
+        newI.highlightHue = selectedCountIndex * (360 / selectedInputsCount);
+        newAllInputs.push(newI);
+        ++selectedCountIndex;
+      } else {
+        newAllInputs.push(i);
+      }
+    });
+    internalSetAllInputs(newAllInputs);
+  }
+
+  function setInput(newInput: DeepReadOnly<ProjectInput>) {
+    setAllInputs(
+      replaceInDeepReadOnly(allInputs, newInput, i =>
+        getCategoryId(i.input?.category)
+      )
+    );
+  }
+
+  function setActiveStep(step: State) {
+    if (step === State.GETTING_STARTED) {
+      setSelectExistingProject(false);
+      selectedExistingProject.setValue(null);
+      setSelectedExistingProjectUseType(null);
+    }
+    if (step === State.PROJECT_DETAILS && selectedExistingProject.getValue()) {
+      loadAndSetInputs();
+    }
+    internalSetActiveStep(step);
+  }
+
+  function loadUserXProjects() {
+    if (!userX?.isAuthenticated) {
+      setSelectExistingProject(false);
+      setSortedExistingProjects([]);
+      selectedExistingProject.setValue(null);
+      setSelectedExistingProjectUseType(null);
+    } else {
       createService(ProjectManagementService, 'ProjectManagementService')
-        .getProjectDefinitionCategoryTypes({includeDemos: true})
+        .getProjects({
+          userXIds: [userX?.id ?? 0],
+          includeAssignment: true,
+          includeInputs: true,
+          includeInputOptions: true,
+        })
         .then(response => {
-          setAllInputValues(
-            response.inputCategories.map(c => ({
-              category: c,
-              freeTexts: [],
-              selectedIds: [],
-            }))
-          );
+          setSelectExistingProject(false);
+          setSortedExistingProjects(response.projects.sort(PROJECT_SORTER));
+          selectedExistingProject.setValue(null);
+          setSelectedExistingProjectUseType(null);
         })
         .catch(global.setError);
     }
-  }, []);
+  }
 
-  function startGeneratingProjects(
-    values: readonly pl_types.IProjectInputValue[]
-  ) {
+  function loadAndSetInputs() {
+    if (!demoInputsLoaded.current) {
+      demoInputsLoaded.current = true;
+      createService(ProjectManagementService, 'ProjectManagementService')
+        .getProjectDefinitionCategoryTypes({includeDemos: true})
+        .then(response => {
+          const inputCategories = response.inputCategories.map((c, index) => ({
+            input: {
+              category: c,
+              freeTexts: [],
+              selectedIds: [],
+            },
+            selected: index < 4,
+            highlightHue: 0,
+          }));
+          setDemoInputs(inputCategories);
+        })
+        .catch(global.setError);
+      return;
+    } else if (demoInputs.length === 0) {
+      return;
+    }
+
+    // Place the project's inputs at the beginning of the inputs list.
+    if (selectedExistingProject.getValue() != null) {
+      // We will exclude the demoInputs that are going to be replaced by the project's inputs.
+      const demoInputIdsToFilterOut = new Set(
+        (
+          selectedExistingProject.getValue()!.projectDefinition?.inputs ?? []
+        ).flatMap(i => [
+          getCategoryId(i?.category),
+          -(i?.category?.typeId ?? 0),
+        ])
+      );
+
+      // Exclude the demoInputs and mark the remaining ones as unselected.
+      const newDemoInputs = demoInputs
+        .filter(
+          i => !demoInputIdsToFilterOut.has(getCategoryId(i.input?.category))
+        )
+        .map(i => {
+          if (i.selected) {
+            const newI = deepClone(i);
+            newI.selected = false;
+            return deepReadOnly(newI);
+          }
+          return i;
+        });
+
+      // Create entries for the project's inputs and mark them as selected.
+      const newProjectInputs = (
+        selectedExistingProject.getValue()!.projectDefinition?.inputs ?? []
+      ).map(
+        i =>
+          ({
+            input: i,
+            selected: true,
+            highlightHue: 0,
+          } as ProjectInput)
+      );
+
+      setAllInputs([...newProjectInputs, ...newDemoInputs]);
+    } else {
+      setAllInputs(demoInputs);
+    }
+  }
+
+  function startGeneratingProjects() {
     createService(ProjectManagementService, 'ProjectManagementService')
-      .generateAnonymousProjects({inputValues: values.slice()})
+      .generateProjects({
+        definition: {
+          inputs: toProto(
+            allInputs
+              .filter(i => i.selected)
+              .map(i => i.input)
+              .filter(i => i != null)
+          ),
+          existingProject: toProto(selectedExistingProject.getValue()),
+          existingProjectUseType: selectedExistingProjectUseType ?? undefined,
+        },
+      })
       .then(response => {
         setProjectInputId(response.projectInputId ?? undefined);
         setActiveStep(activeStep + 1);
@@ -135,6 +315,12 @@ export function ProjectBuilder(props: {
     navigate('/projects/all-projects.html');
   }
 
+  useEffect(() => {
+    loadAndSetInputs();
+  }, [demoInputs, selectedExistingProject.getValue()]);
+
+  useEffect(() => loadUserXProjects(), [userX]);
+
   return (
     <>
       <div className="project-builder-page-layout" style={props.style}>
@@ -185,7 +371,11 @@ export function ProjectBuilder(props: {
                 <Button
                   variant="contained"
                   className="project-builder-button"
-                  disabled={true}
+                  disabled={!userX?.isAuthenticated}
+                  onClick={() => {
+                    setSelectExistingProject(true);
+                    setActiveStep(activeStep + 1);
+                  }}
                 >
                   Start with an
                   <br />
@@ -207,7 +397,7 @@ export function ProjectBuilder(props: {
                 >
                   Create a custom
                   <br />
-                  ikigai project
+                  Ikigai project
                 </Button>
                 <Button
                   variant="contained"
@@ -220,87 +410,274 @@ export function ProjectBuilder(props: {
               </Box>
             </div>
           )}
-          {steps[activeStep] === State.PROJECT_DETAILS && (
-            <Box className="project-builder-project-details">
+          {steps[activeStep] === State.EXISTING_PROJECT && (
+            <Box className="project-builder-existing-project">
               <div
-                className="project-builder-project-details-title"
+                className="global-flex-column"
                 style={{
-                  gridColumn: 1,
-                  gridRow: 1,
+                  alignItems: 'center',
+                  justifyContent: 'space-evenly',
+                  height: '100%',
                 }}
               >
-                Ikigai Project Builder Configuration
-              </div>
-              <div
-                className="project-builder-project-details-description"
-                style={{
-                  gridColumn: 1,
-                  gridRow: 2,
-                }}
-              >
-                Select categories below to include in the Ikigai Project Builder
-                diagram on the right. You can also drag them up and down to
-                reorder them.
-              </div>
-              <div
-                className="project-builder-project-details-widget"
-                style={{
-                  gridColumn: 1,
-                  gridRow: 3,
-                }}
-              >
-                <IkigaiProjectConfigurer
-                  allCategories={allInputValues}
-                  setSelectedCategories={setInputValues}
-                />
-              </div>
-              <div
-                className="project-builder-project-details-title project-builder-project-details-ikigai-builder"
-                style={{
-                  gridColumn: 2,
-                  gridRow: 1,
-                }}
-              >
-                Ikigai Project Builder
-              </div>
-              <div
-                className="project-builder-project-details-description project-builder-project-details-ikigai-builder"
-                style={{
-                  gridColumn: 2,
-                  gridRow: 2,
-                }}
-              >
-                Select categories on the left to include in the Ikigai Project
-                Builder below. Click on the circles to indicate what sorts of
-                projects you wish to generate. After they are all filled, click
-                the <i>SPIN</i> button that appears.
-              </div>
-              <div
-                style={{
-                  gridColumn: 2,
-                  gridRow: 3,
-                }}
-                className="project-builder-project-details-widget project-builder-project-details-ikigai-builder"
-              >
-                <IkigaiProjectBuilder
-                  id="ikigai-builder"
-                  categories={inputValues.slice()}
-                  noCategoriesText={props.noCategoriesText}
-                  categoryDiameter={(width, height) =>
-                    Math.min(width, height) / 2
-                  }
-                  distanceToCategoryCenter={(width, height) =>
-                    (Math.min(width, height) / 2) * 0.45
-                  }
-                  enabled={true}
-                  onSpinClick={(
-                    configuration: pl_types.IProjectInputValue[]
-                  ) => {
-                    startGeneratingProjects(configuration);
-                  }}
-                />
+                <div
+                  className="global-flex-column"
+                  style={{alignItems: 'center'}}
+                >
+                  <div className="project-builder-existing-project-title">
+                    Select the project to use as a starting point
+                  </div>
+                  <div
+                    style={{width: '70%', paddingTop: '1em'}}
+                    className="global-flex-row"
+                  >
+                    <ProjectsAutocomplete
+                      // TODO: make ProjectsAutocomplete take a DeepReadOnly.
+                      sortedProjects={
+                        deepWritable(sortedExistingProjects) ?? []
+                      }
+                      formField={
+                        selectedExistingProject as FormField<IProject | null>
+                      }
+                      style={{width: '100%'}}
+                    />
+                  </div>
+                </div>
+                <div
+                  className="global-flex-column"
+                  style={{alignItems: 'center'}}
+                >
+                  <div className="project-builder-existing-project-title">
+                    Select how to use this project
+                  </div>
+                  <div>
+                    <RadioGroup
+                      defaultValue=""
+                      name="radio-buttons-group"
+                      value={selectedExistingProjectUseType}
+                      onChange={event => {
+                        setSelectedExistingProjectUseType(
+                          parseInt(event.target.value) as ExistingProjectUseType
+                        );
+                      }}
+                    >
+                      <FormControlLabel
+                        value={ExistingProjectUseType.USE_CONFIGURATION}
+                        control={<Radio />}
+                        style={{padding: '1em'}}
+                        label={
+                          <>
+                            <div style={{fontWeight: 'bold'}}>
+                              Start with this project's configuration
+                            </div>
+                            <div>
+                              Start with the selected project's configuration.
+                              Then modify it, if desired, before generating new
+                              projects. New projects{' '}
+                              <u>will likely be unrelated</u> to this project.
+                            </div>
+                          </>
+                        }
+                      />
+                      <FormControlLabel
+                        value={ExistingProjectUseType.MORE_LIKE_THIS}
+                        control={<Radio />}
+                        style={{padding: '1em'}}
+                        label={
+                          <>
+                            <div style={{fontWeight: 'bold'}}>
+                              Generate projects that are similar to this project
+                            </div>
+                            <div>
+                              Start with the selected project's configuration.
+                              Then modify it, if desired, before generating new
+                              projects. New projects <u>should be similar</u> to
+                              this project.
+                            </div>
+                          </>
+                        }
+                      />
+                      <FormControlLabel
+                        value={ExistingProjectUseType.SUB_PROJECTS}
+                        control={<Radio />}
+                        style={{padding: '1em'}}
+                        label={
+                          <>
+                            <div style={{fontWeight: 'bold'}}>
+                              Generate sub-projects for this project
+                            </div>
+                            <div>
+                              Use the selected project as a larger project from
+                              which to create sub-projects. New sub-projects{' '}
+                              <u>will be a part of</u> the larger, selected
+                              project. But, they will focus on achieving
+                              modified goals in the new configuration, below.
+                            </div>
+                          </>
+                        }
+                      />
+                    </RadioGroup>
+                  </div>
+                </div>
+                <div
+                  className="global-flex-row"
+                  style={{justifyContent: 'space-evenly'}}
+                >
+                  <Button
+                    variant="contained"
+                    className="project-builder-button"
+                    onClick={() => setActiveStep(State.GETTING_STARTED)}
+                  >
+                    <div style={{padding: '0.7em 0'}}>&lt;&nbsp;&nbsp;Back</div>
+                  </Button>
+                  <Button
+                    variant="contained"
+                    className="project-builder-button"
+                    disabled={
+                      !selectedExistingProject.getValue() ||
+                      selectedExistingProjectUseType == null
+                    }
+                    onClick={() => setActiveStep(activeStep + 1)}
+                  >
+                    <div style={{padding: '0.7em 0'}}>
+                      Continue&nbsp;&nbsp;&gt;
+                    </div>
+                  </Button>
+                </div>
               </div>
             </Box>
+          )}
+          {steps[activeStep] === State.PROJECT_DETAILS && (
+            <>
+              <Box className="project-builder-project-details">
+                <div
+                  className="project-builder-project-details-title"
+                  style={{
+                    gridColumn: 1,
+                    gridRow: 1,
+                  }}
+                >
+                  Ikigai Project Builder Configuration
+                </div>
+                <div
+                  className="project-builder-project-details-description"
+                  style={{
+                    gridColumn: 1,
+                    gridRow: 2,
+                  }}
+                >
+                  Select categories below to include in the Ikigai Project
+                  Builder diagram on the right. You can also drag them up and
+                  down to reorder them.
+                </div>
+                <div
+                  className="project-builder-project-details-widget"
+                  style={{
+                    gridColumn: 1,
+                    gridRow: 3,
+                  }}
+                >
+                  <IkigaiProjectConfigurer
+                    inputs={allInputs}
+                    setInputs={setAllInputs}
+                  />
+                </div>
+                <div
+                  className="project-builder-project-details-title project-builder-project-details-ikigai-builder"
+                  style={{
+                    gridColumn: 2,
+                    gridRow: 1,
+                  }}
+                >
+                  Ikigai Project Builder
+                </div>
+                <div
+                  className="project-builder-project-details-description project-builder-project-details-ikigai-builder"
+                  style={{
+                    gridColumn: 2,
+                    gridRow: 2,
+                  }}
+                >
+                  Select categories on the left to include in the Ikigai Project
+                  Builder below. Click on the circles to indicate what sorts of
+                  projects you wish to generate. After they are all filled,
+                  click the <i>SPIN</i> button that appears.
+                </div>
+                <div
+                  style={{
+                    gridColumn: 2,
+                    gridRow: 3,
+                  }}
+                  className="project-builder-project-details-widget project-builder-project-details-ikigai-builder global-flex-column"
+                >
+                  {selectedExistingProjectUseType ===
+                  ExistingProjectUseType.USE_CONFIGURATION ? (
+                    <div className="project-builder-project-details-project-configuration">
+                      <div style={{fontWeight: 'bold'}}>
+                        Using an existing project as the initial configuration
+                        for this one.
+                      </div>
+                      The initial configuration below is from the{' '}
+                      <u>
+                        {selectedExistingProject?.getValue()?.name ??
+                          '[Unknown Project]'}
+                      </u>{' '}
+                      project. Modify it, if desired, before generating new
+                      projects. The new projects <u>will likely be unrelated</u>{' '}
+                      to that project.
+                    </div>
+                  ) : selectedExistingProjectUseType ===
+                    ExistingProjectUseType.MORE_LIKE_THIS ? (
+                    <div className="project-builder-project-details-project-configuration">
+                      <div style={{fontWeight: 'bold'}}>
+                        Using an existing project to create more projects like
+                        it.
+                      </div>
+                      The initial configuration below is from the{' '}
+                      <u>
+                        {selectedExistingProject?.getValue()?.name ??
+                          '[Unknown Project]'}
+                      </u>{' '}
+                      project. Modify it, if desired, before generating new
+                      projects. The new projects <u>should be similar</u> to
+                      that project.
+                    </div>
+                  ) : selectedExistingProjectUseType ===
+                    ExistingProjectUseType.SUB_PROJECTS ? (
+                    <div className="project-builder-project-details-project-configuration">
+                      <div style={{fontWeight: 'bold'}}>
+                        Using an existing project to create sub-projects.
+                      </div>
+                      The{' '}
+                      <u>
+                        {selectedExistingProject?.getValue()?.name ??
+                          '[Unknown Project]'}
+                      </u>{' '}
+                      project will be a "parent" project. The configuration
+                      below will be used to generate sub-projects for it. The
+                      sub-projects <u>will be a part of</u> that larger project.
+                      But, they will focus on achieving the goals in the new
+                      configuration below.
+                    </div>
+                  ) : (
+                    <></>
+                  )}
+                  <IkigaiProjectBuilder
+                    inputs={allInputs.filter(i => i.selected)}
+                    setInput={setInput}
+                    noInputsText={props.noCategoriesText}
+                    inputDiameter={(width, height) =>
+                      (Math.min(width, height) / 2) * 0.95
+                    }
+                    distanceToInputCenter={(width, height) =>
+                      (Math.min(width, height) / 4) * 0.85
+                    }
+                    enabled={true}
+                    onSpinClick={startGeneratingProjects}
+                  />
+                </div>
+              </Box>
+            </>
           )}
           {steps[activeStep] === State.REGISTER && (
             <Box className="project-builder-register">

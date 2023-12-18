@@ -13,6 +13,7 @@ import static org.davincischools.leo.server.utils.ProtoDaoUtils.toKnowledgeAndSk
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toKnowledgeAndSkillProto;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toMilestoneProto;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toMilestoneStepProto;
+import static org.davincischools.leo.server.utils.ProtoDaoUtils.toOptionProto;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectDao;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectDefinitionCategoryDao;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectDefinitionDao;
@@ -39,6 +40,7 @@ import static org.davincischools.leo.server.utils.ProtoDaoUtils.toUserXProto;
 import com.google.protobuf.TextFormat;
 import com.google.protobuf.TextFormat.ParseException;
 import jakarta.persistence.EntityManager;
+import java.time.Instant;
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.pl_types.Assignment;
@@ -49,6 +51,8 @@ import org.davincischools.leo.protos.pl_types.Project;
 import org.davincischools.leo.protos.pl_types.Project.Milestone;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
+import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
+import org.davincischools.leo.protos.pl_types.ProjectInputCategory.ValueType;
 import org.davincischools.leo.protos.pl_types.ProjectPost;
 import org.davincischools.leo.protos.pl_types.ProjectPostComment;
 import org.davincischools.leo.protos.pl_types.ProjectPostRating;
@@ -1162,7 +1166,7 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toProjectDefinitionFromInputRoundTript() throws ParseException {
+  public void toProjectDefinitionFromInputRoundTrip() throws ParseException {
     // Options are pulled in separately from the translation.
     ProjectDefinition proto =
         TextFormat.parse(
@@ -1215,12 +1219,19 @@ public class ProtoDaoUtilsTest {
                   free_texts: "free_textA"
                   free_texts: "free_textB"
                 }
-                assignment: {
+                assignment {
                   id: 18
                   name: "assignment name"
                   short_descr: "assignment short"
                   long_descr_html: "assignment long"
                 }
+                existing_project {
+                  id: 19
+                  name: "existing project name"
+                  short_descr: "existing project short"
+                  long_descr_html: "existing project long"
+                }
+                existing_project_use_type: USE_CONFIGURATION
                 """,
             ProjectDefinition.class);
 
@@ -1230,6 +1241,91 @@ public class ProtoDaoUtilsTest {
                 .orElseThrow()
                 .build())
         .isEqualTo(proto);
+  }
+
+  public void toOptionProtoFromKnowledgeAndSkillNull() {
+    assertThat(
+            toOptionProto(
+                (org.davincischools.leo.database.daos.KnowledgeAndSkill) null, Option::newBuilder))
+        .isEmpty();
+  }
+
+  @Test
+  public void toOptionProtoFromKnowledgeAndSkillUninitialized() {
+    assertThat(
+            toOptionProto(
+                newUninitialized(org.davincischools.leo.database.daos.KnowledgeAndSkill.class),
+                Option::newBuilder))
+        .isEmpty();
+  }
+
+  @Test
+  public void toOptionProtoFromKnowledgeAndSkillDao() throws ParseException {
+    var dao =
+        new org.davincischools.leo.database.daos.KnowledgeAndSkill()
+            .setId(1)
+            .setCreationTime(Instant.MIN)
+            .setName("name")
+            .setCategory("category")
+            .setType(ValueType.EKS.name())
+            .setShortDescr("short_descr")
+            .setLongDescrHtml("long_descr_html")
+            .setUserX(new org.davincischools.leo.database.daos.UserX().setId(2))
+            .setGlobal(true);
+    assertThat(toOptionProto(dao, Option::newBuilder).orElseThrow().build())
+        .isEqualTo(
+            TextFormat.parse(
+                """
+                id: 1
+                name: 'name'
+                category: 'category'
+                short_descr: 'short_descr'
+                user_x {
+                  id: 2
+                  is_admin_x: false
+                  is_teacher: false
+                  is_student: false
+                  is_demo: true
+                  is_authenticated: true
+                }
+                """,
+                Option.class));
+  }
+
+  public void toOptionProtoFromMotivationNull() {
+    assertThat(
+            toOptionProto(
+                (org.davincischools.leo.database.daos.Motivation) null, Option::newBuilder))
+        .isEmpty();
+  }
+
+  @Test
+  public void toOptionProtoFromMotivationUninitialized() {
+    assertThat(
+            toOptionProto(
+                newUninitialized(org.davincischools.leo.database.daos.Motivation.class),
+                Option::newBuilder))
+        .isEmpty();
+  }
+
+  @Test
+  public void toOptionProtoFromMotivationDao() throws ParseException {
+    var dao =
+        new org.davincischools.leo.database.daos.Motivation()
+            .setId(1)
+            .setCreationTime(Instant.MIN)
+            .setName("name")
+            .setShortDescr("short_descr")
+            .setLongDescrHtml("long_descr_html");
+    assertThat(toOptionProto(dao, Option::newBuilder).orElseThrow().build())
+        .isEqualTo(
+            TextFormat.parse(
+                """
+                id: 1
+                name: 'name'
+                short_descr: 'short_descr'
+                """,
+                Option.class));
   }
 
   private <T> T newUninitialized(Class<T> entityClass) {

@@ -1,16 +1,16 @@
 import {Modal} from '@mui/material';
 import {user_x_management} from 'pl-pb';
-import IFullUserXDetails = user_x_management.IFullUserXDetails;
 import {SearchForUserX} from './SearchForUserX';
-import {DeepReadonly} from '../misc';
+import {DeepReadOnly} from '../misc';
 import {TitledPaper} from '../TitledPaper/TitledPaper';
 import {FilterAltTwoTone} from '@mui/icons-material';
+import IFullUserXDetails = user_x_management.IFullUserXDetails;
 
 export function SearchForUserXModal(props: {
   showSearchBox: boolean;
   title: string;
-  onSelect: (userX?: DeepReadonly<IFullUserXDetails>) => void;
-  baseRequest: DeepReadonly<user_x_management.IGetUserXsRequest>;
+  onSelect: (userX?: DeepReadOnly<IFullUserXDetails>) => void;
+  baseRequest: DeepReadOnly<user_x_management.IGetUserXsRequest>;
 }) {
   return (
     <Modal

@@ -267,7 +267,7 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
             value={assignment}
             autoHighlight
             options={(assignments?.slice() ?? []).sort(ASSIGNMENT_SORTER)}
-            onChange={(e, value) => setAssignment(value)}
+            onChange={(ignore, value) => setAssignment(value)}
             getOptionLabel={assignment =>
               assignment?.name ?? '(Unnamed Assignment)'
             }
@@ -320,7 +320,7 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
             value={classX}
             autoHighlight
             options={classXs.slice().sort(CLASS_X_SORTER)}
-            onChange={(e, value) => setClassX(value)}
+            onChange={(ignore, value) => setClassX(value)}
             getOptionLabel={classX => classX?.name ?? ''}
             isOptionEqualToValue={(option, value) => option.id === value.id}
             disabled={true}
@@ -431,7 +431,7 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
             options={(projectDefinitions?.slice() ?? []).sort(
               PROJECT_DEFINITION_SORTER
             )}
-            onChange={(e, value) => setProjectDefinition(value ?? null)}
+            onChange={(ignore, value) => setProjectDefinition(value ?? null)}
             getOptionLabel={projectDefinition =>
               projectDefinition?.name ?? '(Unnamed Ikigai Configuration)'
             }

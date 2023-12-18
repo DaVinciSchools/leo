@@ -17,6 +17,7 @@ public class GetProjectInputsParams {
   // One of the following fields must be set to get any results.
   @Nullable private Boolean includeComplete;
   @Nullable private Boolean includeProcessing;
+  @Nullable private GetProjectsParams includeExistingProject;
 
   @Nullable private Iterable<Integer> userXIds;
   @Nullable private Iterable<Integer> projectInputIds;
@@ -35,6 +36,10 @@ public class GetProjectInputsParams {
 
   public Optional<Boolean> getIncludeProcessing() {
     return Optional.ofNullable(includeProcessing);
+  }
+
+  public Optional<GetProjectsParams> getIncludeExistingProject() {
+    return Optional.ofNullable(includeExistingProject);
   }
 
   public Optional<GetAssignmentsParams> getIncludeAssignment() {

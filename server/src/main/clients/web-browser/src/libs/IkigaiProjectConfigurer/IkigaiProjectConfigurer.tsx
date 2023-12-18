@@ -1,74 +1,34 @@
 import '../global.scss';
 
-import {CSSProperties, useEffect, useState} from 'react';
+import {CSSProperties} from 'react';
 import {Layout} from 'react-grid-layout';
 import {PersistedReactGridLayout} from '../PersistedReactGridLayout/PersistedReactGridLayout';
 import {TitledPaper} from '../TitledPaper/TitledPaper';
 import {VISIBLE_ALPHA} from '../../Ikigai/Ikigai';
-import {pl_types} from 'pl-pb';
 import Markdown from 'react-markdown';
+import {getCategoryId, ProjectInput} from '../ProjectBuilder/ProjectBuilder';
+import {DeepReadOnly, modifyInDeepReadOnly} from '../misc';
 
-interface Category {
-  category: pl_types.IProjectInputValue;
-  selected: boolean;
-  headerColor?: string;
-  highlightColor: string;
-}
-
-export function IkigaiProjectConfigurer(props: {
-  allCategories: readonly pl_types.IProjectInputValue[];
-  setSelectedCategories: (
-    categories: readonly pl_types.IProjectInputValue[]
-  ) => void;
-  style?: Partial<CSSProperties>;
-}) {
-  const [categories, setCategories] = useState<readonly Category[]>([]);
-
-  useEffect(() => {
-    let i = 0;
-    setCategories(
-      props.allCategories.map(c => ({
-        category: c,
-        selected: i++ < 4,
-        highlightColor: 'grey',
-      }))
-    );
-    props.setSelectedCategories(props.allCategories);
-  }, [props.allCategories]);
-
-  useEffect(() => {
-    const selectedCategories: Category[] = [];
-    categories.forEach(c => {
-      c.headerColor = undefined;
-      c.highlightColor = 'grey';
-      if (c.selected) {
-        selectedCategories.push(c);
-      }
-    });
-    selectedCategories.forEach((c, index) => {
-      const hue = index * (360 / selectedCategories.length);
-      c.headerColor = `hsla(${hue}, 100%, 75%, ${VISIBLE_ALPHA}`;
-      c.highlightColor = `hsla(${hue}, 100%, 75%, 100%)`;
-    });
-    props.setSelectedCategories(selectedCategories.map(c => c.category));
-  }, [categories]);
-
-  function handleDrag(layout: Layout[]) {
-    const mappedCategories = new Map<string, Category>(
-      categories.map(c => [(c.category?.category?.typeId ?? 0).toString(), c])
-    );
-
+export function IkigaiProjectConfigurer(
+  props: DeepReadOnly<{
+    inputs: ProjectInput[];
+    setInputs: (newInputs: DeepReadOnly<ProjectInput[]>) => void;
+    style?: Partial<CSSProperties>;
+  }>
+) {
+  function handleDrag(layout: DeepReadOnly<Layout[]>) {
     let needsUpdate = false;
-    const newCategories = layout
-      .sort((a, b) => a.y - b.y)
-      .map((l, index) => {
-        const c = mappedCategories.get(l.i)!;
-        /* eslint-disable-next-line eqeqeq */
-        needsUpdate = needsUpdate || categories.at(index) != c;
-        return c;
-      });
+    const sortedLayout = layout.slice().sort((a, b) => a.y - b.y);
+    sortedLayout.forEach((l, index) => {
+      needsUpdate =
+        needsUpdate ||
+        getCategoryId(props.inputs[index]?.input?.category) !== parseInt(l.i);
+    });
     if (needsUpdate) {
-      setCategories(newCategories);
+      const inputsById = new Map(
+        props.inputs.map(i => [getCategoryId(i.input?.category), i])
+      );
+      props.setInputs(sortedLayout.map(l => inputsById.get(parseInt(l.i))!));
     }
   }
 
@@ -79,17 +39,23 @@ export function IkigaiProjectConfigurer(props: {
       rows={3}
       padding={{x: 5, y: 0}}
       gap={{x: 0, y: 16}}
-      panels={categories.map((c, index) => ({
-        id: (c.category?.category?.typeId ?? 0).toString(),
+      panels={props.inputs.map((i, index) => ({
+        id: getCategoryId(i.input?.category).toString(),
         panel: (
           <TitledPaper
             title={
               <Markdown className="global-markdown">
-                {c.category?.category?.name ?? 'undefined'}
+                {i.input?.category?.name ?? '[Unknown Category]'}
               </Markdown>
             }
-            headerColor={c.headerColor}
-            highlightColor={c.highlightColor}
+            headerColor={
+              i.selected
+                ? `hsla(${i.highlightHue}, 100%, 75%, ${VISIBLE_ALPHA}`
+                : undefined
+            }
+            highlightColor={
+              i.selected ? `hsla(${i.highlightHue}, 100%, 75%, 100%)` : 'grey'
+            }
             draggableCursorType="ns-resize"
             bodyStyle={{
               display: 'flex',
@@ -108,10 +74,16 @@ export function IkigaiProjectConfigurer(props: {
                   Include:&nbsp;
                   <input
                     type="checkbox"
-                    checked={c.selected}
+                    checked={i.selected}
                     onChange={() => {
-                      c.selected = !c.selected;
-                      setCategories([...categories]);
+                      props.setInputs(
+                        modifyInDeepReadOnly(
+                          props.inputs,
+                          i,
+                          i2 => (i2.selected = !i2.selected),
+                          i2 => getCategoryId(i2.input?.category)
+                        )
+                      );
                     }}
                   />
                 </span>
@@ -119,7 +91,7 @@ export function IkigaiProjectConfigurer(props: {
             }
           >
             <Markdown className="global-markdown">
-              {c.category?.category?.shortDescr ?? 'undefined'}
+              {i.input?.category?.shortDescr ?? '[No Short Description]'}
             </Markdown>
           </TitledPaper>
         ),
