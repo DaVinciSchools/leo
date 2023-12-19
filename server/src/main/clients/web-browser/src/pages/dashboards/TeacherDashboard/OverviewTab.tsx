@@ -1,6 +1,4 @@
 import './TeacherDashboard.scss';
-
-import NotificationsTwoToneIcon from '@mui/icons-material/NotificationsTwoTone';
 import {TitledPaper} from '../../../libs/TitledPaper/TitledPaper';
 import {PersistedReactGridLayout} from '../../../libs/PersistedReactGridLayout/PersistedReactGridLayout';
 import {useContext, useEffect, useState} from 'react';
@@ -17,13 +15,16 @@ import {
 } from '../../../libs/form_utils/forms';
 import {createService} from '../../../libs/protos';
 import {MultiSchoolAutocomplete} from '../../../libs/common_fields/MultiSchoolAutocomplete';
-import {SCHOOL_SORTER} from '../../../libs/sorters';
+import {FULL_USER_X_SORTER, SCHOOL_SORTER} from '../../../libs/sorters';
 import {MultiClassXAutocomplete} from '../../../libs/common_fields/MultiClassXAutocomplete';
-import {FilterAltTwoTone} from '@mui/icons-material';
+import {FilterAltTwoTone, SearchTwoTone} from '@mui/icons-material';
+import {
+  deepReadOnly,
+  DeepReadOnly,
+  getHighlightStyle,
+} from '../../../libs/misc';
+import {SelectUserXAutocomplete} from '../../../libs/common_fields/SelectUserXAutocomplete';
 import {PostsFeed} from '../../../libs/PostsFeed/PostsFeed';
-import {DeepReadOnly} from '../../../libs/misc';
-import {Button} from '@mui/material';
-import {SearchForUserXModal} from '../../../libs/SearchForUserX/SearchForUserXModal';
 import IClassX = pl_types.IClassX;
 import SchoolManagementService = school_management.SchoolManagementService;
 import ISchool = pl_types.ISchool;
@@ -33,23 +34,47 @@ import IFullUserXDetails = user_x_management.IFullUserXDetails;
 export function OverviewTab() {
   const global = useContext(GlobalStateContext);
   const userX = global.requireUserX(
-    'You must be a teacher for this overview.',
+    'You must be a teacher to view this overview.',
     userX => userX.isAdminX || userX.isTeacher
   );
 
+  // Filter parameters.
+
   const filterForm = useFormFields();
 
-  // Maintain school filters.
+  const [schoolOptions, setSchoolOptions] = useState<DeepReadOnly<ISchool[]>>(
+    []
+  );
+  const schoolFilter = filterForm.useAutocompleteFormField<
+    DeepReadOnly<ISchool[]>
+  >('schoolFilter', {
+    isAutocomplete: {
+      isMultiple: true,
+    },
+    disabled: !userX,
+  });
 
-  const [schoolOptions, setSchoolOptions] = useState<readonly ISchool[]>([]);
-  const schoolFilter = filterForm.useAutocompleteFormField<readonly ISchool[]>(
-    'schoolFilter',
+  const [classXOptions, setClassXOptions] = useState<readonly IClassX[]>([]);
+  const classXFilter = filterForm.useAutocompleteFormField<readonly IClassX[]>(
+    'classXFilter',
     {
       isAutocomplete: {
         isMultiple: true,
       },
-      disabled: !userX,
     }
+  );
+
+  const [userXFilter, setUserXFilter] = useState<
+    DeepReadOnly<IFullUserXDetails[]>
+  >([]);
+
+  // Highlight parameters.
+
+  const [highlightedUserXs, internalSetHighlightedUserXs] = useState<
+    DeepReadOnly<IFullUserXDetails[]>
+  >([]);
+  const [highlightedUserXHues, setHighlightedUserXHues] = useState(
+    deepReadOnly(new Map<number, number>())
   );
 
   useEffect(() => {
@@ -57,6 +82,9 @@ export function OverviewTab() {
       setSchoolOptions([]);
       setClassXOptions([]);
       filterForm.setValuesObject({});
+      setUserXFilter([]);
+      setHighlightedUserXs([]);
+      setHighlightedUserXHues(new Map());
       return;
     }
 
@@ -72,16 +100,6 @@ export function OverviewTab() {
 
   // Maintain classX filters.
 
-  const [classXOptions, setClassXOptions] = useState<readonly IClassX[]>([]);
-  const classXFilter = filterForm.useAutocompleteFormField<readonly IClassX[]>(
-    'classXFilter',
-    {
-      isAutocomplete: {
-        isMultiple: true,
-      },
-    }
-  );
-
   useEffect(() => {
     if ((schoolFilter.getValue()?.length ?? 0) === 0) {
       setClassXOptions([]);
@@ -96,15 +114,20 @@ export function OverviewTab() {
         filterAutocompleteFormField(classXFilter, classX => classX.id, options);
       })
       .catch(global.setError);
-  }, [schoolFilter.getValue()]);
+  }, [userX, schoolFilter.getValue()]);
 
-  // Maintain userX filters.
-
-  const [userXFilter, setUserXFilter] = useState<
-    DeepReadOnly<IFullUserXDetails>[]
-  >([]);
-  const [showSearchForStudent, setShowSearchForStudent] =
-    useState<boolean>(false);
+  function setHighlightedUserXs(userXs: DeepReadOnly<IFullUserXDetails[]>) {
+    const sortedUserXs = userXs.slice().sort(FULL_USER_X_SORTER);
+    const userXHues = new Map<number, number>();
+    for (let i = 0; i < sortedUserXs.length; i++) {
+      userXHues.set(
+        sortedUserXs[i].userX?.id ?? 0,
+        (i * 360) / sortedUserXs.length
+      );
+    }
+    internalSetHighlightedUserXs(sortedUserXs);
+    setHighlightedUserXHues(userXHues);
+  }
 
   if (!userX) {
     return <></>;
@@ -146,24 +169,91 @@ export function OverviewTab() {
                     }
                     InputLabelProps={{shrink: true}}
                   />
-                  <Button
-                    className="global-button"
-                    onClick={() => {
-                      setShowSearchForStudent(true);
+                  <SelectUserXAutocomplete
+                    label="Students to Filter For"
+                    baseRequest={{
+                      studentsOnly: true,
+                      inSchoolIds: schoolFilter
+                        .getValue()
+                        ?.map(school => school.id ?? 0),
+                      inClassXIds: classXFilter
+                        .getValue()
+                        ?.map(classX => classX.id ?? 0),
+                      excludeUserXIds: userXFilter.map(
+                        userX => userX.userX?.id ?? 0
+                      ),
                     }}
-                  >
-                    Select Student
-                    {userXFilter.map(userX => (
-                      <>
-                        <br />
-                        {userX.userX?.emailAddress ?? ''}
-                      </>
-                    ))}
-                  </Button>
+                    onSelect={setUserXFilter}
+                  />
                 </div>
               </TitledPaper>
             ),
-            layout: {x: 8, y: 0, w: 4, h: 6},
+            layout: {x: 8, y: 0, w: 4, h: 4},
+          },
+          {
+            id: 'highlight_posts',
+            panel: (
+              <TitledPaper
+                title="Highlight Posts"
+                icon={<SearchTwoTone />}
+                highlightColor="blue"
+                draggableCursorType="move"
+              >
+                <div
+                  className="global-flex-column"
+                  style={{marginTop: '0.5em', gap: '1em'}}
+                >
+                  <SelectUserXAutocomplete
+                    label="Students to Highlight"
+                    baseRequest={{
+                      studentsOnly: true,
+                      inSchoolIds: schoolFilter
+                        .getValue()
+                        ?.map(school => school.id ?? 0),
+                      inClassXIds: classXFilter
+                        .getValue()
+                        ?.map(classX => classX.id ?? 0),
+                      excludeUserXIds: highlightedUserXs.map(
+                        userX => userX.userX?.id ?? 0
+                      ),
+                    }}
+                    onSelect={setHighlightedUserXs}
+                  />
+                  {highlightedUserXs.map(userX => (
+                    <>
+                      <div
+                        key={userX.userX?.id ?? 0}
+                        style={getHighlightStyle(
+                          highlightedUserXHues.get(userX.userX?.id ?? 0)
+                        )}
+                      >
+                        <div
+                          style={{
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {userX.userX?.lastName ?? ''}
+                          {', '}
+                          {userX.userX?.firstName ?? ''}
+                        </div>
+                        <div
+                          style={{
+                            fontWeight: 'lighter',
+                            fontStyle: 'italic',
+                            paddingLeft: '1em',
+                            fontSize: 'smaller',
+                          }}
+                        >
+                          {userX.userX?.emailAddress ?? ''}
+                        </div>
+                      </div>
+                    </>
+                  ))}
+                </div>
+              </TitledPaper>
+            ),
+            layout: {x: 8, y: 4, w: 4, h: 8},
           },
           {
             id: 'posts',
@@ -180,38 +270,15 @@ export function OverviewTab() {
                   beingEdited: false,
                 }}
                 paged={true}
+                postHighlights={{
+                  getUserXHue: userX =>
+                    highlightedUserXHues.get(userX?.id ?? 0),
+                }}
               />
             ),
             layout: {x: 0, y: 0, w: 8, h: 12},
           },
-          {
-            id: 'notifications',
-            panel: (
-              <TitledPaper
-                title="Notifications"
-                icon={<NotificationsTwoToneIcon />}
-                highlightColor="green"
-                draggableCursorType="move"
-              >
-                TODO
-              </TitledPaper>
-            ),
-            layout: {x: 8, y: 6, w: 4, h: 6},
-          },
         ]}
-      />
-      <SearchForUserXModal
-        showSearchBox={showSearchForStudent}
-        title={'Search for Student'}
-        onSelect={userX => {
-          setShowSearchForStudent(false);
-          setUserXFilter(userX ? [userX] : []);
-        }}
-        baseRequest={{
-          studentsOnly: true,
-          inSchoolIds: schoolFilter.getValue()?.map(e => e.id ?? 0),
-          inClassXIds: classXFilter.getValue()?.map(e => e.id ?? 0),
-        }}
       />
     </>
   );

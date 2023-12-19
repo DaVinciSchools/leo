@@ -1,4 +1,4 @@
-import {pl_types} from 'pl-pb';
+import {pl_types, user_x_management} from 'pl-pb';
 import {DeepReadOnly, toLong} from './misc';
 import IOption = pl_types.ProjectInputCategory.IOption;
 import IClassX = pl_types.IClassX;
@@ -103,4 +103,10 @@ export const USER_X_SORTER = (
   b: DeepReadOnly<pl_types.IUserX | null | undefined>
 ) =>
   (a?.lastName ?? '').localeCompare(b?.lastName ?? '') ||
-  (a?.firstName ?? '').localeCompare(b?.firstName ?? '');
+  (a?.firstName ?? '').localeCompare(b?.firstName ?? '') ||
+  (a?.emailAddress ?? '').localeCompare(b?.emailAddress ?? '');
+
+export const FULL_USER_X_SORTER = (
+  a: DeepReadOnly<user_x_management.IFullUserXDetails | null | undefined>,
+  b: DeepReadOnly<user_x_management.IFullUserXDetails | null | undefined>
+) => USER_X_SORTER(a?.userX, b?.userX);

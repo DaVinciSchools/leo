@@ -15,7 +15,7 @@ enum TabValue {
 export function TeacherDashboard() {
   const global = useContext(GlobalStateContext);
   const userX = global.requireUserX(
-    'You must be an administrator to view this dashboard.',
+    'You must be an teacher to view this dashboard.',
     userX => userX.isAdminX || userX.isTeacher
   );
 

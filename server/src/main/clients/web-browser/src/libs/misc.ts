@@ -2,6 +2,7 @@
 
 import {Long as PbLong} from 'protobufjs';
 import Long from 'long';
+import {CSSProperties} from 'react';
 
 export function isObject(value: any) {
   return value != null && typeof value === 'object';
@@ -177,4 +178,18 @@ export function deepClone<T>(value: T | DeepReadOnly<T>) {
 // document that we are converting it just to store in a proto.
 export function toProto<T>(value: T | DeepReadOnly<T>) {
   return value as DeepWritable<T>;
+}
+
+export function getHighlightStyle(
+  hue: number | null | undefined
+): Partial<CSSProperties> {
+  if (hue != null) {
+    return {
+      background: `hsla(${hue}, 100%, 50%, 25%)`,
+      border: `hsla(${hue}, 100%, 33%, 100%) 2px solid`,
+      borderRadius: '4px',
+      padding: '4px',
+    };
+  }
+  return {};
 }
