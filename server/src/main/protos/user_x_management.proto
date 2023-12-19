@@ -79,6 +79,7 @@ message GetUserXsRequest {
   repeated int32 in_user_x_ids = 10;
   repeated int32 in_school_ids = 4;
   repeated int32 in_class_x_ids = 5;
+  repeated int32 exclude_user_x_ids = 15;
 
   optional string has_email_address = 11;
 

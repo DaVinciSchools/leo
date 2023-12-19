@@ -125,6 +125,10 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
     checkNotNull(params);
 
     userX.fetch().requireId(params.getInUserXIds());
+    if (params.getExcludeUserXIds().isPresent()) {
+      userX.where(
+          Predicate.not(Predicate.in(userX.get(UserX_.id), params.getExcludeUserXIds().get())));
+    }
 
     // var district =
     userX

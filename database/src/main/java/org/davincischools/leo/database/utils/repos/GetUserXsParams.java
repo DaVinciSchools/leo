@@ -20,6 +20,7 @@ public class GetUserXsParams {
   @Nullable private Iterable<Integer> inUserXIds;
   @Nullable private Iterable<Integer> inSchoolIds;
   @Nullable private Iterable<Integer> inClassXIds;
+  @Nullable private Iterable<Integer> excludeUserXIds;
 
   @Nullable private String hasEmailAddress;
 
@@ -70,6 +71,10 @@ public class GetUserXsParams {
 
   Optional<Iterable<Integer>> getInClassXIds() {
     return Optional.ofNullable(inClassXIds);
+  }
+
+  Optional<Iterable<Integer>> getExcludeUserXIds() {
+    return Optional.ofNullable(excludeUserXIds);
   }
 
   Optional<String> getFirstLastEmailSearchText() {
