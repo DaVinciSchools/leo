@@ -2,6 +2,7 @@
 
 import {Long as PbLong} from 'protobufjs';
 import Long from 'long';
+import {CSSProperties} from 'react';
 
 export function isObject(value: any) {
   return value != null && typeof value === 'object';
@@ -177,4 +178,52 @@ export function deepClone<T>(value: T | DeepReadOnly<T>) {
 // document that we are converting it just to store in a proto.
 export function toProto<T>(value: T | DeepReadOnly<T>) {
   return value as DeepWritable<T>;
+}
+
+export function getHighlightStyle(
+  hue: number | null | undefined
+): Partial<CSSProperties> {
+  if (hue != null) {
+    return {
+      background: `hsla(${hue}, 100%, 50%, 25%)`,
+      border: `hsla(${hue}, 100%, 33%, 100%) 2px solid`,
+      borderRadius: '4px',
+      padding: '4px',
+    };
+  }
+  return {};
+}
+
+export function getUniqueHues<ID>(
+  existingHuesById: DeepReadOnly<Map<ID, number>>,
+  allIds: DeepReadOnly<ID[]>
+) {
+  const newHuesById = new Map(allIds.map(id => [id, existingHuesById.get(id)]));
+  const usedHues = new Set(
+    [...newHuesById.values()].filter(hue => hue != null)
+  );
+
+  let maxSteps2 = 1;
+  let step = 0;
+  let hueDelta = 512;
+  let hue = 0;
+
+  for (const id of allIds.slice()) {
+    if (newHuesById.get(id) != null) {
+      continue;
+    }
+
+    do {
+      hue = (hueDelta / 2 + step++ * hueDelta) % 256;
+      if (step >= maxSteps2 / 2) {
+        step = 0;
+        hueDelta /= 2;
+        maxSteps2 *= 2;
+      }
+    } while (usedHues.has(hue));
+    newHuesById.set(id, hue);
+    usedHues.add(hue);
+  }
+
+  return newHuesById as Map<DeepReadOnly<ID>, number>;
 }
