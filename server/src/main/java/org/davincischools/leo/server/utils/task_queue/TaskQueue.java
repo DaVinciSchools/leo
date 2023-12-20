@@ -1,7 +1,10 @@
 package org.davincischools.leo.server.utils.task_queue;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.davincischools.leo.server.utils.TextUtils.numberLines;
+import static org.davincischools.leo.server.utils.TextUtils.quoteAndEscape;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.protobuf.Message;
 import jakarta.annotation.PostConstruct;
@@ -223,6 +226,8 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
                 }
                 try {
                   taskFailed(task, taskMetadata, t);
+                  // Export more information about the exception to the logs.
+                  logExceptionInfo(task, t);
                 } catch (Throwable t2) {
                   synchronized (LOCK) {
                     queueMetadata.errors++;
@@ -254,6 +259,28 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
         }
       }
     }
+  }
+
+  private void logExceptionInfo(T task, Throwable t) {
+    Set<Throwable> seen = new HashSet<>();
+    Throwable cause = t;
+    while (seen.add(cause)) {
+      if (cause instanceof JsonParseException e) {
+        logger
+            .atError()
+            .withThrowable(t)
+            .log(
+                "JSON parsing for task {} failed with payload:\n{}.",
+                quoteAndEscape(toCompressedString(task)),
+                numberLines(e.getRequestPayloadAsString()));
+        return;
+      }
+      cause = cause.getCause();
+    }
+    logger
+        .atError()
+        .withThrowable(t)
+        .log("Task processing failed for task {}.", quoteAndEscape(toCompressedString(task)));
   }
 
   public static List<? extends QueueMetadata<?, ?>> getTaskQueueMetadata() {
