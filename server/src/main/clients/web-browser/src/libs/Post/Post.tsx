@@ -14,6 +14,7 @@ import {
   DeepReadOnly,
   deepWritable,
   formatAsTag,
+  getHighlightStyle,
   isTextEmpty,
   removeInPlace,
   replaceInPlace,
@@ -46,16 +47,26 @@ interface RatingKey {
   readonly knowledgeAndSkillId: number;
 }
 
-export function Post(props: {
-  post: DeepReadOnly<IProjectPost>;
-  postUpdated: (post: DeepReadOnly<IProjectPost>, refresh: boolean) => void;
-  showComments?: boolean | null | undefined;
-  showRatings?: boolean | null | undefined;
-}) {
+export interface PostHighlights {
+  getUserXHue?: (userX: DeepReadOnly<IUserX>) => number | undefined;
+}
+
+export function Post(
+  props: DeepReadOnly<{
+    post: DeepReadOnly<IProjectPost>;
+    postUpdated: (post: DeepReadOnly<IProjectPost>, refresh: boolean) => void;
+    showComments?: boolean | null | undefined;
+    showRatings?: boolean | null | undefined;
+    postHighlights?: DeepReadOnly<PostHighlights>;
+  }>
+) {
   const userX = useContext(GlobalStateContext).requireUserX(
     'You must be logged in to view posts.'
   );
   const global = useContext(GlobalStateContext);
+  const hasHighlightedComment = props.post.comments
+    ?.map(c => props.postHighlights?.getUserXHue?.(c.userX ?? {}) != null)
+    .includes(true);
 
   const [sortedAssignmentKs, setSortedAssignmentKs] = useState<
     DeepReadOnly<IKnowledgeAndSkill[]>
@@ -212,7 +223,12 @@ export function Post(props: {
   return (
     <>
       <div className="post-in-feed">
-        <div className="global-flex-row">
+        <div
+          className="global-flex-row"
+          style={getHighlightStyle(
+            props.postHighlights?.getUserXHue?.(props.post?.userX ?? {})
+          )}
+        >
           <AccountCircle className="post-in-feed-avatar" />
           <div className="global-flex-column" style={{flexGrow: 1, gap: 0}}>
             <PostHeader
@@ -422,58 +438,66 @@ export function Post(props: {
             </table>
           </div>
         )}
-        {expandComments && (
-          <div
-            className="post-in-feed-comments"
-            style={{display: expandComments ? undefined : 'none'}}
-          >
+        {(expandComments || hasHighlightedComment) && (
+          <div className="post-in-feed-comments">
             {sortedComments.length === 0 && (
               <span className="post-in-feed-empty-post">No Comments</span>
             )}
-            {sortedComments.map(comment => (
-              <div key={comment.id ?? 0} className="post-in-feed-comment">
-                <AccountCircle className="post-in-feed-avatar" />
-                <div className="global-flex-column" style={{gap: 0}}>
-                  <PostHeader
-                    userX={comment?.userX}
-                    postTimeMs={toLong(comment?.postTimeMs ?? 0)}
-                    deleteIconClicked={() => deleteComment(comment)}
-                  />
-                  <EditableReactQuill
-                    value={
-                      comment.id === commentBeingEdited?.id
-                        ? newCommentContent
-                        : comment.longDescrHtml
-                    }
-                    placeholder={
-                      <span className="post-in-feed-empty-post">
-                        No Comment Content
-                      </span>
-                    }
-                    editing={comment.id === commentBeingEdited?.id}
-                    onClick={() => {
-                      if (comment.id !== commentBeingEdited?.id) {
-                        saveCommentBeingEdited(() => {
-                          setCommentBeingEdited(comment);
-                          setNewCommentContent(comment.longDescrHtml ?? '');
-                        });
-                      }
-                    }}
-                    onBlur={() => {
-                      saveCommentBeingEdited();
-                    }}
-                    onChange={value => {
-                      if (comment.id === commentBeingEdited?.id) {
-                        setNewCommentContent(value);
-                      }
-                    }}
-                    editingStyle={{
-                      marginTop: '1rem',
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+            {sortedComments.map(
+              comment =>
+                (expandComments ||
+                  props.postHighlights?.getUserXHue?.(comment.userX ?? {}) !=
+                    null) && (
+                  <div
+                    key={comment.id ?? 0}
+                    className="post-in-feed-comment"
+                    style={getHighlightStyle(
+                      props.postHighlights?.getUserXHue?.(comment.userX ?? {})
+                    )}
+                  >
+                    <AccountCircle className="post-in-feed-avatar" />
+                    <div className="global-flex-column" style={{gap: 0}}>
+                      <PostHeader
+                        userX={comment?.userX}
+                        postTimeMs={toLong(comment?.postTimeMs ?? 0)}
+                        deleteIconClicked={() => deleteComment(comment)}
+                      />
+                      <EditableReactQuill
+                        value={
+                          comment.id === commentBeingEdited?.id
+                            ? newCommentContent
+                            : comment.longDescrHtml
+                        }
+                        placeholder={
+                          <span className="post-in-feed-empty-post">
+                            No Comment Content
+                          </span>
+                        }
+                        editing={comment.id === commentBeingEdited?.id}
+                        onClick={() => {
+                          if (comment.id !== commentBeingEdited?.id) {
+                            saveCommentBeingEdited(() => {
+                              setCommentBeingEdited(comment);
+                              setNewCommentContent(comment.longDescrHtml ?? '');
+                            });
+                          }
+                        }}
+                        onBlur={() => {
+                          saveCommentBeingEdited();
+                        }}
+                        onChange={value => {
+                          if (comment.id === commentBeingEdited?.id) {
+                            setNewCommentContent(value);
+                          }
+                        }}
+                        editingStyle={{
+                          marginTop: '1rem',
+                        }}
+                      />
+                    </div>
+                  </div>
+                )
+            )}
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-import {Post} from '../Post/Post';
+import {Post, PostHighlights} from '../Post/Post';
 import {pl_types, post_service} from 'pl-pb';
 import {useContext, useEffect, useRef, useState} from 'react';
 import {createService} from '../protos';
@@ -10,11 +10,15 @@ import IGetProjectPostsRequest = post_service.IGetProjectPostsRequest;
 
 const PAGE_SIZE = 25;
 
-export function PostsFeed(props: {
-  posts?: DeepReadOnly<IProjectPost[]>;
-  request?: DeepReadOnly<IGetProjectPostsRequest>;
-  paged?: boolean;
-}) {
+export function PostsFeed(
+  props: DeepReadOnly<{
+    posts?: DeepReadOnly<IProjectPost[]>;
+    request?: DeepReadOnly<IGetProjectPostsRequest>;
+    paged?: boolean;
+    // UserX.id to hue highlight.
+    postHighlights?: DeepReadOnly<PostHighlights>;
+  }>
+) {
   const global = useContext(GlobalStateContext);
 
   console.assert(
@@ -97,6 +101,7 @@ export function PostsFeed(props: {
             }}
             showComments={props.request?.includeComments}
             showRatings={props.request?.includeRatings}
+            postHighlights={props.postHighlights}
           />
         ))}
         <div
