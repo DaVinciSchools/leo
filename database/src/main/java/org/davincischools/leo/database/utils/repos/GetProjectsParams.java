@@ -19,6 +19,7 @@ public class GetProjectsParams {
   @Nullable private Boolean includeFulfillments;
   @Nullable private GetAssignmentsParams includeAssignment;
   @Nullable private Boolean includeMilestones;
+  @Nullable private GetProjectPostsParams includeProjectPosts;
 
   @Nullable private Iterable<Integer> userXIds;
   @Nullable private Iterable<Integer> projectIds;
@@ -53,5 +54,9 @@ public class GetProjectsParams {
 
   public Optional<Boolean> getIncludeMilestones() {
     return Optional.ofNullable(includeMilestones);
+  }
+
+  public Optional<GetProjectPostsParams> getIncludeProjectPosts() {
+    return Optional.ofNullable(includeProjectPosts);
   }
 }
