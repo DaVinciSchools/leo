@@ -25,27 +25,92 @@ import {EditableReactQuill} from '../EditableReactQuill/EditableReactQuill';
 import {PostHeader} from './PostHeader';
 import {GlobalStateContext} from '../GlobalState';
 import {
-  KNOWLEDGE_AND_SKILL_SORTER,
   PROJECT_POST_COMMENT_SORTER,
   TAG_SORTER,
   USER_X_SORTER,
 } from '../sorters';
-import {FormControl, InputLabel, MenuItem, Select} from '@mui/material';
+import {
+  FormControl,
+  InputLabel,
+  LinearProgress,
+  MenuItem,
+  Select,
+} from '@mui/material';
+import {linearProgressClasses} from '@mui/material/LinearProgress';
 import {createService} from '../protos';
+import {styled} from '@mui/material/styles';
 import IProjectPostRating = pl_types.IProjectPostRating;
 import IProjectPost = pl_types.IProjectPost;
-import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
 import IUserX = pl_types.IUserX;
 import IProjectPostComment = pl_types.IProjectPostComment;
 import ITag = pl_types.ITag;
-import ProjectPostRating = pl_types.ProjectPostRating;
 import PostService = post_service.PostService;
+import IProjectPostRatingCategory = pl_types.IProjectPostRatingCategory;
+import ProjectPostRating = pl_types.ProjectPostRating;
+
+const BorderLinearProgress = styled(LinearProgress)(({theme}) => ({
+  height: 10,
+  borderRadius: 5,
+  [`&.${linearProgressClasses.colorPrimary}`]: {
+    backgroundColor:
+      theme.palette.grey[theme.palette.mode === 'light' ? 200 : 800],
+  },
+  [`& .${linearProgressClasses.bar}`]: {
+    borderRadius: 5,
+    backgroundColor: theme.palette.mode === 'light' ? '#1a90ff' : '#308fe8',
+  },
+}));
+
+interface RatingColumn {
+  userX: IUserX;
+  ratingType: ProjectPostRating.RatingType;
+}
 
 interface RatingKey {
-  readonly userXId: number;
-  readonly ratingType: ProjectPostRating.RatingType;
-  readonly knowledgeAndSkillId: number;
+  ratingColumn: RatingColumn;
+  projectInputFulfillmentId: number;
 }
+
+function toRatingColumn(
+  rating: DeepReadOnly<IProjectPostRating>
+): RatingColumn {
+  return {
+    userX: rating.userX ?? {},
+    ratingType:
+      rating.ratingType ?? ProjectPostRating.RatingType.UNSET_RATING_TYPE,
+  };
+}
+
+function ratingToRatingKey(
+  rating: DeepReadOnly<IProjectPostRating>
+): RatingKey {
+  return {
+    ratingColumn: toRatingColumn(rating),
+    projectInputFulfillmentId: rating.projectInputFulfillmentId ?? 0,
+  };
+}
+
+function cellToRatingKey(
+  column: RatingColumn,
+  category: IProjectPostRatingCategory
+): RatingKey {
+  return {
+    ratingColumn: column,
+    projectInputFulfillmentId: category.projectInputFulfillmentId ?? 0,
+  };
+}
+
+const RATING_COLUMN_SORTER = (a: RatingColumn, b: RatingColumn) =>
+  USER_X_SORTER(a.userX, b.userX) ||
+  (a.ratingType ?? ProjectPostRating.RatingType.UNSET_RATING_TYPE) -
+    (b.ratingType ?? ProjectPostRating.RatingType.UNSET_RATING_TYPE);
+
+const RATING_CATEGORY_SORTER = (
+  a: pl_types.IProjectPostRatingCategory,
+  b: pl_types.IProjectPostRatingCategory
+) =>
+  (a.category ?? '').localeCompare(b.category ?? '') ||
+  (a.value ?? '').localeCompare(b.value ?? '');
 
 export interface PostHighlights {
   getUserXHue?: (userX: DeepReadOnly<IUserX>) => number | undefined;
@@ -68,11 +133,11 @@ export function Post(
     ?.map(c => props.postHighlights?.getUserXHue?.(c.userX ?? {}) != null)
     .includes(true);
 
-  const [sortedAssignmentKs, setSortedAssignmentKs] = useState<
-    DeepReadOnly<IKnowledgeAndSkill[]>
+  const [sortedRatingColumns, setSortedRatingColumns] = useState<
+    DeepReadOnly<RatingColumn[]>
   >([]);
-  const [sortedRatingUsers, setSortedRatingUsers] = useState<
-    DeepReadOnly<IUserX[]>
+  const [sortedRatingCategories, setSortedRatingCategories] = useState<
+    DeepReadOnly<IProjectPostRatingCategory[]>
   >([]);
   const [sortedTags, setSortedTags] = useState<DeepReadOnly<ITag[]>>([]);
   const [sortedComments, setSortedComments] = useState<
@@ -94,32 +159,24 @@ export function Post(
   const [expandRatings, setExpandRatings] = useState<boolean>(false);
 
   useEffect(() => {
-    setSortedAssignmentKs(
-      (props.post?.project?.assignment?.knowledgeAndSkills ?? [])
-        .slice()
-        .sort(KNOWLEDGE_AND_SKILL_SORTER)
+    setSortedRatingColumns(
+      [
+        ...new Set(
+          (props.post.ratings ?? []).map(rating =>
+            JSON.stringify(toRatingColumn(rating))
+          )
+        ),
+      ]
+        .map(jsonRatingColumn => JSON.parse(jsonRatingColumn))
+        .sort(RATING_COLUMN_SORTER)
     );
-
-    const users = new Map(
-      props.post?.ratings?.map(rating => [
-        rating.userX?.id ?? 0,
-        rating.userX ?? {},
-      ])
+    setSortedRatingCategories(
+      (props.post?.ratingCategories ?? []).slice().sort(RATING_CATEGORY_SORTER)
     );
-    users.delete(userX?.id ?? 0);
-    setSortedRatingUsers([
-      userX ?? {},
-      ...[...users.values()].sort(USER_X_SORTER),
-    ]);
-
     setRatings(
       new Map(
-        (props.post?.ratings ?? []).map(rating => [
-          JSON.stringify({
-            userXId: rating.userX?.id ?? 0,
-            ratingType: rating.ratingType,
-            knowledgeAndSkillId: rating.knowledgeAndSkill?.id ?? 0,
-          } as RatingKey),
+        (props.post.ratings ?? []).map(rating => [
+          JSON.stringify(ratingToRatingKey(rating)),
           rating,
         ])
       )
@@ -326,9 +383,10 @@ export function Post(
             <table width="fit-content">
               <thead>
                 <tr>
-                  <th key={-1}>Skill</th>
-                  {sortedRatingUsers.map(userX => (
-                    <th key={userX?.id ?? 0}>
+                  <th key={-2}></th>
+                  <th key={-1}></th>
+                  {sortedRatingColumns.map(column => (
+                    <th key={column.userX?.id ?? 0}>
                       {userX?.lastName ?? ''},&nbsp;
                       {(userX?.firstName ?? '').charAt(0)}
                     </th>
@@ -336,8 +394,17 @@ export function Post(
                 </tr>
               </thead>
               <tbody>
-                {sortedAssignmentKs.map(ks => (
-                  <tr key={ks.id ?? 0}>
+                {sortedRatingCategories.map(ratingCategory => (
+                  <tr key={ratingCategory.projectInputFulfillmentId ?? 0}>
+                    <th
+                      key={-2}
+                      scope="row"
+                      style={{
+                        textAlign: 'right',
+                      }}
+                    >
+                      {ratingCategory.category}
+                    </th>
                     <th
                       key={-1}
                       scope="row"
@@ -345,90 +412,114 @@ export function Post(
                         textAlign: 'right',
                       }}
                     >
-                      {ks.name}
+                      {ratingCategory.value}
                     </th>
-                    {sortedRatingUsers.map(ratingUserX => (
-                      <td key={ratingUserX.id ?? 0}>
+                    {sortedRatingColumns.map(ratingColumn => (
+                      <td key={ratingColumn.userX?.id ?? 0}>
                         <FormControl fullWidth>
-                          <InputLabel
-                            id="demo-simple-select-label"
-                            size="small"
-                          >
-                            Rating
-                          </InputLabel>
-                          <Select
-                            labelId="demo-simple-select-label"
-                            id="demo-simple-select"
-                            size="small"
-                            disabled={
-                              (ratingUserX.id ?? 0) !== (userX?.id ?? 0)
-                            }
-                            value={
-                              ratings.get(
-                                JSON.stringify({
-                                  userXId: ratingUserX.id ?? 0,
-                                  ratingType:
-                                    ProjectPostRating.RatingType.INITIAL_1_TO_5,
-                                  knowledgeAndSkillId: ks.id ?? 0,
-                                } as RatingKey)
-                              )?.rating ?? ''
-                            }
-                            label="Rating"
-                            onChange={e => {
-                              const value =
-                                e.target.value === ''
-                                  ? 0
-                                  : parseInt(String(e.target.value));
-                              const key = JSON.stringify({
-                                userXId: ratingUserX.id ?? 0,
-                                ratingType:
-                                  ProjectPostRating.RatingType.INITIAL_1_TO_5,
-                                knowledgeAndSkillId: ks.id ?? 0,
-                              } as RatingKey);
-
-                              let oldRating = ratings.get(key);
-                              if (oldRating == null) {
-                                oldRating = {
-                                  userX: {id: ratingUserX.id},
-                                  rating: value,
-                                  ratingType:
-                                    ProjectPostRating.RatingType.INITIAL_1_TO_5,
-                                  knowledgeAndSkill: {id: ks.id},
-                                  projectPost: {id: props.post.id},
-                                };
-                              }
-                              const newRating = Object.assign(
-                                {},
-                                deepWritable(oldRating),
-                                {
-                                  rating: value,
+                          {ratingColumn.ratingType ===
+                            ProjectPostRating.RatingType.INITIAL_1_TO_5 && (
+                            <>
+                              <InputLabel
+                                id="demo-simple-select-label"
+                                size="small"
+                              >
+                                Rating
+                              </InputLabel>
+                              <Select
+                                labelId="demo-simple-select-label"
+                                id="demo-simple-select"
+                                size="small"
+                                disabled={
+                                  (ratingColumn.userX?.id ?? 0) !==
+                                  (userX?.id ?? 0)
                                 }
-                              );
-                              createService(PostService, 'PostService')
-                                .upsertProjectPostRating({
-                                  projectPostRating: newRating,
-                                })
-                                .then(response => {
-                                  newRating.id = response.id ?? 0;
-                                  props.postUpdated(
-                                    Object.assign({}, props.post, {
-                                      ratings: Array.from(ratings.values()),
-                                    } as IProjectPost),
-                                    false
+                                value={
+                                  ratings.get(
+                                    JSON.stringify(
+                                      cellToRatingKey(
+                                        ratingColumn,
+                                        ratingCategory
+                                      )
+                                    )
+                                  )?.rating ?? 0
+                                }
+                                label="Rating"
+                                onChange={e => {
+                                  const ratingKey = cellToRatingKey(
+                                    ratingColumn,
+                                    ratingCategory
                                   );
-                                  setRatings(
-                                    new Map(ratings).set(key, newRating)
+                                  const value =
+                                    e.target.value === ''
+                                      ? 0
+                                      : parseInt(String(e.target.value));
+                                  let oldRating = ratings.get(
+                                    JSON.stringify(ratingKey)
                                   );
-                                })
-                                .catch(global.setError);
-                            }}
-                          >
-                            <MenuItem value={1}>1 - No Evidence</MenuItem>
-                            <MenuItem value={2}>2 - Attempted</MenuItem>
-                            <MenuItem value={3}>3 - Emerging</MenuItem>
-                            <MenuItem value={4}>4 - Proficient</MenuItem>
-                            <MenuItem value={5}>5 - Advanced</MenuItem>
-                          </Select>
+                                  if (oldRating == null) {
+                                    oldRating = {
+                                      userX: ratingColumn.userX,
+                                      rating: value,
+                                      ratingType: ratingColumn.ratingType,
+                                      projectInputFulfillmentId:
+                                        ratingCategory.projectInputFulfillmentId,
+                                    };
+                                  }
+                                  const newRating = Object.assign(
+                                    {},
+                                    deepWritable(oldRating),
+                                    {
+                                      rating: value,
+                                    }
+                                  );
+                                  createService(PostService, 'PostService')
+                                    .upsertProjectPostRating({
+                                      projectPostRating: newRating,
+                                    })
+                                    .then(response => {
+                                      newRating.id = response.id ?? 0;
+                                      props.postUpdated(
+                                        Object.assign({}, props.post, {
+                                          ratings: Array.from(ratings.values()),
+                                        } as IProjectPost),
+                                        false
+                                      );
+                                      setRatings(
+                                        new Map(ratings).set(
+                                          JSON.stringify(ratingKey),
+                                          newRating
+                                        )
+                                      );
+                                    })
+                                    .catch(global.setError);
+                                }}
+                              >
+                                <MenuItem value={1}>1 - No Evidence</MenuItem>
+                                <MenuItem value={2}>2 - Attempted</MenuItem>
+                                <MenuItem value={3}>3 - Emerging</MenuItem>
+                                <MenuItem value={4}>4 - Proficient</MenuItem>
+                                <MenuItem value={5}>5 - Advanced</MenuItem>
+                              </Select>
+                            </>
+                          )}
+                          {ratingColumn.ratingType ===
+                            ProjectPostRating.RatingType.GOAL_COMPLETE_PCT && (
+                            <BorderLinearProgress
+                              variant="determinate"
+                              value={
+                                ratings.get(
+                                  JSON.stringify(
+                                    cellToRatingKey(
+                                      ratingColumn,
+                                      ratingCategory
+                                    )
+                                  )
+                                )?.rating ?? 0
+                              }
+                              style={{height: '1em', verticalAlign: 'bottom'}}
+                            />
+                          )}{' '}
                         </FormControl>
                       </td>
                     ))}
@@ -443,61 +534,50 @@ export function Post(
             {sortedComments.length === 0 && (
               <span className="post-in-feed-empty-post">No Comments</span>
             )}
-            {sortedComments.map(
-              comment =>
-                (expandComments ||
-                  props.postHighlights?.getUserXHue?.(comment.userX ?? {}) !=
-                    null) && (
-                  <div
-                    key={comment.id ?? 0}
-                    className="post-in-feed-comment"
-                    style={getHighlightStyle(
-                      props.postHighlights?.getUserXHue?.(comment.userX ?? {})
-                    )}
-                  >
-                    <AccountCircle className="post-in-feed-avatar" />
-                    <div className="global-flex-column" style={{gap: 0}}>
-                      <PostHeader
-                        userX={comment?.userX}
-                        postTimeMs={toLong(comment?.postTimeMs ?? 0)}
-                        deleteIconClicked={() => deleteComment(comment)}
-                      />
-                      <EditableReactQuill
-                        value={
-                          comment.id === commentBeingEdited?.id
-                            ? newCommentContent
-                            : comment.longDescrHtml
-                        }
-                        placeholder={
-                          <span className="post-in-feed-empty-post">
-                            No Comment Content
-                          </span>
-                        }
-                        editing={comment.id === commentBeingEdited?.id}
-                        onClick={() => {
-                          if (comment.id !== commentBeingEdited?.id) {
-                            saveCommentBeingEdited(() => {
-                              setCommentBeingEdited(comment);
-                              setNewCommentContent(comment.longDescrHtml ?? '');
-                            });
-                          }
-                        }}
-                        onBlur={() => {
-                          saveCommentBeingEdited();
-                        }}
-                        onChange={value => {
-                          if (comment.id === commentBeingEdited?.id) {
-                            setNewCommentContent(value);
-                          }
-                        }}
-                        editingStyle={{
-                          marginTop: '1rem',
-                        }}
-                      />
-                    </div>
-                  </div>
-                )
-            )}
+            {sortedComments.map(comment => (
+              <div key={comment.id ?? 0} className="post-in-feed-comment">
+                <AccountCircle className="post-in-feed-avatar" />
+                <div className="global-flex-column" style={{gap: 0}}>
+                  <PostHeader
+                    userX={comment?.userX}
+                    postTimeMs={toLong(comment?.postTimeMs ?? 0)}
+                    deleteIconClicked={() => deleteComment(comment)}
+                  />
+                  <EditableReactQuill
+                    value={
+                      comment.id === commentBeingEdited?.id
+                        ? newCommentContent
+                        : comment.longDescrHtml
+                    }
+                    placeholder={
+                      <span className="post-in-feed-empty-post">
+                        No Comment Content
+                      </span>
+                    }
+                    editing={comment.id === commentBeingEdited?.id}
+                    onClick={() => {
+                      if (comment.id !== commentBeingEdited?.id) {
+                        saveCommentBeingEdited(() => {
+                          setCommentBeingEdited(comment);
+                          setNewCommentContent(comment.longDescrHtml ?? '');
+                        });
+                      }
+                    }}
+                    onBlur={() => {
+                      saveCommentBeingEdited();
+                    }}
+                    onChange={value => {
+                      if (comment.id === commentBeingEdited?.id) {
+                        setNewCommentContent(value);
+                      }
+                    }}
+                    editingStyle={{
+                      marginTop: '1rem',
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

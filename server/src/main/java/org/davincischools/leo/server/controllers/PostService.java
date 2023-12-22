@@ -79,7 +79,10 @@ public class PostService {
                                       request,
                                       GetProjectPostsRequest.INCLUDE_COMMENTS_FIELD_NUMBER))
                               .setIncludeProjects(
-                                  request.getIncludeProjects() ? new GetProjectsParams() : null)
+                                  request.getIncludeProjects()
+                                      ? new GetProjectsParams()
+                                          .setIncludeFulfillments(request.getIncludeRatings())
+                                      : null)
                               .setIncludeRatings(
                                   valueOrNull(
                                       request,
@@ -172,7 +175,9 @@ public class PostService {
               db.getProjectPostRepository().upsert(db, postUserX, projectPost);
               if (!projectPost.getBeingEdited()) {
                 replyToPostsWorker.submitTask(
-                    ReplyToPostTask.newBuilder().setProjectPostId(projectPost.getId()).build());
+                    ReplyToPostTask.newBuilder()
+                        .setProjectId(projectPost.getProject().getId())
+                        .build());
               }
               response.setProjectPostId(projectPost.getId());
 
