@@ -1,14 +1,12 @@
 import './ProjectPage.scss';
-import 'react-quill/dist/quill.bubble.css';
 
 import {Button, Card, Form, Input} from 'antd';
 import {ChangeEvent, useState} from 'react';
 import {CloseCircleTwoTone} from '@ant-design/icons';
 import {pl_types} from 'pl-pb';
-
+import {HtmlEditor} from '../HtmlEditor/HtmlEditor';
 import IProject = pl_types.IProject;
 import IProjectPost = pl_types.IProjectPost;
-import ReactQuill, {Value} from 'react-quill';
 
 export function ProjectPage(props: {
   id: number;
@@ -23,7 +21,7 @@ export function ProjectPage(props: {
   editable: boolean;
 }) {
   const [name, setName] = useState('');
-  const [longDescrHtml, setLongDescrHtml] = useState<Value>('');
+  const [longDescrHtml, setLongDescrHtml] = useState('');
 
   function submitPost(values: {name: string; message: string}) {
     props.onSubmitPost(values.name, values.message);
@@ -39,12 +37,9 @@ export function ProjectPage(props: {
         </div>
         <div className="long-descr">
           <span className="label">Details:</span>
-          <ReactQuill
-            theme={'bubble'}
-            preserveWhitespace={true}
+          <HtmlEditor
+            id={'project-page-' + props.id}
             value={props.longDescrHtml ?? ''}
-            readOnly={true}
-            className="long-descr-html"
           />
         </div>
         <div>
@@ -88,11 +83,9 @@ export function ProjectPage(props: {
                   />
                 }
               >
-                <ReactQuill
-                  theme={'bubble'}
-                  preserveWhitespace={true}
+                <HtmlEditor
+                  id={'project-post-' + post.id}
                   value={post?.longDescrHtml ?? ''}
-                  readOnly={true}
                 />
               </Card>
             </>
@@ -112,9 +105,8 @@ export function ProjectPage(props: {
                 />
               </Form.Item>
               <Form.Item name="message" style={{margin: '0 0'}}>
-                <ReactQuill
-                  theme="snow"
-                  preserveWhitespace={true}
+                <HtmlEditor
+                  id={'project-post-' + props.id}
                   value={longDescrHtml}
                   onChange={setLongDescrHtml}
                 />

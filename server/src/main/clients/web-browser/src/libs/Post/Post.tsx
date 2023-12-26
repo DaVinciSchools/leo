@@ -21,7 +21,6 @@ import {
   textOrEmpty,
   toLong,
 } from '../misc';
-import {EditableReactQuill} from '../EditableReactQuill/EditableReactQuill';
 import {PostHeader} from './PostHeader';
 import {GlobalStateContext} from '../GlobalState';
 import {
@@ -39,6 +38,7 @@ import {
 import {linearProgressClasses} from '@mui/material/LinearProgress';
 import {createService} from '../protos';
 import {styled} from '@mui/material/styles';
+import {HtmlEditor} from '../HtmlEditor/HtmlEditor';
 import IProjectPostRating = pl_types.IProjectPostRating;
 import IProjectPost = pl_types.IProjectPost;
 import IUserX = pl_types.IUserX;
@@ -155,7 +155,7 @@ export function Post(
   >(undefined);
   const [newCommentContent, setNewCommentContent] = useState('');
 
-  const [expandComments, setExpandComments] = useState<boolean>(false);
+  const [expandComments, setExpandComments] = useState<boolean>(true);
   const [expandRatings, setExpandRatings] = useState<boolean>(false);
 
   useEffect(() => {
@@ -302,11 +302,11 @@ export function Post(
           </div>
         </div>
         <div className="post-in-feed-content">
-          <EditableReactQuill
+          <HtmlEditor
+            id={props.post.id?.toString() ?? ''}
             value={props.post.longDescrHtml}
-            placeholder={
-              <span className="post-in-feed-empty-post">No Post Content</span>
-            }
+            placeholder="No Post Content"
+            readOnly={true}
           />
         </div>
         <div
@@ -543,19 +543,16 @@ export function Post(
                     postTimeMs={toLong(comment?.postTimeMs ?? 0)}
                     deleteIconClicked={() => deleteComment(comment)}
                   />
-                  <EditableReactQuill
+                  <HtmlEditor
+                    id={comment.id?.toString() ?? ''}
                     value={
                       comment.id === commentBeingEdited?.id
                         ? newCommentContent
                         : comment.longDescrHtml
                     }
-                    placeholder={
-                      <span className="post-in-feed-empty-post">
-                        No Comment Content
-                      </span>
-                    }
-                    editing={comment.id === commentBeingEdited?.id}
-                    onClick={() => {
+                    placeholder="No comment. Click to edit."
+                    editingPlaceholder="Type your comment here..."
+                    startEditing={() => {
                       if (comment.id !== commentBeingEdited?.id) {
                         saveCommentBeingEdited(() => {
                           setCommentBeingEdited(comment);
@@ -563,16 +560,13 @@ export function Post(
                         });
                       }
                     }}
-                    onBlur={() => {
+                    finishEditing={() => {
                       saveCommentBeingEdited();
                     }}
                     onChange={value => {
                       if (comment.id === commentBeingEdited?.id) {
                         setNewCommentContent(value);
                       }
-                    }}
-                    editingStyle={{
-                      marginTop: '1rem',
                     }}
                   />
                 </div>
