@@ -2,6 +2,7 @@ import {DeepReadOnly} from '../misc';
 import React, {useEffect, useRef} from 'react';
 import 'froala-editor/css/froala_editor.pkgd.min.css';
 import 'froala-editor/css/froala_style.min.css';
+import 'froala-editor/js/plugins.pkgd.min.js';
 import FroalaEditorComponent from 'react-froala-wysiwyg';
 import FroalaEditor from 'react-froala-wysiwyg';
 
@@ -20,6 +21,30 @@ export interface HtmlEditorProps {
   readOnly?: boolean;
   alwaysShowEditor?: boolean;
 }
+
+const TOOLBAR_BUTTONS = [
+  'bold',
+  'italic',
+  'underline',
+  'clearFormatting',
+  '|',
+  'paragraphStyle',
+  'fontFamily',
+  'fontSize',
+  'color',
+  '|',
+  'indent',
+  'outdent',
+  '|',
+  'insertLink',
+  'insertImage',
+  'insertTable',
+  'insertVideo',
+  'insertFile',
+  '|',
+  'undo',
+  'redo',
+];
 
 export function HtmlEditor(props: DeepReadOnly<HtmlEditorProps>) {
   const [requestEditing, setRequestEditing] = React.useState(false);
@@ -103,6 +128,10 @@ export function HtmlEditor(props: DeepReadOnly<HtmlEditorProps>) {
               },
             },
             placeholderText: props.editingPlaceholder ?? 'Type here...',
+            toolbarButtons: TOOLBAR_BUTTONS,
+            toolbarButtonsMD: TOOLBAR_BUTTONS,
+            toolbarButtonsSM: TOOLBAR_BUTTONS,
+            toolbarButtonsXS: TOOLBAR_BUTTONS,
           }}
         />
       </div>
