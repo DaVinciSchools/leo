@@ -14,8 +14,8 @@ import {
 } from 'react';
 import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
-import {ReactQuillProps} from 'react-quill';
 import {Writable} from '../misc';
+import {HtmlEditorProps} from '../HtmlEditor/HtmlEditor';
 
 const MAX_ZIP_CODE_LENGTH = 10;
 const MIN_PASSWORD_LENGTH = 8;
@@ -41,6 +41,7 @@ export interface FormFieldMetadata<T> {
     min?: number;
     max?: number;
   };
+  isAlwaysEditing?: boolean;
   isBoolean?: boolean;
   isEmail?: boolean;
   isZipCode?: boolean;
@@ -80,7 +81,7 @@ export interface FormField<T> {
 
   checkboxParams: (params?: CheckboxProps) => CheckboxProps;
 
-  quillParams: () => ReactQuillProps;
+  htmlEditorProps: () => HtmlEditorProps;
 }
 
 interface InternalFormField<T> extends FormField<T> {
@@ -389,16 +390,15 @@ export function useFormFields(
       };
     }
 
-    function quillParams(): ReactQuillProps {
+    function htmlEditorProps(): HtmlEditorProps {
       return {
+        id: name,
         value: stringValue,
         onChange: (value: string) => {
           setStringValue(value);
         },
-        preserveWhitespace: true,
-        readOnly:
-          formFieldsMetadata?.disabled === true ||
-          fieldMetadata?.disabled === true,
+        alwaysShowEditor: fieldMetadata?.isAlwaysEditing,
+        readOnly: !!formFieldsMetadata?.disabled || !!fieldMetadata?.disabled,
       };
     }
 
@@ -585,7 +585,7 @@ export function useFormFields(
       autocompleteParams,
       textFieldParams,
       checkboxParams,
-      quillParams,
+      htmlEditorProps: htmlEditorProps,
 
       fieldRef,
       fieldMetadata,

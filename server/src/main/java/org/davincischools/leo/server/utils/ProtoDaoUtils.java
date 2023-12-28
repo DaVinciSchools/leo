@@ -681,12 +681,21 @@ public class ProtoDaoUtils {
                                                       .getName())
                                               .setValueType(valueType);
                                       switch (valueType) {
-                                        case MOTIVATION -> rating.setValue(
-                                            inputValue.getMotivationValue().getName());
+                                        case MOTIVATION -> {
+                                          ifInitialized(inputValue.getMotivationValue())
+                                              .ifPresent(
+                                                  motivationValue ->
+                                                      rating.setValue(motivationValue.getName()));
+                                        }
                                         case FREE_TEXT -> rating.setValue(
                                             inputValue.getFreeTextValue());
-                                        default -> rating.setValue(
-                                            inputValue.getKnowledgeAndSkillValue().getName());
+                                        default -> {
+                                          ifInitialized(inputValue.getKnowledgeAndSkillValue())
+                                              .ifPresent(
+                                                  knowledgeAndSkillValue ->
+                                                      rating.setValue(
+                                                          knowledgeAndSkillValue.getName()));
+                                        }
                                       }
                                     });
                           });

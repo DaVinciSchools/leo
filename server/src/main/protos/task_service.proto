@@ -49,7 +49,10 @@ message ResetTaskQueuesResponse {
 // Task payloads.
 
 message ReplyToPostTask {
-  optional int32 project_post_id = 1;
+  // We need the project, not just the post, in order to get the context for
+  // all previous post replies. And, we can deduplicate on the project since
+  // all of its posts are processed.
+  optional int32 project_id = 1;
 }
 
 message FillInMissingProjectInfoTask {

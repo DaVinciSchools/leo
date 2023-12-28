@@ -1,7 +1,5 @@
 import './TeacherDashboard.scss';
-import 'react-quill/dist/quill.snow.css';
 
-import ReactQuill, {Value} from 'react-quill';
 import {
   Autocomplete,
   Button,
@@ -36,6 +34,7 @@ import {
   PROJECT_DEFINITION_SORTER,
 } from '../../../libs/sorters';
 import {addClassName} from '../../../libs/tags';
+import {HtmlEditor} from '../../../libs/HtmlEditor/HtmlEditor';
 import IAssignment = pl_types.IAssignment;
 import IClassX = pl_types.IClassX;
 import IProjectDefinition = pl_types.IProjectDefinition;
@@ -78,7 +77,7 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
   const [classX, setClassX] = useState<IClassX | null>(null);
   const [name, setName] = useState('');
   const [shortDescr, setShortDescr] = useState('');
-  const [longDescrHtml, setLongDescrHtml] = useState<Value>('');
+  const [longDescrHtml, setLongDescrHtml] = useState('');
   const assignmentEks = assignmentFormField.useAutocompleteFormField<
     readonly IKnowledgeAndSkill[]
   >('knowledgeAndSkills', {isAutocomplete: {isMultiple: true}});
@@ -404,13 +403,14 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
           />
         </Grid>
         <Grid item xs={12}>
-          <ReactQuill
-            theme="snow"
-            preserveWhitespace={true}
+          <HtmlEditor
+            id="assignment-id"
             value={longDescrHtml}
             onChange={setLongDescrHtml}
-            onBlur={saveAssignment}
+            alwaysShowEditor={true}
             readOnly={assignment == null}
+            placeholder="Assignment Description"
+            editingPlaceholder="Enter the assignment description here..."
           />
         </Grid>
         <Grid item xs={12} className="section-heading">

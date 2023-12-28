@@ -14,7 +14,6 @@ import static org.davincischools.leo.server.utils.ProtoDaoUtils.toProjectProto;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
 import com.google.common.collect.Iterables;
-import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -200,16 +199,12 @@ public class ProjectManagementService {
                     GenerateDerivedProjectsTask.newBuilder()
                         .setProjectInputId(projectInputDao.getId())
                         .setExistingProjectId(projectInputDao.getExistingProject().getId())
-                        .build(),
-                    // Wait a few seconds for the transaction to finish.
-                    Duration.ofSeconds(5));
+                        .build());
               } else {
                 projectGeneratorWorker.submitTask(
                     GenerateProjectsTask.newBuilder()
                         .setProjectInputId(projectInputDao.getId())
-                        .build(),
-                    // Wait a few seconds for the transaction to finish.
-                    Duration.ofSeconds(5));
+                        .build());
               }
 
               return GenerateProjectsResponse.newBuilder()

@@ -1,7 +1,7 @@
 import {FormFields} from '../form_utils/forms';
 import {TextField} from '@mui/material';
-import ReactQuill from 'react-quill';
 import {MultiTagAutocomplete} from '../common_fields/MultiTagAutocomplete';
+import {HtmlEditor} from '../HtmlEditor/HtmlEditor';
 
 export function PostEditor(props: {
   sortedTags: readonly string[];
@@ -43,11 +43,11 @@ export function PostEditor(props: {
           placeholder={() => 'Select tags or enter new ones then press ENTER'}
         />
         <div className="global-form-label">Details</div>
-        <ReactQuill
-          theme="snow"
-          className="global-react-quill"
+        <HtmlEditor
           placeholder="Enter a description for this post."
-          {...postLongDescrHtml.quillParams()}
+          {...postLongDescrHtml.htmlEditorProps()}
+          alwaysShowEditor={true}
+          editingPlaceholder="Enter a description for this post."
         />
         <div className="global-form-label">Feedback Desired</div>
         <TextField

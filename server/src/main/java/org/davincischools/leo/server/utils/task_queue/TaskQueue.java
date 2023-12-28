@@ -153,7 +153,9 @@ public abstract class TaskQueue<T extends Message, M extends TaskMetadata<M>> {
   public final void submitTask(T task) {
     checkNotNull(task);
 
-    submitTask(task, createDefaultMetadata(), Duration.ZERO);
+    // TODO: The task can start processing before the DB transaction has completed. So, for now
+    // just wait a bit.
+    submitTask(task, createDefaultMetadata(), Duration.ofSeconds(5));
   }
 
   @SuppressWarnings("InfiniteLoopStatement")

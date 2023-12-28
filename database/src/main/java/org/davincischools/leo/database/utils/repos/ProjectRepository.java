@@ -5,11 +5,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import jakarta.persistence.criteria.JoinType;
 import java.util.List;
 import org.davincischools.leo.database.daos.Project;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategory_;
 import org.davincischools.leo.database.daos.ProjectInputFulfillment;
+import org.davincischools.leo.database.daos.ProjectInputFulfillment_;
+import org.davincischools.leo.database.daos.ProjectInputValue_;
 import org.davincischools.leo.database.daos.ProjectInput_;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.daos.ProjectMilestone_;
+import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.Project_;
 import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.utils.Database;
@@ -67,6 +71,12 @@ public interface ProjectRepository
               ProjectInputFulfillment::getProject,
               Project::setProjectInputFulfillments)
           .notDeleted()
+          .join(ProjectInputFulfillment_.projectInputValue, JoinType.LEFT)
+          .notDeleted()
+          .join(ProjectInputValue_.projectDefinitionCategory, JoinType.LEFT)
+          .notDeleted()
+          .join(ProjectDefinitionCategory_.projectDefinitionCategoryType, JoinType.LEFT)
+          .notDeleted()
           .fetch();
     }
 
@@ -91,6 +101,17 @@ public interface ProjectRepository
               ProjectMilestone::setProjectMilestoneSteps)
           .notDeleted()
           .fetch();
+    }
+
+    if (params.getIncludeProjectPosts().isPresent()) {
+      ProjectPostRepository.configureQuery(
+              project.join(
+                  Project_.projectPosts,
+                  JoinType.LEFT,
+                  ProjectPost::getProject,
+                  Project::setProjectPosts),
+              params.getIncludeProjectPosts().get())
+          .notDeleted();
     }
 
     return project;

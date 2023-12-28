@@ -110,6 +110,8 @@ public class ServerApplication {
             new AntPathRequestMatcher("/", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/api/login.html", HttpMethod.POST.name()),
             new AntPathRequestMatcher("/api/logout.html", HttpMethod.POST.name()),
+            new AntPathRequestMatcher("/api/FileService/GetFile**", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/api/FileService/PostFil**", HttpMethod.POST.name()),
             new AntPathRequestMatcher("/api/protos/ErrorService/**", HttpMethod.POST.name()),
             new AntPathRequestMatcher("/api/protos/InterestService/**", HttpMethod.POST.name()),
             new AntPathRequestMatcher(

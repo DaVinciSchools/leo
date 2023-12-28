@@ -1,6 +1,10 @@
 package org.davincischools.leo.server.controllers;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.Multimaps;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.net.MediaType;
@@ -18,7 +22,9 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.server.utils.HttpServletProxy;
 import org.davincischools.leo.server.utils.URIBuilder;
@@ -43,19 +49,57 @@ public class ReactResourceController {
   @Value("${react_port:0}")
   private int reactPort;
 
-  private static final ImmutableMap<String, MediaType> EXTENSIONS_TO_MIME_TYPES =
+  public static final ImmutableMap<String, MediaType> EXTENSIONS_TO_MIME_TYPES =
       ImmutableMap.<String, MediaType>builder()
+          .put("apng", MediaType.create("image", "apng"))
+          .put("avi", MediaType.create("video", "x-msvideo"))
+          .put("avif", MediaType.create("image", "avif"))
           .put("css", MediaType.CSS_UTF_8)
+          .put("csv", MediaType.CSV_UTF_8)
+          .put("gif", MediaType.GIF)
           .put("html", MediaType.HTML_UTF_8)
           .put("ico", MediaType.ICO)
+          .put("jfif", MediaType.JPEG)
+          .put("jpeg", MediaType.JPEG)
           .put("jpg", MediaType.JPEG)
           .put("js", MediaType.JAVASCRIPT_UTF_8)
           .put("json", MediaType.JSON_UTF_8)
+          .put("m2v", MediaType.MPEG_VIDEO)
+          .put("m4v", MediaType.create("video", "x-m4v"))
           .put("map", MediaType.JSON_UTF_8)
+          .put("mov", MediaType.QUICKTIME)
+          .put("movie", MediaType.QUICKTIME)
+          .put("mp4", MediaType.MP4_VIDEO)
+          .put("mpe", MediaType.MPEG_VIDEO)
+          .put("mpeg", MediaType.MPEG_VIDEO)
+          .put("mpg", MediaType.MPEG_VIDEO)
+          .put("ogv", MediaType.OGG_VIDEO)
+          .put("pdf", MediaType.PDF)
+          .put("pjp", MediaType.JPEG)
+          .put("pjpeg", MediaType.JPEG)
           .put("png", MediaType.PNG)
+          .put("qt", MediaType.QUICKTIME)
           .put("svg", MediaType.SVG_UTF_8)
           .put("txt", MediaType.PLAIN_TEXT_UTF_8)
+          .put("webm", MediaType.WEBM_VIDEO)
+          .put("webp", MediaType.WEBP)
           .build();
+
+  public static final ImmutableSetMultimap<MediaType, String> MIME_TYPES_TO_EXTENSIONS =
+      ImmutableSetMultimap.copyOf(
+          EXTENSIONS_TO_MIME_TYPES.entrySet().stream()
+              .flatMap(
+                  entry ->
+                      Stream.of(
+                          Maps.immutableEntry(entry.getKey(), entry.getValue()),
+                          Maps.immutableEntry(
+                              entry.getKey().toUpperCase(), entry.getValue().withoutParameters())))
+              .collect(
+                  Multimaps.toMultimap(
+                      Entry::getValue,
+                      Entry::getKey,
+                      MultimapBuilder.hashKeys().linkedHashSetValues()::build))
+              .entries());
 
   @Autowired private Database db;
 

@@ -4,8 +4,8 @@ import {AssignmentAutocomplete} from '../common_fields/AssignmentAutocomplete';
 import {TextField} from '@mui/material';
 import {FormFields} from '../form_utils/forms';
 import {pl_types} from 'pl-pb';
+import {HtmlEditor} from '../HtmlEditor/HtmlEditor';
 import IAssignment = pl_types.IAssignment;
-import ReactQuill from 'react-quill';
 
 export function ProjectEditor(props: {
   projectForm: FormFields;
@@ -28,6 +28,7 @@ export function ProjectEditor(props: {
     'longDescrHtml',
     {
       maxLength: 65535,
+      isAlwaysEditing: true,
     }
   );
 
@@ -44,11 +45,7 @@ export function ProjectEditor(props: {
         <div className="global-form-label">Description</div>
         <TextField required {...projectShortDescr.textFieldParams()} />
         <div className="global-form-label">Details</div>
-        <ReactQuill
-          theme="snow"
-          className="global-react-quill"
-          {...projectLongDescrHtml.quillParams()}
-        />
+        <HtmlEditor {...projectLongDescrHtml.htmlEditorProps()} />
       </div>
     </>
   );

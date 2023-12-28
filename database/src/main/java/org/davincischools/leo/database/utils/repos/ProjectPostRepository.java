@@ -10,6 +10,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import org.davincischools.leo.database.daos.ProjectInputFulfillment_;
+import org.davincischools.leo.database.daos.ProjectInputValue_;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.ProjectPostComment;
 import org.davincischools.leo.database.daos.ProjectPostComment_;
@@ -98,8 +100,18 @@ public interface ProjectPostRepository
               .notDeleted()
               .fetch();
       projectPostRating.join(ProjectPostRating_.userX, JoinType.LEFT).fetch();
-      projectPostRating
-          .join(ProjectPostRating_.knowledgeAndSkill, JoinType.LEFT)
+      var projectInputValue =
+          projectPostRating
+              .join(ProjectPostRating_.projectInputFulfillment, JoinType.LEFT)
+              .join(ProjectInputFulfillment_.projectInputValue, JoinType.LEFT)
+              .notDeleted()
+              .fetch();
+      projectInputValue
+          .join(ProjectInputValue_.motivationValue, JoinType.LEFT)
+          .notDeleted()
+          .fetch();
+      projectInputValue
+          .join(ProjectInputValue_.knowledgeAndSkillValue, JoinType.LEFT)
           .notDeleted()
           .fetch();
     }

@@ -14,21 +14,15 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
 
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
 @Accessors(chain = true)
 @Entity(name = FileX.ENTITY_NAME)
 @Table(name = FileX.TABLE_NAME, schema = "leo_test")
@@ -39,9 +33,11 @@ public class FileX implements Serializable {
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
+  public static final String COLUMN_FILENAME_NAME = "file_name";
   public static final String COLUMN_FILECONTENT_NAME = "file_content";
+  public static final String COLUMN_FILEKEY_NAME = "file_key";
   public static final String COLUMN_MIMETYPE_NAME = "mime_type";
-  private static final long serialVersionUID = -5866672706510362714L;
+  private static final long serialVersionUID = -6339924224847307229L;
 
   private Integer id;
 
@@ -49,7 +45,11 @@ public class FileX implements Serializable {
 
   private Instant deleted;
 
+  private String fileName;
+
   private byte[] fileContent;
+
+  private String fileKey;
 
   private String mimeType;
 
@@ -74,9 +74,19 @@ public class FileX implements Serializable {
     return deleted;
   }
 
+  @Column(name = COLUMN_FILENAME_NAME, length = 256)
+  public String getFileName() {
+    return fileName;
+  }
+
   @Column(name = COLUMN_FILECONTENT_NAME, nullable = false)
   public byte[] getFileContent() {
     return fileContent;
+  }
+
+  @Column(name = COLUMN_FILEKEY_NAME, nullable = false, length = 24)
+  public String getFileKey() {
+    return fileKey;
   }
 
   @Column(name = COLUMN_MIMETYPE_NAME, nullable = false)
