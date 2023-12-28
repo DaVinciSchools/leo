@@ -13,6 +13,7 @@ import jakarta.persistence.EntityManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -438,6 +439,9 @@ public class AdminXUtils {
 
   @Value("${resetPassword:}")
   private List<String> resetPasswords;
+
+  @Value("${loadSchema:false}")
+  private String loadSchema;
 
   @Value("${loadTestData:false}")
   private String loadTestData;
@@ -970,7 +974,7 @@ public class AdminXUtils {
     log.atInfo().log("Done creating Ikigai Diagram descriptions");
   }
 
-  private void processCommands() throws IOException {
+  private void processCommands() throws IOException, SQLException {
     if (!createDistrict.isEmpty()) {
       log.atInfo().log("Creating district: {}", createDistrict);
       District district = createDistrict();
@@ -999,6 +1003,10 @@ public class AdminXUtils {
     if (!createAdmins.isEmpty()) {
       log.atInfo().log("Creating admin: {}", createAdmins);
       createAdmins();
+    }
+    if (!Objects.equals(loadSchema, "false")) {
+      log.atInfo().log("Loading schema");
+      DatabaseManagement.loadSchema(dataSource);
     }
     if (!Objects.equals(loadTestData, "false")) {
       log.atInfo().log("Loading test data");
