@@ -207,7 +207,7 @@ export function Post(
       Object.assign({}, props.post, {
         comments: sortedComments,
       } as IProjectPost),
-      false
+      true
     );
 
     createService(PostService, 'PostService')
@@ -241,7 +241,7 @@ export function Post(
             Object.assign({}, props.post, {
               comments: newSortedComments,
             } as IProjectPost),
-            false
+            true
           );
 
           saveCommentBeingEdited(() => {
@@ -267,7 +267,7 @@ export function Post(
       Object.assign({}, props.post, {
         comments: newSortedComments,
       } as IProjectPost),
-      false
+      true
     );
 
     createService(PostService, 'PostService')
@@ -483,7 +483,7 @@ export function Post(
                                         Object.assign({}, props.post, {
                                           ratings: Array.from(ratings.values()),
                                         } as IProjectPost),
-                                        false
+                                        true
                                       );
                                       setRatings(
                                         new Map(ratings).set(
