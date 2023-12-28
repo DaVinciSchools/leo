@@ -67,8 +67,86 @@ Log out and log back in so that your group membership is re-evaluated.
 
 ### Build Dependencies: MySQL (Optional)
 
-If you wish to use MySQL for development and you are using WSL, you need
-to install MySQL in the WSL environment -- not in Windows.
+I recommend installing a local instance of MySQL for development. That way you won't have to start
+from scratch every time you run Project Leo.
+
+#### MySQL in Windows with WSL
+
+If you are using WSL, you need to install MySQL in the WSL environment -- not in Windows.
+
+You also need to expose MySQL from WSL to the Windows host. To do that, edit the MySQL
+configuration and allow it to accept connections from computers other than ```localhost```.
+
+Edit the file ```/etc/mysql/mysql.conf.d/mysqld.cnf``` and change, or add, the following line:
+
+```ini
+bind-address = 0.0.0.0
+```
+
+Or change ```0.0.0.0``` to the IP returned by ```wsl hostname -I``` if you want it to be more
+restrictive.
+
+Then restart MySQL.
+
+#### Create a Test User with Privileges
+
+For development, Project Leo requires a MySQL setup of:
+
+* A user named "test" with password "test".
+* A database named "leo_test".
+* Grant ALL privileges for user "test" on database "leo_test".
+* Either:
+    * Grant SUPER privileges for user "test" to edit triggers (Uncomment the line starting
+      with ```GRANT SUPER``` from the commands below).
+    * Manually run the generated SQL in
+      [```database/src/main/resources/my-sql-generated/*.sql```](https://github.com/DaVinciSchools/leo/tree/main/database/src/main/resources/my-sql-generated)
+      after loading the Project Leo schema, below.
+
+The following SQL configures MySQL for development:
+
+```mysql
+CREATE DATABASE leo_test;
+CREATE USER 'test'@'%' IDENTIFIED BY 'test';
+GRANT ALL PRIVILEGES ON leo_test.* TO 'test'@'%';
+# Unfortunately, 'test' needs SUPER privileges to edit triggers.
+# GRANT SUPER ON *.* TO 'test'@'%';
+FLUSH PRIVILEGES;
+```
+
+#### Configure Project Leo to Use MySQL
+
+Copy the following properties into a file named
+```${HOME}/project_leo.properties```:
+
+```properties
+spring.profiles.active=useExternalDatabase
+spring.datasource.url=jdbc:mysql://localhost:3306/leo_test
+spring.datasource.username=test
+spring.datasource.password=test
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+```
+
+#### Load Schema & Test Data
+
+To load the schema and add test data to MySQL. After building the system with ```mvn verify```,
+run the following command from the root of the repository folder:
+
+```shell
+java -jar database/target/project-leo-database-*.jar --loadSchema
+```
+
+To load test data, as well as reset it later, run the following command from the root of the
+repository folder:
+
+```shell
+java -jar database/target/project-leo-database-*.jar --loadTestData
+```
+
+The test data includes the following test accounts, all with the password ```password```:
+
+* ```admin@projectleo.net```
+* ```teacher@projectleo.net```
+* ```student@projectleo.net```
 
 ## External Dependencies
 
@@ -112,7 +190,7 @@ This will do a number of things:
 * Install Node.js and NPM for the React web client.
 * Build the React web client.
 * Embed the React web client in the Spring server.
-* Run all tests. **Note: These will pause (for a long time) while waiting for 
+* Run all tests. **Note: These will pause (for a long time) while waiting for
   docker to start a test database.**
 * Format code for a code review (see [CONTRIBUTING](CONTRIBUTING.md)).
 
