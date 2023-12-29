@@ -118,11 +118,11 @@ export interface PostHighlights {
 
 export function Post(
   props: DeepReadOnly<{
-    post: DeepReadOnly<IProjectPost>;
-    postUpdated: (post: DeepReadOnly<IProjectPost>, refresh: boolean) => void;
+    post: IProjectPost;
+    postUpdated: (post: DeepReadOnly<IProjectPost>) => void;
     showComments?: boolean | null | undefined;
     showRatings?: boolean | null | undefined;
-    postHighlights?: DeepReadOnly<PostHighlights>;
+    postHighlights?: PostHighlights;
   }>
 ) {
   const userX = useContext(GlobalStateContext).requireUserX(
@@ -206,8 +206,7 @@ export function Post(
     props.postUpdated(
       Object.assign({}, props.post, {
         comments: sortedComments,
-      } as IProjectPost),
-      true
+      } as IProjectPost)
     );
 
     createService(PostService, 'PostService')
@@ -240,8 +239,7 @@ export function Post(
           props.postUpdated(
             Object.assign({}, props.post, {
               comments: newSortedComments,
-            } as IProjectPost),
-            true
+            } as IProjectPost)
           );
 
           saveCommentBeingEdited(() => {
@@ -266,8 +264,7 @@ export function Post(
     props.postUpdated(
       Object.assign({}, props.post, {
         comments: newSortedComments,
-      } as IProjectPost),
-      true
+      } as IProjectPost)
     );
 
     createService(PostService, 'PostService')
@@ -482,8 +479,7 @@ export function Post(
                                       props.postUpdated(
                                         Object.assign({}, props.post, {
                                           ratings: Array.from(ratings.values()),
-                                        } as IProjectPost),
-                                        true
+                                        } as IProjectPost)
                                       );
                                       setRatings(
                                         new Map(ratings).set(

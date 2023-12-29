@@ -3,7 +3,7 @@ import {pl_types, post_service} from 'pl-pb';
 import {useContext, useEffect, useRef, useState} from 'react';
 import {createService} from '../protos';
 import {GlobalStateContext} from '../GlobalState';
-import {DeepReadOnly, replaceInPlace} from '../misc';
+import {DeepReadOnly, replaceInDeepReadOnly} from '../misc';
 import IProjectPost = pl_types.IProjectPost;
 import PostService = post_service.PostService;
 import IGetProjectPostsRequest = post_service.IGetProjectPostsRequest;
@@ -12,11 +12,11 @@ const PAGE_SIZE = 25;
 
 export function PostsFeed(
   props: DeepReadOnly<{
-    posts?: DeepReadOnly<IProjectPost[]>;
-    request?: DeepReadOnly<IGetProjectPostsRequest>;
+    posts?: IProjectPost[];
+    request?: IGetProjectPostsRequest;
     paged?: boolean;
     // UserX.id to hue highlight.
-    postHighlights?: DeepReadOnly<PostHighlights>;
+    postHighlights?: PostHighlights;
   }>
 ) {
   const global = useContext(GlobalStateContext);
@@ -93,11 +93,8 @@ export function PostsFeed(
           <Post
             key={post.id ?? 0}
             post={post}
-            postUpdated={(post, refresh) => {
-              replaceInPlace(posts, post, p => p.id);
-              if (refresh) {
-                setPosts([...posts]);
-              }
+            postUpdated={post => {
+              setPosts(replaceInDeepReadOnly(posts, post, p => p.id));
             }}
             showComments={props.request?.includeComments}
             showRatings={props.request?.includeRatings}
