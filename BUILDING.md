@@ -1,7 +1,7 @@
 # Building Project Leo
 
 Project Leo is built on Linux using [Apache Maven](https://maven.apache.org/).
-The instructions on this page are for the [Ubuntu](https://ubuntu.com/)F
+The instructions on this page are for the [Ubuntu](https://ubuntu.com/)
 distribution. But, other distributions may work as well.
 
 If you use Windows, you can install an instance of
