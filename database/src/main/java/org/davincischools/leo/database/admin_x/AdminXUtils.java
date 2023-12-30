@@ -1011,10 +1011,6 @@ public class AdminXUtils {
     if (!Objects.equals(loadTestData, "false")) {
       log.atInfo().log("Loading test data");
       new TestData(dataSource, db, entityManager).addTestData();
-    } else {
-      checkArgument(!createAdmins.isEmpty(), "--createAdmin required.");
-      UserX userX = db.getUserXRepository().findByEmailAddress(createAdmins.get(0)).orElseThrow();
-      addIkigaiDiagramDescriptions(db, userX, db.getAssignmentRepository().findAll());
     }
     if (!resetPasswords.isEmpty()) {
       log.atInfo().log("Resetting passwords: {}", resetPasswords);
