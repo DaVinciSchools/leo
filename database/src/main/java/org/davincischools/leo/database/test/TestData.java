@@ -24,7 +24,6 @@ import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
 import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.ProjectDefinition;
-import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
@@ -156,10 +155,11 @@ public class TestData {
         db.getProjectDefinitionRepository(),
         ProjectDefinition::getDeleted,
         ProjectDefinition::setDeleted);
-    deleteAllRecords(
-        db.getProjectDefinitionCategoryTypeRepository(),
-        ProjectDefinitionCategoryType::getDeleted,
-        ProjectDefinitionCategoryType::setDeleted);
+    // Don't delete these since they are not recreated.
+    //  deleteAllRecords(
+    //      db.getProjectDefinitionCategoryTypeRepository(),
+    //      ProjectDefinitionCategoryType::getDeleted,
+    //      ProjectDefinitionCategoryType::setDeleted);
 
     entityManager.clear();
 
