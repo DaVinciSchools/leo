@@ -3,6 +3,7 @@ import {Autocomplete, Checkbox, Chip, TextField} from '@mui/material';
 import {DeepReadOnly} from '../misc';
 import * as React from 'react';
 import {
+  CSSProperties,
   HTMLAttributes,
   ReactNode,
   useContext,
@@ -20,14 +21,20 @@ import {useDelayedAction} from '../delayed_action';
 // TODO: This is high to force a scrollbar. Seems brittle that way.
 const PAGE_SIZE = 20;
 
-export function DynamicLoadAutocomplete<T>(
+export function DynamicLoadAutocomplete<
+  T,
+  Multiple extends boolean | undefined = false,
+  TMultiple = Multiple extends true ? T[] : T | null
+>(
   props: DeepReadOnly<{
+    multiple?: Multiple;
+
     label: string;
     placeholder?: string;
 
     getId: (value: DeepReadOnly<T>) => number;
-    values: T[];
-    onChange: (values: DeepReadOnly<T[]>) => void;
+    value: TMultiple;
+    onChange: (value: DeepReadOnly<TMultiple>) => void;
 
     loadMoreOptions: (
       page: number,
@@ -35,17 +42,21 @@ export function DynamicLoadAutocomplete<T>(
       searchText: string
     ) => Promise<DeepReadOnly<T[]>>;
 
-    getOptionLabel: (option: DeepReadOnly<T>) => string;
-    groupBy?: (option: DeepReadOnly<T>) => string;
     renderOption?: (
       props: HTMLAttributes<HTMLLIElement>,
       option: DeepReadOnly<T>,
       state: AutocompleteRenderOptionState
     ) => ReactNode;
+    getOptionLabel: (option: DeepReadOnly<T>) => string;
+
     renderTags?: (
       value: DeepReadOnly<T[]>,
       getTagProps: AutocompleteRenderGetTagProps
     ) => ReactNode;
+    renderTagLabel?: (option: DeepReadOnly<T>) => ReactNode;
+    renderTagStyle?: (option: DeepReadOnly<T>) => CSSProperties;
+
+    groupBy?: (option: DeepReadOnly<T>) => string;
   }>
 ) {
   const global = useContext(GlobalStateContext);
@@ -113,8 +124,8 @@ export function DynamicLoadAutocomplete<T>(
   }
 
   return (
-    <Autocomplete<DeepReadOnly<T>, true, false, false>
-      multiple
+    <Autocomplete<DeepReadOnly<T>, Multiple, false, false>
+      multiple={props.multiple as Multiple}
       disableClearable={false}
       freeSolo={false}
       autoHighlight
@@ -123,23 +134,35 @@ export function DynamicLoadAutocomplete<T>(
       size="small"
       options={dropdownOptions}
       // 'value' requires a mutable array.
-      value={props.values as DeepReadOnly<T>[]}
+      value={
+        props.value as Multiple extends true
+          ? DeepReadOnly<T>[]
+          : DeepReadOnly<T | null>
+      }
       isOptionEqualToValue={(option, value) =>
         props.getId(option) === props.getId(value)
       }
-      onChange={(_, values) => {
-        props.onChange(values);
+      onChange={(_, value) => {
+        if (props.multiple) {
+          props.onChange((value ?? []) as DeepReadOnly<TMultiple>);
+        } else {
+          props.onChange(value as DeepReadOnly<TMultiple>);
+        }
       }}
       onInputChange={(_, value) => setSearchText(value)}
       inputValue={searchText}
-      getOptionLabel={option => props.getOptionLabel(option) ?? ''}
+      getOptionLabel={option =>
+        option ? props.getOptionLabel(option) ?? '' : ''
+      }
       groupBy={props.groupBy ? props.groupBy : undefined}
       renderOption={
         props.renderOption
           ? props.renderOption
           : (props2, option, state) => (
               <li {...props2} key={props.getId(option)}>
-                <Checkbox style={{marginRight: 8}} checked={state.selected} />
+                {props.multiple && (
+                  <Checkbox style={{marginRight: 8}} checked={state.selected} />
+                )}
                 <span
                   style={{
                     textOverflow: 'ellipsis',
@@ -152,27 +175,34 @@ export function DynamicLoadAutocomplete<T>(
             )
       }
       renderTags={
-        props.renderTags
-          ? props.renderTags
-          : (options, getTagProps) =>
+        !props.multiple
+          ? undefined
+          : props.renderTags ??
+            ((options, getTagProps) =>
               options.map(option => (
                 <Chip
                   {...getTagProps}
                   key={props.getId(option)}
-                  label={props.getOptionLabel(option)}
+                  label={
+                    option
+                      ? props.renderTagLabel?.(option) ??
+                        props.getOptionLabel(option)
+                      : ''
+                  }
                   size="small"
                   onDelete={() => {
                     props.onChange(
-                      props.values
+                      (props.value as DeepReadOnly<T[]>)
                         .slice()
                         .filter(
                           option2 =>
                             props.getId(option) !== props.getId(option2)
-                        )
+                        ) as DeepReadOnly<TMultiple>
                     );
                   }}
+                  style={option ? props.renderTagStyle?.(option) ?? {} : {}}
                 />
-              ))
+              )))
       }
       renderInput={params => (
         <TextField

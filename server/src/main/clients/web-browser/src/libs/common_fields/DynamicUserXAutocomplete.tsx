@@ -1,25 +1,27 @@
 import '../global.scss';
 import {user_x_management} from 'pl-pb';
-import {Checkbox, Chip} from '@mui/material';
+import {Checkbox} from '@mui/material';
 import {DeepReadOnly, toProto} from '../misc';
-import {ReactNode} from 'react';
-import {AutocompleteRenderGetTagProps} from '@mui/material/Autocomplete/Autocomplete';
+import {CSSProperties} from 'react';
 import {DynamicLoadAutocomplete} from './DynamicLoadAutocomplete';
 import {createService} from '../protos';
 import IFullUserXDetails = user_x_management.IFullUserXDetails;
 import IGetUserXsRequest = user_x_management.IGetUserXsRequest;
 import UserXManagementService = user_x_management.UserXManagementService;
 
-export function SelectUserXsAutocomplete(
+export function DynamicUserXAutocomplete<
+  Multiple extends boolean | undefined = false,
+  TMultiple = Multiple extends true
+    ? IFullUserXDetails[]
+    : IFullUserXDetails | null
+>(
   props: DeepReadOnly<{
+    multiple?: Multiple;
     label: string;
-    baseRequest: DeepReadOnly<IGetUserXsRequest>;
-    values: DeepReadOnly<IFullUserXDetails[]>;
-    onChange: (userXs: DeepReadOnly<IFullUserXDetails[]>) => void;
-    renderTags?: (
-      value: DeepReadOnly<IFullUserXDetails[]>,
-      getTagProps: AutocompleteRenderGetTagProps
-    ) => ReactNode;
+    baseRequest: IGetUserXsRequest;
+    value: TMultiple;
+    onChange: (userXs: DeepReadOnly<TMultiple>) => void;
+    renderTagStyle?: (option: DeepReadOnly<IFullUserXDetails>) => CSSProperties;
   }>
 ) {
   function loadMoreUserXs(page: number, pageSize: number, searchText: string) {
@@ -37,11 +39,12 @@ export function SelectUserXsAutocomplete(
   }
 
   return (
-    <DynamicLoadAutocomplete<IFullUserXDetails>
+    <DynamicLoadAutocomplete<IFullUserXDetails, Multiple, TMultiple>
+      multiple={props.multiple}
       label={props.label}
       placeholder="Search by Name or Email Address"
       getId={userX => userX.userX?.id ?? 0}
-      values={props.values}
+      value={props.value}
       onChange={props.onChange}
       loadMoreOptions={loadMoreUserXs}
       getOptionLabel={option => {
@@ -52,7 +55,9 @@ export function SelectUserXsAutocomplete(
       }}
       renderOption={(params, option, {selected}) => (
         <li {...params} key={option.userX?.id ?? 0}>
-          <Checkbox style={{marginRight: 8}} checked={selected} />
+          {props.multiple && (
+            <Checkbox style={{marginRight: 8}} checked={selected} />
+          )}
           <span
             style={{
               textOverflow: 'ellipsis',
@@ -66,28 +71,18 @@ export function SelectUserXsAutocomplete(
           </span>
         </li>
       )}
-      renderTags={(options, getTagProps) => (
-        <>
-          {props.renderTags?.(options, getTagProps) ??
-            options.map(option => (
-              <Chip
-                {...getTagProps}
-                key={option.userX?.id ?? 0}
-                label={`${option.userX?.lastName ?? ''}, ${
-                  option.userX?.firstName ?? ''
-                }`}
-                size="small"
-                onDelete={() => {
-                  props.onChange(
-                    props.values
-                      .slice()
-                      .filter(userX => userX?.userX?.id !== option?.userX?.id)
-                  );
-                }}
-              />
-            ))}
-        </>
-      )}
+      renderTagLabel={
+        props.multiple
+          ? option => (
+              <>
+                {(option.userX?.lastName ?? '') +
+                  ', ' +
+                  (option.userX?.firstName ?? '')}
+              </>
+            )
+          : undefined
+      }
+      renderTagStyle={props.renderTagStyle}
     />
   );
 }

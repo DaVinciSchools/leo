@@ -24,9 +24,8 @@ import {
   getHighlightStyle,
   getUniqueHues,
 } from '../../../libs/misc';
-import {SelectUserXsAutocomplete} from '../../../libs/common_fields/SelectUserXsAutocomplete';
+import {DynamicUserXAutocomplete} from '../../../libs/common_fields/DynamicUserXAutocomplete';
 import {PostsFeed} from '../../../libs/PostsFeed/PostsFeed';
-import {Chip} from '@mui/material';
 import IClassX = pl_types.IClassX;
 import SchoolManagementService = school_management.SchoolManagementService;
 import ISchool = pl_types.ISchool;
@@ -168,7 +167,8 @@ export function OverviewTab() {
                     }
                     InputLabelProps={{shrink: true}}
                   />
-                  <SelectUserXsAutocomplete
+                  <DynamicUserXAutocomplete
+                    multiple
                     label="Filter by Student"
                     baseRequest={{
                       studentsOnly: true,
@@ -179,7 +179,7 @@ export function OverviewTab() {
                         .getValue()
                         ?.map(classX => classX.id ?? 0),
                     }}
-                    values={filteredUserXs}
+                    value={filteredUserXs}
                     onChange={setFilteredUserXs}
                   />
                 </div>
@@ -200,7 +200,8 @@ export function OverviewTab() {
                   className="global-flex-column"
                   style={{marginTop: '0.5em', gap: '1em'}}
                 >
-                  <SelectUserXsAutocomplete
+                  <DynamicUserXAutocomplete
+                    multiple
                     label="Students to Highlight"
                     baseRequest={{
                       studentsOnly: true,
@@ -211,35 +212,13 @@ export function OverviewTab() {
                         .getValue()
                         ?.map(classX => classX.id ?? 0),
                     }}
-                    values={highlightedUserXs}
+                    value={highlightedUserXs}
                     onChange={setHighlightedUserXs}
-                    renderTags={(options, getTagProps) => (
-                      <>
-                        {options.map(option => (
-                          <Chip
-                            {...getTagProps}
-                            key={option.userX?.id ?? 0}
-                            label={`${option.userX?.lastName ?? ''}, ${
-                              option.userX?.firstName ?? ''
-                            }`}
-                            size="small"
-                            onDelete={() => {
-                              setHighlightedUserXs(
-                                highlightedUserXs
-                                  .slice()
-                                  .filter(
-                                    userX =>
-                                      userX?.userX?.id !== option?.userX?.id
-                                  )
-                              );
-                            }}
-                            style={getHighlightStyle(
-                              highlightedUserXHues.get(option.userX?.id ?? 0)
-                            )}
-                          />
-                        ))}
-                      </>
-                    )}
+                    renderTagStyle={userX =>
+                      getHighlightStyle(
+                        highlightedUserXHues.get(userX?.userX?.id ?? 0)
+                      )
+                    }
                   />
                 </div>
               </TitledPaper>
