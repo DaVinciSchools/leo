@@ -2,7 +2,6 @@ package org.davincischools.leo.database.utils.repos;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import jakarta.persistence.EntityManager;
 import java.util.List;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.School;
@@ -32,7 +31,6 @@ public class UserXRepositoryTest {
   public static class TestApplicationConfiguration {}
 
   @Autowired private Database db;
-  @Autowired private EntityManager em;
   @Autowired private TestData testData;
 
   @Before
