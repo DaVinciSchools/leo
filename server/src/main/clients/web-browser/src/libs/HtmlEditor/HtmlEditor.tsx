@@ -48,76 +48,42 @@ const TOOLBAR_BUTTONS = [
   'redo',
 ];
 
+// All entries below are the second part of a mime type, i.e., the part after 'image/'.
+const ALLOWED_IMAGE_TYPES = [
+  'apng',
+  'avif',
+  'gif',
+  'jpeg',
+  'png',
+  'svg+xml',
+  'vnd.microsoft.icon',
+  'webp',
+  'x-icon',
+];
+
+// All entries below are the second part of a mime type, i.e., the part after 'video/'.
+const ALLOWED_VIDEO_TYPES = [
+  'mp4',
+  'mpeg',
+  'ogg',
+  'quicktime',
+  'webm',
+  'x-flv',
+  'x-m4v',
+  'x-ms-asf',
+  'x-msvideo',
+];
+
 const ALLOWED_FILE_TYPES = [
+  ...ALLOWED_IMAGE_TYPES.map(e => 'image/' + e),
+  ...ALLOWED_VIDEO_TYPES.map(e => 'video/' + e),
   'application/javascript',
   'application/json',
   'application/pdf',
-  'image/gif',
-  'image/jpeg',
-  'image/png',
-  'image/svg+xml',
-  'image/vnd.microsoft.icon',
   'text/css',
   'text/csv',
   'text/html',
   'text/plain',
-  'video/mp4',
-  'video/mpeg',
-  'video/ogg',
-  'video/quicktime',
-  'video/webm',
-  'video/x-m4v',
-  'video/x-msvideo',
-];
-
-// Image types source: https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types
-const ALLOWED_IMAGE_TYPES = [
-  // Mime type: 'image/apng',
-  'apng',
-
-  // Mime type: 'image/avif',
-  'avif',
-
-  // Mime type: 'image/gif',
-  'gif',
-
-  // Mime type: 'image/jpeg',
-  'jfif',
-  'jpeg',
-  'jpg',
-  'pjp',
-  'pjpeg',
-
-  // Mime type: 'image/png',
-  'png',
-
-  // TODO: Windows doesn't list '*.svg' in the image file selection dialog box.
-  // TODO: Manually selecting a svg file causes Froala to return "Image file type is invalid.".
-
-  // Mime type: 'image/svg+xml',
-  'svg',
-
-  // Mime type: 'image/webp',
-  'webp',
-];
-
-const ALLOWED_VIDEO_TYPES = [
-  // Mime type: 'video/x-msvideo'
-  'avi',
-
-  // Mime type: 'video/x-m4v'
-  'm4v',
-
-  // Mime type: 'video/mp4'
-  'mp4',
-
-  // Mime type: 'video/mpeg'
-  'm2v',
-  'mpeg',
-  'mpg',
-
-  // Mime type: 'video/web'
-  'webm',
 ];
 
 const MAX_FILE_SIZE = 1024 * 1024 * 16 - 1;
@@ -198,8 +164,7 @@ export function HtmlEditor(props: DeepReadOnly<HtmlEditorProps>) {
           model={props.value ?? ''}
           onModelChange={(value: string) => props.onChange?.(value)}
           config={{
-            apiKey:
-              'yDC5hH4I4B10D9A5E4A3g1JWSDBCQG1ZGDf1C1d2JXDAAOZWJhE5B4E4G3F2I3A8A4C4F5==',
+            key: 'yDC5hH4I4B10D9A5E4A3g1JWSDBCQG1ZGDf1C1d2JXDAAOZWJhE5B4E4G3F2I3A8A4C4F5==',
             initOnClick: false,
             attribution: false,
             tabSpaces: 4,
