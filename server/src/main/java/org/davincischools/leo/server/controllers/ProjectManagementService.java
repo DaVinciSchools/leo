@@ -153,13 +153,13 @@ public class ProjectManagementService {
   @ResponseBody
   @Transactional
   public GenerateProjectsResponse generateProjects(
-      @Authenticated HttpUserX userX,
+      @Anonymous HttpUserX userX,
       @RequestBody Optional<GenerateProjectsRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
-    if (userX.isNotAuthorized()) {
-      return userX.returnForbidden(GenerateProjectsResponse.getDefaultInstance());
-    }
+    //
+    // NOTE: This needs to work for anonymous users who use the Try It Out! pathway.
+    //
 
     var projectInputDaoRef = new AtomicReference<ProjectInput>();
     return httpExecutors
@@ -462,6 +462,9 @@ public class ProjectManagementService {
       @RequestBody Optional<GetProjectDefinitionCategoryTypesRequest> optionalRequest,
       HttpExecutors httpExecutors)
       throws HttpExecutorException {
+    //
+    // NOTE: This needs to work for anonymous users who use the Try It Out! pathway.
+    //
 
     return httpExecutors
         .start(
