@@ -125,7 +125,7 @@ public class TestDatabase {
 
     // Configure the test database container.
     MySQLContainer<?> container =
-        new MySQLContainer<>(DockerImageName.parse("mysql").withTag("8-debian"))
+        new MySQLContainer<>(DockerImageName.parse("mysql").withTag("8"))
             .withDatabaseName(DATABASE_NAME)
             .withUsername(USERNAME)
             .withPassword(PASSWORD)
