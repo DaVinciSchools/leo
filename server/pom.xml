@@ -540,6 +540,19 @@
                     </archive>
                 </configuration>
             </plugin>
+
+            <!-- Set default compiler parameters. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <?m2e execute onConfiguration,onIncremental?>
+                    <compilerArgs>
+                        <arg>-Xlint:all</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
