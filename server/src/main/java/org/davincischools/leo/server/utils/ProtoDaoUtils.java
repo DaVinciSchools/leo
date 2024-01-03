@@ -386,6 +386,7 @@ public class ProtoDaoUtils {
                 projectInputCategory.getValueType(),
                 valueType ->
                     db.getMotivationRepository().findAll().stream()
+                        .filter(knowledgeAndSkill -> knowledgeAndSkill.getDeleted() == null)
                         .map(motivation -> toOptionProto(motivation, Option::newBuilder))
                         .filter(Optional::isPresent)
                         .map(Optional::get)
@@ -397,6 +398,7 @@ public class ProtoDaoUtils {
                 projectInputCategory.getValueType(),
                 valueType ->
                     db.getKnowledgeAndSkillRepository().findAll(valueType.name()).stream()
+                        .filter(knowledgeAndSkill -> knowledgeAndSkill.getDeleted() == null)
                         .map(
                             knowledgeAndSkill ->
                                 toOptionProto(knowledgeAndSkill, Option::newBuilder))

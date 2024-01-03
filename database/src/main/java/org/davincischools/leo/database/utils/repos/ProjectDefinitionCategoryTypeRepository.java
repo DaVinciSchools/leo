@@ -47,7 +47,8 @@ public interface ProjectDefinitionCategoryTypeRepository
       """
       SELECT pdct
       FROM ProjectDefinitionCategoryType pdct
-      WHERE pdct.includeInDemo = (:include_demos)""")
+      WHERE pdct.includeInDemo = (:include_demos)
+      AND pdct.deleted IS NULL""")
   List<ProjectDefinitionCategoryType> findAllByCategories(
       @Param("include_demos") boolean include_demos);
 }
