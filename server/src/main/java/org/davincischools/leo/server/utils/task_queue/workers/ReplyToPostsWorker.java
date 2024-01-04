@@ -63,22 +63,8 @@ public final class ReplyToPostsWorker extends TaskQueue<ReplyToPostTask, Default
     db.getProjectRepository()
         .getProjects(
             new GetProjectsParams()
-                .setIncludeInactive(true)
                 .setIncludeInputs(new GetProjectInputsParams().setIncludeComplete(true)))
-        .forEach(
-            p -> {
-              try {
-                if ("Scott".equals(p.getProjectInput().getUserX().getFirstName())
-                    || "Admin".equals(p.getProjectInput().getUserX().getFirstName())) {
-                  submitTask(ReplyToPostTask.newBuilder().setProjectId(p.getId()).build());
-                }
-              } catch (Exception e) {
-                logger
-                    .atError()
-                    .withThrowable(e)
-                    .log("Error submitting task for project {}", p.getId());
-              }
-            });
+        .forEach(p -> submitTask(ReplyToPostTask.newBuilder().setProjectId(p.getId()).build()));
   }
 
   @Override
