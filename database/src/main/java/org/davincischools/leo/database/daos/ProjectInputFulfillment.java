@@ -16,20 +16,16 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
 
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
 @Accessors(chain = true)
 @Entity(name = ProjectInputFulfillment.ENTITY_NAME)
 @Table(name = ProjectInputFulfillment.TABLE_NAME, schema = "leo_test")

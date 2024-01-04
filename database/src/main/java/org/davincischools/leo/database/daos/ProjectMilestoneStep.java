@@ -13,21 +13,17 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.davincischools.leo.database.dao_interfaces.DaoWithPosition;
 import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
 
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
 @Accessors(chain = true)
 @Entity(name = ProjectMilestoneStep.ENTITY_NAME)
 @Table(name = ProjectMilestoneStep.TABLE_NAME, schema = "leo_test")

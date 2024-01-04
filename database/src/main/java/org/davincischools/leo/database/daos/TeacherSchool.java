@@ -11,20 +11,16 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
 
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
 @Accessors(chain = true)
 @Entity(name = TeacherSchool.ENTITY_NAME)
 @Table(name = TeacherSchool.TABLE_NAME, schema = "leo_test")

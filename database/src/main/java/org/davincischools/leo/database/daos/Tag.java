@@ -12,19 +12,15 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
 @Accessors(chain = true)
 @Entity(name = Tag.ENTITY_NAME)
 @Table(name = Tag.TABLE_NAME, schema = "leo_test")

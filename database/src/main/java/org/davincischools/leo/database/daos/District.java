@@ -13,19 +13,15 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
 @Accessors(chain = true)
 @Entity(name = District.ENTITY_NAME)
 @Table(

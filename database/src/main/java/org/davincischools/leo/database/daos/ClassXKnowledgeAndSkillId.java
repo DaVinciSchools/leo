@@ -7,19 +7,15 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
 @Accessors(chain = true)
 @Embeddable
 public class ClassXKnowledgeAndSkillId implements Serializable {

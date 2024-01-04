@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.google.common.collect.Maps;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +19,6 @@ import org.davincischools.leo.database.daos.ProjectInputFulfillment;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
-import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai.OpenAi3V1ProjectGenerator.InitialChatMessage;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai.OpenAi3V3ProjectGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -199,14 +197,8 @@ public class AiProject {
                   .setFulfillmentPercentage(criteria.fulfillmentPercentage)
                   .setVisibleIndicator(criteria.assessmentApproach);
 
-          if (!DaoUtils.isInitialized(project.getProjectInputFulfillments())) {
-            project.setProjectInputFulfillments(new LinkedHashSet<>());
-          }
           project.getProjectInputFulfillments().add(projectInputFulfillment);
 
-          if (!DaoUtils.isInitialized(inputValue.getProjectInputFulfillments())) {
-            inputValue.setProjectInputFulfillments(new LinkedHashSet<>());
-          }
           inputValue.getProjectInputFulfillments().add(projectInputFulfillment);
         });
     return project;
