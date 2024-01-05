@@ -51,12 +51,13 @@ public class UserX implements Serializable {
   public static final String COLUMN_FIRSTNAME_NAME = "first_name";
   public static final String COLUMN_LASTNAME_NAME = "last_name";
   public static final String COLUMN_EMAILADDRESS_NAME = "email_address";
+  public static final String COLUMN_EMAILADDRESSVERIFIED_NAME = "email_address_verified";
+  public static final String COLUMN_AVATARIMAGEURL_NAME = "avatar_image_url";
   public static final String COLUMN_ENCODEDPASSWORD_NAME = "encoded_password";
   public static final String COLUMN_TEMPORARYPASSWORDGOODUNTIL_NAME =
       "temporary_password_good_until";
   public static final String COLUMN_TEMPORARYENCODEDPASSWORD_NAME = "temporary_encoded_password";
-  public static final String COLUMN_EMAILADDRESSVERIFIED_NAME = "email_address_verified";
-  private static final long serialVersionUID = -4295007479038222673L;
+  private static final long serialVersionUID = 5145772325639569618L;
 
   private Integer id;
 
@@ -69,6 +70,10 @@ public class UserX implements Serializable {
   private String lastName;
 
   private String emailAddress;
+
+  private Boolean emailAddressVerified;
+
+  private String avatarImageUrl;
 
   private String encodedPassword;
 
@@ -85,8 +90,6 @@ public class UserX implements Serializable {
   private Student student;
 
   private Interest interest;
-
-  private Boolean emailAddressVerified;
 
   private Set<FileX> fileXES = new LinkedHashSet<>();
 
@@ -138,8 +141,18 @@ public class UserX implements Serializable {
     return emailAddress;
   }
 
+  @Column(name = COLUMN_EMAILADDRESSVERIFIED_NAME)
+  public Boolean getEmailAddressVerified() {
+    return emailAddressVerified;
+  }
+
+  @Column(name = COLUMN_AVATARIMAGEURL_NAME)
+  public String getAvatarImageUrl() {
+    return avatarImageUrl;
+  }
+
   @Lob
-  @Column(name = COLUMN_ENCODEDPASSWORD_NAME, nullable = false)
+  @Column(name = COLUMN_ENCODEDPASSWORD_NAME)
   public String getEncodedPassword() {
     return encodedPassword;
   }
@@ -186,11 +199,6 @@ public class UserX implements Serializable {
   @JoinColumn(name = "interest_id")
   public Interest getInterest() {
     return interest;
-  }
-
-  @Column(name = COLUMN_EMAILADDRESSVERIFIED_NAME)
-  public Boolean getEmailAddressVerified() {
-    return emailAddressVerified;
   }
 
   @OneToMany(mappedBy = "userX")

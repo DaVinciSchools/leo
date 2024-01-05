@@ -11,9 +11,10 @@ CREATE TABLE IF NOT EXISTS user_x
     email_address                 VARCHAR(254) UNIQUE NOT NULL,
     INDEX user_x__email_address USING HASH (email_address),
     email_address_verified        BOOLEAN,
+    avatar_image_url              VARCHAR(255),
 
     -- From org.springframework.security.crypto.factory.PasswordEncoderFactories.
-    encoded_password              TEXT                NOT NULL,
+    encoded_password              TEXT,
 
     -- This is for a one time password recovery or a one time QR code sign in, etc.
     temporary_password_good_until DATETIME,
