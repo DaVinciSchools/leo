@@ -1240,7 +1240,7 @@ public class ProtoDaoUtils {
                                   setMethod.get().invoke(dao, protoEnumValue.getName());
                                 }
                               } else {
-                                setMethod.get().invoke(dao, null);
+                                setMethod.get().invoke(dao, (Object[]) null);
                               }
                             }
                           } catch (Exception e) {
