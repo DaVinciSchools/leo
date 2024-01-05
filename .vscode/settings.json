@@ -32,4 +32,18 @@
     "maven.pomfile.autoUpdateEffectivePOM": true,
     "files.eol": "\n",
     "java.format.enabled": false,
+    "java.maven.downloadSources": true,
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "google-java-format.executable": "${env.HOME}/.m2/repository/com/google/googlejavaformat/google-java-format/1.18.1/google-java-format-1.18.1.jar",
+    "eslint.codeActionsOnSave.rules": [
+        "eslint:fix"
+    ],
+    "eslint.run": "onSave",
+    "eslint.validate": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact"
+    ],
 }
