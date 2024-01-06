@@ -156,8 +156,11 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.12.1</version>
                 <configuration>
+                    <?m2e execute onConfiguration,onIncremental?>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -170,6 +173,10 @@
                             <version>6.2.7.Final</version>
                         </path>
                     </annotationProcessorPaths>
+                    <?m2e execute onConfiguration,onIncremental?>
+                    <compilerArgs>
+                        <arg>-Xlint:all</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 
@@ -230,19 +237,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!-- Set default compiler parameters. -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <?m2e execute onConfiguration,onIncremental?>
-                    <compilerArgs>
-                        <arg>-Xlint:all</arg>
-                    </compilerArgs>
-                </configuration>
             </plugin>
         </plugins>
     </build>
