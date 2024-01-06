@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.google.common.collect.Maps;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
@@ -169,12 +170,13 @@ public class AiProject {
                 })
             .collect(toImmutableSet()));
 
-    var inputValuesById =
-        Maps.uniqueIndex(
-            generatorInput.getSortedProjectInputs().stream()
-                .flatMap(p -> p.getInputValues().stream())
-                .toList(),
-            ProjectInputValue::getId);
+    var inputValues =
+        generatorInput.getSortedProjectInputs().stream()
+            .flatMap(p -> p.getInputValues().stream())
+            .toList();
+    inputValues.forEach(
+        inputValue -> inputValue.setProjectInputFulfillments(new LinkedHashSet<>()));
+    var inputValuesById = Maps.uniqueIndex(inputValues, ProjectInputValue::getId);
     aiProject.criteriaFulfillment.forEach(
         criteria -> {
           var inputValue = inputValuesById.get(criteria.criteriaNumber);

@@ -1,5 +1,8 @@
 package org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators;
 
+import static org.davincischools.leo.server.utils.OpenAiUtils.chatToString;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -7,6 +10,7 @@ import com.theokanning.openai.client.OpenAiApi;
 import com.theokanning.openai.completion.chat.ChatCompletionChoice;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest.ChatCompletionRequestFunctionCall;
+import com.theokanning.openai.completion.chat.ChatCompletionResult;
 import com.theokanning.openai.completion.chat.ChatFunction;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.completion.chat.ChatMessageRole;
@@ -15,7 +19,10 @@ import com.theokanning.openai.service.OpenAiService;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.server.utils.HtmlUtils;
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +30,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class OpenAiCommentGenerator implements AiCommentGenerator {
+
+  private static final Logger logger = LogManager.getLogger();
+  private static final AtomicLong counter = new AtomicLong(System.currentTimeMillis());
 
   @Autowired OpenAiUtils openAiUtils;
 
@@ -58,7 +68,7 @@ public class OpenAiCommentGenerator implements AiCommentGenerator {
         "There are a number of goals for the project that need to be completed."
             + " Each goal has a unique id and a description of what needs to be completed."
             + " No one knows the id of each goal, so they should be referred to by their"
-            + " 'what_needs_to_be_completed' descripotion."
+            + " 'what_needs_to_be_completed' description."
             + " These goals are:\n");
     promptContent.goals.forEach(
         goal ->
@@ -86,7 +96,9 @@ public class OpenAiCommentGenerator implements AiCommentGenerator {
         .put("new_post_questions", promptContent.getNewPostFeedbackRequest())
         .put("previous_posts_summaries", promptContent.getPreviousPostsSummary())
         .put("previous_positive_feedback", promptContent.getPreviousPositiveFeedback())
-        .put("previous_things_to_improve_feedback", promptContent.getPreviousToImproveFeedback())
+        .put(
+            "previous_things_to_improve_feedback",
+            promptContent.getPreviousThingsToImproveFeedback())
         .put(
             "previous_what_things_have_improved_feedback",
             promptContent.getPreviousHowImprovedFeedback())
@@ -110,7 +122,12 @@ public class OpenAiCommentGenerator implements AiCommentGenerator {
             .newBuilder()
             .connectTimeout(timeout)
             .build();
-    var retrofit = OpenAiService.defaultRetrofit(okHttpClient, OpenAiService.defaultObjectMapper());
+    var retrofit =
+        OpenAiService.defaultRetrofit(
+            okHttpClient,
+            OpenAiService.defaultObjectMapper()
+                .setDefaultLeniency(true)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false));
     var openAiService = new OpenAiService(retrofit.create(OpenAiApi.class));
 
     // Initialize the function and request.
@@ -143,11 +160,16 @@ public class OpenAiCommentGenerator implements AiCommentGenerator {
             .build();
 
     // Query AI and return comment.
-    for (int attempt = 0; attempt < 3; ++attempt) {
+    long count = counter.incrementAndGet();
+    ChatCompletionResult chatCompletionResponse = null;
+    try {
+      logger.atDebug().log("Chat completion request [[{}]]: {}", count, chatCompletionRequest);
+      chatCompletionResponse = openAiService.createChatCompletion(chatCompletionRequest);
+      logger.atDebug().log("Chat completion response: [[{}]] {}", count, chatCompletionResponse);
       org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.AiComment
           aiComment =
               Iterables.getOnlyElement(
-                  openAiService.createChatCompletion(chatCompletionRequest).getChoices().stream()
+                  chatCompletionResponse.getChoices().stream()
                       .map(ChatCompletionChoice::getMessage)
                       .map(ChatMessage::getFunctionCall)
                       .map(functionExecutor::execute)
@@ -161,8 +183,18 @@ public class OpenAiCommentGenerator implements AiCommentGenerator {
           .isEmpty()) {
         return aiComment;
       }
+      throw new IOException(
+          "Failed to get AI comment due to empty feedback [["
+              + count
+              + "]]:\n\n"
+              + chatToString(chatCompletionRequest, chatCompletionResponse));
+    } catch (Exception e) {
+      throw new IOException(
+          "Failed to get AI comment due to exception [["
+              + count
+              + "]]:\n\n"
+              + chatToString(chatCompletionRequest, chatCompletionResponse),
+          e);
     }
-
-    throw new IOException("Failed to get a post reply from OpenAI.");
   }
 }

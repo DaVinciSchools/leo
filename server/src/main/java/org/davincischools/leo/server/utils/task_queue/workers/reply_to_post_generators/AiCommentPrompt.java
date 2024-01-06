@@ -30,7 +30,7 @@ public class AiCommentPrompt {
 
   public String previousPostsSummary;
   public String previousPositiveFeedback;
-  public String previousToImproveFeedback;
+  public String previousThingsToImproveFeedback;
   public String previousHowImprovedFeedback;
   public String previousFeedbackResponses;
 }

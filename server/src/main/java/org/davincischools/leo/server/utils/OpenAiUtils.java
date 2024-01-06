@@ -3,10 +3,16 @@ package org.davincischools.leo.server.utils;
 import com.fasterxml.jackson.datatype.jdk8.WrappedIOException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Bytes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.protobuf.GeneratedMessageV3.Builder;
 import com.google.protobuf.Message;
 import com.google.protobuf.TextFormat;
 import com.google.protobuf.util.JsonFormat;
+import com.theokanning.openai.completion.chat.ChatCompletionChoice;
+import com.theokanning.openai.completion.chat.ChatCompletionRequest;
+import com.theokanning.openai.completion.chat.ChatCompletionResult;
+import com.theokanning.openai.completion.chat.ChatMessage;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
@@ -17,6 +23,7 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +45,7 @@ import reactor.netty.http.client.HttpClient;
 public class OpenAiUtils {
 
   private static final Logger logger = LogManager.getLogger();
+  private static final Gson gson = new GsonBuilder().setLenient().setPrettyPrinting().create();
 
   public static final String OPENAI_API_KEY_PROP_NAME = "openai.api.key";
   public static final String OPENAI_URL_PROP_NAME = "openai.url";
@@ -180,5 +188,38 @@ public class OpenAiUtils {
               return responseBuilder;
             })
         .finish();
+  }
+
+  public static String chatToString(ChatCompletionRequest request, ChatCompletionResult response) {
+    return "Request: "
+        + request
+        + "\n\n"
+        + messagesToString(request.getMessages())
+        + "\n\nResponse: "
+        + response
+        + "\n\n"
+        + messagesToString(
+            response != null
+                ? response.getChoices().stream().map(ChatCompletionChoice::getMessage).toList()
+                : List.of());
+  }
+
+  public static String messagesToString(List<ChatMessage> messages) {
+    var sb = new StringBuilder();
+    for (int i = 0; i < messages.size(); i++) {
+      sb.append("Message ").append(i).append(":\n");
+      try {
+        sb.append(
+            gson.toJson(
+                gson.toJsonTree(
+                    messages.get(i).getFunctionCall() != null
+                        ? messages.get(i).getFunctionCall().getArguments().toString()
+                        : messages.get(i).getContent())));
+      } catch (Exception e) {
+        sb.append(messages.get(i).getContent());
+      }
+      sb.append("\n\n");
+    }
+    return sb.toString().trim();
   }
 }

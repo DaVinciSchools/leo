@@ -1,5 +1,6 @@
 package org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import java.util.List;
@@ -10,6 +11,7 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @Accessors(chain = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AiComment {
 
   public static class GoalRating {

@@ -113,7 +113,7 @@ public final class ReplyToPostsWorker extends TaskQueue<ReplyToPostTask, Default
     // These will accumulate information that will be used to generate each post's comment.
     StringBuilder previousPostsSummary = new StringBuilder();
     StringBuilder previousPositiveFeedback = new StringBuilder();
-    StringBuilder previousToImproveFeedback = new StringBuilder();
+    StringBuilder previousThingsToImproveFeedback = new StringBuilder();
     StringBuilder previousHowImprovedFeedback = new StringBuilder();
     StringBuilder previousFeedbackResponses = new StringBuilder();
 
@@ -144,8 +144,8 @@ public final class ReplyToPostsWorker extends TaskQueue<ReplyToPostTask, Default
             Strings.nullToEmpty(previousPostsSummary.toString().trim()));
         promptContent.setPreviousPositiveFeedback(
             Strings.nullToEmpty(previousPositiveFeedback.toString().trim()));
-        promptContent.setPreviousToImproveFeedback(
-            Strings.nullToEmpty(previousToImproveFeedback.toString().trim()));
+        promptContent.setPreviousThingsToImproveFeedback(
+            Strings.nullToEmpty(previousThingsToImproveFeedback.toString().trim()));
         promptContent.setPreviousHowImprovedFeedback(
             Strings.nullToEmpty(previousHowImprovedFeedback.toString().trim()));
         promptContent.setPreviousFeedbackResponses(
@@ -195,7 +195,7 @@ public final class ReplyToPostsWorker extends TaskQueue<ReplyToPostTask, Default
       // Update the previous post summaries for use with the next post.
       previousPostsSummary.append(" ").append(coachComment.get().getIncrementalPostSummary());
       previousPositiveFeedback.append(" ").append(coachComment.get().getPositiveFeedback());
-      previousToImproveFeedback.append(" ").append(coachComment.get().getToImproveFeedback());
+      previousThingsToImproveFeedback.append(" ").append(coachComment.get().getToImproveFeedback());
       previousHowImprovedFeedback.append(" ").append(coachComment.get().getHowImprovedFeedback());
       previousFeedbackResponses.append(" ").append(coachComment.get().getFeedbackResponseHtml());
     }

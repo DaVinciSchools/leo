@@ -6,11 +6,13 @@ import static org.davincischools.leo.server.utils.HtmlUtils.stripOutHtml;
 import static org.davincischools.leo.server.utils.TextUtils.quoteAndEscape;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.theokanning.openai.client.OpenAiApi;
 import com.theokanning.openai.completion.chat.ChatCompletionChoice;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest;
 import com.theokanning.openai.completion.chat.ChatCompletionRequest.ChatCompletionRequestFunctionCall;
+import com.theokanning.openai.completion.chat.ChatCompletionResult;
 import com.theokanning.openai.completion.chat.ChatFunction;
 import com.theokanning.openai.completion.chat.ChatMessage;
 import com.theokanning.openai.completion.chat.ChatMessageRole;
@@ -101,11 +103,17 @@ public class OpenAi3V3ProjectGenerator implements ProjectGenerator {
             .newBuilder()
             .connectTimeout(timeout)
             .build();
-    var retrofit = OpenAiService.defaultRetrofit(okHttpClient, OpenAiService.defaultObjectMapper());
+    var retrofit =
+        OpenAiService.defaultRetrofit(
+            okHttpClient,
+            OpenAiService.defaultObjectMapper()
+                .setDefaultLeniency(true)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false));
     OpenAiService openAiService = new OpenAiService(retrofit.create(OpenAiApi.class));
+    ChatCompletionResult chatCompletionResponse = null;
     try {
-      var chatCompletionResponse = openAiService.createChatCompletion(chatCompletionRequest);
       logger.atDebug().log("Chat completion request: {}", chatCompletionRequest);
+      chatCompletionResponse = openAiService.createChatCompletion(chatCompletionRequest);
       logger.atDebug().log("Chat completion response: {}", chatCompletionResponse);
       return chatCompletionResponse.getChoices().stream()
           .map(ChatCompletionChoice::getMessage)
@@ -116,8 +124,11 @@ public class OpenAi3V3ProjectGenerator implements ProjectGenerator {
           .map(p -> AiProject.aiProjectToProject(generatorInput, initialChatMessage, p))
           .toList();
     } catch (Exception e) {
-      logger.atError().withThrowable(e).log("Failed to generate projects: {}", messages);
-      throw new RuntimeException(e);
+      logger
+          .atError()
+          .withThrowable(e)
+          .log("Failed to generate projects: {}", chatCompletionResponse);
+      throw new RuntimeException("Failed to generate projects: " + chatCompletionResponse, e);
     } finally {
       try {
         openAiService.shutdownExecutor();
