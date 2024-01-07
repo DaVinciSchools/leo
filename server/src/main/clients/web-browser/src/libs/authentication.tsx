@@ -1,11 +1,15 @@
 import Cookies from 'js-cookie';
 import {HandleErrorType} from './HandleError/HandleError';
 import {IGlobalState, LoadedState} from './GlobalState';
-import {pl_types} from 'pl-pb';
+import {pl_types, user_x_management} from 'pl-pb';
+import {createService} from './protos';
+import UserXManagementService = user_x_management.UserXManagementService;
 
 export const FORWARD_PARAM = 'returnTo';
 export const USERNAME_PARAM = 'username';
 export const PASSWORD_PARAM = 'password';
+export const LOAD_CREDENTIALS_PARAM = 'loadCredentials';
+export const DEFAULT_FORWARD_URL = '/dashboards/redirect.html';
 
 export function addXsrfHeader(headers?: HeadersInit) {
   if (Cookies.get('XSRF-TOKEN') != null) {
@@ -31,7 +35,7 @@ export function addXsrfInputField() {
   return <></>;
 }
 
-export function login(
+export function usernamePasswordLogin(
   global: IGlobalState,
   username: string,
   password: string,
@@ -44,8 +48,8 @@ export function login(
   loginUrl.append(PASSWORD_PARAM, password);
 
   logout(global)
-    .catch(reason => {
-      console.error('Failed to logout before login.', reason);
+    .catch(error => {
+      console.error('Failed to logout before login.', error);
     })
     .finally(() => {
       try {
@@ -60,18 +64,15 @@ export function login(
         })
           .then(response => {
             if (!response.ok) {
-              console.error('Failed to login.', response);
-              onError(response);
+              onError(new Error(JSON.stringify(response)));
             } else if (response.redirected) {
               if (new URL(response.url).searchParams.get('failed') != null) {
                 onFailure();
               } else {
-                console.error('Failed to login.', response);
-                onError(response);
+                onError(new Error(JSON.stringify(response)));
               }
             } else if (response.body == null) {
-              console.error('Failed to login.', response);
-              onError('Response had no body.');
+              onError(new Error('Response had no body.'));
             } else {
               response.body
                 .getReader()
@@ -80,17 +81,48 @@ export function login(
                   try {
                     global.setUserX(pl_types.UserX.decode(result.value!));
                     onSuccess();
-                  } catch (e) {
-                    onError(e);
+                  } catch (error) {
+                    onError(error);
                   }
                 })
-                .catch(onError);
+                .catch(error => {
+                  onError(error);
+                });
             }
           })
-          .catch(onError);
-      } catch (e) {
-        onError(e);
+          .catch(error => {
+            onError(error);
+          });
+      } catch (error) {
+        onError(error);
       }
+    });
+}
+
+export function loadCredentialsLogin(
+  global: IGlobalState,
+  onSuccess: () => void,
+  onFailure: () => void,
+  onError: (error?: HandleErrorType) => void
+) {
+  logout(global)
+    .catch(error => {
+      console.error('Failed to logout before login.', error);
+    })
+    .finally(() => {
+      createService(UserXManagementService, 'UserXManagementService')
+        .getUserXs({ofSelf: true})
+        .then(response => {
+          if (response.userXs.length === 1) {
+            global.setUserX(response.userXs?.[0]?.userX);
+            onSuccess();
+          } else {
+            onFailure();
+          }
+        })
+        .catch(error => {
+          onError(error);
+        });
     });
 }
 
@@ -109,4 +141,8 @@ export function logout(global: IGlobalState) {
     cache: 'no-cache',
     redirect: 'follow',
   });
+}
+
+export function addBaseUrl(url: string) {
+  return `${window.location.protocol}//${window.location.host}${url}`;
 }

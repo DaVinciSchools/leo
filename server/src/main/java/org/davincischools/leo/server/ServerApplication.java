@@ -3,12 +3,16 @@ package org.davincischools.leo.server;
 import static org.davincischools.leo.server.SpringConstants.LOCAL_SERVER_PORT_PROPERTY;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.toUserXProto;
 
+import com.google.common.base.Strings;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +20,7 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.post_environment_processors.LoadCustomProjectLeoProperties;
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
+import org.davincischools.leo.database.utils.repos.GetUserXsParams;
 import org.davincischools.leo.server.utils.ApplicationExceptionConsoleLogger;
 import org.davincischools.leo.server.utils.QueryWithNullsToRecordConverter;
 import org.davincischools.leo.server.utils.http_executor.HttpExecutor;
@@ -25,6 +30,7 @@ import org.davincischools.leo.server.utils.http_user_x.HttpUserXService;
 import org.davincischools.leo.server.utils.http_user_x.UserXDetails;
 import org.davincischools.leo.server.utils.task_queue.workers.ReplyToPostsWorker;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.ProjectGenerator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
@@ -32,6 +38,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -39,7 +46,12 @@ import org.springframework.http.converter.protobuf.ProtobufHttpMessageConverter;
 import org.springframework.http.converter.protobuf.ProtobufJsonFormatHttpMessageConverter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.oauth2.client.CommonOAuth2Provider;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.InMemoryOAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
+import org.springframework.security.oauth2.core.OAuth2AuthenticatedPrincipal;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -67,6 +79,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
 public class ServerApplication {
 
   private static final Logger logger = LogManager.getLogger();
+
+  private static final String CLIENT_PROPERTY_KEY = "spring.security.oauth2.client.registration.";
 
   @Configuration
   static class ServerApplicationConfigurer extends WebMvcConfigurationSupport {
@@ -101,6 +115,9 @@ public class ServerApplication {
   @EnableWebSecurity
   static class SecurityConfigurer {
 
+    @Autowired Environment environment;
+    @Autowired Database db;
+
     @Bean
     public SecurityFilterChain buildSecurityFilterChain(HttpSecurity http) throws Exception {
       // Public resources.
@@ -128,7 +145,10 @@ public class ServerApplication {
             new AntPathRequestMatcher("/gtag.js", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/images/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/index.html", HttpMethod.GET.name()),
+            // The following exists for OAuth2 login. But, it seems to not be needed here.
+            // new AntPathRequestMatcher("/login/oauth2/code/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/manifest.json", HttpMethod.GET.name()),
+            new AntPathRequestMatcher("/oauth2/authorization/**", HttpMethod.POST.name()),
             new AntPathRequestMatcher("/robots.txt", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/schools/**", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/static/**", HttpMethod.GET.name()),
@@ -141,7 +161,7 @@ public class ServerApplication {
             // https://github.com/webpack/webpack-dev-server.
             new AntPathRequestMatcher("/main.*.hot-update.js", HttpMethod.GET.name()),
             new AntPathRequestMatcher("/main.*.hot-update.js.map", HttpMethod.GET.name()),
-            new AntPathRequestMatcher("/main.*.hot-update.json", HttpMethod.GET.name())
+            new AntPathRequestMatcher("/main.*.hot-update.json", HttpMethod.GET.name()),
           };
 
       // https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html#_i_am_using_angularjs_or_another_javascript_framework
@@ -150,7 +170,7 @@ public class ServerApplication {
       HeaderWriterLogoutHandler clearSiteData =
           new HeaderWriterLogoutHandler(new ClearSiteDataHeaderWriter(Directive.ALL));
 
-      return http
+      http
 
           // Public content.
           .authorizeHttpRequests(config -> config.requestMatchers(publicMatchers).permitAll())
@@ -235,13 +255,92 @@ public class ServerApplication {
                       .fullyAuthenticated())
 
           // Remaining pages require authentication.
-          .authorizeHttpRequests(config -> config.anyRequest().authenticated())
+          .authorizeHttpRequests(config -> config.anyRequest().authenticated());
 
-          // TODO: Set security realm.
-          // .httpBasic(config -> config.realmName("project.leo"))
+      var oauthRegistrations = createClientRegistrations();
+      if (!oauthRegistrations.isEmpty()) {
+        http // OAuth2 login.
+            .oauth2Login(
+            config ->
+                config
+                    .clientRegistrationRepository(
+                        new InMemoryClientRegistrationRepository(createClientRegistrations()))
+                    .authorizedClientService(
+                        new InMemoryOAuth2AuthorizedClientService(
+                            new InMemoryClientRegistrationRepository(createClientRegistrations())))
+                    .successHandler(
+                        (request, response, authentication) -> {
+                          if (authentication.getPrincipal()
+                                  instanceof OAuth2AuthenticatedPrincipal oauth
+                              && !Strings.isNullOrEmpty(oauth.getAttribute("email"))) {
+                            String email = oauth.getAttribute("email");
+                            var userX =
+                                db
+                                    .getUserXRepository()
+                                    .getUserXs(new GetUserXsParams().setHasEmailAddress(email))
+                                    .stream()
+                                    .findFirst();
+                            if (userX.isEmpty()) {
+                              userX =
+                                  Optional.of(
+                                      new UserX()
+                                          .setCreationTime(Instant.now())
+                                          .setEmailAddress(email));
+                            }
+                            db.getUserXRepository()
+                                .save(
+                                    userX
+                                        .get()
+                                        .setFirstName(oauth.getAttribute("given_name"))
+                                        .setLastName(oauth.getAttribute("family_name"))
+                                        .setEmailAddressVerified(
+                                            Boolean.TRUE.equals(
+                                                oauth.getAttribute("email_verified")))
+                                        .setAvatarImageUrl(oauth.getAttribute("picture")));
+                          }
+                          response.sendRedirect("/users/login.html?loadCredentials=true");
+                        })
+                    .failureHandler(
+                        (request, response, exception) -> {
+                          logger
+                              .atError()
+                              .withThrowable(exception)
+                              .log("OAuth2 login failed: {}", exception.getMessage());
+                          response.encodeRedirectURL("/users/login.html?failed=true");
+                        }));
+      }
 
-          // Done with configuration.
-          .build();
+      // TODO: Set security realm.
+      // http.httpBasic(config -> config.realmName("project.leo"))
+
+      return http.build();
+    }
+
+    @Bean
+    public List<ClientRegistration> createClientRegistrations() {
+      var registrations =
+          new ArrayList<
+              org.springframework.security.oauth2.client.registration.ClientRegistration.Builder>();
+
+      String googleClientId = environment.getProperty(CLIENT_PROPERTY_KEY + "google.client-id");
+      String googleSecret = environment.getProperty(CLIENT_PROPERTY_KEY + "google.client-secret");
+      if (!Strings.isNullOrEmpty(googleClientId) && !Strings.isNullOrEmpty(googleSecret)) {
+        registrations.add(
+            CommonOAuth2Provider.GOOGLE
+                .getBuilder("google")
+                .clientId(googleClientId)
+                .clientSecret(googleSecret));
+      } else {
+        logger.atWarn().log("Google OAuth2 client not configured.");
+      }
+
+      String baseUrl = environment.getProperty("project_leo.base_url", "{baseUrl}");
+      return registrations.stream()
+          .map(
+              registration ->
+                  registration.redirectUri(baseUrl + "/{action}/oauth2/code/{registrationId}"))
+          .map(ClientRegistration.Builder::build)
+          .toList();
     }
   }
 

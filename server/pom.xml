@@ -59,6 +59,11 @@
             <artifactId>spring-context</artifactId>
             <version>${spring.framework.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+            <version>${spring.boot.starter.version}</version>
+        </dependency>
         <!-- Needed to proxy services to React web server. -->
         <dependency>
             <groupId>org.springframework</groupId>

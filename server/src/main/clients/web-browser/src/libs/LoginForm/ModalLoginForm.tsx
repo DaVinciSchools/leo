@@ -2,10 +2,13 @@ import './LoginForm.scss';
 
 import {Backdrop, Box, Modal} from '@mui/material';
 import {LoginForm} from './LoginForm';
+import {HandleErrorType} from '../HandleError/HandleError';
 
 export function ModalLoginForm(props: {
   open: boolean;
-  onLoggedIn: () => void;
+  onSuccess: () => void;
+  onFailure: () => void;
+  onError: (error?: HandleErrorType) => void;
   onCancel: () => void;
 }) {
   return (
@@ -20,7 +23,12 @@ export function ModalLoginForm(props: {
         }}
       >
         <Box className="login-form-modal" paddingX={8}>
-          <LoginForm onLoggedIn={props.onLoggedIn} onCancel={props.onCancel} />
+          <LoginForm
+            onSuccess={props.onSuccess}
+            onFailure={props.onFailure}
+            onError={props.onError}
+            onCancel={props.onCancel}
+          />
         </Box>
       </Modal>
     </>

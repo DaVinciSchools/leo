@@ -1,5 +1,5 @@
-@use '../../../libs/color';
-@use '../../../libs/form_utils/forms';
+@use '../../libs/color';
+@use '../../libs/form_utils/forms';
 
 .space-filler {
   height: 15%;
@@ -13,6 +13,11 @@
   a {
     line-height: 0;
   }
+}
+
+.logging-in {
+  text-align: center;
+  color: color.$primary-800;
 }
 
 .logout {

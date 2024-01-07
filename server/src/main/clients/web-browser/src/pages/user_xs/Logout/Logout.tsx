@@ -1,4 +1,4 @@
-import './Logout.scss';
+import '../Login.scss';
 import {logout} from '../../../libs/authentication';
 import {useContext, useEffect} from 'react';
 import {Link} from 'react-router-dom';
