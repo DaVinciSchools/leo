@@ -2,7 +2,6 @@ import './Post.scss';
 
 import {pl_types, post_service} from 'pl-pb';
 import {
-  AccountCircle,
   AddCommentTwoTone,
   AssessmentTwoTone,
   CommentTwoTone,
@@ -39,6 +38,7 @@ import {linearProgressClasses} from '@mui/material/LinearProgress';
 import {createService} from '../protos';
 import {styled} from '@mui/material/styles';
 import {HtmlEditor} from '../HtmlEditor/HtmlEditor';
+import {UserXAvatar} from '../UserXAvatar/UserXAvatar';
 import IProjectPostRating = pl_types.IProjectPostRating;
 import IProjectPost = pl_types.IProjectPost;
 import IUserX = pl_types.IUserX;
@@ -277,14 +277,18 @@ export function Post(
   return (
     <>
       <div className="post-in-feed">
-        <div
-          className="global-flex-row"
-          style={getHighlightStyle(
-            props.postHighlights?.getUserXHue?.(props.post?.userX ?? {})
-          )}
-        >
-          <AccountCircle className="post-in-feed-avatar" />
-          <div className="global-flex-column" style={{flexGrow: 1, gap: 0}}>
+        <div className="global-flex-row">
+          <UserXAvatar userX={props.post?.userX} size="3rem" />
+          <div
+            className="global-flex-column"
+            style={{
+              flexGrow: 1,
+              gap: 0,
+              ...getHighlightStyle(
+                props.postHighlights?.getUserXHue?.(props.post?.userX ?? {})
+              ),
+            }}
+          >
             <PostHeader
               userX={props.post?.userX}
               postTimeMs={toLong(props.post?.postTimeMs ?? 0)}
@@ -532,13 +536,21 @@ export function Post(
             )}
             {sortedComments.map(comment => (
               <div key={comment.id ?? 0} className="post-in-feed-comment">
-                <AccountCircle className="post-in-feed-avatar" />
+                <UserXAvatar userX={comment?.userX} />
                 <div className="global-flex-column" style={{gap: 0}}>
-                  <PostHeader
-                    userX={comment?.userX}
-                    postTimeMs={toLong(comment?.postTimeMs ?? 0)}
-                    deleteIconClicked={() => deleteComment(comment)}
-                  />
+                  <div
+                    style={getHighlightStyle(
+                      props.postHighlights?.getUserXHue?.(
+                        props.post?.userX ?? {}
+                      )
+                    )}
+                  >
+                    <PostHeader
+                      userX={comment?.userX}
+                      postTimeMs={toLong(comment?.postTimeMs ?? 0)}
+                      deleteIconClicked={() => deleteComment(comment)}
+                    />
+                  </div>
                   <HtmlEditor
                     id={comment.id?.toString() ?? ''}
                     value={

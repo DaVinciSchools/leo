@@ -1,14 +1,11 @@
 import './DefaultPage.scss';
 
-import {
-  BellOutlined,
-  QuestionCircleOutlined,
-  SmileTwoTone,
-} from '@ant-design/icons';
+import {BellOutlined, QuestionCircleOutlined} from '@ant-design/icons';
 import {GlobalStateContext} from '../GlobalState';
 import {Link} from 'react-router-dom';
 import {Popover} from 'antd';
 import {CSSProperties, PropsWithChildren, ReactNode, useContext} from 'react';
+import {UserXAvatar} from '../UserXAvatar/UserXAvatar';
 
 export function DefaultPage(
   props: PropsWithChildren<{
@@ -22,7 +19,7 @@ export function DefaultPage(
     userX != null ? (
       <div className="avatar-panel">
         <div className="avatar-icon">
-          <SmileTwoTone />
+          <UserXAvatar userX={userX} size="7rem" />
         </div>
         <div className="name">
           <span style={{whiteSpace: 'nowrap'}}>
@@ -57,7 +54,7 @@ export function DefaultPage(
             >
               <div className="page-account">
                 <span className="avatar-icon">
-                  <SmileTwoTone />
+                  <UserXAvatar userX={userX} size="2rem" />
                 </span>
                 {userX?.firstName ?? ''} {userX?.lastName ?? ''}
               </div>

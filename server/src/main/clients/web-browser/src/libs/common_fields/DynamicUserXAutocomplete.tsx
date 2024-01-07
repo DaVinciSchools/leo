@@ -5,6 +5,7 @@ import {DeepReadOnly, toProto} from '../misc';
 import {CSSProperties} from 'react';
 import {DynamicLoadAutocomplete} from './DynamicLoadAutocomplete';
 import {createService} from '../protos';
+import {UserXAvatar} from '../UserXAvatar/UserXAvatar';
 import IFullUserXDetails = user_x_management.IFullUserXDetails;
 import IGetUserXsRequest = user_x_management.IGetUserXsRequest;
 import UserXManagementService = user_x_management.UserXManagementService;
@@ -54,10 +55,16 @@ export function DynamicUserXAutocomplete<
         return `${last}, ${first} ${email}`;
       }}
       renderOption={(params, option, {selected}) => (
-        <li {...params} key={option.userX?.id ?? 0}>
+        <li
+          {...params}
+          key={option.userX?.id ?? 0}
+          className="global-flex-row"
+          style={{alignItems: 'center', cursor: 'pointer'}}
+        >
           {props.multiple && (
-            <Checkbox style={{marginRight: 8}} checked={selected} />
+            <Checkbox style={{marginRight: -6}} checked={selected} />
           )}
+          <UserXAvatar userX={option.userX} size="2em" />
           <span
             style={{
               textOverflow: 'ellipsis',

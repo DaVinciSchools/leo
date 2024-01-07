@@ -107,6 +107,7 @@ message UserX {
   optional string first_name = 3;
   optional string last_name = 4;
   optional string email_address = 5;
+  optional string avatar_image_url = 14;
 
   optional bool is_admin_x = 6;
   optional int32 admin_x_id = 7;
