@@ -540,9 +540,7 @@ export function Post(
                 <div className="global-flex-column" style={{gap: 0}}>
                   <div
                     style={getHighlightStyle(
-                      props.postHighlights?.getUserXHue?.(
-                        props.post?.userX ?? {}
-                      )
+                      props.postHighlights?.getUserXHue?.(comment?.userX ?? {})
                     )}
                   >
                     <PostHeader
