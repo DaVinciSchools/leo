@@ -3,9 +3,8 @@ import {createContext, PropsWithChildren, useState} from 'react';
 import {createService} from './protos';
 import {pl_types, user_x_management} from 'pl-pb';
 import {useNavigate} from 'react-router';
-
-import UserXManagementService = user_x_management.UserXManagementService;
 import {FORWARD_PARAM, logout} from './authentication';
+import UserXManagementService = user_x_management.UserXManagementService;
 
 export enum LoadedState {
   NOT_LOADED,
@@ -78,7 +77,7 @@ export function GlobalState(props: PropsWithChildren<{}>) {
       if (userX == null || !userXReq(userX)) {
         const navigate = useNavigate();
         if (forwardUrl) {
-          navigate(forwardUrl);
+          navigate(forwardUrl ?? '/users/login.html');
         } else {
           navigate(
             `/users/login.html?${FORWARD_PARAM}=${encodeURIComponent(
