@@ -38,6 +38,7 @@ pipeline {
             /usr/bin/rm -rf "${RUN_DIR}" || true
             /usr/bin/mkdir -p "${RUN_DIR}"
             /usr/bin/cp -r "${WORKSPACE}"/server/target/project-leo-server-* "${RUN_DIR}"
+            /usr/bin/cp -r "${WORKSPACE}"/database/target/project-leo-database-* "${RUN_DIR}"
             echo "${BUILD_URL}" > "${RUN_DIR}/build_url.txt"
             '''
         fingerprint '${WORKSPACE}/server/target/project-leo-server-*.jar'
