@@ -10,7 +10,6 @@ import static org.davincischools.leo.server.utils.ProtoDaoUtils.toUserXDao;
 import static org.davincischools.leo.server.utils.ProtoDaoUtils.valueOrNull;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.ProjectPost;
@@ -114,11 +113,6 @@ public class PostService {
                               .setBeingEdited(
                                   valueOrNull(
                                       request, GetProjectPostsRequest.BEING_EDITED_FIELD_NUMBER))
-                              .setExcludeCommentsByUserXIds(
-                                  userX.isAdminX()
-                                      ? List.of()
-                                      : List.of(
-                                          db.getUserXRepository().getProjectLeoCoach().getId()))
                               .setPage(
                                   valueOrNull(request, GetProjectPostsRequest.PAGE_FIELD_NUMBER))
                               .setPageSize(
