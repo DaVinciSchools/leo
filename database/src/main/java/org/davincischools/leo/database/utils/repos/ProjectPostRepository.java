@@ -13,9 +13,7 @@ import java.util.function.Function;
 import org.davincischools.leo.database.daos.ProjectInputFulfillment_;
 import org.davincischools.leo.database.daos.ProjectInputValue_;
 import org.davincischools.leo.database.daos.ProjectPost;
-import org.davincischools.leo.database.daos.ProjectPostComment;
 import org.davincischools.leo.database.daos.ProjectPostComment_;
-import org.davincischools.leo.database.daos.ProjectPostRating;
 import org.davincischools.leo.database.daos.ProjectPostRating_;
 import org.davincischools.leo.database.daos.ProjectPost_;
 import org.davincischools.leo.database.daos.Tag;
@@ -62,20 +60,13 @@ public interface ProjectPostRepository
     projectPost.join(ProjectPost_.userX, JoinType.LEFT).fetch().requireId(params.getUserXIds());
 
     if (params.getIncludeTags().orElse(false)) {
-      projectPost
-          .join(ProjectPost_.tags, JoinType.LEFT, Tag::getProjectPost, ProjectPost::setTags)
-          .notDeleted()
-          .fetch();
+      projectPost.join(ProjectPost_.tags, JoinType.LEFT).notDeleted().fetch();
     }
 
     if (params.getIncludeComments().orElse(false)) {
       var commentUserX =
           projectPost
-              .join(
-                  ProjectPost_.projectPostComments,
-                  JoinType.LEFT,
-                  ProjectPostComment::getProjectPost,
-                  ProjectPost::setProjectPostComments)
+              .join(ProjectPost_.projectPostComments, JoinType.LEFT)
               .notDeleted()
               .join(ProjectPostComment_.userX, JoinType.LEFT)
               .fetch();
@@ -91,14 +82,7 @@ public interface ProjectPostRepository
 
     if (params.getIncludeRatings().orElse(false)) {
       var projectPostRating =
-          projectPost
-              .join(
-                  ProjectPost_.projectPostRatings,
-                  JoinType.LEFT,
-                  ProjectPostRating::getProjectPost,
-                  ProjectPost::setProjectPostRatings)
-              .notDeleted()
-              .fetch();
+          projectPost.join(ProjectPost_.projectPostRatings, JoinType.LEFT).notDeleted().fetch();
       projectPostRating.join(ProjectPostRating_.userX, JoinType.LEFT).fetch();
       var projectInputValue =
           projectPostRating

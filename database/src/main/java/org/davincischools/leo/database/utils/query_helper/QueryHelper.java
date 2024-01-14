@@ -3,10 +3,7 @@ package org.davincischools.leo.database.utils.query_helper;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableList;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -19,13 +16,11 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 import jakarta.persistence.metamodel.SetAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,13 +29,6 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * This class helps with queries that would pull in a LOT of extra data due to the cartesian product
- * and N+1 issues with JPA + Hibernate. It breaks queries up into subqueries and performs them
- * separately so that only one of each element is queried.
- *
- * <p>It assumes that ALL tables have an 'id' and 'deleted' (a nullable timestamp) column.
- */
 @Component
 public class QueryHelper {
 
@@ -73,31 +61,18 @@ public class QueryHelper {
     queryBuilder.configureQuery(root).notDeleted();
 
     try (var em = entityManager.getEntityManagerFactory().createEntityManager()) {
-      // TODO: Profile and maybe incorporate optimizations.
-
-      boolean getIds = pageable.isPaged();
-      if (getIds) {
-        getIds(
-            em,
-            root,
-            pageable,
-            new QueryHelperConfig().setJoinOnly(true).setStopAtSubqueryBoundaries(false));
+      var count = Optional.<Long>empty();
+      if (pageable.isPaged()) {
+        count = Optional.of(getCount(em, root, new QueryHelperConfig().setJoinOnly(true)));
       }
 
       em.clear();
 
-      int size = root.getAllIds().size();
-
       var result =
           PageableExecutionUtils.getPage(
-              getEntities(
-                  em,
-                  root,
-                  getIds,
-                  pageable,
-                  new QueryHelperConfig().setJoinOnly(false).setStopAtSubqueryBoundaries(false)),
+              getEntities(em, root, pageable, new QueryHelperConfig().setJoinOnly(false)),
               pageable,
-              () -> size);
+              count::get);
 
       em.clear();
 
@@ -105,140 +80,65 @@ public class QueryHelper {
     }
   }
 
-  private <E> void getIds(
-      EntityManager em, Entity<?, E> root, Pageable pageable, QueryHelperConfig config) {
-    int pageStart = !pageable.isPaged() ? 0 : PageableUtils.getOffsetAsInteger(pageable);
-    int pageEnd = !pageable.isPaged() ? Integer.MAX_VALUE : pageStart + pageable.getPageSize();
-
+  private long getCount(EntityManager em, Entity<?, ?> root, QueryHelperConfig config) {
     CriteriaBuilder builder = em.getCriteriaBuilder();
     CriteriaQuery<Tuple> query = builder.createTupleQuery();
     List<Predicate> where = new ArrayList<>();
 
-    var roots = root.getRoots().toArray(Entity[]::new);
-    var allIds = Arrays.stream(roots).map(Entity::getAllIds).toArray(Set[]::new);
-    var selectedIds = Arrays.stream(roots).map(Entity::getSortedSelectedIds).toArray(List[]::new);
-
-    Arrays.asList(roots).forEach(Entity::getId);
+    root.getId();
     populateJpaEntities(root, /* isRoot= */ true, query, config);
     // Only after all entities have a JPA entity can we create preconditions.
     populateJpaPredicates(root, builder, where, config);
 
-    // Assemble query.
     var emQuery =
         em.createQuery(
             query
-                .select(
-                    builder.tuple(
-                        Arrays.stream(roots)
-                            .map(r -> (Selection<?>) r.getId().getJpaEntity())
-                            .toArray(Selection[]::new)))
-                .where(where.toArray(Predicate[]::new))
+                .select(builder.tuple(builder.countDistinct(root.getId().getJpaEntity())))
+                .where(
+                    ImmutableList.<Predicate>builder()
+                        .addAll(where)
+                        .add(builder.isNotNull(root.getId().getJpaEntity()))
+                        .build()
+                        .toArray(Predicate[]::new)));
+
+    return emQuery.getResultList().stream().map(t -> t.get(0, Long.class)).findFirst().orElse(0L);
+  }
+
+  private <E> ImmutableList<E> getEntities(
+      EntityManager em, Entity<?, E> root, Pageable pageable, QueryHelperConfig config) {
+    var builder = em.getCriteriaBuilder();
+    var query = builder.createQuery(root.getEntityClass());
+    var where = new ArrayList<Predicate>();
+
+    populateJpaEntities(root, /* isRoot= */ true, query, config);
+    // Only after all entities have a JPA entity can we create preconditions.
+    populateJpaPredicates(root, builder, where, config);
+
+    @SuppressWarnings("unchecked")
+    var selectJpaEntity = (Selection<? extends E>) root.getJpaEntity();
+    var emQuery =
+        em.createQuery(
+            query
+                .select(selectJpaEntity)
+                .distinct(true)
+                .where(
+                    ImmutableList.<Predicate>builder()
+                        .addAll(where)
+                        .add(builder.isNotNull(root.getJpaEntity()))
+                        .build()
+                        .toArray(Predicate[]::new))
                 .orderBy(
                     root.getOrderByList().stream()
                         .map(o -> o.toOrder(builder))
                         .toArray(Order[]::new)));
 
-    // Collect information about selected ids.
-    emQuery
-        .getResultList()
-        .forEach(
-            t -> {
-              var inPage = false;
-              for (int i = 0; i < roots.length; ++i) {
-                var id = t.get(i);
-                @SuppressWarnings("unchecked")
-                var added = allIds[i].add(id);
-                if (i == 0) {
-                  inPage =
-                      !((allIds[i].size() - 1) < pageStart || (allIds[i].size() - 1) >= pageEnd);
-                }
-                if (added && inPage) {
-                  selectedIds[i].add(id);
-                }
-              }
-            });
-  }
-
-  private <E> List<E> getEntities(
-      EntityManager em,
-      Entity<?, E> root,
-      boolean gotIds,
-      Pageable pageable,
-      QueryHelperConfig config) {
-    CriteriaBuilder builder = em.getCriteriaBuilder();
-    for (var entity : root.getRoots()) {
-      var query = builder.createQuery(entity.getEntityClass());
-      var where = new ArrayList<Predicate>();
-
-      populateJpaEntities(entity, /* isRoot= */ true, query, config);
-      // Only after all entities have a JPA entity can we create predicates.
-      populateJpaPredicates(entity, builder, where, config);
-      if (gotIds) {
-        where.add(entity.getId().getJpaEntity().in(entity.getSortedSelectedIds()));
-      }
-
-      // Assemble query.
-      query.select(entity.getJpaEntity()).distinct(true).where(where.toArray(Predicate[]::new));
-      if (!gotIds) {
-        query.orderBy(
-            root.getOrderByList().stream().map(o -> o.toOrder(builder)).toArray(Order[]::new));
-      }
-      var emQuery = em.createQuery(query);
-      if (!gotIds && pageable.isPaged()) {
-        emQuery
-            .setFirstResult(PageableUtils.getOffsetAsInteger(pageable))
-            .setMaxResults(pageable.getPageSize());
-      }
-      entity.getResults().addAll(emQuery.getResultList());
-
-      if (!config.isStopAtSubqueryBoundaries()) {
-        break;
-      }
+    if (pageable.isPaged()) {
+      int pageStart = !pageable.isPaged() ? 0 : PageableUtils.getOffsetAsInteger(pageable);
+      int pageEnd = !pageable.isPaged() ? Integer.MAX_VALUE : pageStart + pageable.getPageSize();
+      emQuery.setFirstResult(pageStart).setMaxResults(pageEnd - pageStart);
     }
 
-    if (!gotIds) {
-      return root.getResults();
-    } else {
-      for (int i = 1; i < root.getRoots().size(); ++i) {
-        var child = root.getRoots().get(i);
-        Multimap<Object, Object> childrenBySource =
-            Multimaps.index(child.getResults(), k -> child.getGetSource().apply(k));
-        for (var entry : childrenBySource.asMap().entrySet()) {
-          if (child.getAttribute() instanceof SetAttribute<?, ?>) {
-            child.getSetSourceTargets().accept(entry.getKey(), Sets.newHashSet(entry.getValue()));
-          } else {
-            throw new RuntimeException(
-                "Unsupported collection type: " + child.getAttribute().getClass());
-          }
-        }
-      }
-
-      Method getIdMethod =
-          getIdMethods.computeIfAbsent(
-              root.getEntityClass(),
-              k -> {
-                try {
-                  return root.getEntityClass().getMethod("getId");
-                } catch (NoSuchMethodException e) {
-                  throw new RuntimeException(e);
-                }
-              });
-
-      var indexedResults =
-          Multimaps.index(
-              root.getResults(),
-              e -> {
-                try {
-                  return getIdMethod.invoke(e);
-                } catch (IllegalAccessException | InvocationTargetException ex) {
-                  throw new RuntimeException(ex);
-                }
-              });
-
-      return root.getSortedSelectedIds().stream()
-          .map(i -> Iterables.getOnlyElement(indexedResults.get(i)))
-          .toList();
-    }
+    return ImmutableList.copyOf(emQuery.getResultList());
   }
 
   private static <W, E> void populateJpaEntities(
@@ -304,13 +204,7 @@ public class QueryHelper {
     entity
         .getChildren()
         .values()
-        .forEach(
-            e -> {
-              if (config.isStopAtSubqueryBoundaries() && e.isSubqueryBoundary()) {
-                return;
-              }
-              populateJpaEntities((Entity<?, Object>) e, /* isRoot= */ false, query, config);
-            });
+        .forEach(e -> populateJpaEntities(e, /* isRoot= */ false, query, config));
   }
 
   private void populateJpaPredicates(
@@ -326,9 +220,6 @@ public class QueryHelper {
         .getOn()
         .forEach(
             p -> {
-              if (config.isStopAtSubqueryBoundaries() && !isPredicateInBoundary(entity, p)) {
-                return;
-              }
               if (entity.getEntityType() == EntityType.ROOT
                   || entity.getJpaEntity() instanceof Root<?>) {
                 where.add(p.toPredicate(builder));
@@ -341,52 +232,16 @@ public class QueryHelper {
         .getWhere()
         .forEach(
             p -> {
-              if (config.isStopAtSubqueryBoundaries() && !isPredicateInBoundary(entity, p)) {
-                return;
-              }
               where.add(p.toPredicate(builder));
             });
 
-    // Populate Preconditions.
     entity
         .getChildren()
         .values()
         .forEach(
             e -> {
-              if (config.isStopAtSubqueryBoundaries() && !isEntityInBoundary(entity, e)) {
-                return;
-              }
               populateJpaPredicates(e, builder, where, config);
             });
-  }
-
-  private boolean isPredicateInBoundary(
-      Entity<?, ?> entity, org.davincischools.leo.database.utils.query_helper.Predicate predicate) {
-    checkNotNull(entity);
-    checkNotNull(predicate);
-
-    if (predicate.getLeft() instanceof Entity<?, ?> leftEntity
-        && !isEntityInBoundary(entity, leftEntity)) {
-      return false;
-    }
-    if (predicate.getRight() instanceof Entity<?, ?> rightEntity
-        && !isEntityInBoundary(entity, rightEntity)) {
-      return false;
-    }
-    return true;
-  }
-
-  private boolean isEntityInBoundary(Entity<?, ?> entity, Entity<?, ?> child) {
-    while (child != null) {
-      if (child == entity) {
-        return true;
-      }
-      if (child.isSubqueryBoundary()) {
-        return false;
-      }
-      child = child.getParent();
-    }
-    return false;
   }
 
   private static void addJoinOn(Object jpaEntity, Predicate predicate) {

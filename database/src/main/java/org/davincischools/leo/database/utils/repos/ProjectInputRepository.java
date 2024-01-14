@@ -4,14 +4,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import jakarta.persistence.criteria.JoinType;
 import java.util.List;
-import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.AssignmentProjectDefinition_;
-import org.davincischools.leo.database.daos.ProjectDefinition;
-import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory_;
 import org.davincischools.leo.database.daos.ProjectDefinition_;
 import org.davincischools.leo.database.daos.ProjectInput;
-import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectInputValue_;
 import org.davincischools.leo.database.daos.ProjectInput_;
 import org.davincischools.leo.database.utils.query_helper.Entity;
@@ -79,24 +75,13 @@ public interface ProjectInputRepository
     var projectDefinition =
         projectInput.join(ProjectInput_.projectDefinition, JoinType.LEFT).fetch();
     projectDefinition
-        .join(
-            ProjectDefinition_.projectDefinitionCategories,
-            JoinType.LEFT,
-            ProjectDefinitionCategory::getProjectDefinition,
-            ProjectDefinition::setProjectDefinitionCategories)
+        .join(ProjectDefinition_.projectDefinitionCategories, JoinType.LEFT)
         .notDeleted()
         .join(ProjectDefinitionCategory_.projectDefinitionCategoryType, JoinType.LEFT)
         .fetch();
 
     var projectInputValue =
-        projectInput
-            .join(
-                ProjectInput_.projectInputValues,
-                JoinType.LEFT,
-                ProjectInputValue::getProjectInput,
-                ProjectInput::setProjectInputValues)
-            .notDeleted()
-            .fetch();
+        projectInput.join(ProjectInput_.projectInputValues, JoinType.LEFT).notDeleted().fetch();
     projectInputValue
         .join(ProjectInputValue_.knowledgeAndSkillValue, JoinType.LEFT)
         .notDeleted()
@@ -108,11 +93,7 @@ public interface ProjectInputRepository
           List.of(
               projectInput.join(ProjectInput_.assignment, JoinType.LEFT),
               projectDefinition
-                  .join(
-                      ProjectDefinition_.assignmentProjectDefinitions,
-                      JoinType.LEFT,
-                      AssignmentProjectDefinition::getProjectDefinition,
-                      ProjectDefinition::setAssignmentProjectDefinitions)
+                  .join(ProjectDefinition_.assignmentProjectDefinitions, JoinType.LEFT)
                   .notDeleted()
                   .fetch()
                   .join(AssignmentProjectDefinition_.assignment, JoinType.LEFT))) {

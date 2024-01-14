@@ -16,14 +16,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -46,29 +42,14 @@ public class Entity<W, E> implements Expression<E> {
   private EntityType entityType;
   private Attribute<? super W, ?> attribute;
   private Class<E> entityClass;
-  private final List<Entity<Object, Object>> roots = new ArrayList<>();
 
   private JoinType joinType;
-  private Function<E, W> getSource;
-  private BiConsumer<W, Collection<E>> setSourceTargets;
 
   private final List<Predicate> on = new ArrayList<>();
   private final List<Predicate> where = new ArrayList<>();
 
   private final Map<Attribute<? super E, ?>, Entity<E, ?>> children = new HashMap<>();
   private final List<OrderBy> orderByList = new ArrayList<>();
-
-  @Getter(AccessLevel.PUBLIC)
-  private boolean isSubqueryBoundary = false;
-
-  @Getter(AccessLevel.PUBLIC)
-  private final Set<Object> allIds = new HashSet<>();
-
-  @Getter(AccessLevel.PUBLIC)
-  private final List<Object> sortedSelectedIds = new ArrayList<>();
-
-  @Getter(AccessLevel.PUBLIC)
-  private final List<E> results = new ArrayList<>();
 
   Entity(EntityManager entityManager) {
     this.entityManager = checkNotNull(entityManager);
@@ -149,17 +130,12 @@ public class Entity<W, E> implements Expression<E> {
             .setEntityClass(attribute.getBindableJavaType()));
   }
 
-  @SuppressWarnings("unchecked")
   public <C extends Collection<T>, T> Entity<E, T> join(
-      PluralAttribute<E, C, T> attribute,
-      JoinType joinType,
-      Function<T, E> getSource,
-      BiConsumer<E, C> setSourceTargets) {
+      PluralAttribute<E, C, T> attribute, JoinType joinType) {
     checkNotNull(attribute);
     checkNotNull(joinType);
-    checkNotNull(getSource);
-    checkNotNull(setSourceTargets);
 
+    @SuppressWarnings("unchecked")
     var child =
         addChild(
             (Attribute<E, T>) attribute,
@@ -168,10 +144,8 @@ public class Entity<W, E> implements Expression<E> {
                 .setParent(this)
                 .setJoinType(joinType)
                 .setAttribute(attribute)
-                .setEntityClass(attribute.getBindableJavaType())
-                .setGetSource(getSource)
-                .setSetSourceTargets((BiConsumer<E, Collection<T>>) setSourceTargets));
-    getRoot().getRoots().add((Entity<Object, Object>) child.setSubqueryBoundary(true));
+                .setEntityClass(attribute.getBindableJavaType()));
+
     return child;
   }
 
@@ -248,11 +222,6 @@ public class Entity<W, E> implements Expression<E> {
 
     this.entityType = entityType;
 
-    if (entityType == EntityType.ROOT) {
-      @SuppressWarnings("unchecked")
-      var objThis = (Entity<Object, Object>) this;
-      getRoot().getRoots().add(objThis);
-    }
     if (entityType == EntityType.FETCH) {
       if (parent != null && parent.getEntityType() == EntityType.JOIN) {
         parent.setEntityType(EntityType.FETCH);
@@ -281,10 +250,6 @@ public class Entity<W, E> implements Expression<E> {
     checkArgument(child.getJpaEntity() == null);
     checkArgument(child.getParent() == entity.getParent());
     checkArgument(child.getEntityClass() == entity.getEntityClass());
-    checkArgument(child.roots.isEmpty());
-
-    checkArgument(child.getGetSource() == entity.getGetSource());
-    checkArgument(child.getSetSourceTargets() == entity.getSetSourceTargets());
 
     checkArgument(child.getOn().isEmpty());
     checkArgument(child.getWhere().isEmpty());
@@ -302,10 +267,6 @@ public class Entity<W, E> implements Expression<E> {
     checkState(entity.getParent() != null);
     checkState(entity.getAttribute() != null);
     checkState(entity.getEntityClass() != null);
-    if (entity.attribute instanceof PluralAttribute<?, ?, ?>) {
-      checkState(entity.getGetSource() != null);
-      checkState(entity.getSetSourceTargets() != null);
-    }
 
     return entity;
   }
@@ -322,12 +283,12 @@ public class Entity<W, E> implements Expression<E> {
     switch (entityType) {
       case ROOT -> sb.append("Root(").append(entityClass.getSimpleName()).append(")");
       case GET -> sb.append("Get(")
-          .append(children.get(attribute))
+          .append(attribute.getName())
           .append(":")
           .append(entityClass.getSimpleName())
           .append(")");
       case JOIN, FETCH -> sb.append("Join(")
-          .append(children.get(attribute))
+          .append(attribute.getName())
           .append(":")
           .append(entityClass.getSimpleName())
           .append(")");

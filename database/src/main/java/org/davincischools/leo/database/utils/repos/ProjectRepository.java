@@ -6,16 +6,11 @@ import jakarta.persistence.criteria.JoinType;
 import java.util.List;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory_;
-import org.davincischools.leo.database.daos.ProjectInputFulfillment;
 import org.davincischools.leo.database.daos.ProjectInputFulfillment_;
 import org.davincischools.leo.database.daos.ProjectInputValue_;
 import org.davincischools.leo.database.daos.ProjectInput_;
-import org.davincischools.leo.database.daos.ProjectMilestone;
-import org.davincischools.leo.database.daos.ProjectMilestoneStep;
 import org.davincischools.leo.database.daos.ProjectMilestone_;
-import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.Project_;
-import org.davincischools.leo.database.daos.Tag;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.query_helper.Entity;
 import org.davincischools.leo.database.utils.query_helper.Predicate;
@@ -51,10 +46,7 @@ public interface ProjectRepository
     }
 
     if (params.getIncludeTags().orElse(false)) {
-      project
-          .join(Project_.tags, JoinType.LEFT, Tag::getProject, Project::setTags)
-          .notDeleted()
-          .fetch();
+      project.join(Project_.tags, JoinType.LEFT).notDeleted().fetch();
     }
 
     if (params.getIncludeInputs().isPresent()) {
@@ -65,11 +57,7 @@ public interface ProjectRepository
 
     if (params.getIncludeFulfillments().orElse(false)) {
       project
-          .join(
-              Project_.projectInputFulfillments,
-              JoinType.LEFT,
-              ProjectInputFulfillment::getProject,
-              Project::setProjectInputFulfillments)
+          .join(Project_.projectInputFulfillments, JoinType.LEFT)
           .notDeleted()
           .join(ProjectInputFulfillment_.projectInputValue, JoinType.LEFT)
           .notDeleted()
@@ -88,28 +76,16 @@ public interface ProjectRepository
 
     if (params.getIncludeMilestones().orElse(false)) {
       project
-          .join(
-              Project_.projectMilestones,
-              JoinType.LEFT,
-              ProjectMilestone::getProject,
-              Project::setProjectMilestones)
+          .join(Project_.projectMilestones, JoinType.LEFT)
           .notDeleted()
-          .join(
-              ProjectMilestone_.projectMilestoneSteps,
-              JoinType.LEFT,
-              ProjectMilestoneStep::getProjectMilestone,
-              ProjectMilestone::setProjectMilestoneSteps)
+          .join(ProjectMilestone_.projectMilestoneSteps, JoinType.LEFT)
           .notDeleted()
           .fetch();
     }
 
     if (params.getIncludeProjectPosts().isPresent()) {
       ProjectPostRepository.configureQuery(
-              project.join(
-                  Project_.projectPosts,
-                  JoinType.LEFT,
-                  ProjectPost::getProject,
-                  Project::setProjectPosts),
+              project.join(Project_.projectPosts, JoinType.LEFT),
               params.getIncludeProjectPosts().get())
           .notDeleted();
     }

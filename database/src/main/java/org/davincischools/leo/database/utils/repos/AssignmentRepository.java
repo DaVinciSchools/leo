@@ -9,14 +9,10 @@ import java.util.List;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.AssignmentKnowledgeAndSkill_;
-import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.AssignmentProjectDefinition_;
 import org.davincischools.leo.database.daos.Assignment_;
-import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.ClassX_;
-import org.davincischools.leo.database.daos.StudentClassX;
 import org.davincischools.leo.database.daos.StudentClassX_;
-import org.davincischools.leo.database.daos.TeacherClassX;
 import org.davincischools.leo.database.daos.TeacherClassX_;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.query_helper.Entity;
@@ -65,11 +61,7 @@ public interface AssignmentRepository
         () ->
             classX
                 .get()
-                .join(
-                    ClassX_.teacherClassXES,
-                    JoinType.LEFT,
-                    TeacherClassX::getClassX,
-                    ClassX::setTeacherClassXES)
+                .join(ClassX_.teacherClassXES, JoinType.LEFT)
                 .notDeleted()
                 .join(TeacherClassX_.teacher, JoinType.LEFT),
         params.getTeacherIds());
@@ -79,11 +71,7 @@ public interface AssignmentRepository
         () ->
             classX
                 .get()
-                .join(
-                    ClassX_.studentClassXES,
-                    JoinType.LEFT,
-                    StudentClassX::getClassX,
-                    ClassX::setStudentClassXES)
+                .join(ClassX_.studentClassXES, JoinType.LEFT)
                 .notDeleted()
                 .join(StudentClassX_.student, JoinType.LEFT),
         params.getStudentIds());
@@ -94,11 +82,7 @@ public interface AssignmentRepository
 
     if (params.getIncludeKnowledgeAndSkills().orElse(false)) {
       assignment
-          .join(
-              Assignment_.assignmentKnowledgeAndSkills,
-              JoinType.LEFT,
-              AssignmentKnowledgeAndSkill::getAssignment,
-              Assignment::setAssignmentKnowledgeAndSkills)
+          .join(Assignment_.assignmentKnowledgeAndSkills, JoinType.LEFT)
           .notDeleted()
           .join(AssignmentKnowledgeAndSkill_.knowledgeAndSkill, JoinType.LEFT)
           .fetch();
@@ -107,11 +91,7 @@ public interface AssignmentRepository
     if (params.getIncludeProjectDefinitions().isPresent()) {
       ProjectDefinitionRepository.configureQuery(
               assignment
-                  .join(
-                      Assignment_.assignmentProjectDefinitions,
-                      JoinType.LEFT,
-                      AssignmentProjectDefinition::getAssignment,
-                      Assignment::setAssignmentProjectDefinitions)
+                  .join(Assignment_.assignmentProjectDefinitions, JoinType.LEFT)
                   .notDeleted()
                   .join(AssignmentProjectDefinition_.projectDefinition, JoinType.LEFT),
               params.getIncludeProjectDefinitions().get())

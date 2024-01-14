@@ -120,11 +120,7 @@ public class QueryHelperTest {
             teacher -> {
               teacher
                   .notDeleted()
-                  .join(
-                      Teacher_.teacherClassXES,
-                      JoinType.LEFT,
-                      TeacherClassX::getTeacher,
-                      Teacher::setTeacherClassXES)
+                  .join(Teacher_.teacherClassXES, JoinType.LEFT)
                   .notDeleted()
                   .fetch()
                   .join(TeacherClassX_.classX, JoinType.LEFT)

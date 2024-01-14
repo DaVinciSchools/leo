@@ -10,5 +10,4 @@ import lombok.experimental.Accessors;
 @Setter(AccessLevel.PACKAGE)
 class QueryHelperConfig {
   private boolean joinOnly = false;
-  private boolean stopAtSubqueryBoundaries = false;
 }
