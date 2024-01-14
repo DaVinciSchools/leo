@@ -44,8 +44,8 @@ public interface AssignmentRepository
         .query(Assignment.class, assignment -> configureQuery(assignment, params));
   }
 
-  static Entity<?, Assignment> configureQuery(
-      Entity<?, Assignment> assignment, GetAssignmentsParams params) {
+  static Entity<?, ?, Assignment> configureQuery(
+      Entity<?, ?, Assignment> assignment, GetAssignmentsParams params) {
     checkNotNull(assignment);
     checkNotNull(params);
 

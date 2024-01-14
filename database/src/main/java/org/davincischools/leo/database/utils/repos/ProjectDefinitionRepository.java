@@ -66,8 +66,8 @@ public interface ProjectDefinitionRepository
             projectDefinition -> configureQuery(projectDefinition, params));
   }
 
-  static Entity<?, ProjectDefinition> configureQuery(
-      Entity<?, ProjectDefinition> projectDefinition, GetProjectDefinitionsParams params) {
+  static <P, S> Entity<P, S, ProjectDefinition> configureQuery(
+      Entity<P, S, ProjectDefinition> projectDefinition, GetProjectDefinitionsParams params) {
     checkNotNull(projectDefinition);
     checkNotNull(params);
 

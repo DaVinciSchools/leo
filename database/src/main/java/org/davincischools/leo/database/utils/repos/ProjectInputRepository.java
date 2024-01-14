@@ -48,8 +48,8 @@ public interface ProjectInputRepository
         .query(ProjectInput.class, projectInput -> configureQuery(projectInput, params));
   }
 
-  static Entity<?, ProjectInput> configureQuery(
-      Entity<?, ProjectInput> projectInput, GetProjectInputsParams params) {
+  static Entity<?, ?, ProjectInput> configureQuery(
+      Entity<?, ?, ProjectInput> projectInput, GetProjectInputsParams params) {
     checkNotNull(projectInput);
     checkNotNull(params);
 

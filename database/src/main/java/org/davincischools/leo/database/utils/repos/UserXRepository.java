@@ -104,7 +104,10 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
     return getQueryHelper()
         .query(
             UserX.class,
-            userX -> configureQuery(userX, params),
+            userX -> {
+              userX.notDeleted();
+              return configureQuery(userX, params);
+            },
             params
                 .getPage()
                 .map(
@@ -114,7 +117,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
                 .orElse(Pageable.unpaged()));
   }
 
-  static Entity<?, UserX> configureQuery(Entity<?, UserX> userX, GetUserXsParams params) {
+  static Entity<?, ?, UserX> configureQuery(Entity<?, ?, UserX> userX, GetUserXsParams params) {
     checkNotNull(userX);
     checkNotNull(params);
 

@@ -29,40 +29,66 @@ import lombok.experimental.Accessors;
 @Getter
 @Accessors(chain = true)
 @Setter(AccessLevel.PACKAGE)
-public class Entity<W, E> implements Expression<E> {
+public class Entity<P, S, F> implements Expression<F> {
   private static final AtomicInteger previousJoinId = new AtomicInteger(0);
 
   private final int id = previousJoinId.incrementAndGet();
   private final EntityManager entityManager;
+  private final QueryHelper queryHelper;
+  private final Class<S> selectClass;
+  private final Class<F> fromClass;
 
-  // This must be <?> because singular attributes are E and plural attributes are Collection<E>.
+  // This must be <?> because singular attributes are F2 and plural attributes are Collection<F2>.
   private jakarta.persistence.criteria.Expression<?> jpaEntity;
 
-  private Entity<?, W> parent;
+  private Entity<?, S, P> parent;
   private EntityType entityType;
-  private Attribute<? super W, ?> attribute;
-  private Class<E> entityClass;
+  // This must be <?> because singular attributes are F2 and plural attributes are Collection<F2>.
+  private Attribute<? super P, ?> attribute;
+  private Entity<?, ?, S> selectEntity;
 
   private JoinType joinType;
-
   private final List<Predicate> on = new ArrayList<>();
   private final List<Predicate> where = new ArrayList<>();
 
-  private final Map<Attribute<? super E, ?>, Entity<E, ?>> children = new HashMap<>();
+  private final Map<Attribute<? super F, ?>, Entity<F, S, ?>> children = new HashMap<>();
   private final List<OrderBy> orderByList = new ArrayList<>();
 
-  Entity(EntityManager entityManager) {
+  Entity(
+      QueryHelper queryHelper,
+      EntityManager entityManager,
+      Class<S> selectClass,
+      Class<F> fromClass) {
+    this.queryHelper = checkNotNull(queryHelper);
     this.entityManager = checkNotNull(entityManager);
+    this.selectClass = checkNotNull(selectClass);
+    this.fromClass = checkNotNull(fromClass);
   }
 
-  public <Y, Z> Supplier<Entity<Y, Z>> supplier(Supplier<Entity<Y, Z>> supplier) {
+  public Entity<P, S, F> select() {
+    checkState(selectClass == fromClass);
+    @SuppressWarnings("unchecked")
+    var sfChild = (Entity<P, S, S>) this;
+    setSelectEntity(sfChild);
+    return this;
+  }
+
+  private void setSelectEntity(Entity<?, ?, S> entity) {
+    checkState(selectClass == entity.fromClass);
+    this.selectEntity = entity;
+    if (parent != null && parent.selectEntity == null) {
+      parent.setSelectEntity(entity);
+    }
+  }
+
+  public <S2, F2> Supplier<Entity<?, S2, F2>> supplier(Supplier<Entity<?, S2, F2>> supplier) {
     checkNotNull(supplier);
 
     return supplier;
   }
 
-  public <Y, Z> Supplier<Entity<Y, Z>> supplier(
-      Supplier<Entity<Y, Z>> supplier, Optional<Iterable<Integer>> inIds) {
+  public <S2, F2> Supplier<Entity<?, S2, F2>> supplier(
+      Supplier<Entity<?, S2, F2>> supplier, Optional<Iterable<Integer>> inIds) {
     checkNotNull(supplier);
     checkNotNull(inIds);
 
@@ -72,84 +98,82 @@ public class Entity<W, E> implements Expression<E> {
     return supplier;
   }
 
-  public Entity<W, E> notDeleted() {
+  public Entity<P, S, F> notDeleted() {
     on.add(Predicate.isNull(getDeleted()));
     return this;
   }
 
-  public <T> Entity<E, T> get(SingularAttribute<E, T> attribute) {
+  public <F2> Entity<F, S, F2> get(SingularAttribute<? super F, F2> attribute) {
     checkNotNull(attribute);
 
     return addChild(
         attribute,
-        new Entity<E, T>(entityManager)
+        new Entity<F, S, F2>(
+                queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
             .setEntityType(EntityType.GET)
             .setParent(this)
-            .setAttribute(attribute)
-            .setEntityClass(attribute.getBindableJavaType()));
+            .setAttribute(attribute));
   }
 
-  public <T> Entity<E, T> get(String attributeName, Class<T> getClass) {
+  public <F2> Entity<F, S, F2> get(String attributeName, Class<F2> getClass) {
     checkNotNull(attributeName);
     checkNotNull(getClass);
 
     @SuppressWarnings("unchecked")
     var attribute =
-        (Attribute<? super E, T>)
-            entityManager.getMetamodel().managedType(entityClass).getAttribute(attributeName);
+        (Attribute<? super F, F2>)
+            entityManager.getMetamodel().managedType(fromClass).getAttribute(attributeName);
     checkArgument(getClass.isAssignableFrom(attribute.getJavaType()));
 
     return addChild(
         attribute,
-        new Entity<E, T>(entityManager)
+        new Entity<F, S, F2>(queryHelper, entityManager, selectClass, getClass)
             .setEntityType(EntityType.GET)
             .setParent(this)
-            .setAttribute(attribute)
-            .setEntityClass(getClass));
+            .setAttribute(attribute));
   }
 
-  public Entity<E, Object> getId() {
+  public Entity<F, S, Object> getId() {
     return get("id", Object.class);
   }
 
-  public Entity<E, Instant> getDeleted() {
+  public Entity<F, S, Instant> getDeleted() {
     return get("deleted", Instant.class);
   }
 
-  public <T> Entity<E, T> join(SingularAttribute<? super E, T> attribute, JoinType joinType) {
+  public <F2> Entity<F, S, F2> join(SingularAttribute<? super F, F2> attribute, JoinType joinType) {
     checkNotNull(attribute);
     checkNotNull(joinType);
 
     return addChild(
         attribute,
-        new Entity<E, T>(entityManager)
+        new Entity<F, S, F2>(
+                queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
             .setEntityType(EntityType.JOIN)
             .setParent(this)
             .setJoinType(joinType)
-            .setAttribute(attribute)
-            .setEntityClass(attribute.getBindableJavaType()));
+            .setAttribute(attribute));
   }
 
-  public <C extends Collection<T>, T> Entity<E, T> join(
-      PluralAttribute<E, C, T> attribute, JoinType joinType) {
+  @SuppressWarnings("unchecked")
+  public <C extends Collection<F2>, F2> Entity<F, S, F2> join(
+      PluralAttribute<? super F, C, F2> attribute, JoinType joinType) {
     checkNotNull(attribute);
     checkNotNull(joinType);
 
-    @SuppressWarnings("unchecked")
     var child =
         addChild(
-            (Attribute<E, T>) attribute,
-            new Entity<E, T>(entityManager)
+            (Attribute<? super F, F2>) attribute,
+            new Entity<F, S, F2>(
+                    queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
                 .setEntityType(EntityType.JOIN)
                 .setParent(this)
                 .setJoinType(joinType)
-                .setAttribute(attribute)
-                .setEntityClass(attribute.getBindableJavaType()));
-
+                .setAttribute(attribute));
     return child;
   }
 
-  public Entity<W, E> fetch() {
+  public Entity<P, S, F> fetch() {
     if (entityType == EntityType.JOIN) {
       setEntityType(EntityType.FETCH);
       if (getParent() != null) {
@@ -160,21 +184,22 @@ public class Entity<W, E> implements Expression<E> {
     return this;
   }
 
-  public Entity<W, E> on(Predicate predicate) {
+  public Entity<P, S, F> on(Predicate predicate) {
     checkNotNull(predicate);
 
     on.add(predicate);
     return this;
   }
 
-  public Entity<W, E> where(Predicate predicate) {
+  public Entity<P, S, F> where(Predicate predicate) {
     checkNotNull(predicate);
 
     where.add(predicate);
+
     return this;
   }
 
-  public Entity<W, E> requireId(Optional<Iterable<Integer>> optionalIds) {
+  public Entity<P, S, F> requireId(Optional<Iterable<Integer>> optionalIds) {
     checkNotNull(optionalIds);
 
     optionalIds.ifPresent(
@@ -184,7 +209,7 @@ public class Entity<W, E> implements Expression<E> {
     return this;
   }
 
-  public Entity<W, E> requireNotId(Optional<Iterable<Integer>> optionalIds) {
+  public Entity<P, S, F> requireNotId(Optional<Iterable<Integer>> optionalIds) {
     checkNotNull(optionalIds);
 
     if (optionalIds.isPresent() && !Iterables.isEmpty(optionalIds.get())) {
@@ -197,27 +222,31 @@ public class Entity<W, E> implements Expression<E> {
     return this;
   }
 
-  private Entity<?, ?> getRoot() {
-    Entity<?, ?> root = this;
+  private Entity<?, S, ?> getRoot() {
+    Entity<?, S, ?> root = this;
     while (root.parent != null) {
       root = root.parent;
     }
     return root;
   }
 
-  public void orderByAsc(Entity<?, ?> entity) {
+  public Entity<P, S, F> orderByAsc(Entity<?, ?, ?> entity) {
     checkNotNull(entity);
 
     getRoot().orderByList.add(new OrderBy(entity, OrderDirection.ASC));
+
+    return this;
   }
 
-  public void orderByDesc(Entity<?, ?> entity) {
+  public Entity<P, S, F> orderByDesc(Entity<?, ?, ?> entity) {
     checkNotNull(entity);
 
     getRoot().orderByList.add(new OrderBy(entity, OrderDirection.DESC));
+
+    return this;
   }
 
-  Entity<W, E> setEntityType(EntityType entityType) {
+  Entity<P, S, F> setEntityType(EntityType entityType) {
     checkNotNull(entityType);
 
     this.entityType = entityType;
@@ -231,7 +260,7 @@ public class Entity<W, E> implements Expression<E> {
     return this;
   }
 
-  Entity<W, E> setJoinType(JoinType joinType) {
+  Entity<P, S, F> setJoinType(JoinType joinType) {
     // Null is a valid value.
 
     this.joinType = joinType;
@@ -239,17 +268,19 @@ public class Entity<W, E> implements Expression<E> {
     return this;
   }
 
-  private <Y> Entity<E, Y> addChild(Attribute<? super E, Y> attribute, Entity<E, Y> child) {
+  private <F2> Entity<F, S, F2> addChild(
+      Attribute<? super F, F2> attribute, Entity<F, S, F2> child) {
     checkNotNull(attribute);
     checkNotNull(child);
 
     @SuppressWarnings("unchecked")
-    Entity<E, Y> entity = (Entity<E, Y>) children.computeIfAbsent(attribute, k -> child);
+    Entity<F, S, F2> entity = (Entity<F, S, F2>) children.computeIfAbsent(attribute, k -> child);
 
     // The (new) child should be a basic template for the entity. Not many fields should be set.
     checkArgument(child.getJpaEntity() == null);
     checkArgument(child.getParent() == entity.getParent());
-    checkArgument(child.getEntityClass() == entity.getEntityClass());
+    checkArgument(child.getSelectClass() == entity.getSelectClass());
+    checkArgument(child.getFromClass() == entity.getFromClass());
 
     checkArgument(child.getOn().isEmpty());
     checkArgument(child.getWhere().isEmpty());
@@ -258,49 +289,39 @@ public class Entity<W, E> implements Expression<E> {
 
     // Merge changes in the child into the existing.
     entity.setEntityType(child.getEntityType()).setJoinType(child.getJoinType());
-    entity.setEntityClass(
-        entity.getEntityClass() != Object.class ? entity.getEntityClass() : child.getEntityClass());
     entity.setAttribute(child.getAttribute());
 
     // Verify that the required fields are set on the result.
     checkState(entity.getEntityType() != null);
     checkState(entity.getParent() != null);
     checkState(entity.getAttribute() != null);
-    checkState(entity.getEntityClass() != null);
+    checkState(entity.getSelectClass() != null);
+    checkState(entity.getFromClass() != null);
 
     return entity;
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public jakarta.persistence.criteria.Expression<E> toExpression(CriteriaBuilder builder) {
-    return (jakarta.persistence.criteria.Expression<E>) jpaEntity;
+  public jakarta.persistence.criteria.Expression<F> toExpression(CriteriaBuilder builder) {
+    return (jakarta.persistence.criteria.Expression<F>) jpaEntity;
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     switch (entityType) {
-      case ROOT -> sb.append("Root(").append(entityClass.getSimpleName()).append(")");
+      case ROOT -> sb.append("Root(").append(fromClass.getSimpleName()).append(")");
       case GET -> sb.append("Get(")
           .append(attribute.getName())
           .append(":")
-          .append(entityClass.getSimpleName())
+          .append(fromClass.getSimpleName())
           .append(")");
       case JOIN, FETCH -> sb.append("Join(")
           .append(attribute.getName())
           .append(":")
-          .append(entityClass.getSimpleName())
+          .append(fromClass.getSimpleName())
           .append(")");
-    }
-
-    for (var p : on) {
-      sb.append(System.lineSeparator());
-      sb.append("On: ").append(p);
-    }
-    for (var p : where) {
-      sb.append(System.lineSeparator());
-      sb.append("Where: ").append(p);
     }
 
     return sb.toString();

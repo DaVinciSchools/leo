@@ -51,8 +51,8 @@ public interface ProjectPostRepository
                 .orElse(Pageable.unpaged()));
   }
 
-  static Entity<?, ProjectPost> configureQuery(
-      Entity<?, ProjectPost> projectPost, GetProjectPostsParams params) {
+  static Entity<?, ?, ProjectPost> configureQuery(
+      Entity<?, ?, ProjectPost> projectPost, GetProjectPostsParams params) {
     checkNotNull(projectPost);
     checkNotNull(params);
 

@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableList;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.From;
@@ -43,34 +42,70 @@ public class QueryHelper {
   }
 
   @Transactional(readOnly = true)
-  public <E> List<E> query(Class<E> rootClass, QueryBuilder<E> queryBuilder) {
-    checkNotNull(rootClass);
+  public <SF> List<SF> query(Class<SF> selectFromClass, QueryBuilder<SF, SF> queryBuilder) {
+    checkNotNull(selectFromClass);
     checkNotNull(queryBuilder);
 
-    return query(rootClass, queryBuilder, Pageable.unpaged()).getContent();
+    return query(
+            selectFromClass,
+            selectFromClass,
+            entity -> queryBuilder.configureQuery(entity.select()),
+            Pageable.unpaged())
+        .getContent();
   }
 
   @Transactional(readOnly = true)
-  public <E> Page<E> query(Class<E> rootClass, QueryBuilder<E> queryBuilder, Pageable pageable) {
-    checkNotNull(rootClass);
+  public <SF> Page<SF> query(
+      Class<SF> selectFromClass, QueryBuilder<SF, SF> queryBuilder, Pageable pageable) {
+    checkNotNull(selectFromClass);
+    checkNotNull(queryBuilder);
+
+    return query(
+        selectFromClass,
+        selectFromClass,
+        entity -> queryBuilder.configureQuery(entity.select()),
+        pageable);
+  }
+
+  @Transactional(readOnly = true)
+  public <S, F> List<S> query(
+      Class<S> selectClass, Class<F> fromClass, QueryBuilder<S, F> queryBuilder) {
+    checkNotNull(selectClass);
+    checkNotNull(fromClass);
+    checkNotNull(queryBuilder);
+
+    return query(selectClass, fromClass, queryBuilder, Pageable.unpaged()).getContent();
+  }
+
+  @Transactional(readOnly = true)
+  public <S, F> Page<S> query(
+      Class<S> selectClass,
+      Class<F> fromClass,
+      QueryBuilder<S, F> queryBuilder,
+      Pageable pageable) {
+    checkNotNull(selectClass);
+    checkNotNull(fromClass);
     checkNotNull(queryBuilder);
     checkNotNull(pageable);
 
-    var root =
-        new Entity<Void, E>(entityManager).setEntityType(EntityType.ROOT).setEntityClass(rootClass);
-    queryBuilder.configureQuery(root).notDeleted();
+    var rootEntity =
+        new Entity<Void, S, F>(this, entityManager, selectClass, fromClass)
+            .setEntityType(EntityType.ROOT);
+    queryBuilder.configureQuery(rootEntity);
 
     try (var em = entityManager.getEntityManagerFactory().createEntityManager()) {
       var count = Optional.<Long>empty();
       if (pageable.isPaged()) {
-        count = Optional.of(getCount(em, root, new QueryHelperConfig().setJoinOnly(true)));
+        count =
+            Optional.of(
+                getCount(em, rootEntity, pageable, new QueryHelperConfig().setJoinOnly(true)));
       }
 
       em.clear();
 
       var result =
           PageableExecutionUtils.getPage(
-              getEntities(em, root, pageable, new QueryHelperConfig().setJoinOnly(false)),
+              getEntities(em, rootEntity, pageable, new QueryHelperConfig().setJoinOnly(false)),
               pageable,
               count::get);
 
@@ -80,42 +115,45 @@ public class QueryHelper {
     }
   }
 
-  private long getCount(EntityManager em, Entity<?, ?> root, QueryHelperConfig config) {
-    CriteriaBuilder builder = em.getCriteriaBuilder();
-    CriteriaQuery<Tuple> query = builder.createTupleQuery();
-    List<Predicate> where = new ArrayList<>();
+  private Long getCount(
+      EntityManager em, Entity<?, ?, ?> rootEntity, Pageable pageable, QueryHelperConfig config) {
+    var builder = em.getCriteriaBuilder();
+    var query = builder.createTupleQuery();
+    var where = new ArrayList<Predicate>();
 
-    root.getId();
-    populateJpaEntities(root, /* isRoot= */ true, query, config);
+    populateJpaEntities(rootEntity, /* isRoot= */ true, query, config);
     // Only after all entities have a JPA entity can we create preconditions.
-    populateJpaPredicates(root, builder, where, config);
+    populateJpaPredicates(rootEntity, builder, where, config);
 
     var emQuery =
         em.createQuery(
             query
-                .select(builder.tuple(builder.countDistinct(root.getId().getJpaEntity())))
+                .select(
+                    builder.tuple(
+                        builder.countDistinct(rootEntity.getSelectEntity().getJpaEntity())))
+                .distinct(true)
                 .where(
                     ImmutableList.<Predicate>builder()
                         .addAll(where)
-                        .add(builder.isNotNull(root.getId().getJpaEntity()))
+                        .add(builder.isNotNull(rootEntity.getSelectEntity().getJpaEntity()))
                         .build()
                         .toArray(Predicate[]::new)));
 
     return emQuery.getResultList().stream().map(t -> t.get(0, Long.class)).findFirst().orElse(0L);
   }
 
-  private <E> ImmutableList<E> getEntities(
-      EntityManager em, Entity<?, E> root, Pageable pageable, QueryHelperConfig config) {
+  private <S, F> List<S> getEntities(
+      EntityManager em, Entity<?, S, F> rootEntity, Pageable pageable, QueryHelperConfig config) {
     var builder = em.getCriteriaBuilder();
-    var query = builder.createQuery(root.getEntityClass());
+    var query = builder.createQuery(rootEntity.getSelectEntity().getFromClass());
     var where = new ArrayList<Predicate>();
 
-    populateJpaEntities(root, /* isRoot= */ true, query, config);
+    populateJpaEntities(rootEntity, /* isRoot= */ true, query, config);
     // Only after all entities have a JPA entity can we create preconditions.
-    populateJpaPredicates(root, builder, where, config);
+    populateJpaPredicates(rootEntity, builder, where, config);
 
     @SuppressWarnings("unchecked")
-    var selectJpaEntity = (Selection<? extends E>) root.getJpaEntity();
+    var selectJpaEntity = (Selection<? extends S>) rootEntity.getSelectEntity().getJpaEntity();
     var emQuery =
         em.createQuery(
             query
@@ -124,11 +162,11 @@ public class QueryHelper {
                 .where(
                     ImmutableList.<Predicate>builder()
                         .addAll(where)
-                        .add(builder.isNotNull(root.getJpaEntity()))
+                        .add(builder.isNotNull(rootEntity.getSelectEntity().getJpaEntity()))
                         .build()
                         .toArray(Predicate[]::new))
                 .orderBy(
-                    root.getOrderByList().stream()
+                    rootEntity.getOrderByList().stream()
                         .map(o -> o.toOrder(builder))
                         .toArray(Order[]::new)));
 
@@ -141,30 +179,30 @@ public class QueryHelper {
     return ImmutableList.copyOf(emQuery.getResultList());
   }
 
-  private static <W, E> void populateJpaEntities(
-      Entity<W, E> entity, boolean isRoot, CriteriaQuery<?> query, QueryHelperConfig config) {
+  private static <P, S, F> void populateJpaEntities(
+      Entity<P, S, F> entity, boolean isRoot, CriteriaQuery<?> query, QueryHelperConfig config) {
     checkNotNull(entity);
     checkNotNull(query);
 
     // Create a JPA entity for the Entity.
     switch (isRoot ? EntityType.ROOT : entity.getEntityType()) {
       case ROOT:
-        entity.setJpaEntity(query.from(entity.getEntityClass()));
+        entity.setJpaEntity(query.from(entity.getFromClass()));
         break;
       case GET:
         {
-          if (entity.getAttribute() instanceof SingularAttribute<? super W, ?> a
+          if (entity.getAttribute() instanceof SingularAttribute<? super P, ?> a
               && entity.getParent().getJpaEntity() instanceof From<?, ?> f) {
             @SuppressWarnings("unchecked")
-            var expr = f.get((SingularAttribute<Object, E>) a);
+            var expr = f.get((SingularAttribute<Object, F>) a);
             entity.setJpaEntity(expr);
           } else if (entity.getAttribute() instanceof SetAttribute<?, ?> a
               && entity.getParent().getJpaEntity() instanceof From<?, ?> f) {
             @SuppressWarnings("unchecked")
-            var expr = ((From<Object, Object>) f).get((SetAttribute<Object, E>) a);
+            var expr = ((From<Object, Object>) f).get((SetAttribute<Object, F>) a);
             entity.setJpaEntity(expr);
           } else {
-            throw new RuntimeException("Invalid attribute type.");
+            throw new RuntimeException("Invalid attribute type: " + entity.getAttribute());
           }
         }
         break;
@@ -177,16 +215,17 @@ public class QueryHelper {
               @SuppressWarnings("unchecked")
               var expr =
                   isJoin
-                      ? f.join((SingularAttribute<Object, E>) a, entity.getJoinType())
-                      : (Join<W, E>)
-                          f.fetch((SingularAttribute<Object, E>) a, entity.getJoinType());
+                      ? f.join((SingularAttribute<Object, F>) a, entity.getJoinType())
+                      : (Join<? super P, F>)
+                          f.fetch((SingularAttribute<Object, F>) a, entity.getJoinType());
               entity.setJpaEntity(expr);
             } else if (entity.getAttribute() instanceof SetAttribute<?, ?> a) {
               @SuppressWarnings("unchecked")
               var expr =
                   isJoin
-                      ? f.join((SetAttribute<Object, E>) a, entity.getJoinType())
-                      : (Join<W, E>) f.fetch((SetAttribute<Object, E>) a, entity.getJoinType());
+                      ? f.join((SetAttribute<Object, F>) a, entity.getJoinType())
+                      : (Join<? super P, F>)
+                          f.fetch((SetAttribute<Object, F>) a, entity.getJoinType());
               entity.setJpaEntity(expr);
             } else {
               throw new RuntimeException(
@@ -208,7 +247,7 @@ public class QueryHelper {
   }
 
   private void populateJpaPredicates(
-      Entity<?, ?> entity,
+      Entity<?, ?, ?> entity,
       CriteriaBuilder builder,
       List<Predicate> where,
       QueryHelperConfig config) {

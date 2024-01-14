@@ -28,7 +28,8 @@ public interface ProjectRepository
     return getQueryHelper().query(Project.class, project -> configureQuery(project, params));
   }
 
-  static Entity<?, Project> configureQuery(Entity<?, Project> project, GetProjectsParams params) {
+  static Entity<?, ?, Project> configureQuery(
+      Entity<?, ?, Project> project, GetProjectsParams params) {
     checkNotNull(project);
     checkNotNull(params);
 

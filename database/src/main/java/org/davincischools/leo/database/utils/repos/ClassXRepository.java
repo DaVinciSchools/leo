@@ -61,10 +61,11 @@ public interface ClassXRepository
   default List<ClassX> getClassXs(GetClassXsParams params) {
     checkNotNull(params);
 
-    return getQueryHelper().query(ClassX.class, classX -> configureQuery(classX, params));
+    return getQueryHelper()
+        .query(ClassX.class, classX -> configureQuery(classX.notDeleted(), params));
   }
 
-  static Entity<?, ClassX> configureQuery(Entity<?, ClassX> classX, GetClassXsParams params) {
+  static Entity<?, ?, ClassX> configureQuery(Entity<?, ?, ClassX> classX, GetClassXsParams params) {
     checkNotNull(classX);
     checkNotNull(params);
 

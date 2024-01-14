@@ -4,7 +4,9 @@ import static com.google.common.truth.Truth.assertThat;
 
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.criteria.JoinType;
+import org.davincischools.leo.database.daos.AdminX;
 import org.davincischools.leo.database.daos.ClassX;
+import org.davincischools.leo.database.daos.ClassX_;
 import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.daos.TeacherClassX;
 import org.davincischools.leo.database.daos.TeacherClassX_;
@@ -27,6 +29,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.shaded.com.google.common.collect.ImmutableList;
 
@@ -335,5 +338,117 @@ public class QueryHelperTest {
             testData.getDemo().getId(),
             testData.getStudent().getId(),
             testData.getTeacher().getId());
+  }
+
+  @Test
+  public void getResultsWithDifferentNonEntitySelect() {
+    var results =
+        queryHelper.query(
+            String.class,
+            UserX.class,
+            userX -> userX.notDeleted().get(UserX_.emailAddress).select());
+
+    assertThat(results)
+        .containsExactly(
+            testData.getAdminX().getEmailAddress(),
+            testData.getTeacher().getEmailAddress(),
+            testData.getStudent().getEmailAddress(),
+            testData.getDemo().getEmailAddress());
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
+  }
+
+  @Test
+  public void getResultsWithDifferentNonEntitySelectWithPage() {
+    var results =
+        queryHelper.query(
+            String.class,
+            UserX.class,
+            userX ->
+                userX
+                    .notDeleted()
+                    .get(UserX_.emailAddress)
+                    .select()
+                    .orderByAsc(userX.get(UserX_.emailAddress)),
+            Pageable.ofSize(1).withPage(0));
+
+    assertThat(results).containsExactly(testData.getAdminX().getEmailAddress());
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(2);
+  }
+
+  @Test
+  public void getResultsWithGetDifferentEntitySelect() {
+    var results =
+        queryHelper.query(
+            AdminX.class, UserX.class, userX -> userX.notDeleted().get(UserX_.adminX).select());
+
+    assertThat(results.stream().map(AdminX::getId).toList())
+        .containsExactly(testData.getAdminX().getAdminX().getId());
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
+  }
+
+  @Test
+  public void getResultsWithGetDifferentEntitySelectWithPage() {
+    var results =
+        queryHelper.query(
+            AdminX.class,
+            UserX.class,
+            userX -> userX.notDeleted().get(UserX_.adminX).select(),
+            Pageable.ofSize(1).withPage(0));
+
+    assertThat(results.stream().map(AdminX::getId).toList())
+        .containsExactly(testData.getAdminX().getAdminX().getId());
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(2);
+  }
+
+  @Test
+  public void getResultsWithJoinDifferentEntitySelect() {
+    var results =
+        queryHelper.query(
+            ClassX.class,
+            UserX.class,
+            userX ->
+                userX
+                    .notDeleted()
+                    .join(UserX_.teacher, JoinType.LEFT)
+                    .join(Teacher_.teacherClassXES, JoinType.LEFT)
+                    .join(TeacherClassX_.classX, JoinType.LEFT)
+                    .select());
+
+    assertThat(results.stream().map(ClassX::getId).toList())
+        .containsExactly(
+            testData.getChemistryClassX().getId(),
+            testData.getProgrammingClassX().getId(),
+            testData.getDanceClassX().getId());
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
+  }
+
+  @Test
+  public void getResultsWithJoinDifferentEntitySelectWithPage() {
+    var results =
+        queryHelper.query(
+            ClassX.class,
+            UserX.class,
+            userX -> {
+              var classX =
+                  userX
+                      .notDeleted()
+                      .join(UserX_.teacher, JoinType.LEFT)
+                      .join(Teacher_.teacherClassXES, JoinType.LEFT)
+                      .join(TeacherClassX_.classX, JoinType.LEFT)
+                      .select();
+              classX.orderByAsc(classX.get(ClassX_.name));
+              return classX;
+            },
+            Pageable.ofSize(1).withPage(0));
+
+    assertThat(results.stream().map(ClassX::getId).toList())
+        .containsExactly(testData.getDanceClassX().getId());
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(2);
   }
 }
