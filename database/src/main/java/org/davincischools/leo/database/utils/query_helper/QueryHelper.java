@@ -89,7 +89,7 @@ public class QueryHelper {
     checkNotNull(pageable);
 
     var rootEntity =
-        new Entity<Void, S, F>(this, entityManager, selectClass, fromClass)
+        new Entity<Void, S, F>(null, this, entityManager, selectClass, fromClass)
             .setEntityType(EntityType.ROOT);
     queryBuilder.configureQuery(rootEntity);
 

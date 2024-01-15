@@ -10,6 +10,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.metamodel.Attribute;
+import jakarta.persistence.metamodel.ManagedType;
 import jakarta.persistence.metamodel.PluralAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
 import java.time.Instant;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,6 +35,7 @@ public class Entity<P, S, F> implements Expression<F> {
   private static final AtomicInteger previousJoinId = new AtomicInteger(0);
 
   private final int id = previousJoinId.incrementAndGet();
+  private final Entity<?, S, P> parent;
   private final EntityManager entityManager;
   private final QueryHelper queryHelper;
   private final Class<S> selectClass;
@@ -41,7 +44,6 @@ public class Entity<P, S, F> implements Expression<F> {
   // This must be <?> because singular attributes are F2 and plural attributes are Collection<F2>.
   private jakarta.persistence.criteria.Expression<?> jpaEntity;
 
-  private Entity<?, S, P> parent;
   private EntityType entityType;
   // This must be <?> because singular attributes are F2 and plural attributes are Collection<F2>.
   private Attribute<? super P, ?> attribute;
@@ -54,15 +56,31 @@ public class Entity<P, S, F> implements Expression<F> {
   private final Map<Attribute<? super F, ?>, Entity<F, S, ?>> children = new HashMap<>();
   private final List<OrderBy> orderByList = new ArrayList<>();
 
+  @Nullable private final ManagedType<F> managedType;
+  private final List<Entity<?, ?, ?>> allManagedEntities = new ArrayList<>();
+
   Entity(
+      @Nullable Entity<?, S, P> parent,
       QueryHelper queryHelper,
       EntityManager entityManager,
       Class<S> selectClass,
       Class<F> fromClass) {
+    this.parent = parent;
     this.queryHelper = checkNotNull(queryHelper);
     this.entityManager = checkNotNull(entityManager);
     this.selectClass = checkNotNull(selectClass);
     this.fromClass = checkNotNull(fromClass);
+
+    ManagedType<F> managedType = null;
+    try {
+      managedType = entityManager.getMetamodel().managedType(fromClass);
+      if (parent == null) {
+        allManagedEntities.add(this);
+      }
+    } catch (IllegalArgumentException e) {
+      // There's no other simple way to see if something is a managed entity.
+    }
+    this.managedType = managedType;
   }
 
   public Entity<P, S, F> select() {
@@ -109,9 +127,8 @@ public class Entity<P, S, F> implements Expression<F> {
     return addChild(
         attribute,
         new Entity<F, S, F2>(
-                queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
+                this, queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
             .setEntityType(EntityType.GET)
-            .setParent(this)
             .setAttribute(attribute));
   }
 
@@ -127,9 +144,8 @@ public class Entity<P, S, F> implements Expression<F> {
 
     return addChild(
         attribute,
-        new Entity<F, S, F2>(queryHelper, entityManager, selectClass, getClass)
+        new Entity<F, S, F2>(this, queryHelper, entityManager, selectClass, getClass)
             .setEntityType(EntityType.GET)
-            .setParent(this)
             .setAttribute(attribute));
   }
 
@@ -148,9 +164,8 @@ public class Entity<P, S, F> implements Expression<F> {
     return addChild(
         attribute,
         new Entity<F, S, F2>(
-                queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
+                this, queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
             .setEntityType(EntityType.JOIN)
-            .setParent(this)
             .setJoinType(joinType)
             .setAttribute(attribute));
   }
@@ -165,9 +180,8 @@ public class Entity<P, S, F> implements Expression<F> {
         addChild(
             (Attribute<? super F, F2>) attribute,
             new Entity<F, S, F2>(
-                    queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
+                    this, queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
                 .setEntityType(EntityType.JOIN)
-                .setParent(this)
                 .setJoinType(joinType)
                 .setAttribute(attribute));
     return child;
@@ -274,7 +288,16 @@ public class Entity<P, S, F> implements Expression<F> {
     checkNotNull(child);
 
     @SuppressWarnings("unchecked")
-    Entity<F, S, F2> entity = (Entity<F, S, F2>) children.computeIfAbsent(attribute, k -> child);
+    Entity<F, S, F2> entity =
+        (Entity<F, S, F2>)
+            children.computeIfAbsent(
+                attribute,
+                k -> {
+                  if (child.managedType != null) {
+                    getRoot().allManagedEntities.add(child);
+                  }
+                  return child;
+                });
 
     // The (new) child should be a basic template for the entity. Not many fields should be set.
     checkArgument(child.getJpaEntity() == null);

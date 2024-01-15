@@ -449,4 +449,24 @@ public class QueryHelperTest {
 
     assertThat(sessionFactory.getStatistics().getQueries()).hasLength(2);
   }
+
+  @Test
+  public void verifyAllManagedEntities() {
+    var results =
+        queryHelper.query(
+            ClassX.class,
+            UserX.class,
+            userX -> {
+              var classX =
+                  userX
+                      .notDeleted()
+                      .join(UserX_.teacher, JoinType.LEFT)
+                      .join(Teacher_.teacherClassXES, JoinType.LEFT)
+                      .join(TeacherClassX_.classX, JoinType.LEFT)
+                      .select();
+              classX.get(ClassX_.id);
+              assertThat(userX.getAllManagedEntities()).hasSize(4);
+              return classX;
+            });
+  }
 }
