@@ -1,4 +1,4 @@
-package org.davincischools.leo.database.utils;
+package org.davincischools.leo.database.utils.query_helper;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -15,9 +15,7 @@ import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.daos.UserX_;
 import org.davincischools.leo.database.test.TestData;
 import org.davincischools.leo.database.test.TestDatabase;
-import org.davincischools.leo.database.utils.query_helper.Entity;
-import org.davincischools.leo.database.utils.query_helper.Predicate;
-import org.davincischools.leo.database.utils.query_helper.QueryHelper;
+import org.davincischools.leo.database.utils.Database;
 import org.hibernate.Hibernate;
 import org.hibernate.SessionFactory;
 import org.junit.Before;
