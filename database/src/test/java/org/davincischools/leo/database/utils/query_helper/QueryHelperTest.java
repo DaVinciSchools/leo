@@ -7,6 +7,7 @@ import jakarta.persistence.criteria.JoinType;
 import org.davincischools.leo.database.daos.AdminX;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.ClassX_;
+import org.davincischools.leo.database.daos.StudentClassX_;
 import org.davincischools.leo.database.daos.Teacher;
 import org.davincischools.leo.database.daos.TeacherClassX;
 import org.davincischools.leo.database.daos.TeacherClassX_;
@@ -179,8 +180,8 @@ public class QueryHelperTest {
             },
             PageRequest.of(0, 1));
 
-    assertThat(results.stream().map(UserX::getId).toList())
-        .containsExactly(testData.getAdminX().getId());
+    assertThat(results.stream().map(UserX::getEmailAddress).toList())
+        .containsExactly(testData.getAdminX().getEmailAddress());
   }
 
   @Test
@@ -194,8 +195,8 @@ public class QueryHelperTest {
             },
             PageRequest.of(1, 1));
 
-    assertThat(results.stream().map(UserX::getId).toList())
-        .containsExactly(testData.getDemo().getId());
+    assertThat(results.stream().map(UserX::getEmailAddress).toList())
+        .containsExactly(testData.getDemo().getEmailAddress());
   }
 
   @Test
@@ -209,8 +210,8 @@ public class QueryHelperTest {
             },
             PageRequest.of(2, 1));
 
-    assertThat(results.stream().map(UserX::getId).toList())
-        .containsExactly(testData.getStudent().getId());
+    assertThat(results.stream().map(UserX::getEmailAddress).toList())
+        .containsExactly(testData.getStudent().getEmailAddress());
   }
 
   @Test
@@ -224,8 +225,8 @@ public class QueryHelperTest {
             },
             PageRequest.of(3, 1));
 
-    assertThat(results.stream().map(UserX::getId).toList())
-        .containsExactly(testData.getTeacher().getId());
+    assertThat(results.stream().map(UserX::getEmailAddress).toList())
+        .containsExactly(testData.getTeacher().getEmailAddress());
   }
 
   @Test
@@ -368,7 +369,8 @@ public class QueryHelperTest {
                     .get(UserX_.emailAddress)
                     .select()
                     .orderByAsc(userX.get(UserX_.emailAddress)),
-            Pageable.ofSize(1).withPage(0));
+            Pageable.ofSize(1).withPage(0),
+            /* distinct= */ true);
 
     assertThat(results).containsExactly(testData.getAdminX().getEmailAddress());
 
@@ -394,7 +396,8 @@ public class QueryHelperTest {
             AdminX.class,
             UserX.class,
             userX -> userX.notDeleted().get(UserX_.adminX).select(),
-            Pageable.ofSize(1).withPage(0));
+            Pageable.ofSize(1).withPage(0),
+            /* distinct= */ true);
 
     assertThat(results.stream().map(AdminX::getId).toList())
         .containsExactly(testData.getAdminX().getAdminX().getId());
@@ -442,7 +445,8 @@ public class QueryHelperTest {
               classX.orderByAsc(classX.get(ClassX_.name));
               return classX;
             },
-            Pageable.ofSize(1).withPage(0));
+            Pageable.ofSize(1).withPage(0),
+            /* distinct= */ true);
 
     assertThat(results.stream().map(ClassX::getId).toList())
         .containsExactly(testData.getDanceClassX().getId());
@@ -450,23 +454,133 @@ public class QueryHelperTest {
     assertThat(sessionFactory.getStatistics().getQueries()).hasLength(2);
   }
 
+  private Entity<?, ClassX, ClassX> buildManagedEntitiesAcrossFetchedPluralAttributeQuery(
+      Entity<?, ClassX, UserX> userX) {
+    var classX =
+        userX
+            .notDeleted()
+            .join(UserX_.teacher, JoinType.LEFT)
+            .notDeleted()
+            .join(Teacher_.teacherClassXES, JoinType.LEFT)
+            .notDeleted()
+            .join(TeacherClassX_.classX, JoinType.LEFT)
+            .notDeleted()
+            .select();
+    classX
+        // A fetched plural attribute.
+        .join(ClassX_.studentClassXES, JoinType.LEFT)
+        .notDeleted()
+        .fetch()
+        .join(StudentClassX_.student, JoinType.LEFT)
+        .notDeleted()
+        .fetch();
+    // An id managed entity.
+    classX.getId();
+    // A non managed entity.
+    var classXName = classX.get(ClassX_.name);
+    classX.orderByAsc(classXName);
+
+    return classX;
+  }
+
   @Test
-  public void verifyAllManagedEntities() {
+  public void verifyManagedEntitiesAcrossFetchedPluralAttribute1of1s() {
     var results =
         queryHelper.query(
             ClassX.class,
             UserX.class,
             userX -> {
-              var classX =
-                  userX
-                      .notDeleted()
-                      .join(UserX_.teacher, JoinType.LEFT)
-                      .join(Teacher_.teacherClassXES, JoinType.LEFT)
-                      .join(TeacherClassX_.classX, JoinType.LEFT)
-                      .select();
-              classX.get(ClassX_.id);
-              assertThat(userX.getAllManagedEntities()).hasSize(4);
+              var classX = buildManagedEntitiesAcrossFetchedPluralAttributeQuery(userX);
+              assertThat(userX.getNonIdManagedEntities()).hasSize(6);
               return classX;
-            });
+            },
+            Pageable.ofSize(1).withPage(0),
+            /* distinct= */ true);
+
+    assertThat(results.stream().map(ClassX::getName).toList())
+        .containsExactly(testData.getDanceClassX().getName());
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(2);
+  }
+
+  @Test
+  public void verifyManagedEntitiesAcrossFetchedPluralAttribute2of1s() {
+    var results =
+        queryHelper.query(
+            ClassX.class,
+            UserX.class,
+            userX -> {
+              var classX = buildManagedEntitiesAcrossFetchedPluralAttributeQuery(userX);
+              assertThat(userX.getNonIdManagedEntities()).hasSize(6);
+              return classX;
+            },
+            Pageable.ofSize(1).withPage(1),
+            /* distinct= */ true);
+
+    assertThat(results.stream().map(ClassX::getName).toList())
+        .containsExactly(testData.getChemistryClassX().getName());
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(2);
+  }
+
+  @Test
+  public void verifyManagedEntitiesAcrossFetchedPluralAttribute3of1s() {
+    var results =
+        queryHelper.query(
+            ClassX.class,
+            UserX.class,
+            userX -> {
+              var classX = buildManagedEntitiesAcrossFetchedPluralAttributeQuery(userX);
+              assertThat(userX.getNonIdManagedEntities()).hasSize(6);
+              return classX;
+            },
+            Pageable.ofSize(1).withPage(2),
+            /* distinct= */ true);
+
+    assertThat(results.stream().map(ClassX::getName).toList())
+        .containsExactly(testData.getProgrammingClassX().getName());
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(2);
+  }
+
+  @Test
+  public void verifyManagedEntitiesAcrossFetchedPluralAttribute4of1s() {
+    var results =
+        queryHelper.query(
+            ClassX.class,
+            UserX.class,
+            userX -> {
+              var classX = buildManagedEntitiesAcrossFetchedPluralAttributeQuery(userX);
+              assertThat(userX.getNonIdManagedEntities()).hasSize(6);
+              return classX;
+            },
+            Pageable.ofSize(1).withPage(3),
+            /* distinct= */ true);
+
+    assertThat(results).isEmpty();
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(2);
+  }
+
+  @Test
+  public void verifyManagedEntitiesAcrossFetchedPluralAttribute1of2s() {
+    var results =
+        queryHelper.query(
+            ClassX.class,
+            UserX.class,
+            userX -> {
+              var classX = buildManagedEntitiesAcrossFetchedPluralAttributeQuery(userX);
+              assertThat(userX.getNonIdManagedEntities()).hasSize(6);
+              return classX;
+            },
+            Pageable.ofSize(2).withPage(0),
+            /* distinct= */ true);
+
+    assertThat(results.stream().map(ClassX::getName).toList())
+        .containsExactly(
+            testData.getDanceClassX().getName(), testData.getChemistryClassX().getName())
+        .inOrder();
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(2);
   }
 }

@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import jakarta.persistence.EntityManager;
@@ -57,7 +58,8 @@ public class Entity<P, S, F> implements Expression<F> {
   private final List<OrderBy> orderByList = new ArrayList<>();
 
   @Nullable private final ManagedType<F> managedType;
-  private final List<Entity<?, ?, ?>> allManagedEntities = new ArrayList<>();
+  // These will be the entities that ids will be pulled from.
+  private final List<Entity<?, ?, ?>> nonIdManagedEntities = new ArrayList<>();
 
   Entity(
       @Nullable Entity<?, S, P> parent,
@@ -75,7 +77,7 @@ public class Entity<P, S, F> implements Expression<F> {
     try {
       managedType = entityManager.getMetamodel().managedType(fromClass);
       if (parent == null) {
-        allManagedEntities.add(this);
+        nonIdManagedEntities.add(this);
       }
     } catch (IllegalArgumentException e) {
       // There's no other simple way to see if something is a managed entity.
@@ -126,45 +128,45 @@ public class Entity<P, S, F> implements Expression<F> {
 
     return addChild(
         attribute,
-        new Entity<F, S, F2>(
-                this, queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
+        new Entity<>(this, queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
             .setEntityType(EntityType.GET)
             .setAttribute(attribute));
   }
 
-  public <F2> Entity<F, S, F2> get(String attributeName, Class<F2> getClass) {
+  public Entity<F, S, ?> get(String attributeName) {
     checkNotNull(attributeName);
-    checkNotNull(getClass);
 
     @SuppressWarnings("unchecked")
     var attribute =
-        (Attribute<? super F, F2>)
+        (Attribute<? super F, Object>)
             entityManager.getMetamodel().managedType(fromClass).getAttribute(attributeName);
-    checkArgument(getClass.isAssignableFrom(attribute.getJavaType()));
 
-    return addChild(
-        attribute,
-        new Entity<F, S, F2>(this, queryHelper, entityManager, selectClass, getClass)
-            .setEntityType(EntityType.GET)
-            .setAttribute(attribute));
+    var child =
+        new Entity<>(this, queryHelper, entityManager, selectClass, attribute.getJavaType());
+
+    return addChild(attribute, child.setEntityType(EntityType.GET).setAttribute(attribute));
   }
 
   public Entity<F, S, Object> getId() {
-    return get("id", Object.class);
+    @SuppressWarnings("unchecked")
+    var entity = (Entity<F, S, Object>) get("id");
+    return entity;
   }
 
   public Entity<F, S, Instant> getDeleted() {
-    return get("deleted", Instant.class);
+    @SuppressWarnings("unchecked")
+    var entity = (Entity<F, S, Instant>) get("deleted");
+    checkArgument(entity.getFromClass() == Instant.class);
+    return entity;
   }
 
-  public <F2> Entity<F, S, F2> join(SingularAttribute<? super F, F2> attribute, JoinType joinType) {
+  public <F2> Entity<F, S, F2> join(SingularAttribute<F, F2> attribute, JoinType joinType) {
     checkNotNull(attribute);
     checkNotNull(joinType);
 
     return addChild(
         attribute,
-        new Entity<F, S, F2>(
-                this, queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
+        new Entity<>(this, queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
             .setEntityType(EntityType.JOIN)
             .setJoinType(joinType)
             .setAttribute(attribute));
@@ -172,29 +174,32 @@ public class Entity<P, S, F> implements Expression<F> {
 
   @SuppressWarnings("unchecked")
   public <C extends Collection<F2>, F2> Entity<F, S, F2> join(
-      PluralAttribute<? super F, C, F2> attribute, JoinType joinType) {
+      PluralAttribute<F, C, F2> attribute, JoinType joinType) {
     checkNotNull(attribute);
     checkNotNull(joinType);
 
-    var child =
-        addChild(
-            (Attribute<? super F, F2>) attribute,
-            new Entity<F, S, F2>(
-                    this, queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
-                .setEntityType(EntityType.JOIN)
-                .setJoinType(joinType)
-                .setAttribute(attribute));
-    return child;
+    return addChild(
+        (Attribute<F, F2>) attribute,
+        new Entity<>(this, queryHelper, entityManager, selectClass, attribute.getBindableJavaType())
+            .setEntityType(EntityType.JOIN)
+            .setJoinType(joinType)
+            .setAttribute(attribute));
   }
 
   public Entity<P, S, F> fetch() {
-    if (entityType == EntityType.JOIN) {
-      setEntityType(EntityType.FETCH);
-      if (getParent() != null) {
-        getParent().fetch();
-      }
+    if (getEntityType() != EntityType.JOIN) {
+      return this;
+    }
+    if (getRoot().getSelectEntity().equals(this)) {
+      return this;
     }
 
+    if (getParent() == null) {
+      throw new IllegalStateException("A fetch must occur beneath the select entity.");
+    }
+
+    getParent().fetch();
+    setEntityType(EntityType.FETCH);
     return this;
   }
 
@@ -213,7 +218,7 @@ public class Entity<P, S, F> implements Expression<F> {
     return this;
   }
 
-  public Entity<P, S, F> requireId(Optional<Iterable<Integer>> optionalIds) {
+  public <ID> Entity<P, S, F> requireId(Optional<Iterable<ID>> optionalIds) {
     checkNotNull(optionalIds);
 
     optionalIds.ifPresent(
@@ -223,7 +228,7 @@ public class Entity<P, S, F> implements Expression<F> {
     return this;
   }
 
-  public Entity<P, S, F> requireNotId(Optional<Iterable<Integer>> optionalIds) {
+  public <ID> Entity<P, S, F> requireNotId(Optional<Iterable<ID>> optionalIds) {
     checkNotNull(optionalIds);
 
     if (optionalIds.isPresent() && !Iterables.isEmpty(optionalIds.get())) {
@@ -265,12 +270,6 @@ public class Entity<P, S, F> implements Expression<F> {
 
     this.entityType = entityType;
 
-    if (entityType == EntityType.FETCH) {
-      if (parent != null && parent.getEntityType() == EntityType.JOIN) {
-        parent.setEntityType(EntityType.FETCH);
-      }
-    }
-
     return this;
   }
 
@@ -293,8 +292,9 @@ public class Entity<P, S, F> implements Expression<F> {
             children.computeIfAbsent(
                 attribute,
                 k -> {
-                  if (child.managedType != null) {
-                    getRoot().allManagedEntities.add(child);
+                  boolean isId = attribute instanceof SingularAttribute<?, ?> s && s.isId();
+                  if (child.managedType != null && !isId) {
+                    getRoot().nonIdManagedEntities.add(child);
                   }
                   return child;
                 });
@@ -348,5 +348,29 @@ public class Entity<P, S, F> implements Expression<F> {
     }
 
     return sb.toString();
+  }
+
+  public boolean isFetchingPluralAttributes() {
+    for (var child : children.values()) {
+      if (child.getAttribute() instanceof PluralAttribute<?, ?, ?>
+              && child.getEntityType() == EntityType.FETCH
+          || child.isFetchingPluralAttributes()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Entity<?, ?, ?> entity = (Entity<?, ?, ?>) o;
+    return id == entity.id;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
   }
 }
