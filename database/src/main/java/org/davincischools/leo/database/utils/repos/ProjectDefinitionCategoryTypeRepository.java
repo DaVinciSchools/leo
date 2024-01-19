@@ -18,14 +18,6 @@ import org.springframework.stereotype.Repository;
 public interface ProjectDefinitionCategoryTypeRepository
     extends JpaRepository<ProjectDefinitionCategoryType, Integer> {
 
-  enum ValueType {
-    FREE_TEXT,
-    EKS,
-    XQ_COMPETENCY,
-    MOTIVATION,
-    CTE,
-  }
-
   default ProjectDefinitionCategoryType upsert(
       String name, Consumer<ProjectDefinitionCategoryType> modifier) {
     checkArgument(!Strings.isNullOrEmpty(name));

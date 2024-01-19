@@ -8,6 +8,7 @@ import org.davincischools.leo.database.daos.AssignmentProjectDefinition_;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory_;
 import org.davincischools.leo.database.daos.ProjectDefinition_;
 import org.davincischools.leo.database.daos.ProjectInput;
+import org.davincischools.leo.database.daos.ProjectInput.StateType;
 import org.davincischools.leo.database.daos.ProjectInputValue_;
 import org.davincischools.leo.database.daos.ProjectInput_;
 import org.davincischools.leo.database.utils.query_helper.Entity;
@@ -24,16 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 public interface ProjectInputRepository
     extends JpaRepository<ProjectInput, Integer>, AutowiredRepositoryValues {
 
-  enum State {
-    PROCESSING,
-    COMPLETED,
-    FAILED
-  }
-
   @Modifying
   @Transactional
   @Query("UPDATE ProjectInput p SET p.state = (:state) WHERE p.id = (:id)")
-  void updateState(@Param("id") int id, @Param("state") String state);
+  void updateState(@Param("id") int id, @Param("state") StateType state);
 
   @Modifying
   @Transactional
@@ -66,10 +61,10 @@ public interface ProjectInputRepository
     projectInput.where(
         Predicate.or(
             params.getIncludeComplete().orElse(false)
-                ? Predicate.eq(projectInput.get(ProjectInput_.state), State.COMPLETED.name())
+                ? Predicate.eq(projectInput.get(ProjectInput_.state), StateType.COMPLETED)
                 : Expression.FALSE,
             params.getIncludeProcessing().orElse(false)
-                ? Predicate.eq(projectInput.get(ProjectInput_.state), State.PROCESSING.name())
+                ? Predicate.eq(projectInput.get(ProjectInput_.state), StateType.PROCESSING)
                 : Expression.FALSE));
 
     var projectDefinition =

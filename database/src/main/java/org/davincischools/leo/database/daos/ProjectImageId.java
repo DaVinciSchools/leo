@@ -22,7 +22,7 @@ public class ProjectImageId implements Serializable {
 
   public static final String COLUMN_PROJECTID_NAME = "project_id";
   public static final String COLUMN_FILEXID_NAME = "file_x_id";
-  private static final long serialVersionUID = 5427885553131037338L;
+  private static final long serialVersionUID = -1649723595512797026L;
 
   private Integer projectId;
 

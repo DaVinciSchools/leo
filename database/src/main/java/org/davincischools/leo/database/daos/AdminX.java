@@ -2,6 +2,7 @@ package org.davincischools.leo.database.daos;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,7 +30,7 @@ public class AdminX implements Serializable {
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = 7918764969722015232L;
+  private static final long serialVersionUID = 9006334913072815137L;
 
   private Integer id;
 
@@ -56,7 +57,7 @@ public class AdminX implements Serializable {
     return deleted;
   }
 
-  @OneToOne(mappedBy = "adminX", fetch = jakarta.persistence.FetchType.LAZY)
+  @OneToOne(fetch = FetchType.LAZY, mappedBy = "adminX")
   public UserX getUserX() {
     return userX;
   }

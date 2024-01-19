@@ -21,11 +21,11 @@ import org.davincischools.leo.database.daos.ProjectInputFulfillment;
 import org.davincischools.leo.database.daos.ProjectPost;
 import org.davincischools.leo.database.daos.ProjectPostComment;
 import org.davincischools.leo.database.daos.ProjectPostRating;
+import org.davincischools.leo.database.daos.ProjectPostRating.RatingType;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectPostsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectsParams;
-import org.davincischools.leo.database.utils.repos.ProjectPostRatingRepository.RatingType;
 import org.davincischools.leo.protos.task_service.ReplyToPostTask;
 import org.davincischools.leo.server.utils.task_queue.DefaultTaskMetadata;
 import org.davincischools.leo.server.utils.task_queue.TaskQueue;
@@ -184,7 +184,7 @@ public final class ReplyToPostsWorker extends TaskQueue<ReplyToPostTask, Default
                                 .setProjectInputFulfillment(
                                     new ProjectInputFulfillment().setId(g.goalIdNumber))
                                 .setRating(g.goalProgressScore)
-                                .setRatingType(RatingType.GOAL_COMPLETE_PCT.name())
+                                .setRatingType(RatingType.GOAL_COMPLETE_PCT)
                                 .setGoalProgress(g.goalProgressSummary)
                                 .setGoalRemaining(g.goalRemainingSummary))
                     .toList());

@@ -36,7 +36,7 @@ public class District implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
-  private static final long serialVersionUID = -8914543911571870647L;
+  private static final long serialVersionUID = -7038666320676051398L;
 
   private Integer id;
 

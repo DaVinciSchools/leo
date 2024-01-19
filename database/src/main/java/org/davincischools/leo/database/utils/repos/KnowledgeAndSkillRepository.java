@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
+import org.davincischools.leo.database.daos.KnowledgeAndSkill.Type;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,18 +17,12 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndSkill, Integer> {
 
-  enum Type {
-    EKS,
-    XQ_COMPETENCY,
-    CTE,
-  }
-
   @Query("SELECT ks FROM KnowledgeAndSkill ks WHERE ks.type = (:type)")
-  List<KnowledgeAndSkill> findAll(@Param("type") String type);
+  List<KnowledgeAndSkill> findAll(@Param("type") Type type);
 
   @Query("SELECT ks FROM KnowledgeAndSkill ks WHERE ks.id IN (:id) AND ks.type = (:type)")
   List<KnowledgeAndSkill> findAllByIdsAndType(
-      @Param("id") Iterable<Integer> ids, @Param("type") String type);
+      @Param("id") Iterable<Integer> ids, @Param("type") Type type);
 
   @Query(
       """
@@ -36,7 +31,7 @@ public interface KnowledgeAndSkillRepository extends JpaRepository<KnowledgeAndS
           WHERE ks.type IN (:types)
           AND (ks.global OR ((:requiredUserXId) IS NULL OR ks.userX.id = (:requiredUserXId)))""")
   List<KnowledgeAndSkill> findAllByTypes(
-      @Param("types") Iterable<String> types, @Param("requiredUserXId") Integer userXId);
+      @Param("types") Iterable<Type> types, @Param("requiredUserXId") Integer userXId);
 
   @Query(
       "SELECT ks FROM KnowledgeAndSkill ks"

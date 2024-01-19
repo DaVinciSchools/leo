@@ -36,7 +36,7 @@ public class ProjectDefinition implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_TEMPLATE_NAME = "template";
-  private static final long serialVersionUID = -7682182021437430617L;
+  private static final long serialVersionUID = -2999000606552826382L;
 
   private Integer id;
 

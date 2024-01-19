@@ -22,12 +22,12 @@ import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
+import org.davincischools.leo.database.daos.KnowledgeAndSkill.Type;
 import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -299,7 +299,7 @@ public class TestData {
               new KnowledgeAndSkill()
                   .setCreationTime(Instant.now())
                   .setName(xqCompetency.getExampleName())
-                  .setType(Type.XQ_COMPETENCY.name())
+                  .setType(Type.XQ_COMPETENCY)
                   .setGlobal(true)
                   .setCategory(xqCompetency.getCategory())
                   .setUserX(adminX));
@@ -323,7 +323,7 @@ public class TestData {
                 new KnowledgeAndSkill()
                     .setCreationTime(Instant.now())
                     .setName("Sort Algorithms")
-                    .setType(Type.EKS.name())
+                    .setType(Type.EKS)
                     .setShortDescr("I understand different sort algorithms.")
                     .setGlobal(true)
                     .setUserX(adminX));
@@ -333,7 +333,7 @@ public class TestData {
                 new KnowledgeAndSkill()
                     .setCreationTime(Instant.now())
                     .setName("Containers")
-                    .setType(Type.EKS.name())
+                    .setType(Type.EKS)
                     .setShortDescr("I understand Lists, Sets, and Maps.")
                     .setGlobal(true)
                     .setUserX(adminX));
@@ -380,7 +380,7 @@ public class TestData {
                 new KnowledgeAndSkill()
                     .setCreationTime(Instant.now())
                     .setName("Periodic Table")
-                    .setType(Type.EKS.name())
+                    .setType(Type.EKS)
                     .setShortDescr("I know how to read a periodic table.")
                     .setGlobal(true)
                     .setUserX(adminX));
@@ -390,7 +390,7 @@ public class TestData {
                 new KnowledgeAndSkill()
                     .setCreationTime(Instant.now())
                     .setName("Valence Electrons")
-                    .setType(Type.EKS.name())
+                    .setType(Type.EKS)
                     .setShortDescr(
                         "I can determine the number of valence electrons for each element.")
                     .setGlobal(true)

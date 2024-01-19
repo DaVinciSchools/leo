@@ -32,7 +32,7 @@ public class Tag implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_TEXT_NAME = "text";
-  private static final long serialVersionUID = -3909970086928664812L;
+  private static final long serialVersionUID = 7205730829734460024L;
 
   private Integer id;
 

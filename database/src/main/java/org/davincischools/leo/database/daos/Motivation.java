@@ -35,7 +35,7 @@ public class Motivation implements Serializable {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = -545968625896401663L;
+  private static final long serialVersionUID = -6735590129769050136L;
 
   private Integer id;
 

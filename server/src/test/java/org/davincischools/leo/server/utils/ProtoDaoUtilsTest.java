@@ -41,6 +41,7 @@ import com.google.protobuf.TextFormat;
 import com.google.protobuf.TextFormat.ParseException;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
+import org.davincischools.leo.database.daos.KnowledgeAndSkill.Type;
 import org.davincischools.leo.database.test.TestDatabase;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.protos.pl_types.Assignment;
@@ -52,7 +53,6 @@ import org.davincischools.leo.protos.pl_types.Project.Milestone;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory;
 import org.davincischools.leo.protos.pl_types.ProjectInputCategory.Option;
-import org.davincischools.leo.protos.pl_types.ProjectInputCategory.ValueType;
 import org.davincischools.leo.protos.pl_types.ProjectPost;
 import org.davincischools.leo.protos.pl_types.ProjectPostComment;
 import org.davincischools.leo.protos.pl_types.ProjectPostRating;
@@ -1267,7 +1267,7 @@ public class ProtoDaoUtilsTest {
             .setCreationTime(Instant.MIN)
             .setName("name")
             .setCategory("category")
-            .setType(ValueType.EKS.name())
+            .setType(Type.EKS)
             .setShortDescr("short_descr")
             .setLongDescrHtml("long_descr_html")
             .setUserX(new org.davincischools.leo.database.daos.UserX().setId(2))

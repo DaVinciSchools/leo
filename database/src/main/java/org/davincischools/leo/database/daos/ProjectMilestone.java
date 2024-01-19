@@ -41,7 +41,7 @@ public class ProjectMilestone implements Serializable, DaoWithPosition {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = 5826149288515102487L;
+  private static final long serialVersionUID = -1817860713873739267L;
 
   private Integer id;
 

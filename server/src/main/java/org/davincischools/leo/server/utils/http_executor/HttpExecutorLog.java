@@ -1,8 +1,8 @@
 package org.davincischools.leo.server.utils.http_executor;
 
+import org.davincischools.leo.database.daos.Log.StatusType;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectInput;
-import org.davincischools.leo.database.utils.repos.LogRepository;
 
 public interface HttpExecutorLog {
 
@@ -14,5 +14,5 @@ public interface HttpExecutorLog {
 
   HttpExecutorLog setIssueLink(String issueLink);
 
-  HttpExecutorLog setStatus(LogRepository.Status status);
+  HttpExecutorLog setStatus(StatusType status);
 }

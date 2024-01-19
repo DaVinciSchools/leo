@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
@@ -28,7 +29,14 @@ import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
 @Setter
 @Accessors(chain = true)
 @Entity(name = ProjectPostComment.ENTITY_NAME)
-@Table(name = ProjectPostComment.TABLE_NAME, schema = "leo_test")
+@Table(
+    name = ProjectPostComment.TABLE_NAME,
+    schema = "leo_test",
+    indexes = {
+      @Index(name = "creation_time", columnList = "creation_time"),
+      @Index(name = "post_time", columnList = "post_time"),
+      @Index(name = "being_edited", columnList = "being_edited")
+    })
 public class ProjectPostComment implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectPostComment";
@@ -46,7 +54,7 @@ public class ProjectPostComment implements Serializable {
   public static final String COLUMN_HASENOUGHCONTENTPERCENT_NAME = "has_enough_content_percent";
   public static final String COLUMN_INCREMENTALPOSTSUMMARY_NAME = "incremental_post_summary";
   public static final String COLUMN_FEEDBACKRESPONSEHTML_NAME = "feedback_response_html";
-  private static final long serialVersionUID = 295605713590740816L;
+  private static final long serialVersionUID = 727389957033701817L;
 
   private Integer id;
 

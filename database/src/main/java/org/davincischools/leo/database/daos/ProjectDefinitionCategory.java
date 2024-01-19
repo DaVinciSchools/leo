@@ -38,7 +38,7 @@ public class ProjectDefinitionCategory implements Serializable, DaoWithPosition 
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_MAXNUMVALUES_NAME = "max_num_values";
-  private static final long serialVersionUID = -1446314093737017378L;
+  private static final long serialVersionUID = 4361866229766535153L;
 
   private Integer id;
 

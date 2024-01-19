@@ -42,7 +42,7 @@ public class ClassX implements Serializable {
   public static final String COLUMN_GRADE_NAME = "grade";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = -5488875829747816021L;
+  private static final long serialVersionUID = -5632151905594902451L;
 
   private Integer id;
 

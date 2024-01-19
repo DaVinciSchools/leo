@@ -34,9 +34,11 @@ import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
+import org.davincischools.leo.database.daos.KnowledgeAndSkill.Type;
 import org.davincischools.leo.database.daos.ProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType;
+import org.davincischools.leo.database.daos.ProjectDefinitionCategoryType.ValueType;
 import org.davincischools.leo.database.daos.School;
 import org.davincischools.leo.database.daos.Student;
 import org.davincischools.leo.database.daos.Teacher;
@@ -46,8 +48,6 @@ import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.UserXUtils;
 import org.davincischools.leo.database.utils.repos.AdminXRepository;
 import org.davincischools.leo.database.utils.repos.GetClassXsParams;
-import org.davincischools.leo.database.utils.repos.KnowledgeAndSkillRepository.Type;
-import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.database.utils.repos.UserXRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -193,7 +193,7 @@ public class AdminXUtils {
                                       + " building things'.")
                               .setInputPlaceholder("Student Interest")
                               .setQueryPrefix("You would like projects that involve")
-                              .setValueType(ValueType.FREE_TEXT.name())));
+                              .setValueType(ValueType.FREE_TEXT)));
 
       careerInterestType =
           new ProjectDefinitionCategoryTypeBuilder(
@@ -216,7 +216,7 @@ public class AdminXUtils {
                               .setInputPlaceholder("Career Interest")
                               .setQueryPrefix(
                                   "You would like projects that help you learn how to be a")
-                              .setValueType(ValueType.FREE_TEXT.name())));
+                              .setValueType(ValueType.FREE_TEXT)));
 
       assignmentTopicType =
           new ProjectDefinitionCategoryTypeBuilder(
@@ -242,7 +242,7 @@ public class AdminXUtils {
                               .setInputPlaceholder("Assignment Topic")
                               .setQueryPrefix(
                                   "It is very important that every project MUST help you")
-                              .setValueType(ValueType.FREE_TEXT.name())));
+                              .setValueType(ValueType.FREE_TEXT)));
 
       motivationType =
           new ProjectDefinitionCategoryTypeBuilder(
@@ -266,7 +266,7 @@ public class AdminXUtils {
                                       + " from the options below.")
                               .setInputPlaceholder("Select a Motivation")
                               .setQueryPrefix("You are motivated by")
-                              .setValueType(ValueType.MOTIVATION.name())));
+                              .setValueType(ValueType.MOTIVATION)));
 
       projectLeadTheWayType =
           new ProjectDefinitionCategoryTypeBuilder(
@@ -293,7 +293,7 @@ public class AdminXUtils {
                               .setInputPlaceholder("Enter PLTW Standards")
                               .setQueryPrefix(
                                   "It is very important that every project MUST help you with")
-                              .setValueType(ValueType.FREE_TEXT.name())));
+                              .setValueType(ValueType.FREE_TEXT)));
 
       eksType =
           new ProjectDefinitionCategoryTypeBuilder(
@@ -319,7 +319,7 @@ public class AdminXUtils {
                               .setQueryPrefix(
                                   "It is very important that every project"
                                       + " MUST help you learn how to")
-                              .setValueType(ValueType.EKS.name())));
+                              .setValueType(ValueType.EKS)));
 
       xqType =
           new ProjectDefinitionCategoryTypeBuilder(
@@ -343,7 +343,7 @@ public class AdminXUtils {
                               .setQueryPrefix(
                                   "It is very important that every project"
                                       + " MUST help you learn how to")
-                              .setValueType(ValueType.XQ_COMPETENCY.name())));
+                              .setValueType(ValueType.XQ_COMPETENCY)));
 
       cteType =
           new ProjectDefinitionCategoryTypeBuilder(
@@ -367,7 +367,7 @@ public class AdminXUtils {
                               .setQueryPrefix(
                                   "You would like projects that are part of the following"
                                       + " industries")
-                              .setValueType(ValueType.CTE.name())));
+                              .setValueType(ValueType.CTE)));
     }
 
     public ProjectDefinitionCategoryTypeBuilder getCareerInterestType() {
@@ -671,7 +671,7 @@ public class AdminXUtils {
                                       new KnowledgeAndSkill()
                                           .setCreationTime(Instant.now())
                                           .setName(eksName)
-                                          .setType(Type.EKS.name())
+                                          .setType(Type.EKS)
                                           .setShortDescr(eksDescr)
                                           .setGlobal(true)
                                           .setUserX(userX));
@@ -836,7 +836,7 @@ public class AdminXUtils {
                     new KnowledgeAndSkill()
                         .setCreationTime(Instant.now())
                         .setName(xqName)
-                        .setType(Type.XQ_COMPETENCY.name())
+                        .setType(Type.XQ_COMPETENCY)
                         .setShortDescr(xqDescr)
                         .setGlobal(true)
                         .setCategory(xqCategory.getCategory())

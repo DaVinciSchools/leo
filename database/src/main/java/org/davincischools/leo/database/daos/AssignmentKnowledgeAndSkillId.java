@@ -22,7 +22,7 @@ public class AssignmentKnowledgeAndSkillId implements Serializable {
 
   public static final String COLUMN_ASSIGNMENTID_NAME = "assignment_id";
   public static final String COLUMN_KNOWLEDGEANDSKILLID_NAME = "knowledge_and_skill_id";
-  private static final long serialVersionUID = -5081293272016056331L;
+  private static final long serialVersionUID = -7674831523109019980L;
 
   private Integer assignmentId;
 

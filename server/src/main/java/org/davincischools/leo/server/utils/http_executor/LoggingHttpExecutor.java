@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.davincischools.leo.database.utils.repos.LogRepository.trimToLogLength;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -27,11 +26,11 @@ import javax.annotation.CheckReturnValue;
 import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.davincischools.leo.database.daos.Log;
+import org.davincischools.leo.database.daos.Log.StatusType;
 import org.davincischools.leo.database.daos.LogReference;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectInput;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.repos.LogRepository;
 import org.davincischools.leo.server.utils.http_user_x.HttpUserX;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -113,8 +112,8 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
   }
 
   @Override
-  public HttpExecutorLog setStatus(LogRepository.Status status) {
-    log.setStatus(status.name());
+  public HttpExecutorLog setStatus(StatusType status) {
+    log.setStatus(status);
     return this;
   }
 
@@ -234,7 +233,7 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
           lastSuccessfulInput = errorConsumerResponse.get();
           lastSuccessfulInputTime = Instant.now();
         } else {
-          log.setStatus(LogRepository.Status.ERROR.name());
+          log.setStatus(StatusType.ERROR);
 
           db.getLogRepository().save(log);
           db.getLogReferenceRepository().saveAll(logReferences);
@@ -261,8 +260,8 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
       }
       log.setFinalResponse(trimToLogLength(ioToString(lastSuccessfulInput)));
 
-      if (Strings.isNullOrEmpty(log.getStatus())) {
-        log.setStatus(LogRepository.Status.SUCCESS.name());
+      if (log.getStatus() == null) {
+        log.setStatus(StatusType.SUCCESS);
       }
 
       db.getLogRepository().save(log);

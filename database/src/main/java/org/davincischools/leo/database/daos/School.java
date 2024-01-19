@@ -51,7 +51,7 @@ public class School implements Serializable {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_NICKNAME_NAME = "nickname";
   public static final String COLUMN_ADDRESS_NAME = "address";
-  private static final long serialVersionUID = 4147549771007920763L;
+  private static final long serialVersionUID = -8076782436439313985L;
 
   private Integer id;
 

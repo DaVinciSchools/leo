@@ -3,10 +3,9 @@ package org.davincischools.leo.server.utils.task_queue.workers;
 import static org.davincischools.leo.database.utils.DaoUtils.getId;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import java.util.Objects;
+import org.davincischools.leo.database.daos.ProjectInput.StateType;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
-import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.protos.task_service.GenerateProjectsTask;
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.task_queue.DefaultTaskMetadata;
@@ -39,7 +38,7 @@ public class ProjectGeneratorWorker extends TaskQueue<GenerateProjectsTask, Defa
         .getProjectInputs(new GetProjectInputsParams().setIncludeProcessing(true))
         .forEach(
             projectInput -> {
-              if (Objects.equals(projectInput.getState(), State.PROCESSING.name())
+              if (projectInput.getState() == StateType.PROCESSING
                   && getId(projectInput.getExistingProject()).isEmpty()) {
                 submitTask(
                     GenerateProjectsTask.newBuilder()
@@ -58,7 +57,7 @@ public class ProjectGeneratorWorker extends TaskQueue<GenerateProjectsTask, Defa
     if (generatorInput == null) {
       throw new IllegalArgumentException("Unable to create project generator input.");
     }
-    if (!(Objects.equals(generatorInput.getProjectInput().getState(), State.PROCESSING.name())
+    if (!(generatorInput.getProjectInput().getState() == StateType.PROCESSING
         && getId(generatorInput.getProjectInput().getExistingProject()).isEmpty())) {
       return false;
     }
@@ -66,12 +65,12 @@ public class ProjectGeneratorWorker extends TaskQueue<GenerateProjectsTask, Defa
     var projects = new OpenAi3V3ProjectGenerator(openAiUtils).generateProjects(generatorInput, 5);
     db.getProjectRepository().deeplySaveProjects(db, projects);
     db.getProjectInputRepository()
-        .updateState(generatorInput.getProjectInput().getId(), State.COMPLETED.name());
+        .updateState(generatorInput.getProjectInput().getId(), StateType.COMPLETED);
     return true;
   }
 
   @Override
   protected void taskFailed(GenerateProjectsTask task, DefaultTaskMetadata metadata, Throwable t) {
-    db.getProjectInputRepository().updateState(task.getProjectInputId(), State.FAILED.name());
+    db.getProjectInputRepository().updateState(task.getProjectInputId(), StateType.FAILED);
   }
 }

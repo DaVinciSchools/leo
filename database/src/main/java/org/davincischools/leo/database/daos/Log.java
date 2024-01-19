@@ -2,6 +2,8 @@ package org.davincischools.leo.database.daos;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -52,7 +54,7 @@ public class Log implements Serializable {
   public static final String COLUMN_LASTINPUT_NAME = "last_input";
   public static final String COLUMN_LASTINPUTTYPE_NAME = "last_input_type";
   public static final String COLUMN_LASTINPUTTIME_NAME = "last_input_time";
-  private static final long serialVersionUID = -7284732420520432006L;
+  private static final long serialVersionUID = -2621644071711615716L;
 
   private Integer id;
 
@@ -62,7 +64,7 @@ public class Log implements Serializable {
 
   private UserX userX;
 
-  private String status;
+  private StatusType status;
 
   private String notes;
 
@@ -122,8 +124,9 @@ public class Log implements Serializable {
   }
 
   @Lob
+  @Enumerated(EnumType.STRING)
   @Column(name = COLUMN_STATUS_NAME, nullable = false)
-  public String getStatus() {
+  public StatusType getStatus() {
     return status;
   }
 
@@ -221,5 +224,10 @@ public class Log implements Serializable {
   @OneToMany(mappedBy = "log")
   public Set<LogReference> getLogReferences() {
     return logReferences;
+  }
+
+  public enum StatusType {
+    SUCCESS,
+    ERROR
   }
 }

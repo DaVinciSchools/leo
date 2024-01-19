@@ -31,7 +31,7 @@ public class ProjectImage implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_SELECTED_NAME = "selected";
-  private static final long serialVersionUID = -5689642528296133733L;
+  private static final long serialVersionUID = -3955804921106261107L;
 
   private ProjectImageId id;
 

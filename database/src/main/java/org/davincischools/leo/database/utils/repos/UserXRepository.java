@@ -35,7 +35,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
   int MAX_LAST_NAME_LENGTH =
       EntityUtils.getColumn(UserX.class, UserX.COLUMN_LASTNAME_NAME).length();
 
-  static final int MIN_PASSWORD_LENGTH = 8;
+  int MIN_PASSWORD_LENGTH = 8;
   String INVALID_ENCODED_PASSWORD = "INVALID ENCODED PASSWORD";
 
   enum Role {

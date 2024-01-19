@@ -41,7 +41,7 @@ public class ProjectInput implements Serializable {
   public static final String COLUMN_TIMEOUT_NAME = "timeout";
   public static final String COLUMN_STATE_NAME = "state";
   public static final String COLUMN_EXISTINGPROJECTUSETYPE_NAME = "existing_project_use_type";
-  private static final long serialVersionUID = 8018302510977246859L;
+  private static final long serialVersionUID = 6237200163263475851L;
 
   private Integer id;
 
@@ -51,7 +51,7 @@ public class ProjectInput implements Serializable {
 
   private Instant timeout;
 
-  private String state;
+  private StateType state;
 
   private Project existingProject;
 
@@ -66,6 +66,8 @@ public class ProjectInput implements Serializable {
   private Set<LogReference> logReferences = new LinkedHashSet<>();
 
   private Set<Project> projects = new LinkedHashSet<>();
+
+  private Set<ProjectInputAssignment> projectInputAssignments = new LinkedHashSet<>();
 
   private Set<ProjectInputValue> projectInputValues = new LinkedHashSet<>();
 
@@ -92,8 +94,9 @@ public class ProjectInput implements Serializable {
   }
 
   @Lob
+  @Enumerated(EnumType.STRING)
   @Column(name = COLUMN_STATE_NAME, nullable = false)
-  public String getState() {
+  public StateType getState() {
     return state;
   }
 
@@ -141,7 +144,24 @@ public class ProjectInput implements Serializable {
   }
 
   @OneToMany(mappedBy = "projectInput")
+  public Set<ProjectInputAssignment> getProjectInputAssignments() {
+    return projectInputAssignments;
+  }
+
+  @OneToMany(mappedBy = "projectInput")
   public Set<ProjectInputValue> getProjectInputValues() {
     return projectInputValues;
+  }
+
+  public enum ExistingProjectUseType {
+    USE_CONFIGURATION,
+    MORE_LIKE_THIS,
+    SUB_PROJECTS
+  }
+
+  public enum StateType {
+    PROCESSING,
+    COMPLETED,
+    FAILED
   }
 }

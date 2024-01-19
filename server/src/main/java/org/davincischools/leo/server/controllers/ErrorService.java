@@ -10,9 +10,9 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.davincischools.leo.database.daos.Log;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.Database;
-import org.davincischools.leo.database.utils.repos.LogRepository.Status;
 import org.davincischools.leo.protos.error_service.ReportErrorRequest;
 import org.davincischools.leo.protos.error_service.ReportErrorResponse;
 import org.davincischools.leo.protos.jira.Assignee;
@@ -79,7 +79,7 @@ public class ErrorService {
             (request, log) -> {
               var response = ReportErrorResponse.newBuilder();
 
-              log.setStatus(Status.ERROR);
+              log.setStatus(Log.StatusType.ERROR);
               try {
                 if (!Strings.isNullOrEmpty(atlassianAssigneeEmail)) {
                   CreateIssueResponse issueResponse = createBugForError(log, userX, request);

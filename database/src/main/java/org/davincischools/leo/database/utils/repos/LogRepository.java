@@ -24,11 +24,6 @@ public interface LogRepository extends JpaRepository<Log, Integer> {
   int MAX_LOG_BYTES = /* 16MB= */ 16 * 1024 * 1024;
   int MAX_LOG_CHARS = convertByteCountToCharCount(MAX_LOG_BYTES);
 
-  enum Status {
-    ERROR,
-    SUCCESS
-  }
-
   static String trimToLogLength(String input) {
     if (input.length() < MAX_LOG_CHARS) {
       return input;
