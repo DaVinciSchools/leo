@@ -128,9 +128,10 @@ public class ProjectManagementService {
               if (!switch (request.getKnowledgeAndSkill().getType()) {
                 case EKS -> userX.isAdminX() || userX.isTeacher();
                 case CTE, XQ_COMPETENCY -> userX.isAdminX();
-                case UNSET_TYPE, UNRECOGNIZED -> throw new IllegalArgumentException(
-                    "Unknown knowledge and skill type: "
-                        + request.getKnowledgeAndSkill().getType());
+                case UNSET_TYPE, UNRECOGNIZED ->
+                    throw new IllegalArgumentException(
+                        "Unknown knowledge and skill type: "
+                            + request.getKnowledgeAndSkill().getType());
               }) {
                 return userX.returnForbidden(UpsertKnowledgeAndSkillResponse.getDefaultInstance());
               }
@@ -447,7 +448,7 @@ public class ProjectManagementService {
                       enumNameOrNull(reqProject.getThumbsState(), ThumbsStateType.class))
                   .setThumbsStateReason(reqProject.getThumbsStateReason())
                   .setActive(reqProject.getActive());
-              toAssignmentDao(reqProject.getAssignment()).ifPresent(project::setAssignment);
+              project.setAssignment(toAssignmentDao(reqProject.getAssignment()).orElse(null));
 
               DaoUtils.removeTransientValues(project, db.getProjectRepository()::save);
 
