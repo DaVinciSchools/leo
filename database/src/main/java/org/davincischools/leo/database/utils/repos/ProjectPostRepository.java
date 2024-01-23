@@ -64,13 +64,11 @@ public interface ProjectPostRepository
     }
 
     if (params.getIncludeComments().orElse(false)) {
-      var commentUserX =
-          projectPost
-              .join(ProjectPost_.projectPostComments, JoinType.LEFT)
-              .notDeleted()
-              .join(ProjectPostComment_.userX, JoinType.LEFT)
-              .fetch();
-      commentUserX.requireNotId(params.getExcludeCommentsByUserXIds());
+      projectPost
+          .join(ProjectPost_.projectPostComments, JoinType.LEFT)
+          .notDeleted()
+          .join(ProjectPostComment_.userX, JoinType.LEFT)
+          .fetch();
     }
 
     var project =
