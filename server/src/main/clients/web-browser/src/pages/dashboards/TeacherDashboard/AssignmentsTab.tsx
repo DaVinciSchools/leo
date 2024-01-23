@@ -35,6 +35,7 @@ import {
 } from '../../../libs/sorters';
 import {addClassName} from '../../../libs/tags';
 import {HtmlEditor} from '../../../libs/HtmlEditor/HtmlEditor';
+import {DeepReadOnly} from '../../../libs/misc';
 import IAssignment = pl_types.IAssignment;
 import IClassX = pl_types.IClassX;
 import IProjectDefinition = pl_types.IProjectDefinition;
@@ -78,9 +79,10 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
   const [name, setName] = useState('');
   const [shortDescr, setShortDescr] = useState('');
   const [longDescrHtml, setLongDescrHtml] = useState('');
-  const assignmentEks = assignmentFormField.useAutocompleteFormField<
-    readonly IKnowledgeAndSkill[]
-  >('knowledgeAndSkills', {isAutocomplete: {isMultiple: true}});
+  const assignmentEks =
+    assignmentFormField.useMultipleAutocompleteFormField<
+      DeepReadOnly<IKnowledgeAndSkill>
+    >('knowledgeAndSkills');
 
   // Used to track the project definition.
   const [projectDefinitions, setProjectDefinitions] = useState<
@@ -360,8 +362,7 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
         </Grid>
         <Grid item xs={12}>
           <Autocomplete
-            {...assignmentEks.autocompleteParams()}
-            multiple
+            {...assignmentEks.getAutocompleteParams()}
             autoHighlight
             disableCloseOnSelect
             options={sortedAssignmentEks}
@@ -370,7 +371,7 @@ export function AssignmentsTab(props: {userX: IUserX | undefined}) {
               <TextField
                 label="Select knowledge and skills"
                 autoComplete="off"
-                {...assignmentEks.textFieldParams(params)}
+                {...assignmentEks.getTextFieldParams(params)}
               />
             )}
             groupBy={eks =>

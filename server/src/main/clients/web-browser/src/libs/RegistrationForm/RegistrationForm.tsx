@@ -34,13 +34,10 @@ export function RegistrationForm(props: {
     isPassword: {},
     startIcon: <Lock />,
   });
-  const profession = formFields.useAutocompleteFormField<string | null>(
+  const profession = formFields.useSingleFreeSoloAutocompleteFormField(
     'profession',
     {
       maxLength: 255,
-      isAutocomplete: {
-        isFreeSolo: true,
-      },
     }
   );
   const reasonForInterest = formFields.useStringFormField('reasonForInterest', {
@@ -95,7 +92,7 @@ export function RegistrationForm(props: {
             autoFocus
             autoComplete="given-name"
             label="First Name"
-            {...firstName.textFieldParams()}
+            {...firstName.getTextFieldParams()}
           />
         </Grid>
         <Grid item xs={6}>
@@ -103,7 +100,7 @@ export function RegistrationForm(props: {
             required
             autoComplete="family-name"
             label="Last Name"
-            {...lastName.textFieldParams()}
+            {...lastName.getTextFieldParams()}
           />
         </Grid>
         <Grid item xs={12}>
@@ -111,7 +108,7 @@ export function RegistrationForm(props: {
             required
             autoComplete="email"
             label="Email Address"
-            {...emailAddress.textFieldParams()}
+            {...emailAddress.getTextFieldParams()}
           />
         </Grid>
         <Grid item xs={6}>
@@ -119,7 +116,7 @@ export function RegistrationForm(props: {
             required
             autoComplete="current-password"
             label="Password"
-            {...password.textFieldParams()}
+            {...password.getTextFieldParams()}
           />
         </Grid>
         <Grid item xs={6}>
@@ -127,12 +124,11 @@ export function RegistrationForm(props: {
             required
             autoComplete="new-password"
             label="Verify Password"
-            {...verifyPassword.textFieldParams()}
+            {...verifyPassword.getTextFieldParams()}
           />
         </Grid>
         <Grid item xs={12}>
           <Autocomplete
-            freeSolo
             autoComplete
             options={[
               'K-12 District Leader/Administrator',
@@ -145,10 +141,10 @@ export function RegistrationForm(props: {
                 required
                 autoComplete="organization-title"
                 label="Profession"
-                {...profession.textFieldParams(params)}
+                {...profession.getTextFieldParams(params)}
               />
             )}
-            {...profession.autocompleteParams()}
+            {...profession.getAutocompleteParams()}
           />
         </Grid>
         <Grid item xs={12}>
@@ -157,51 +153,51 @@ export function RegistrationForm(props: {
             multiline
             rows={3}
             label="Let us know why you're interested."
-            {...reasonForInterest.textFieldParams()}
+            {...reasonForInterest.getTextFieldParams()}
           />
         </Grid>
         <Grid item xs={12} />
         <Grid item xs={12}>
           <TextField
             label="District Name"
-            {...districtName.textFieldParams()}
+            {...districtName.getTextFieldParams()}
           />
         </Grid>
         <Grid item xs={12}>
-          <TextField label="School Name" {...schoolName.textFieldParams()} />
+          <TextField label="School Name" {...schoolName.getTextFieldParams()} />
         </Grid>
         <Grid item xs={12}>
           <TextField
             label="Address Line 1"
-            {...addressLine1.textFieldParams()}
+            {...addressLine1.getTextFieldParams()}
           />
         </Grid>
         <Grid item xs={12}>
           <TextField
             label="Address Line 2"
-            {...addressLine2.textFieldParams()}
+            {...addressLine2.getTextFieldParams()}
           />
         </Grid>
         <Grid item xs={4}>
-          <TextField label="City" {...city.textFieldParams()} />
+          <TextField label="City" {...city.getTextFieldParams()} />
         </Grid>
         <Grid item xs={4}>
-          <TextField label="State" {...state.textFieldParams()} />
+          <TextField label="State" {...state.getTextFieldParams()} />
         </Grid>
         <Grid item xs={4}>
-          <TextField label="Zip Code" {...zipCode.textFieldParams()} />
+          <TextField label="Zip Code" {...zipCode.getTextFieldParams()} />
         </Grid>
         <Grid item xs={12} />
         <Grid item xs={6}>
           <TextField
             label="Number of Educators"
-            {...numTeachers.textFieldParams()}
+            {...numTeachers.getTextFieldParams()}
           />
         </Grid>
         <Grid item xs={6}>
           <TextField
             label="Number of Students"
-            {...numStudents.textFieldParams()}
+            {...numStudents.getTextFieldParams()}
           />
         </Grid>
         <Grid item xs={12} />

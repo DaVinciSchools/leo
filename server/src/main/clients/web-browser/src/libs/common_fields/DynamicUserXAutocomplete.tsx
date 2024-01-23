@@ -1,7 +1,7 @@
 import '../global.scss';
 import {user_x_management} from 'pl-pb';
 import {Checkbox} from '@mui/material';
-import {DeepReadOnly, toProto} from '../misc';
+import {DeepReadOnly, writableForProto} from '../misc';
 import {CSSProperties} from 'react';
 import {DynamicLoadAutocomplete} from './DynamicLoadAutocomplete';
 import {createService} from '../protos';
@@ -28,7 +28,7 @@ export function DynamicUserXAutocomplete<
   function loadMoreUserXs(page: number, pageSize: number, searchText: string) {
     return createService(UserXManagementService, 'UserXManagementService')
       .getUserXs(
-        toProto(
+        writableForProto(
           Object.assign({}, props.baseRequest, {
             page,
             pageSize,

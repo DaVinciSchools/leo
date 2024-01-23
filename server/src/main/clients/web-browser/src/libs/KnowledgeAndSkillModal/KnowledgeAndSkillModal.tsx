@@ -40,7 +40,7 @@ export function KnowledgeAndSkillModal(props: {
         props.onOk(mainForm.getValuesObject(true, {...props.value}));
       }}
     >
-      <form style={{paddingTop: '2em'}} {...mainForm.formParams()}>
+      <form style={{paddingTop: '2em'}} {...mainForm.getFormParams()}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
             A name should be a one or two word summary to uniquely identify it.
@@ -50,7 +50,7 @@ export function KnowledgeAndSkillModal(props: {
               InputLabelProps={{shrink: true}}
               placeholder="e.g., Camera Types"
               style={{marginTop: '1em'}}
-              {...nameField.textFieldParams()}
+              {...nameField.getTextFieldParams()}
             />
           </Grid>
           <Grid item xs={12}>
@@ -72,13 +72,13 @@ export function KnowledgeAndSkillModal(props: {
               label="Description"
               placeholder="e.g., Differentiate between camera types for specific types of videography."
               InputLabelProps={{shrink: true}}
-              {...shortDescrField.textFieldParams()}
+              {...shortDescrField.getTextFieldParams()}
             />
           </Grid>
           <Grid item xs={12}>
             <FormControlLabel
               label="Visible to other teachers"
-              control={<Checkbox {...globalField.checkboxParams()} />}
+              control={<Checkbox {...globalField.getCheckboxParams()} />}
             />
           </Grid>
         </Grid>

@@ -29,7 +29,12 @@ import {useContext, useEffect, useState} from 'react';
 import {useDelayedAction} from '../../../libs/delayed_action';
 import {useFormFields} from '../../../libs/form_utils/forms';
 import {KnowledgeAndSkillModal} from '../../../libs/KnowledgeAndSkillModal/KnowledgeAndSkillModal';
-import {replaceInPlace, replaceOrAddInPlace} from '../../../libs/misc';
+import {
+  DeepReadOnly,
+  replaceInDeepReadOnly,
+  replaceOrAddInDeepReadOnly,
+  writableForProto,
+} from '../../../libs/misc';
 import ClassXManagementService = class_x_management_service.ClassXManagementService;
 import IClassX = pl_types.IClassX;
 import IKnowledgeAndSkill = pl_types.IKnowledgeAndSkill;
@@ -45,9 +50,12 @@ export function TeacherEditClassXs() {
     userX => userX.isAdminX || userX.isTeacher
   );
 
-  const [sortedClasses, setSortedClasses] = useState<readonly IClassX[]>([]);
+  const [sortedClasses, setSortedClasses] = useState<DeepReadOnly<IClassX[]>>(
+    []
+  );
   const [haveMultipleSchools, setHaveMultipleSchools] = useState(false);
-  const [selectedClass, setSelectedClass] = useState<IClassX | null>(null);
+  const [selectedClass, setSelectedClass] =
+    useState<DeepReadOnly<IClassX | undefined>>();
   const [sortedKnowledgeAndSkills, setSortedKnowledgeAndSkills] = useState<
     readonly IKnowledgeAndSkill[]
   >([]);
@@ -59,12 +67,19 @@ export function TeacherEditClassXs() {
     () => {
       setClassSaveStatus('Modified');
       if (selectedClass?.id != null) {
-        const newClass = classFormFields.getValuesObject(true, selectedClass);
-        setSortedClasses(
-          replaceInPlace(sortedClasses.slice(), newClass, e => e?.id).sort(
-            CLASS_X_SORTER
-          )
+        const newSelectedClass = classFormFields.getValuesObject(
+          true,
+          selectedClass
         );
+        setSortedClasses(
+          replaceInDeepReadOnly(
+            sortedClasses,
+            newSelectedClass,
+            e => e?.id
+          ).sort(CLASS_X_SORTER)
+        );
+        // This would update the select class autocomplete. But, it makes the form buggy.
+        // setSelectedClass(newSelectedClass);
       }
     },
     () => {
@@ -72,7 +87,9 @@ export function TeacherEditClassXs() {
       if (selectedClass?.id != null && classFormFields.verifyOk(true)) {
         return createService(ClassXManagementService, 'ClassXManagementService')
           .upsertClassX({
-            classX: classFormFields.getValuesObject(true, selectedClass),
+            classX: writableForProto(
+              classFormFields.getValuesObject(true, selectedClass)
+            ),
           })
           .then(() => {
             setClassSaveStatus('Saved');
@@ -92,21 +109,20 @@ export function TeacherEditClassXs() {
     onChange: () => autoSave.trigger(),
     disabled: selectedClass == null,
   });
-  const classSchool = classFormFields.useAutocompleteFormField<ISchool | null>(
-    'school',
-    {
-      isAutocomplete: {},
-    }
-  );
+  const classSchool =
+    classFormFields.useSingleAutocompleteFormField<DeepReadOnly<ISchool>>(
+      'school'
+    );
   const className = classFormFields.useStringFormField('name', {
     maxLength: 255,
   });
   const classNumber = classFormFields.useStringFormField('number', {
     maxLength: 255,
   });
-  const classEks = classFormFields.useAutocompleteFormField<
-    readonly IKnowledgeAndSkill[]
-  >('knowledgeAndSkills', {isAutocomplete: {isMultiple: true}});
+  const classEks =
+    classFormFields.useMultipleAutocompleteFormField<
+      DeepReadOnly<IKnowledgeAndSkill>
+    >('knowledgeAndSkills');
   const classPeriod = classFormFields.useStringFormField('period', {
     maxLength: 16,
   });
@@ -132,7 +148,7 @@ export function TeacherEditClassXs() {
 
   useEffect(() => {
     if (userX == null) {
-      setSelectedClass(null);
+      setSelectedClass(undefined);
       setHaveMultipleSchools(false);
       setSortedSchools([]);
       setSortedClasses([]);
@@ -210,7 +226,7 @@ export function TeacherEditClassXs() {
             <Autocomplete
               autoHighlight
               autoFocus
-              value={selectedClass}
+              value={selectedClass ?? null}
               options={sortedClasses}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               groupBy={
@@ -237,9 +253,9 @@ export function TeacherEditClassXs() {
                 ': ' +
                 (option?.name ?? 'undefined')
               }
-              onChange={(ignore, option) => {
+              onChange={(_, option) => {
                 autoSave.forceDelayedAction(() => {
-                  setSelectedClass(option);
+                  setSelectedClass(option != null ? option : undefined);
                 });
               }}
             />
@@ -267,7 +283,7 @@ export function TeacherEditClassXs() {
             </Button>
           </Grid>
         </Grid>
-        <form style={{paddingTop: '2em'}} {...classFormFields.formParams()}>
+        <form style={{paddingTop: '2em'}} {...classFormFields.getFormParams()}>
           <Grid container spacing={2}>
             <Grid item xs={12} className="section-heading">
               <div className="section-title">Edit Class:</div>
@@ -287,7 +303,7 @@ export function TeacherEditClassXs() {
                 renderInput={params => (
                   <TextField
                     label="Select school"
-                    {...classSchool.textFieldParams(params)}
+                    {...classSchool.getTextFieldParams(params)}
                   />
                 )}
                 renderOption={(props, option) => (
@@ -296,26 +312,25 @@ export function TeacherEditClassXs() {
                   </li>
                 )}
                 getOptionLabel={option => option?.name ?? 'School is Unnamed'}
-                {...classSchool.autocompleteParams()}
+                {...classSchool.getAutocompleteParams()}
               />
             </Grid>
             <Grid item {...spread({sm: 12, md: 4})}>
               <TextField
                 required
                 label="Class ID"
-                {...classNumber.textFieldParams()}
+                {...classNumber.getTextFieldParams()}
               />
             </Grid>
             <Grid item {...spread({sm: 12, md: 8})}>
               <TextField
                 required
                 label="Class Name"
-                {...className.textFieldParams()}
+                {...className.getTextFieldParams()}
               />
             </Grid>
             <Grid item {...spread({sm: 12, md: 9.5})}>
               <Autocomplete
-                multiple
                 autoHighlight
                 disableCloseOnSelect
                 options={sortedKnowledgeAndSkills}
@@ -324,7 +339,7 @@ export function TeacherEditClassXs() {
                   <TextField
                     label="Select knowledge and skills"
                     autoComplete="off"
-                    {...classEks.textFieldParams(params)}
+                    {...classEks.getTextFieldParams(params)}
                   />
                 )}
                 renderOption={(props, option, {selected}) => (
@@ -364,7 +379,7 @@ export function TeacherEditClassXs() {
                     />
                   ))
                 }
-                {...classEks.autocompleteParams()}
+                {...classEks.getAutocompleteParams()}
               />
             </Grid>
             <Grid item {...spread({sm: 12, md: 2.5})}>
@@ -382,21 +397,21 @@ export function TeacherEditClassXs() {
               </Button>
             </Grid>
             <Grid item {...spread({sm: 12, md: 6})}>
-              <TextField label="Period" {...classPeriod.textFieldParams()} />
+              <TextField label="Period" {...classPeriod.getTextFieldParams()} />
             </Grid>
             <Grid item {...spread({sm: 12, md: 6})}>
-              <TextField label="Grade" {...classGrade.textFieldParams()} />
+              <TextField label="Grade" {...classGrade.getTextFieldParams()} />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 label="Short Description"
-                {...classShortDescr.textFieldParams()}
+                {...classShortDescr.getTextFieldParams()}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 label="Long Description"
-                {...classLongDescrHtml.textFieldParams()}
+                {...classLongDescrHtml.getTextFieldParams()}
               />
             </Grid>
           </Grid>
@@ -416,7 +431,7 @@ export function TeacherEditClassXs() {
               .upsertKnowledgeAndSkill({knowledgeAndSkill: ks})
               .then(response => {
                 setSortedKnowledgeAndSkills(
-                  replaceOrAddInPlace(
+                  replaceOrAddInDeepReadOnly(
                     sortedKnowledgeAndSkills.slice(),
                     response.knowledgeAndSkill!,
                     e => e.id
@@ -425,7 +440,7 @@ export function TeacherEditClassXs() {
                 if (editKsOp === 'ADD') {
                   // Add the knowledge and skill to the class.
                   classEks.setValue(
-                    replaceOrAddInPlace(
+                    replaceOrAddInDeepReadOnly(
                       classEks.getValue()?.slice() ?? [],
                       response.knowledgeAndSkill!,
                       e => e.id
@@ -433,7 +448,7 @@ export function TeacherEditClassXs() {
                   );
                 } else {
                   classEks.setValue(
-                    replaceInPlace(
+                    replaceInDeepReadOnly(
                       classEks.getValue()?.slice() ?? [],
                       response.knowledgeAndSkill!,
                       e => e.id

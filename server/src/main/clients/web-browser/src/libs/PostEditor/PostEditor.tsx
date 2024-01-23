@@ -10,13 +10,10 @@ export function PostEditor(props: {
   const postName = props.postForm.useStringFormField('name', {
     maxLength: 255,
   });
-  const postTags = props.postForm.useAutocompleteFormField<readonly string[]>(
-    'tags',
-    {
+  const postTags =
+    props.postForm.useMultipleFreeSoloAutocompleteFormField<string>('tags', {
       maxLength: 32,
-      isAutocomplete: {isMultiple: true, isFreeSolo: true},
-    }
-  );
+    });
   const postLongDescrHtml = props.postForm.useStringFormField('longDescrHtml', {
     maxLength: 65535,
   });
@@ -34,7 +31,7 @@ export function PostEditor(props: {
         <TextField
           placeholder="Enter a name for this post."
           // TODO: required - Right now it pulls the focus all the time.
-          {...postName.textFieldParams()}
+          {...postName.getTextFieldParams()}
         />
         <div className="global-form-label">Tags</div>
         <MultiTagAutocomplete
@@ -45,7 +42,7 @@ export function PostEditor(props: {
         <div className="global-form-label">Details</div>
         <HtmlEditor
           placeholder="Enter a description for this post."
-          {...postLongDescrHtml.htmlEditorProps()}
+          {...postLongDescrHtml.getHtmlEditorParams()}
           alwaysShowEditor={true}
           editingPlaceholder="Enter a description for this post."
         />
@@ -54,7 +51,7 @@ export function PostEditor(props: {
           multiline
           minRows={3}
           placeholder="Enter what kind of feedback you want."
-          {...postDesiredFeedback.textFieldParams()}
+          {...postDesiredFeedback.getTextFieldParams()}
         />
       </div>
     </>

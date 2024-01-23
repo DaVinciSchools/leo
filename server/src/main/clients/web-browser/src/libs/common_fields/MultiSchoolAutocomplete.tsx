@@ -9,19 +9,19 @@ import {
 } from '@mui/material';
 import {FormField} from '../form_utils/forms';
 import {pl_types} from 'pl-pb';
-import ISchool = pl_types.ISchool;
 import {addClassName} from '../tags';
+import {DeepReadOnly} from '../misc';
+import ISchool = pl_types.ISchool;
 
 export function MultiSchoolAutocomplete(props: {
   sortedSchools: readonly ISchool[];
-  formField: FormField<readonly ISchool[]>;
+  formField: FormField<DeepReadOnly<ISchool>, true>;
   InputLabelProps?: Partial<InputLabelProps>;
   placeholder?: (hasOptions: boolean) => string;
 }) {
   return (
     <Autocomplete
-      {...props.formField.autocompleteParams()}
-      multiple
+      {...props.formField.getAutocompleteParams()}
       autoHighlight
       disableCloseOnSelect
       options={props.sortedSchools}
@@ -51,7 +51,7 @@ export function MultiSchoolAutocomplete(props: {
       }}
       renderInput={params => (
         <TextField
-          {...props.formField.textFieldParams(params)}
+          {...props.formField.getTextFieldParams(params)}
           label="Schools"
           InputLabelProps={props.InputLabelProps}
           placeholder={
@@ -61,7 +61,7 @@ export function MultiSchoolAutocomplete(props: {
           }
         />
       )}
-      renderTags={(schools: readonly ISchool[], getTagProps) =>
+      renderTags={(schools, getTagProps) =>
         schools.map((option, index) => (
           <Chip
             {...addClassName(getTagProps({index}), 'global-tags')}

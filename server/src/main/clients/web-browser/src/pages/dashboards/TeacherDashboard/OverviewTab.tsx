@@ -46,24 +46,17 @@ export function OverviewTab() {
   const [schoolOptions, setSchoolOptions] = useState<DeepReadOnly<ISchool[]>>(
     []
   );
-  const schoolFilter = filterForm.useAutocompleteFormField<
-    DeepReadOnly<ISchool[]>
+  const schoolFilter = filterForm.useMultipleAutocompleteFormField<
+    DeepReadOnly<ISchool>
   >('schoolFilter', {
-    isAutocomplete: {
-      isMultiple: true,
-    },
     disabled: !userX,
   });
 
   const [classXOptions, setClassXOptions] = useState<readonly IClassX[]>([]);
-  const classXFilter = filterForm.useAutocompleteFormField<readonly IClassX[]>(
-    'classXFilter',
-    {
-      isAutocomplete: {
-        isMultiple: true,
-      },
-    }
-  );
+  const classXFilter =
+    filterForm.useMultipleAutocompleteFormField<DeepReadOnly<IClassX>>(
+      'classXFilter'
+    );
 
   const [filteredUserXs, setFilteredUserXs] = useState<
     DeepReadOnly<IFullUserXDetails[]>

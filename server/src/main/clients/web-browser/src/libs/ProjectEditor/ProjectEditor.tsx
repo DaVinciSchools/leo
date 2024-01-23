@@ -5,6 +5,7 @@ import {TextField} from '@mui/material';
 import {FormFields} from '../form_utils/forms';
 import {pl_types} from 'pl-pb';
 import {HtmlEditor} from '../HtmlEditor/HtmlEditor';
+import {DeepReadOnly} from '../misc';
 import IAssignment = pl_types.IAssignment;
 
 export function ProjectEditor(props: {
@@ -15,11 +16,8 @@ export function ProjectEditor(props: {
     maxLength: 255,
   });
   const projectAssignment =
-    props.projectForm.useAutocompleteFormField<IAssignment | null>(
-      'assignment',
-      {
-        isAutocomplete: {},
-      }
+    props.projectForm.useSingleAutocompleteFormField<DeepReadOnly<IAssignment>>(
+      'assignment'
     );
   const projectShortDescr = props.projectForm.useStringFormField('shortDescr', {
     maxLength: 65535,
@@ -41,11 +39,11 @@ export function ProjectEditor(props: {
           formField={projectAssignment}
         />
         <div className="global-form-label">Title</div>
-        <TextField required {...projectName.textFieldParams()} />
+        <TextField required {...projectName.getTextFieldParams()} />
         <div className="global-form-label">Description</div>
-        <TextField required {...projectShortDescr.textFieldParams()} />
+        <TextField required {...projectShortDescr.getTextFieldParams()} />
         <div className="global-form-label">Details</div>
-        <HtmlEditor {...projectLongDescrHtml.htmlEditorProps()} />
+        <HtmlEditor {...projectLongDescrHtml.getHtmlEditorParams()} />
       </div>
     </>
   );

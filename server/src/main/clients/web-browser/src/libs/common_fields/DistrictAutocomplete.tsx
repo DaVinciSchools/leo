@@ -1,18 +1,19 @@
-import {Autocomplete, InputLabelProps, TextField} from '@mui/material';
+import {Autocomplete, TextField} from '@mui/material';
 import {FormField} from '../form_utils/forms';
 import {pl_types} from 'pl-pb';
-
+import {DeepReadOnly} from '../misc';
 import IDistrict = pl_types.IDistrict;
 
-export function DistrictAutocomplete(props: {
-  sortedDistricts: readonly IDistrict[];
-  formField: FormField<IDistrict | null>;
-  InputLabelProps?: Partial<InputLabelProps>;
-  placeholder?: (hasOptions: boolean) => string;
-}) {
+export function DistrictAutocomplete(
+  props: DeepReadOnly<{
+    sortedDistricts: IDistrict[];
+    formField: FormField<DeepReadOnly<IDistrict>>;
+    placeholder?: (hasOptions: boolean) => string;
+  }>
+) {
   return (
     <Autocomplete
-      {...props.formField.autocompleteParams()}
+      {...props.formField.getAutocompleteParams()}
       autoHighlight
       options={props.sortedDistricts}
       isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -30,10 +31,9 @@ export function DistrictAutocomplete(props: {
       )}
       renderInput={params => (
         <TextField
-          {...props.formField.textFieldParams(params)}
+          {...props.formField.getTextFieldParams(params)}
           label="District"
           size="small"
-          InputLabelProps={props.InputLabelProps}
           placeholder={
             props.placeholder
               ? props.placeholder(props.sortedDistricts.length > 0)
