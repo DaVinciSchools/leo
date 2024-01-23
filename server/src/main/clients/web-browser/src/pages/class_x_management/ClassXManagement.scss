@@ -1,7 +1,6 @@
-@use '../../../libs/IkigaiProjectBuilder/IkigaiProjectBuilder';
-@use '../../../libs/DefaultPage/DefaultPage';
-@use '../../../libs/color';
-
+@use '../../libs/IkigaiProjectBuilder/IkigaiProjectBuilder';
+@use '../../libs/DefaultPage/DefaultPage';
+@use '../../libs/color';
 
 .teacher-edit-classes-expand-buttons {
   display: flex;
