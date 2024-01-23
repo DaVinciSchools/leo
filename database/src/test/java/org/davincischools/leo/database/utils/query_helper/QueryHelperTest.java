@@ -583,4 +583,28 @@ public class QueryHelperTest {
 
     assertThat(sessionFactory.getStatistics().getQueries()).hasLength(2);
   }
+
+  @Test
+  public void subqueryWithInTest() {
+    var results =
+        queryHelper.query(
+            UserX.class,
+            userX ->
+                userX
+                    .notDeleted()
+                    .where(
+                        Predicate.in(
+                            userX.get(UserX_.id),
+                            userX
+                                .subquery(Integer.class, Teacher.class)
+                                .join(Teacher_.userX, JoinType.INNER)
+                                .get(UserX_.id)
+                                .select())));
+
+    assertThat(results.stream().map(UserX::getEmailAddress).toList())
+        .containsExactly(
+            testData.getAdminX().getEmailAddress(), testData.getTeacher().getEmailAddress());
+
+    assertThat(sessionFactory.getStatistics().getQueries()).hasLength(1);
+  }
 }

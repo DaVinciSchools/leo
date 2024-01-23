@@ -42,8 +42,9 @@ public class Entity<P, S, F> implements Expression<F> {
   private final Class<S> selectClass;
   private final Class<F> fromClass;
 
-  // This must be <?> because singular attributes are F2 and plural attributes are Collection<F2>.
+  // These must be <?> because singular attributes are ? and plural attributes are Collection<?>.
   private jakarta.persistence.criteria.Expression<?> jpaEntity;
+  private jakarta.persistence.criteria.Expression<?> subqueryJpaEntity;
 
   private EntityType entityType;
   // This must be <?> because singular attributes are F2 and plural attributes are Collection<F2>.
@@ -60,6 +61,7 @@ public class Entity<P, S, F> implements Expression<F> {
   @Nullable private final ManagedType<F> managedType;
   // These will be the entities that ids will be pulled from.
   private final List<Entity<?, ?, ?>> nonIdManagedEntities = new ArrayList<>();
+  private final List<Entity<?, ?, ?>> subqueries = new ArrayList<>();
 
   Entity(
       @Nullable Entity<?, S, P> parent,
@@ -86,19 +88,35 @@ public class Entity<P, S, F> implements Expression<F> {
   }
 
   public Entity<P, S, F> select() {
-    checkState(selectClass == fromClass);
+    checkState(
+        selectClass == fromClass,
+        "%s must be the same as %s",
+        selectClass.getSimpleName(),
+        fromClass.getSimpleName());
     @SuppressWarnings("unchecked")
     var sfChild = (Entity<P, S, S>) this;
-    setSelectEntity(sfChild);
+    getQueryRoot().setSelectEntity(sfChild);
     return this;
   }
 
   private void setSelectEntity(Entity<?, ?, S> entity) {
-    checkState(selectClass == entity.fromClass);
+    checkState(
+        selectClass == entity.fromClass,
+        "%s must be the same as %s",
+        selectClass.getSimpleName(),
+        entity.fromClass.getSimpleName());
     this.selectEntity = entity;
-    if (parent != null && parent.selectEntity == null) {
-      parent.setSelectEntity(entity);
-    }
+  }
+
+  public <S2, F2> Entity<?, S2, F2> subquery(Class<S2> selectClass, Class<F2> fromClass) {
+    checkNotNull(selectClass);
+    checkNotNull(fromClass);
+
+    var subquery = new Entity<>(null, queryHelper, entityManager, selectClass, fromClass);
+
+    subqueries.add(subquery);
+
+    return subquery;
   }
 
   public <S2, F2> Supplier<Entity<?, S2, F2>> supplier(Supplier<Entity<?, S2, F2>> supplier) {
@@ -241,12 +259,24 @@ public class Entity<P, S, F> implements Expression<F> {
     return this;
   }
 
-  private Entity<?, S, ?> getRoot() {
-    Entity<?, S, ?> root = this;
+  private Entity<?, ?, ?> getRoot() {
+    Entity<?, ?, ?> root = this;
     while (root.parent != null) {
       root = root.parent;
     }
     return root;
+  }
+
+  private Entity<?, S, ?> getQueryRoot() {
+    Entity<?, S, ?> root = this;
+    while (root.parent != null && !root.isQuery()) {
+      root = root.parent;
+    }
+    return root;
+  }
+
+  private boolean isQuery() {
+    return entityType == EntityType.ROOT || entityType == EntityType.SUBQUERY;
   }
 
   public Entity<P, S, F> orderByAsc(Entity<?, ?, ?> entity) {
@@ -327,6 +357,9 @@ public class Entity<P, S, F> implements Expression<F> {
   @SuppressWarnings("unchecked")
   @Override
   public jakarta.persistence.criteria.Expression<F> toExpression(CriteriaBuilder builder) {
+    if (entityType == EntityType.SUBQUERY) {
+      return (jakarta.persistence.criteria.Expression<F>) subqueryJpaEntity;
+    }
     return (jakarta.persistence.criteria.Expression<F>) jpaEntity;
   }
 
@@ -334,7 +367,16 @@ public class Entity<P, S, F> implements Expression<F> {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     switch (entityType) {
-      case ROOT -> sb.append("Root(").append(fromClass.getSimpleName()).append(")");
+      case ROOT -> sb.append("Root(")
+          .append(fromClass.getSimpleName())
+          .append("->")
+          .append(selectClass.getSimpleName())
+          .append(")");
+      case SUBQUERY -> sb.append("Subquery(")
+          .append(fromClass.getSimpleName())
+          .append("->")
+          .append(selectClass.getSimpleName())
+          .append(")");
       case GET -> sb.append("Get(")
           .append(attribute.getName())
           .append(":")

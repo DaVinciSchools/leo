@@ -9,6 +9,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Order;
@@ -318,6 +319,16 @@ public class QueryHelper {
       case ROOT:
         entity.setJpaEntity(query.from(entity.getFromClass()));
         break;
+      case SUBQUERY:
+        {
+          var subquery = query.subquery(entity.getSelectClass());
+          @SuppressWarnings("unchecked")
+          var select = (Expression<S>) entity.getSelectEntity().getJpaEntity();
+          subquery.select(select);
+          entity.setSubqueryJpaEntity(subquery);
+          entity.setJpaEntity(subquery.from(entity.getFromClass()));
+        }
+        break;
       case GET:
         {
           @SuppressWarnings("unchecked")
@@ -373,6 +384,14 @@ public class QueryHelper {
         .getChildren()
         .values()
         .forEach(e -> populateJpaEntities(e, /* isRoot= */ false, query, config));
+
+    // Create JPA entities for the subqueries.
+    entity
+        .getSubqueries()
+        .forEach(
+            e -> {
+              populateJpaEntities((Entity<?, ?, ?>) e, /* isRoot= */ true, query, config);
+            });
   }
 
   private static void populateJpaPredicates(
@@ -396,6 +415,7 @@ public class QueryHelper {
                 addJoinOn(entity.getJpaEntity(), p.toPredicate(builder));
               }
             });
+
     entity
         .getWhere()
         .forEach(
@@ -406,6 +426,13 @@ public class QueryHelper {
     entity
         .getChildren()
         .values()
+        .forEach(
+            e -> {
+              populateJpaPredicates(e, builder, where, config);
+            });
+
+    entity
+        .getSubqueries()
         .forEach(
             e -> {
               populateJpaPredicates(e, builder, where, config);
