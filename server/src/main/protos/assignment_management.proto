@@ -17,6 +17,8 @@ service AssignmentManagementService {
 message GetAssignmentsRequest {
   optional int32 teacher_id = 1;
   optional int32 student_id = 2;
+  repeated int32 school_ids = 5;
+  repeated int32 class_x_ids = 6;
   repeated int32 assignment_ids = 3;
 
   optional bool include_project_definitions = 4;

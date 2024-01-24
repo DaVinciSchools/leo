@@ -18,6 +18,7 @@ public class GetAssignmentsParams {
   @Nullable private GetProjectDefinitionsParams includeProjectDefinitions;
 
   @Nullable private Iterable<Integer> assignmentIds;
+  @Nullable private Iterable<Integer> schoolIds;
   @Nullable private Iterable<Integer> classXIds;
   @Nullable private Iterable<Integer> teacherIds;
   @Nullable private Iterable<Integer> studentIds;
@@ -36,6 +37,10 @@ public class GetAssignmentsParams {
 
   public Optional<Iterable<Integer>> getAssignmentIds() {
     return Optional.ofNullable(assignmentIds);
+  }
+
+  public Optional<Iterable<Integer>> getSchoolIds() {
+    return Optional.ofNullable(schoolIds);
   }
 
   public Optional<Iterable<Integer>> getClassXIds() {

@@ -56,6 +56,10 @@ public interface AssignmentRepository
             () -> assignment.join(Assignment_.classX, JoinType.LEFT).notDeleted(),
             params.getClassXIds());
 
+    // var school =
+    assignment.supplier(
+        () -> classX.get().join(ClassX_.school, JoinType.LEFT).notDeleted(), params.getSchoolIds());
+
     // var teacher =
     assignment.supplier(
         () ->
