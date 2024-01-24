@@ -6,26 +6,22 @@ import {CSSProperties} from 'react';
 import {DynamicLoadAutocomplete} from './DynamicLoadAutocomplete';
 import {createService} from '../protos';
 import {UserXAvatar} from '../UserXAvatar/UserXAvatar';
+import {FormField} from '../form_utils/forms';
 import IFullUserXDetails = user_x_management.IFullUserXDetails;
 import IGetUserXsRequest = user_x_management.IGetUserXsRequest;
 import UserXManagementService = user_x_management.UserXManagementService;
 
 export function DynamicUserXAutocomplete<
-  Multiple extends boolean | undefined = false,
-  TMultiple = Multiple extends true
-    ? IFullUserXDetails[]
-    : IFullUserXDetails | null
+  Multiple extends boolean | undefined = false
 >(
   props: DeepReadOnly<{
-    multiple?: Multiple;
     label: string;
     baseRequest: IGetUserXsRequest;
-    value: TMultiple;
-    onChange: (userXs: DeepReadOnly<TMultiple>) => void;
+    userXField: FormField<DeepReadOnly<IFullUserXDetails>, Multiple>;
     renderTagStyle?: (option: DeepReadOnly<IFullUserXDetails>) => CSSProperties;
   }>
 ) {
-  function loadMoreUserXs(page: number, pageSize: number, searchText: string) {
+  function loadMoreOptions(page: number, pageSize: number, searchText: string) {
     return createService(UserXManagementService, 'UserXManagementService')
       .getUserXs(
         writableForProto(
@@ -40,14 +36,12 @@ export function DynamicUserXAutocomplete<
   }
 
   return (
-    <DynamicLoadAutocomplete<IFullUserXDetails, Multiple, TMultiple>
-      multiple={props.multiple}
+    <DynamicLoadAutocomplete<IFullUserXDetails, Multiple>
+      formField={props.userXField}
       label={props.label}
       placeholder="Search by Name or Email Address"
-      getId={userX => userX.userX?.id ?? 0}
-      value={props.value}
-      onChange={props.onChange}
-      loadMoreOptions={loadMoreUserXs}
+      getId={option => option.userX?.id ?? 0}
+      loadMoreOptions={loadMoreOptions}
       getOptionLabel={option => {
         const first = option.userX?.firstName ?? '';
         const last = option.userX?.lastName ?? '';
@@ -57,11 +51,10 @@ export function DynamicUserXAutocomplete<
       renderOption={(params, option, {selected}) => (
         <li
           {...params}
-          key={option.userX?.id ?? 0}
           className="global-flex-row"
           style={{alignItems: 'center', cursor: 'pointer'}}
         >
-          {props.multiple && (
+          {props.userXField.multiple && (
             <Checkbox style={{marginRight: -6}} checked={selected} />
           )}
           <UserXAvatar userX={option.userX} size="2em" />
@@ -79,7 +72,7 @@ export function DynamicUserXAutocomplete<
         </li>
       )}
       renderTagLabel={
-        props.multiple
+        props.userXField.multiple
           ? option => (
               <>
                 {(option.userX?.lastName ?? '') +
@@ -90,6 +83,7 @@ export function DynamicUserXAutocomplete<
           : undefined
       }
       renderTagStyle={props.renderTagStyle}
+      context={props.baseRequest}
     />
   );
 }

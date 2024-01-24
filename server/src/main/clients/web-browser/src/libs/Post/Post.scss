@@ -8,6 +8,14 @@
   margin: 1rem 0;
   gap: 1rem;
 
+  &:first-child {
+    margin-top: 0;
+  }
+
+  &:nth-last-child(2) {
+    margin-bottom: 0;
+  }
+
   .post-in-feed-header {
     @extend .global-flex-row;
 

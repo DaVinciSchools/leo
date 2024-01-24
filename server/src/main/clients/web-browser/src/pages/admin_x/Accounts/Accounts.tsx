@@ -23,10 +23,12 @@ export function Accounts() {
     userX => userX.isAdminX
   );
 
-  const [editingUserX, setEditingUserX] =
-    useState<DeepReadOnly<IFullUserXDetails | null>>();
-
-  const disabled = editingUserX?.userX?.id == null;
+  const formFields = useFormFields();
+  const editingUserX =
+    formFields.useSingleAutocompleteFormField<DeepReadOnly<IFullUserXDetails>>(
+      'userX'
+    );
+  const disabled = editingUserX.getValue() != null;
 
   const profileForm = useFormFields({
     onChange: () => autoSave.trigger(),
@@ -109,11 +111,13 @@ export function Accounts() {
               <DynamicUserXAutocomplete
                 label="Search by Name or Email Address"
                 baseRequest={{
-                  inDistrictIds:
-                    userX.districtId != null ? [userX.districtId] : undefined,
+                  inDistrictIds: userX.isAdminX
+                    ? undefined
+                    : userX.districtId != null
+                    ? [userX.districtId]
+                    : undefined,
                 }}
-                value={editingUserX ?? null}
-                onChange={setEditingUserX}
+                userXField={editingUserX}
               />
               <div
                 className="global-error-notice"
@@ -123,7 +127,7 @@ export function Accounts() {
               </div>
             </div>
             <ProfileEditor
-              userXId={editingUserX?.userX?.id ?? null}
+              userXId={editingUserX.getValue?.()?.userX?.id ?? null}
               profileForm={profileForm}
               profileSaveStatus={profileSaveStatus}
             />

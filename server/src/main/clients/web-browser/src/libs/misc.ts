@@ -49,7 +49,9 @@ export function removeInDeepReadOnly<T>(
   const key = toKey(oldValue);
   const index = values.findIndex(value => toKey(value) === key);
   if (index !== -1) {
-    return values.slice().splice(index, 1);
+    const newValues = values.slice();
+    newValues.splice(index, 1);
+    return newValues;
   }
   return values.slice();
 }

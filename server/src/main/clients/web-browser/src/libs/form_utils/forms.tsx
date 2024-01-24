@@ -38,6 +38,8 @@ const PASSWORD_ERROR_MESSAGE =
   'Passwords must have 8+ characters, a number, and a lower and upper case letter.';
 const PASSWORDS_DO_NOT_MATCH = 'Passwords do not match.';
 
+export const DEFAULT_PAGE_SIZE = 10;
+
 export interface FormFieldMetadata<
   T,
   Multiple extends boolean | undefined = false,
@@ -84,6 +86,8 @@ export interface FormField<
 > {
   readonly name: string;
   readonly disabled: boolean;
+  readonly multiple: Multiple;
+  readonly freeSolo: FreeSolo;
 
   getValue: () => Multiple extends true ? T[] : T | undefined;
   setValue: (value: Multiple extends true ? T[] : T | undefined) => void;
@@ -847,6 +851,10 @@ export function useFormFields(
     > = {
       name,
       disabled: !!formFieldsMetadata?.disabled || !!fieldMetadata?.disabled,
+      multiple: (fieldMetadata?.isAutocomplete?.isMultiple ??
+        false) as Multiple,
+      freeSolo: (fieldMetadata?.isAutocomplete?.isFreeSolo ??
+        false) as FreeSolo,
 
       getValue,
       setValue,
