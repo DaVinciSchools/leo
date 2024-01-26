@@ -19,9 +19,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import org.davincischools.leo.database.daos.KnowledgeAndSkill.Type;
 import org.davincischools.leo.database.daos.Project;
+import org.davincischools.leo.database.daos.Project.ThumbsStateType;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectInput;
+import org.davincischools.leo.database.daos.ProjectInput.StateType;
 import org.davincischools.leo.database.daos.UserX;
 import org.davincischools.leo.database.utils.DaoUtils;
 import org.davincischools.leo.database.utils.Database;
@@ -29,7 +32,6 @@ import org.davincischools.leo.database.utils.repos.GetAssignmentsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectDefinitionsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectsParams;
-import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.protos.pl_types.ProjectDefinition;
 import org.davincischools.leo.protos.project_management.GenerateProjectsRequest;
 import org.davincischools.leo.protos.project_management.GenerateProjectsResponse;
@@ -94,7 +96,7 @@ public class ProjectManagementService {
               db
                   .getKnowledgeAndSkillRepository()
                   .findAllByTypes(
-                      request.getTypesList().stream().map(Enum::name).toList(),
+                      request.getTypesList().stream().map(Enum::name).map(Type::valueOf).toList(),
                       userX.isAdminX() ? null : userX.getUserXIdOrNull())
                   .stream()
                   .filter(e -> e.getDeleted() == null)
@@ -128,7 +130,7 @@ public class ProjectManagementService {
                 case CTE, XQ_COMPETENCY -> userX.isAdminX();
                 case UNSET_TYPE, UNRECOGNIZED -> throw new IllegalArgumentException(
                     "Unknown knowledge and skill type: "
-                        + request.getKnowledgeAndSkill().getType().name());
+                        + request.getKnowledgeAndSkill().getType());
               }) {
                 return userX.returnForbidden(UpsertKnowledgeAndSkillResponse.getDefaultInstance());
               }
@@ -215,7 +217,7 @@ public class ProjectManagementService {
             (error, log) -> {
               if (projectInputDaoRef.get() != null) {
                 db.getProjectInputRepository()
-                    .updateState(projectInputDaoRef.get().getId(), State.FAILED.name());
+                    .updateState(projectInputDaoRef.get().getId(), StateType.FAILED);
               }
               return Optional.empty();
             })
@@ -263,7 +265,7 @@ public class ProjectManagementService {
         ProtoDaoUtils.toProjectInputDao(definition)
             .orElseThrow()
             .setUserX(userX.getUserXOrNull())
-            .setState(State.PROCESSING.name())
+            .setState(StateType.PROCESSING)
             .setProjectDefinition(definitionDao);
 
     // Save the daos.
@@ -441,10 +443,11 @@ public class ProjectManagementService {
                   .setShortDescr(reqProject.getShortDescr())
                   .setLongDescrHtml(reqProject.getLongDescrHtml())
                   .setFavorite(reqProject.getFavorite())
-                  .setThumbsState(enumNameOrNull(reqProject.getThumbsState()))
+                  .setThumbsState(
+                      enumNameOrNull(reqProject.getThumbsState(), ThumbsStateType.class))
                   .setThumbsStateReason(reqProject.getThumbsStateReason())
                   .setActive(reqProject.getActive());
-              toAssignmentDao(reqProject.getAssignment()).ifPresent(project::setAssignment);
+              project.setAssignment(toAssignmentDao(reqProject.getAssignment()).orElse(null));
 
               DaoUtils.removeTransientValues(project, db.getProjectRepository()::save);
 

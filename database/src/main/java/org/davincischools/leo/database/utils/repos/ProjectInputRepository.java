@@ -4,14 +4,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import jakarta.persistence.criteria.JoinType;
 import java.util.List;
-import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.AssignmentProjectDefinition_;
-import org.davincischools.leo.database.daos.ProjectDefinition;
-import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory_;
 import org.davincischools.leo.database.daos.ProjectDefinition_;
 import org.davincischools.leo.database.daos.ProjectInput;
-import org.davincischools.leo.database.daos.ProjectInputValue;
+import org.davincischools.leo.database.daos.ProjectInput.StateType;
 import org.davincischools.leo.database.daos.ProjectInputValue_;
 import org.davincischools.leo.database.daos.ProjectInput_;
 import org.davincischools.leo.database.utils.query_helper.Entity;
@@ -28,16 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 public interface ProjectInputRepository
     extends JpaRepository<ProjectInput, Integer>, AutowiredRepositoryValues {
 
-  enum State {
-    PROCESSING,
-    COMPLETED,
-    FAILED
-  }
-
   @Modifying
   @Transactional
   @Query("UPDATE ProjectInput p SET p.state = (:state) WHERE p.id = (:id)")
-  void updateState(@Param("id") int id, @Param("state") String state);
+  void updateState(@Param("id") int id, @Param("state") StateType state);
 
   @Modifying
   @Transactional
@@ -52,8 +43,8 @@ public interface ProjectInputRepository
         .query(ProjectInput.class, projectInput -> configureQuery(projectInput, params));
   }
 
-  static Entity<?, ProjectInput> configureQuery(
-      Entity<?, ProjectInput> projectInput, GetProjectInputsParams params) {
+  static Entity<?, ?, ProjectInput> configureQuery(
+      Entity<?, ?, ProjectInput> projectInput, GetProjectInputsParams params) {
     checkNotNull(projectInput);
     checkNotNull(params);
 
@@ -70,33 +61,22 @@ public interface ProjectInputRepository
     projectInput.where(
         Predicate.or(
             params.getIncludeComplete().orElse(false)
-                ? Predicate.eq(projectInput.get(ProjectInput_.state), State.COMPLETED.name())
+                ? Predicate.eq(projectInput.get(ProjectInput_.state), StateType.COMPLETED)
                 : Expression.FALSE,
             params.getIncludeProcessing().orElse(false)
-                ? Predicate.eq(projectInput.get(ProjectInput_.state), State.PROCESSING.name())
+                ? Predicate.eq(projectInput.get(ProjectInput_.state), StateType.PROCESSING)
                 : Expression.FALSE));
 
     var projectDefinition =
         projectInput.join(ProjectInput_.projectDefinition, JoinType.LEFT).fetch();
     projectDefinition
-        .join(
-            ProjectDefinition_.projectDefinitionCategories,
-            JoinType.LEFT,
-            ProjectDefinitionCategory::getProjectDefinition,
-            ProjectDefinition::setProjectDefinitionCategories)
+        .join(ProjectDefinition_.projectDefinitionCategories, JoinType.LEFT)
         .notDeleted()
         .join(ProjectDefinitionCategory_.projectDefinitionCategoryType, JoinType.LEFT)
         .fetch();
 
     var projectInputValue =
-        projectInput
-            .join(
-                ProjectInput_.projectInputValues,
-                JoinType.LEFT,
-                ProjectInputValue::getProjectInput,
-                ProjectInput::setProjectInputValues)
-            .notDeleted()
-            .fetch();
+        projectInput.join(ProjectInput_.projectInputValues, JoinType.LEFT).notDeleted().fetch();
     projectInputValue
         .join(ProjectInputValue_.knowledgeAndSkillValue, JoinType.LEFT)
         .notDeleted()
@@ -108,11 +88,7 @@ public interface ProjectInputRepository
           List.of(
               projectInput.join(ProjectInput_.assignment, JoinType.LEFT),
               projectDefinition
-                  .join(
-                      ProjectDefinition_.assignmentProjectDefinitions,
-                      JoinType.LEFT,
-                      AssignmentProjectDefinition::getProjectDefinition,
-                      ProjectDefinition::setAssignmentProjectDefinitions)
+                  .join(ProjectDefinition_.assignmentProjectDefinitions, JoinType.LEFT)
                   .notDeleted()
                   .fetch()
                   .join(AssignmentProjectDefinition_.assignment, JoinType.LEFT))) {

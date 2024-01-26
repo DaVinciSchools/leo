@@ -2,14 +2,16 @@ import {Autocomplete, TextField} from '@mui/material';
 import {FormField} from '../form_utils/forms';
 import {pl_types} from 'pl-pb';
 import {CSSProperties, useEffect, useState} from 'react';
-
+import {DeepReadOnly} from '../misc';
 import IProject = pl_types.IProject;
 
-export function ProjectsAutocomplete(props: {
-  sortedProjects: readonly IProject[];
-  formField: FormField<IProject | null>;
-  style?: CSSProperties;
-}) {
+export function ProjectsAutocomplete(
+  props: DeepReadOnly<{
+    sortedProjects: IProject[];
+    formField: FormField<DeepReadOnly<IProject>>;
+    style?: CSSProperties;
+  }>
+) {
   const [hasMultipleProjects, setHasMultipleProjects] = useState(true);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export function ProjectsAutocomplete(props: {
       isOptionEqualToValue={(option, value) => option.id === value.id}
       groupBy={
         hasMultipleProjects
-          ? option => option?.assignment?.classX?.name ?? 'No Class Selected'
+          ? option => option.assignment?.classX?.name ?? 'No Class Selected'
           : undefined
       }
       renderOption={(props, option) => (
@@ -44,12 +46,12 @@ export function ProjectsAutocomplete(props: {
         <TextField
           label="Select Project"
           size="small"
-          {...props.formField.textFieldParams(params)}
+          {...props.formField.getTextFieldParams(params)}
           style={props.style}
         />
       )}
       getOptionLabel={option => option.name + ': ' + option.shortDescr}
-      {...props.formField.autocompleteParams()}
+      {...props.formField.getAutocompleteParams()}
     />
   );
 }

@@ -2,6 +2,8 @@ package org.davincischools.leo.database.daos;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -40,7 +42,7 @@ public class ProjectDefinitionCategoryType implements Serializable {
   public static final String COLUMN_INPUTPLACEHOLDER_NAME = "input_placeholder";
   public static final String COLUMN_QUERYPREFIX_NAME = "query_prefix";
   public static final String COLUMN_VALUETYPE_NAME = "value_type";
-  private static final long serialVersionUID = -6672582400449927685L;
+  private static final long serialVersionUID = 4328954611307630679L;
 
   private Integer id;
 
@@ -62,7 +64,7 @@ public class ProjectDefinitionCategoryType implements Serializable {
 
   private String queryPrefix;
 
-  private String valueType;
+  private ValueType valueType;
 
   private Set<ProjectDefinitionCategory> projectDefinitionCategories = new LinkedHashSet<>();
 
@@ -119,13 +121,22 @@ public class ProjectDefinitionCategoryType implements Serializable {
   }
 
   @Lob
+  @Enumerated(EnumType.STRING)
   @Column(name = COLUMN_VALUETYPE_NAME, nullable = false)
-  public String getValueType() {
+  public ValueType getValueType() {
     return valueType;
   }
 
   @OneToMany(mappedBy = "projectDefinitionCategoryType")
   public Set<ProjectDefinitionCategory> getProjectDefinitionCategories() {
     return projectDefinitionCategories;
+  }
+
+  public enum ValueType {
+    FREE_TEXT,
+    EKS,
+    XQ_COMPETENCY,
+    CTE,
+    MOTIVATION
   }
 }

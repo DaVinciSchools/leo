@@ -131,13 +131,13 @@ export function LoginForm(props: {
             required
             autoComplete="email"
             label="Email Address"
-            {...username.textFieldParams()}
+            {...username.getTextFieldParams()}
           />
           <TextField
             required
             autoComplete="current-password"
             label="Password"
-            {...password.textFieldParams()}
+            {...password.getTextFieldParams()}
           />
           <div className="login-form-buttons">
             <Button variant="contained" type="submit">

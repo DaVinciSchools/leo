@@ -2,6 +2,8 @@ package org.davincischools.leo.database.daos;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -41,7 +43,7 @@ public class KnowledgeAndSkill implements Serializable {
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_GLOBAL_NAME = "global";
-  private static final long serialVersionUID = 5631132623792746760L;
+  private static final long serialVersionUID = 7679377034674098270L;
 
   private Integer id;
 
@@ -51,7 +53,7 @@ public class KnowledgeAndSkill implements Serializable {
 
   private String name;
 
-  private String type;
+  private Type type;
 
   private String category;
 
@@ -94,8 +96,9 @@ public class KnowledgeAndSkill implements Serializable {
   }
 
   @Lob
+  @Enumerated(EnumType.STRING)
   @Column(name = COLUMN_TYPE_NAME, nullable = false)
-  public String getType() {
+  public Type getType() {
     return type;
   }
 
@@ -145,5 +148,11 @@ public class KnowledgeAndSkill implements Serializable {
   @OneToMany(mappedBy = "knowledgeAndSkill")
   public Set<ProjectPostRating> getProjectPostRatings() {
     return projectPostRatings;
+  }
+
+  public enum Type {
+    EKS,
+    XQ_COMPETENCY,
+    CTE
   }
 }

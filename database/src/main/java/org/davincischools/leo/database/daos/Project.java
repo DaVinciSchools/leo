@@ -2,6 +2,8 @@ package org.davincischools.leo.database.daos;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -45,7 +47,7 @@ public class Project implements Serializable {
   public static final String COLUMN_THUMBSSTATEREASON_NAME = "thumbs_state_reason";
   public static final String COLUMN_ARCHIVED_NAME = "archived";
   public static final String COLUMN_ACTIVE_NAME = "active";
-  private static final long serialVersionUID = 1849850730655062598L;
+  private static final long serialVersionUID = -4906058996811272258L;
 
   private Integer id;
 
@@ -63,7 +65,7 @@ public class Project implements Serializable {
 
   private Boolean favorite;
 
-  private String thumbsState;
+  private ThumbsStateType thumbsState;
 
   private String thumbsStateReason;
 
@@ -75,7 +77,15 @@ public class Project implements Serializable {
 
   private ProjectInput projectInput;
 
+  private Set<CommentX> commentXES = new LinkedHashSet<>();
+
+  private Set<DeadlineStatus> deadlineStatuses = new LinkedHashSet<>();
+
   private Set<LogReference> logReferences = new LinkedHashSet<>();
+
+  private Set<Post> posts = new LinkedHashSet<>();
+
+  private Set<ProjectAssignment> projectAssignments = new LinkedHashSet<>();
 
   private Set<ProjectImage> projectImages = new LinkedHashSet<>();
 
@@ -135,8 +145,9 @@ public class Project implements Serializable {
   }
 
   @Lob
+  @Enumerated(EnumType.STRING)
   @Column(name = COLUMN_THUMBSSTATE_NAME)
-  public String getThumbsState() {
+  public ThumbsStateType getThumbsState() {
     return thumbsState;
   }
 
@@ -170,8 +181,28 @@ public class Project implements Serializable {
   }
 
   @OneToMany(mappedBy = "project")
+  public Set<CommentX> getCommentXES() {
+    return commentXES;
+  }
+
+  @OneToMany(mappedBy = "project")
+  public Set<DeadlineStatus> getDeadlineStatuses() {
+    return deadlineStatuses;
+  }
+
+  @OneToMany(mappedBy = "project")
   public Set<LogReference> getLogReferences() {
     return logReferences;
+  }
+
+  @OneToMany(mappedBy = "project")
+  public Set<Post> getPosts() {
+    return posts;
+  }
+
+  @OneToMany(mappedBy = "project")
+  public Set<ProjectAssignment> getProjectAssignments() {
+    return projectAssignments;
   }
 
   @OneToMany(mappedBy = "project")
@@ -202,5 +233,10 @@ public class Project implements Serializable {
   @OneToMany(mappedBy = "project")
   public Set<Tag> getTags() {
     return tags;
+  }
+
+  public enum ThumbsStateType {
+    THUMBS_UP,
+    THUMBS_DOWN
   }
 }

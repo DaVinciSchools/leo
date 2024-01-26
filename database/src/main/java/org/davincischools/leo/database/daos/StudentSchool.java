@@ -30,7 +30,7 @@ public class StudentSchool implements Serializable {
   public static final String TABLE_NAME = "student__school";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = -2020150566091002487L;
+  private static final long serialVersionUID = -7583637380013716130L;
 
   private StudentSchoolId id;
 

@@ -1,16 +1,23 @@
 -- All tables created in my-sql in reverse file order.
 -- Previous names of tables are grouped together with the new name.
 
-ALTER TABLE project_input DROP CONSTRAINT project_input__existing_project_id;
+ALTER TABLE project_input
+    DROP CONSTRAINT project_input__existing_project_id;
 
 DROP TABLE IF EXISTS log_reference;
 DROP TABLE IF EXISTS log;
 DROP TABLE IF EXISTS tag;
+DROP TABLE IF EXISTS notification;
+DROP TABLE IF EXISTS deadline_status;
+DROP TABLE IF EXISTS deadline;
+DROP TABLE IF EXISTS comment_x;
+DROP TABLE IF EXISTS post;
 DROP TABLE IF EXISTS project_post_rating;
 DROP TABLE IF EXISTS project_input_fulfillment;
 DROP TABLE IF EXISTS project_post_comment;
 DROP TABLE IF EXISTS project_input_value;
 DROP TABLE IF EXISTS portfolio;
+DROP TABLE IF EXISTS assignment_project_status;
 DROP TABLE IF EXISTS project_post;
 DROP TABLE IF EXISTS project_input_category; -- Renamed
 DROP TABLE IF EXISTS assignment__project_definition;
@@ -24,13 +31,15 @@ DROP TABLE IF EXISTS project_cycle_step; -- Renamed.
 DROP TABLE IF EXISTS project_cycle; -- Renamed.
 DROP TABLE IF EXISTS project_milestone_step;
 DROP TABLE IF EXISTS project_milestone;
-
+DROP TABLE IF EXISTS project_input__assignment;
+DROP TABLE IF EXISTS project_comment;
 DROP TABLE IF EXISTS project__image;
+DROP TABLE IF EXISTS project__assignment;
 DROP TABLE IF EXISTS motivation;
 DROP TABLE IF EXISTS knowledge_and_skill;
 DROP TABLE IF EXISTS project;
 
-DROP TABLE IF EXISTS ikigai_input;
+DROP TABLE IF EXISTS ikigai_input; -- Renamed
 DROP TABLE IF EXISTS project_input;
 DROP TABLE IF EXISTS project_definition_category;
 DROP TABLE IF EXISTS assignment;

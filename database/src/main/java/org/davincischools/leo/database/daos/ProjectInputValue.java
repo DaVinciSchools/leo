@@ -39,7 +39,7 @@ public class ProjectInputValue implements Serializable, DaoWithPosition {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_FREETEXTVALUE_NAME = "free_text_value";
-  private static final long serialVersionUID = 5005258628859973638L;
+  private static final long serialVersionUID = -3819840364689001430L;
 
   private Integer id;
 

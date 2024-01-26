@@ -22,7 +22,7 @@ public class StudentSchoolId implements Serializable {
 
   public static final String COLUMN_STUDENTID_NAME = "student_id";
   public static final String COLUMN_SCHOOLID_NAME = "school_id";
-  private static final long serialVersionUID = -1039763664204117444L;
+  private static final long serialVersionUID = 5048945715734968535L;
 
   private Integer studentId;
 

@@ -24,45 +24,36 @@ export function toLong(value: DeepReadOnly<PbLong> | number) {
   }
 }
 
-export function replaceOrAddInPlace<T>(
-  values: T[],
-  newValue: T,
-  toKey: (value: T) => any
-): T[] {
+export function replaceOrAddInDeepReadOnly<T>(
+  values: DeepReadOnly<T[]>,
+  newValue: DeepReadOnly<T>,
+  toKey: (value: DeepReadOnly<T>) => any
+): DeepReadOnly<T>[] {
   const key = toKey(newValue);
   const index = values.findIndex(value => toKey(value) === key);
+  const newValues = values.slice();
   if (index === -1) {
-    values.push(newValue);
+    newValues.push(newValue);
+    return newValues;
   } else {
-    values[index] = newValue;
+    newValues[index] = newValue;
+    return newValues;
   }
-  return values;
 }
 
-export function replaceInPlace<T>(
-  values: T[],
-  newValue: T,
-  toKey: (value: T) => any
-): T[] {
-  const key = toKey(newValue);
-  const index = values.findIndex(value => toKey(value) === key);
-  if (index !== -1) {
-    values[index] = newValue;
-  }
-  return values;
-}
-
-export function removeInPlace<T>(
-  values: T[],
-  oldValue: T,
-  toKey: (value: T) => any
-): T[] {
+export function removeInDeepReadOnly<T>(
+  values: DeepReadOnly<T[]>,
+  oldValue: DeepReadOnly<T>,
+  toKey: (value: DeepReadOnly<T>) => any
+): DeepReadOnly<T>[] {
   const key = toKey(oldValue);
   const index = values.findIndex(value => toKey(value) === key);
   if (index !== -1) {
-    values.splice(index, 1);
+    const newValues = values.slice();
+    newValues.splice(index, 1);
+    return newValues;
   }
-  return values;
+  return values.slice();
 }
 
 export function modifyInDeepReadOnly<T, K>(
@@ -70,7 +61,7 @@ export function modifyInDeepReadOnly<T, K>(
   oldValue: DeepReadOnly<T>,
   processFn: (value: DeepWritable<T>) => void,
   toKey: (value: DeepReadOnly<T>) => K
-): DeepReadOnly<T[]> {
+): DeepReadOnly<T>[] {
   const oldKey = toKey(oldValue);
   const index = values.findIndex(value => toKey(value) === oldKey);
   if (index !== -1) {
@@ -80,7 +71,7 @@ export function modifyInDeepReadOnly<T, K>(
     newValues[index] = deepReadOnly(newValue);
     return newValues;
   }
-  return values;
+  return values.slice();
 }
 
 export function replaceInDeepReadOnly<T, K>(
@@ -176,7 +167,7 @@ export function deepClone<T>(value: T | DeepReadOnly<T>) {
 // Proto types are mutable by default. So, to store a DeepReadOnly value in a proto
 // we need to make it DeepWritable first. Use this rather than deepWritable() to
 // document that we are converting it just to store in a proto.
-export function toProto<T>(value: T | DeepReadOnly<T>) {
+export function writableForProto<T>(value: T | DeepReadOnly<T>) {
   return value as DeepWritable<T>;
 }
 

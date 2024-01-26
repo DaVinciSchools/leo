@@ -1,20 +1,21 @@
 import '../global.scss';
 import {pl_types} from 'pl-pb';
-import IClassX = pl_types.IClassX;
 import {
   Autocomplete,
-  TextField,
-  InputLabelProps,
   Checkbox,
   Chip,
+  InputLabelProps,
+  TextField,
 } from '@mui/material';
 import {useEffect, useState} from 'react';
 import {FormField} from '../form_utils/forms';
 import {addClassName} from '../tags';
+import {DeepReadOnly} from '../misc';
+import IClassX = pl_types.IClassX;
 
 export function MultiClassXAutocomplete(props: {
   sortedClassXs: readonly IClassX[];
-  formField: FormField<readonly IClassX[]>;
+  formField: FormField<DeepReadOnly<IClassX>, true>;
   InputLabelProps?: Partial<InputLabelProps>;
   placeholder?: (hasOptions: boolean) => string;
 }) {
@@ -28,8 +29,6 @@ export function MultiClassXAutocomplete(props: {
 
   return (
     <Autocomplete
-      {...props.formField.autocompleteParams()}
-      multiple
       autoHighlight
       disableCloseOnSelect
       options={props.sortedClassXs.slice()}
@@ -64,7 +63,7 @@ export function MultiClassXAutocomplete(props: {
       }}
       renderInput={params => (
         <TextField
-          {...props.formField.textFieldParams(params)}
+          {...props.formField.getTextFieldParams(params)}
           label="Classes"
           InputLabelProps={props.InputLabelProps}
           placeholder={
@@ -74,7 +73,7 @@ export function MultiClassXAutocomplete(props: {
           }
         />
       )}
-      renderTags={(classXs: readonly IClassX[], getTagProps) =>
+      renderTags={(classXs, getTagProps) =>
         classXs.map((option, index) => (
           <Chip
             {...addClassName(getTagProps({index}), 'global-tags')}
@@ -88,6 +87,7 @@ export function MultiClassXAutocomplete(props: {
           />
         ))
       }
+      {...props.formField.getAutocompleteParams()}
     />
   );
 }

@@ -57,7 +57,7 @@ public class UserX implements Serializable {
   public static final String COLUMN_TEMPORARYPASSWORDGOODUNTIL_NAME =
       "temporary_password_good_until";
   public static final String COLUMN_TEMPORARYENCODEDPASSWORD_NAME = "temporary_encoded_password";
-  private static final long serialVersionUID = 5145772325639569618L;
+  private static final long serialVersionUID = -2099206053928132935L;
 
   private Integer id;
 
@@ -91,11 +91,25 @@ public class UserX implements Serializable {
 
   private Interest interest;
 
+  private Set<CommentX> commentXES = new LinkedHashSet<>();
+
+  private Set<Deadline> deadlines = new LinkedHashSet<>();
+
+  private Set<DeadlineStatus> deadlineStatuses = new LinkedHashSet<>();
+
   private Set<FileX> fileXES = new LinkedHashSet<>();
 
   private Set<KnowledgeAndSkill> knowledgeAndSkills = new LinkedHashSet<>();
 
   private Set<Log> logs = new LinkedHashSet<>();
+
+  private Set<Notification> posted_by_user_x_notifications = new LinkedHashSet<>();
+
+  private Set<Notification> posted_to_user_x_notifications = new LinkedHashSet<>();
+
+  private Set<Post> user_x_posts = new LinkedHashSet<>();
+
+  private Set<Post> to_user_x_posts = new LinkedHashSet<>();
 
   private Set<ProjectDefinition> projectDefinitions = new LinkedHashSet<>();
 
@@ -202,6 +216,21 @@ public class UserX implements Serializable {
   }
 
   @OneToMany(mappedBy = "userX")
+  public Set<CommentX> getCommentXES() {
+    return commentXES;
+  }
+
+  @OneToMany(mappedBy = "userX")
+  public Set<Deadline> getDeadlines() {
+    return deadlines;
+  }
+
+  @OneToMany(mappedBy = "userX")
+  public Set<DeadlineStatus> getDeadlineStatuses() {
+    return deadlineStatuses;
+  }
+
+  @OneToMany(mappedBy = "userX")
   public Set<FileX> getFileXES() {
     return fileXES;
   }
@@ -214,6 +243,26 @@ public class UserX implements Serializable {
   @OneToMany(mappedBy = "userX")
   public Set<Log> getLogs() {
     return logs;
+  }
+
+  @OneToMany(mappedBy = "postedByUserX")
+  public Set<Notification> getPosted_by_user_x_notifications() {
+    return posted_by_user_x_notifications;
+  }
+
+  @OneToMany(mappedBy = "postedToUserX")
+  public Set<Notification> getPosted_to_user_x_notifications() {
+    return posted_to_user_x_notifications;
+  }
+
+  @OneToMany(mappedBy = "userX")
+  public Set<Post> getUser_x_posts() {
+    return user_x_posts;
+  }
+
+  @OneToMany(mappedBy = "postToUserX")
+  public Set<Post> getTo_user_x_posts() {
+    return to_user_x_posts;
   }
 
   @OneToMany(mappedBy = "userX")

@@ -21,18 +21,13 @@ enum MenuKeys {
   ADMIN_ACCOUNTS,
   ADMIN_DISTRICTS,
   ADMIN_SCHOOLS,
-  CLASSES,
-  CLASSES_EDIT_TEACHER,
+  CLASS_MANAGEMENT,
   DASHBOARD_ADMIN,
   DASHBOARD_STUDENT,
   DASHBOARD_TEACHER,
   MY_ACCOUNT,
   PORTFOLIOS,
   PROJECTS,
-  PROJECTS_ALL_PROJECTS,
-  PROJECTS_MY_PROJECTS,
-  PROJECTS_OVERVIEW,
-  PROJECTS_PROJECT_BUILDER,
 }
 
 export function DefaultPageNav() {
@@ -67,41 +62,17 @@ export function DefaultPageNav() {
       },
     },
     {
-      label: (userX?.isAdminX ? 'Teacher ' : '') + 'Classes',
-      key: MenuKeys.CLASSES,
+      label: 'Class Management',
+      key: MenuKeys.CLASS_MANAGEMENT,
       icon: <UserOutlined />,
       style: {
         display: userX?.isAdminX || userX?.isTeacher ? 'block' : 'none',
       },
-      children: [
-        {
-          label: 'Edit Classes',
-          key: MenuKeys.CLASSES_EDIT_TEACHER,
-        },
-      ],
     },
     {
       label: 'Projects',
       key: MenuKeys.PROJECTS,
       icon: <RocketOutlined />,
-      children: [
-        {
-          label: 'Overview',
-          key: MenuKeys.PROJECTS_OVERVIEW,
-        },
-        {
-          label: 'My Projects',
-          key: MenuKeys.PROJECTS_MY_PROJECTS,
-        },
-        {
-          label: 'Project Builder',
-          key: MenuKeys.PROJECTS_PROJECT_BUILDER,
-        },
-        {
-          label: 'All Projects',
-          key: MenuKeys.PROJECTS_ALL_PROJECTS,
-        },
-      ],
     },
     {
       label: 'Portfolios',
@@ -158,8 +129,8 @@ export function DefaultPageNav() {
         navigate('/profiles/edit-schools.html');
         break;
       }
-      case MenuKeys.CLASSES_EDIT_TEACHER: {
-        navigate('/classes/teacher-edit-classes.html');
+      case MenuKeys.CLASS_MANAGEMENT: {
+        navigate('/class-management/class-management.html');
         break;
       }
       case MenuKeys.DASHBOARD_ADMIN: {
@@ -179,23 +150,7 @@ export function DefaultPageNav() {
         break;
       }
       case MenuKeys.PROJECTS: {
-        // not selectable.
-        break;
-      }
-      case MenuKeys.PROJECTS_ALL_PROJECTS: {
-        navigate('/projects/all-projects.html');
-        break;
-      }
-      case MenuKeys.PROJECTS_MY_PROJECTS: {
-        navigate('/projects/my-projects.html');
-        break;
-      }
-      case MenuKeys.PROJECTS_OVERVIEW: {
-        navigate('/projects/overview.html');
-        break;
-      }
-      case MenuKeys.PROJECTS_PROJECT_BUILDER: {
-        navigate('/projects/project-builder.html');
+        navigate('/projects/projects.html');
         break;
       }
     }

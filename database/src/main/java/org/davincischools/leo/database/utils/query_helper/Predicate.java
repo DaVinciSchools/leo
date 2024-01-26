@@ -46,7 +46,21 @@ public class Predicate implements Expression<Boolean> {
     return new Predicate()
         .setType(PredicateType.IN)
         .setLeft(left)
-        .setValues(stream(values).map(Expression::literal).toList());
+        .setValues(
+            stream(values)
+                .map(
+                    value ->
+                        value instanceof Expression
+                            ? (Expression<?>) value
+                            : Expression.literal(value))
+                .toList());
+  }
+
+  public static <V> Predicate in(Expression<V> left, Expression<V> values) {
+    checkNotNull(left);
+    checkNotNull(values);
+
+    return new Predicate().setType(PredicateType.IN).setLeft(left).setRight(values);
   }
 
   public static Predicate isNotNull(Expression<?> value) {
@@ -113,10 +127,12 @@ public class Predicate implements Expression<Boolean> {
     return switch (type) {
       case EQ -> builder.equal(left.toExpression(builder), right.toExpression(builder));
       case FALSE -> builder.isTrue(builder.literal(false));
-      case IN -> values.isEmpty()
-          ? FALSE.toPredicate(builder)
-          : left.toExpression(builder)
-              .in(values.stream().map(v -> v.toExpression(builder)).toList());
+      case IN -> right != null
+          ? left.toExpression(builder).in(right.toExpression(builder))
+          : values != null && !values.isEmpty()
+              ? left.toExpression(builder)
+                  .in(values.stream().map(v -> v.toExpression(builder)).toList())
+              : FALSE.toPredicate(builder);
       case IS_NOT_NULL -> builder.isNotNull(value.toExpression(builder));
       case IS_NULL -> builder.isNull(value.toExpression(builder));
       case LIKE -> builder.like(
@@ -143,7 +159,10 @@ public class Predicate implements Expression<Boolean> {
     return switch (type) {
       case EQ -> left.toString() + " = " + right.toString();
       case FALSE -> "FALSE";
-      case IN -> left.toString() + " IN (" + values.toString() + ")";
+      case IN -> left.toString()
+          + " IN ("
+          + (right != null ? right.toString() : values.toString())
+          + ")";
       case IS_NOT_NULL -> value.toString() + " IS NOT NULL";
       case IS_NULL -> value.toString() + " IS NULL";
       case LIKE -> left.toString() + " LIKE " + right.toString();

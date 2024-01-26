@@ -1,21 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import {InputAdornment} from '@mui/material';
+import {
+  AutocompleteProps,
+  AutocompleteValue,
+  InputAdornment,
+} from '@mui/material';
 import {CheckboxProps} from '@mui/material/Checkbox/Checkbox';
 import {
   DetailedHTMLProps,
+  ElementType,
   FormHTMLAttributes,
   ReactElement,
   RefObject,
-  SyntheticEvent,
   useEffect,
   useRef,
   useState,
 } from 'react';
 import {OutlinedTextFieldProps} from '@mui/material/TextField/TextField';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
-import {Writable} from '../misc';
 import {HtmlEditorProps} from '../HtmlEditor/HtmlEditor';
+import {ChipTypeMap} from '@mui/material/Chip';
+import {deepClone, DeepReadOnly} from '../misc';
 
 const MAX_ZIP_CODE_LENGTH = 10;
 const MIN_PASSWORD_LENGTH = 8;
@@ -33,7 +38,15 @@ const PASSWORD_ERROR_MESSAGE =
   'Passwords must have 8+ characters, a number, and a lower and upper case letter.';
 const PASSWORDS_DO_NOT_MATCH = 'Passwords do not match.';
 
-export interface FormFieldMetadata<T> {
+export const DEFAULT_PAGE_SIZE = 10;
+
+export interface FormFieldMetadata<
+  T,
+  Multiple extends boolean | undefined = false,
+  DisableClearable extends boolean | undefined = false,
+  FreeSolo extends boolean | undefined = false,
+  ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+> {
   isPassword?: {
     skipPasswordCheck?: boolean;
   };
@@ -48,24 +61,36 @@ export interface FormFieldMetadata<T> {
   startIcon?: ReactElement;
   maxLength?: number;
   isAutocomplete?: {
-    isFreeSolo?: boolean;
-    isMultiple?: boolean;
+    isMultiple?: Multiple;
+    isFreeSolo?: FreeSolo;
   };
-  onChange?: (formField: FormField<T>, formFields: FormFields) => void;
+  onChange?: (
+    formField: FormField<
+      T,
+      Multiple,
+      DisableClearable,
+      FreeSolo,
+      ChipComponent
+    >,
+    formFields: FormFields
+  ) => void;
   disabled?: boolean;
 }
 
-export interface IFormAutocompleteParams<T> {
-  value: Writable<T>;
-  onChange: (event: SyntheticEvent, value: Readonly<T>) => void;
-  disabled: boolean;
-}
-
-export interface FormField<T> {
+export interface FormField<
+  T,
+  Multiple extends boolean | undefined = false,
+  DisableClearable extends boolean | undefined = false,
+  FreeSolo extends boolean | undefined = false,
+  ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+> {
   readonly name: string;
+  readonly disabled: boolean;
+  readonly multiple: Multiple;
+  readonly freeSolo: FreeSolo;
 
-  getValue: () => T | undefined;
-  setValue: (value: T | undefined) => void;
+  getValue: () => Multiple extends true ? T[] : T | undefined;
+  setValue: (value: Multiple extends true ? T[] : T | undefined) => void;
 
   readonly stringValue: string;
   setStringValue: (value: string) => void;
@@ -73,20 +98,41 @@ export interface FormField<T> {
   readonly error: string;
   setError: (message: string) => void;
 
-  autocompleteParams(): IFormAutocompleteParams<T>;
+  reset: () => void;
 
-  textFieldParams: (
+  getTextFieldParams: (
     params?: Partial<OutlinedTextFieldProps>
-  ) => OutlinedTextFieldProps;
+  ) => Partial<OutlinedTextFieldProps>;
 
-  checkboxParams: (params?: CheckboxProps) => CheckboxProps;
+  getHtmlEditorParams: (
+    params?: Partial<HtmlEditorProps>
+  ) => Partial<HtmlEditorProps>;
 
-  htmlEditorProps: () => HtmlEditorProps;
+  getCheckboxParams: (
+    params?: Partial<CheckboxProps>
+  ) => Partial<CheckboxProps>;
+
+  getAutocompleteParams: (
+    params?: Partial<
+      AutocompleteProps<T, Multiple, DisableClearable, FreeSolo, ChipComponent>
+    >
+  ) => Partial<
+    AutocompleteProps<T, Multiple, DisableClearable, FreeSolo, ChipComponent>
+  >;
 }
 
-interface InternalFormField<T> extends FormField<T> {
-  fieldRef: RefObject<HTMLDivElement | HTMLButtonElement>;
-  fieldMetadata?: FormFieldMetadata<T>;
+interface InternalFormField<
+  T,
+  Multiple extends boolean | undefined = false,
+  DisableClearable extends boolean | undefined = false,
+  FreeSolo extends boolean | undefined = false,
+  ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+> extends FormField<T, Multiple, DisableClearable, FreeSolo, ChipComponent> {
+  fieldRef: RefObject<HTMLDivElement | HTMLButtonElement | undefined>;
+
+  fieldMetadata?:
+    | FormFieldMetadata<T, Multiple, DisableClearable, FreeSolo, ChipComponent>
+    | undefined;
 
   reset: () => void;
 
@@ -95,8 +141,11 @@ interface InternalFormField<T> extends FormField<T> {
   calculateError: (finalCheck: boolean) => string | undefined;
 }
 
-export type FormFieldsMetadata<T> = {
-  onChange?: (formField: FormField<T>, formFields: FormFields) => void;
+export type FormFieldsMetadata = {
+  onChange?: (
+    formField: FormField<any, any, any, any, any>,
+    formFields: FormFields
+  ) => void;
   disabled?: boolean;
 };
 
@@ -116,12 +165,85 @@ export interface FormFields {
     fieldMetadata?: FormFieldMetadata<boolean>
   ): FormField<boolean>;
 
-  useAutocompleteFormField<T>(
+  useAutocompleteFormField<
+    T,
+    Multiple extends boolean | undefined = false,
+    DisableClearable extends boolean | undefined = false,
+    FreeSolo extends boolean | undefined = false,
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  >(
     name: string,
-    fieldMetadata?: FormFieldMetadata<T>
-  ): FormField<T>;
+    multiple: Multiple,
+    freeSolo: FreeSolo,
+    fieldMetadata?: FormFieldMetadata<
+      T,
+      Multiple,
+      DisableClearable,
+      FreeSolo,
+      ChipComponent
+    >
+  ): FormField<T, Multiple, DisableClearable, FreeSolo, ChipComponent>;
 
-  formParams(): DetailedHTMLProps<
+  useSingleAutocompleteFormField<
+    T,
+    DisableClearable extends boolean | undefined = false,
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  >(
+    name: string,
+    fieldMetadata?: FormFieldMetadata<
+      T,
+      false,
+      DisableClearable,
+      false,
+      ChipComponent
+    >
+  ): FormField<T, false, DisableClearable, false, ChipComponent>;
+
+  useSingleFreeSoloAutocompleteFormField<
+    DisableClearable extends boolean | undefined = false,
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  >(
+    name: string,
+    fieldMetadata?: FormFieldMetadata<
+      string,
+      false,
+      DisableClearable,
+      true,
+      ChipComponent
+    >
+  ): FormField<string, false, DisableClearable, true, ChipComponent>;
+
+  useMultipleAutocompleteFormField<
+    T,
+    DisableClearable extends boolean | undefined = false,
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  >(
+    name: string,
+    fieldMetadata?: FormFieldMetadata<
+      T,
+      true,
+      DisableClearable,
+      false,
+      ChipComponent
+    >
+  ): FormField<T, true, DisableClearable, false, ChipComponent>;
+
+  useMultipleFreeSoloAutocompleteFormField<
+    T,
+    DisableClearable extends boolean | undefined = false,
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  >(
+    name: string,
+    fieldMetadata?: FormFieldMetadata<
+      T,
+      true,
+      DisableClearable,
+      true,
+      ChipComponent
+    >
+  ): FormField<T, true, DisableClearable, true, ChipComponent>;
+
+  getFormParams(): DetailedHTMLProps<
     FormHTMLAttributes<HTMLFormElement>,
     HTMLFormElement
   >;
@@ -134,16 +256,19 @@ export interface FormFields {
 
   getValuesObject<O extends {}>(
     includeNulls?: boolean,
-    startWithObject?: O | null | undefined
+    startWithObject?: DeepReadOnly<O> | null | undefined
   ): O;
 
   getValuesURLSearchParams(): URLSearchParams;
 }
 
 export function useFormFields(
-  formFieldsMetadata?: FormFieldsMetadata<any>
+  formFieldsMetadata?: FormFieldsMetadata
 ): FormFields {
-  const fields: Map<string, InternalFormField<any>> = new Map();
+  const fields: Map<
+    string,
+    InternalFormField<any, any, any, any, any>
+  > = new Map();
   const formRef = useRef<HTMLFormElement>(null);
   const [showPasswords, setShowPasswords] = useState(false);
   const [evaluateAllFields, setEvaluateAllFields] = useState(false);
@@ -206,12 +331,29 @@ export function useFormFields(
     return useFormField<boolean>(name, fieldMetadata);
   }
 
-  function useAutocompleteFormField<T>(
+  function useAutocompleteFormField<
+    T,
+    Multiple extends boolean | undefined = false,
+    DisableClearable extends boolean | undefined = false,
+    FreeSolo extends boolean | undefined = false,
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  >(
     name: string,
-    fieldMetadata?: FormFieldMetadata<T>
-  ): FormField<T> {
+    multiple: Multiple,
+    freeSolo: FreeSolo,
+    fieldMetadata?: FormFieldMetadata<
+      T,
+      Multiple,
+      DisableClearable,
+      FreeSolo,
+      ChipComponent
+    >
+  ): FormField<T, Multiple, DisableClearable, FreeSolo, ChipComponent> {
     fieldMetadata = {...fieldMetadata};
     fieldMetadata.isAutocomplete = fieldMetadata.isAutocomplete ?? {};
+    fieldMetadata.isAutocomplete.isMultiple = multiple;
+    fieldMetadata.isAutocomplete.isFreeSolo = freeSolo;
+
     if (
       fieldMetadata?.isInteger ||
       fieldMetadata?.isBoolean ||
@@ -223,20 +365,106 @@ export function useFormFields(
         )}`
       );
     }
-    return useFormField<T>(name, fieldMetadata);
+    return useFormField<T, Multiple, DisableClearable, FreeSolo, ChipComponent>(
+      name,
+      fieldMetadata
+    );
   }
 
-  function useFormField<T>(
+  function useSingleAutocompleteFormField<
+    T,
+    DisableClearable extends boolean | undefined = false,
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  >(
     name: string,
-    fieldMetadata?: FormFieldMetadata<T>
-  ): FormField<T> {
+    fieldMetadata?: FormFieldMetadata<
+      T,
+      false,
+      DisableClearable,
+      false,
+      ChipComponent
+    >
+  ): FormField<T, false, DisableClearable, false, ChipComponent> {
+    return useAutocompleteFormField(name, false, false, fieldMetadata);
+  }
+
+  function useSingleFreeSoloAutocompleteFormField<
+    DisableClearable extends boolean | undefined = false,
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  >(
+    name: string,
+    fieldMetadata?: FormFieldMetadata<
+      string,
+      false,
+      DisableClearable,
+      true,
+      ChipComponent
+    >
+  ): FormField<string, false, DisableClearable, true, ChipComponent> {
+    return useAutocompleteFormField(name, false, true, fieldMetadata);
+  }
+
+  function useMultipleAutocompleteFormField<
+    T,
+    DisableClearable extends boolean | undefined = false,
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  >(
+    name: string,
+    fieldMetadata?: FormFieldMetadata<
+      T,
+      true,
+      DisableClearable,
+      false,
+      ChipComponent
+    >
+  ): FormField<T, true, DisableClearable, false, ChipComponent> {
+    return useAutocompleteFormField(name, true, false, fieldMetadata);
+  }
+
+  function useMultipleFreeSoloAutocompleteFormField<
+    T,
+    DisableClearable extends boolean | undefined = false,
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  >(
+    name: string,
+    fieldMetadata?: FormFieldMetadata<
+      T,
+      true,
+      DisableClearable,
+      true,
+      ChipComponent
+    >
+  ): FormField<T, true, DisableClearable, true, ChipComponent> {
+    return useAutocompleteFormField(name, true, true, fieldMetadata);
+  }
+
+  function useFormField<
+    T,
+    Multiple extends boolean | undefined = false,
+    DisableClearable extends boolean | undefined = false,
+    FreeSolo extends boolean | undefined = false,
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  >(
+    name: string,
+    fieldMetadata?: FormFieldMetadata<
+      T,
+      Multiple,
+      DisableClearable,
+      FreeSolo,
+      ChipComponent
+    >
+  ): FormField<T, Multiple, DisableClearable, FreeSolo, ChipComponent> {
     const [stringValue, setStringValue] = useState('');
-    const [autocompleteValue, setAutocompleteValue] = useState<T>(
-      fieldMetadata?.isAutocomplete?.isMultiple ? ([] as T) : (null as T)
+    const [autocompleteValue, setAutocompleteValue] = useState<
+      Multiple extends true ? T[] : T | undefined
+    >(
+      (fieldMetadata?.isAutocomplete?.isMultiple
+        ? []
+        : undefined) as Multiple extends true ? T[] : T | undefined
     );
     const [error, setError] = useState('');
     const [evaluateField, setEvaluateField] = useState(false);
-    const fieldRef = useRef<HTMLDivElement | HTMLButtonElement>(null);
+    const fieldRef = useRef<HTMLDivElement | HTMLButtonElement>();
 
     useEffect(() => {
       fieldMetadata?.onChange?.(formField, formFields);
@@ -266,9 +494,13 @@ export function useFormFields(
       setStringValue('');
       if (fieldMetadata?.isAutocomplete) {
         if (fieldMetadata?.isAutocomplete?.isMultiple) {
-          setAutocompleteValue([] as T);
+          setAutocompleteValue(
+            [] as Multiple extends true ? T[] : T | undefined
+          );
         } else {
-          setAutocompleteValue(null as T);
+          setAutocompleteValue(
+            undefined as Multiple extends true ? T[] : T | undefined
+          );
         }
       } else if (fieldMetadata?.isBoolean) {
         setStringValue('off');
@@ -287,12 +519,11 @@ export function useFormFields(
         : 'text';
     }
 
-    function textFieldParams(
+    function getTextFieldParams(
       params?: Partial<OutlinedTextFieldProps>
-    ): OutlinedTextFieldProps {
+    ): Partial<OutlinedTextFieldProps> {
       return {
         ...(params ?? {}),
-        value: stringValue,
         type: getType(),
         variant: 'outlined',
         fullWidth: true,
@@ -301,14 +532,6 @@ export function useFormFields(
         ref: fieldRef as RefObject<HTMLDivElement>,
         helperText: error,
         error: !!error,
-        onChange: e => {
-          setStringValue(e.target.value);
-          params?.onChange?.(e);
-        },
-        onBlur: e => {
-          setEvaluateField(true);
-          setStringValue(e.target.value);
-        },
         InputProps: {
           ...(params?.InputProps ?? {}),
           startAdornment: fieldMetadata?.startIcon ? (
@@ -336,29 +559,46 @@ export function useFormFields(
         },
         inputProps: {
           ...(params?.inputProps ?? {}),
-          minLength:
-            fieldMetadata?.isPassword &&
-            fieldMetadata?.isPassword?.skipPasswordCheck !== true
-              ? MIN_PASSWORD_LENGTH
-              : undefined,
-          maxLength:
-            fieldMetadata?.maxLength ??
-            (fieldMetadata?.isZipCode
-              ? MAX_ZIP_CODE_LENGTH
-              : fieldMetadata?.isPassword &&
-                fieldMetadata?.isPassword?.skipPasswordCheck !== true
-              ? MAX_PASSWORD_LENGTH
-              : undefined),
-          min: fieldMetadata?.isInteger?.min,
-          max: fieldMetadata?.isInteger?.max,
+          ...{
+            minLength:
+              fieldMetadata?.isPassword &&
+              fieldMetadata?.isPassword?.skipPasswordCheck !== true
+                ? MIN_PASSWORD_LENGTH
+                : undefined,
+            maxLength:
+              fieldMetadata?.maxLength ??
+              (fieldMetadata?.isZipCode
+                ? MAX_ZIP_CODE_LENGTH
+                : fieldMetadata?.isPassword &&
+                  fieldMetadata?.isPassword?.skipPasswordCheck !== true
+                ? MAX_PASSWORD_LENGTH
+                : undefined),
+            min: fieldMetadata?.isInteger?.min,
+            max: fieldMetadata?.isInteger?.max,
+            onBlur: e => {
+              setEvaluateField(true);
+              setStringValue(e.target.value);
+              params?.inputProps?.onBlur?.(e);
+            },
+            spellCheck: true,
+          },
         },
         disabled:
           formFieldsMetadata?.disabled === true ||
           fieldMetadata?.disabled === true,
+        ...(fieldMetadata?.isAutocomplete != null
+          ? {}
+          : {
+              value: stringValue,
+              onChange: e => {
+                setEvaluateField(true);
+                setStringValue(e.target.value);
+              },
+            }),
       } as OutlinedTextFieldProps;
     }
 
-    function checkboxParams(): CheckboxProps {
+    function getCheckboxParams(): CheckboxProps {
       return {
         checked: stringValue === 'on',
         size: 'small',
@@ -373,24 +613,45 @@ export function useFormFields(
       };
     }
 
-    function autocompleteParams() {
+    function getAutocompleteParams(): Partial<
+      AutocompleteProps<T, Multiple, DisableClearable, FreeSolo, ChipComponent>
+    > {
       return {
-        // The value must be modifiable, even though it doesn't modify anything.
-        value: Array.isArray(autocompleteValue)
-          ? (autocompleteValue.slice() as unknown as Writable<T>)
-          : autocompleteValue,
-        onChange: (ignore: SyntheticEvent, value: Readonly<T>) => {
+        multiple: (fieldMetadata?.isAutocomplete?.isMultiple ??
+          false) as Multiple,
+        freeSolo: (fieldMetadata?.isAutocomplete?.isMultiple ??
+          false) as FreeSolo,
+        value:
+          // We have to set a null value if undefined in order to indicate
+          // that it's still a controlled value. See the docs.
+          (autocompleteValue ??
+            (fieldMetadata?.isAutocomplete?.isMultiple
+              ? []
+              : null)) as AutocompleteValue<
+            T,
+            Multiple,
+            DisableClearable,
+            FreeSolo
+          >,
+        onChange: (_, value) => {
+          setEvaluateField(true);
           setAutocompleteValue(
-            (Array.isArray(value) ? value.slice() : value) as T
+            value as Multiple extends true ? T[] : T | undefined
           );
         },
         disabled:
           formFieldsMetadata?.disabled === true ||
           fieldMetadata?.disabled === true,
+        spellCheck: true,
+        inputValue: stringValue,
+        onInputChange: (_, value) => {
+          setEvaluateField(true);
+          setStringValue(value);
+        },
       };
     }
 
-    function htmlEditorProps(): HtmlEditorProps {
+    function getHtmlEditorParams(): HtmlEditorProps {
       return {
         id: name,
         value: stringValue,
@@ -402,26 +663,32 @@ export function useFormFields(
       };
     }
 
-    function getValue() {
+    function getValue(): Multiple extends true ? T[] : T | undefined {
       if (fieldMetadata?.isAutocomplete) {
         if (fieldMetadata?.isAutocomplete?.isMultiple) {
-          return autocompleteValue ?? ([] as T);
+          return (autocompleteValue ?? []) as Multiple extends true
+            ? T[]
+            : T | undefined;
         } else if (fieldMetadata?.isAutocomplete?.isFreeSolo) {
-          return stringValue as T;
+          return (
+            stringValue != null ? stringValue : undefined
+          ) as Multiple extends true ? T[] : T | undefined;
         } else {
-          return autocompleteValue as T;
+          return (
+            autocompleteValue != null ? autocompleteValue : undefined
+          ) as Multiple extends true ? T[] : T | undefined;
         }
       }
 
       const trimmedValue = stringValue.trim();
       if (trimmedValue === '') {
-        return;
+        return undefined as Multiple extends true ? T[] : T | undefined;
       }
 
       const type = getType();
 
       if (['email', 'password', 'text', 'textarea'].includes(type)) {
-        return trimmedValue as T;
+        return trimmedValue as Multiple extends true ? T[] : T | undefined;
       }
 
       if (type === 'number') {
@@ -430,33 +697,38 @@ export function useFormFields(
             INTEGER_PATTERN.exec(trimmedValue)
               ? parseInt(trimmedValue)
               : parseFloat(trimmedValue)
-          ) as T;
+          ) as Multiple extends true ? T[] : T | undefined;
         }
-        return;
+        return undefined as Multiple extends true ? T[] : T | undefined;
       }
 
       if (type === 'checkbox') {
-        return (trimmedValue === 'on') as T;
+        return (trimmedValue === 'on') as Multiple extends true
+          ? T[]
+          : T | undefined;
       }
 
       throw new Error(`Input type '${type}' is not recognized.`);
     }
 
-    function setValue(value: T | undefined) {
-      setStringValue('');
+    function setValue(value: Multiple extends true ? T[] : T | undefined) {
       if (fieldMetadata?.isAutocomplete) {
         if (fieldMetadata?.isAutocomplete?.isMultiple) {
-          setAutocompleteValue(value ?? ([] as T));
+          setAutocompleteValue(value);
         } else if (!fieldMetadata?.isAutocomplete?.isFreeSolo) {
-          setAutocompleteValue(value ?? (null as T));
+          setAutocompleteValue(value);
         } else if (value != null) {
           setStringValue(String(value));
+        } else {
+          setStringValue('');
         }
       } else {
         if (fieldMetadata?.isBoolean) {
           setStringValue(value ? 'on' : 'off');
         } else if (value != null) {
           setStringValue(String(value));
+        } else {
+          setStringValue('');
         }
       }
     }
@@ -570,8 +842,19 @@ export function useFormFields(
       return;
     }
 
-    const formField: InternalFormField<T> = {
+    const formField: InternalFormField<
+      T,
+      Multiple,
+      DisableClearable,
+      FreeSolo,
+      ChipComponent
+    > = {
       name,
+      disabled: !!formFieldsMetadata?.disabled || !!fieldMetadata?.disabled,
+      multiple: (fieldMetadata?.isAutocomplete?.isMultiple ??
+        false) as Multiple,
+      freeSolo: (fieldMetadata?.isAutocomplete?.isFreeSolo ??
+        false) as FreeSolo,
 
       getValue,
       setValue,
@@ -582,10 +865,10 @@ export function useFormFields(
       error,
       setError,
 
-      autocompleteParams,
-      textFieldParams,
-      checkboxParams,
-      htmlEditorProps: htmlEditorProps,
+      getAutocompleteParams,
+      getTextFieldParams,
+      getCheckboxParams,
+      getHtmlEditorParams,
 
       fieldRef,
       fieldMetadata,
@@ -663,7 +946,7 @@ export function useFormFields(
     });
 
     if (errorField) {
-      const input = getInputField(errorField.fieldRef.current);
+      const input = getInputField(errorField.fieldRef?.current);
       if (input != null) {
         input.scrollIntoView(true);
         input.focus();
@@ -688,9 +971,11 @@ export function useFormFields(
 
   function getValuesObject<O extends {}>(
     includeNulls?: boolean,
-    startWithObject?: O | null | undefined
+    startWithObject?: DeepReadOnly<O> | null | undefined
   ): O {
-    const object = (startWithObject ?? {}) as {[key: string]: any};
+    const object = deepClone(
+      startWithObject != null ? startWithObject : {}
+    ) as {[key: string]: any};
     fields.forEach(f => {
       const value = f.getValue();
       if (value != null || includeNulls === true) {
@@ -719,7 +1004,11 @@ export function useFormFields(
     useNumberFormField,
     useBooleanFormField,
     useAutocompleteFormField,
-    formParams,
+    useSingleAutocompleteFormField,
+    useSingleFreeSoloAutocompleteFormField,
+    useMultipleAutocompleteFormField,
+    useMultipleFreeSoloAutocompleteFormField,
+    getFormParams: formParams,
     reset,
     verifyOk,
     setValuesObject,
@@ -748,7 +1037,7 @@ export function getInputField(
   inputSearch: for (const tagName of ['INPUT', 'TEXTAREA']) {
     const inputs = field.getElementsByTagName(tagName);
     for (let i = 0; i < inputs.length; ++i) {
-      // MUI will create multiple input elements for an TextField. We only
+      // MUI will create multiple input elements for a TextField. We only
       // want the visible one.
       if (getComputedStyle(inputs.item(i)!).visibility === 'hidden') {
         continue;
@@ -762,9 +1051,9 @@ export function getInputField(
 }
 
 export function filterAutocompleteFormField<T, ID>(
-  formField: FormField<readonly T[]>,
-  toId: (idFunction: T) => ID,
-  options: T[]
+  formField: FormField<DeepReadOnly<T>, true>,
+  toId: (idFunction: DeepReadOnly<T>) => ID,
+  options: DeepReadOnly<T[]>
 ) {
   const idOptions = new Set(options.map(toId));
   const filteredOptions =

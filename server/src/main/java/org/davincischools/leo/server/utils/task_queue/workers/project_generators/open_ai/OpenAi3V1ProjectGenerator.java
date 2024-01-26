@@ -6,7 +6,6 @@ import com.theokanning.openai.completion.chat.ChatMessage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-import org.davincischools.leo.database.utils.repos.ProjectDefinitionCategoryTypeRepository.ValueType;
 import org.davincischools.leo.server.utils.TextUtils;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.ProjectGeneratorInput;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,7 @@ public class OpenAi3V1ProjectGenerator {
       List<StringBuilder> goal = new ArrayList<>();
       goal.add(
           new StringBuilder().append("Goal: ").append(categoryType.getQueryPrefix()).append(":"));
-      switch (ValueType.valueOf(categoryType.getValueType())) {
+      switch (categoryType.getValueType()) {
         case FREE_TEXT -> {
           for (var value : categoryInputs.getInputValues()) {
             goal.add(

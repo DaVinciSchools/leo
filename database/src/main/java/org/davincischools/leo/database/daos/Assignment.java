@@ -40,7 +40,7 @@ public class Assignment implements Serializable {
   public static final String COLUMN_NICKNAME_NAME = "nickname";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = 8333467510053735778L;
+  private static final long serialVersionUID = 9088997727098926739L;
 
   private Integer id;
 
@@ -62,9 +62,15 @@ public class Assignment implements Serializable {
 
   private Set<AssignmentProjectDefinition> assignmentProjectDefinitions = new LinkedHashSet<>();
 
+  private Set<Deadline> deadlines = new LinkedHashSet<>();
+
   private Set<Project> projects = new LinkedHashSet<>();
 
+  private Set<ProjectAssignment> projectAssignments = new LinkedHashSet<>();
+
   private Set<ProjectInput> projectInputs = new LinkedHashSet<>();
+
+  private Set<ProjectInputAssignment> projectInputAssignments = new LinkedHashSet<>();
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -123,12 +129,27 @@ public class Assignment implements Serializable {
   }
 
   @OneToMany(mappedBy = "assignment")
+  public Set<Deadline> getDeadlines() {
+    return deadlines;
+  }
+
+  @OneToMany(mappedBy = "assignment")
   public Set<Project> getProjects() {
     return projects;
   }
 
   @OneToMany(mappedBy = "assignment")
+  public Set<ProjectAssignment> getProjectAssignments() {
+    return projectAssignments;
+  }
+
+  @OneToMany(mappedBy = "assignment")
   public Set<ProjectInput> getProjectInputs() {
     return projectInputs;
+  }
+
+  @OneToMany(mappedBy = "assignment")
+  public Set<ProjectInputAssignment> getProjectInputAssignments() {
+    return projectInputAssignments;
   }
 }

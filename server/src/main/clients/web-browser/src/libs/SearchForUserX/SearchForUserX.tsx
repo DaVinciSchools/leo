@@ -51,7 +51,7 @@ export function SearchForUserX(props: {
   return (
     <>
       <TextField
-        {...searchText.textFieldParams({
+        {...searchText.getTextFieldParams({
           label: 'Search by Name or Email Address',
           autoFocus: true,
           style: {marginTop: '0.5rem', marginBottom: '1rem'},

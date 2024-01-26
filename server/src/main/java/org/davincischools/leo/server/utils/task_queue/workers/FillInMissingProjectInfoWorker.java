@@ -5,10 +5,10 @@ import static org.davincischools.leo.database.utils.DaoUtils.listIfInitialized;
 import com.google.common.collect.Iterables;
 import java.io.IOException;
 import java.util.List;
+import org.davincischools.leo.database.daos.ProjectInput.StateType;
 import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectsParams;
-import org.davincischools.leo.database.utils.repos.ProjectInputRepository.State;
 import org.davincischools.leo.protos.task_service.FillInMissingProjectInfoTask;
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.task_queue.DefaultTaskMetadata;
@@ -89,7 +89,7 @@ public final class FillInMissingProjectInfoWorker
     var projects = new OpenAi3V3ProjectGenerator(openAiUtils).generateProjects(generatorInput, 1);
     db.getProjectRepository().deeplySaveProjects(db, projects);
     db.getProjectInputRepository()
-        .updateState(generatorInput.getProjectInput().getId(), State.COMPLETED.name());
+        .updateState(generatorInput.getProjectInput().getId(), StateType.COMPLETED);
     return true;
   }
 }

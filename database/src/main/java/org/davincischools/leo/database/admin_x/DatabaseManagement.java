@@ -45,7 +45,13 @@ public final class DatabaseManagement {
         logger.atInfo().log("Loading schema: {}", resource.getFilename());
         byte[] sqlBytes = ByteStreams.toByteArray(resource.getInputStream());
         String sql = new String(sqlBytes, StandardCharsets.UTF_8);
-        connection.prepareCall(sql).execute();
+        try {
+          connection.prepareCall(sql).execute();
+        } catch (SQLException e) {
+          if (!resource.getFilename().endsWith("-FAILABLE.sql")) {
+            throw e;
+          }
+        }
       }
 
       // Apply generated files in order.

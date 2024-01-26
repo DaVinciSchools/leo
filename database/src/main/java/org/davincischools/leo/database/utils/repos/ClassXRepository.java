@@ -8,15 +8,12 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
-import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill;
 import org.davincischools.leo.database.daos.ClassXKnowledgeAndSkill_;
 import org.davincischools.leo.database.daos.ClassX_;
-import org.davincischools.leo.database.daos.StudentClassX;
 import org.davincischools.leo.database.daos.StudentClassX_;
 import org.davincischools.leo.database.daos.Teacher;
-import org.davincischools.leo.database.daos.TeacherClassX;
 import org.davincischools.leo.database.daos.TeacherClassX_;
 import org.davincischools.leo.database.exceptions.UnauthorizedUserX;
 import org.davincischools.leo.database.utils.Database;
@@ -64,10 +61,11 @@ public interface ClassXRepository
   default List<ClassX> getClassXs(GetClassXsParams params) {
     checkNotNull(params);
 
-    return getQueryHelper().query(ClassX.class, classX -> configureQuery(classX, params));
+    return getQueryHelper()
+        .query(ClassX.class, classX -> configureQuery(classX.notDeleted(), params));
   }
 
-  static Entity<?, ClassX> configureQuery(Entity<?, ClassX> classX, GetClassXsParams params) {
+  static Entity<?, ?, ClassX> configureQuery(Entity<?, ?, ClassX> classX, GetClassXsParams params) {
     checkNotNull(classX);
     checkNotNull(params);
 
@@ -81,11 +79,7 @@ public interface ClassXRepository
     classX.supplier(
         () ->
             classX
-                .join(
-                    ClassX_.teacherClassXES,
-                    JoinType.LEFT,
-                    TeacherClassX::getClassX,
-                    ClassX::setTeacherClassXES)
+                .join(ClassX_.teacherClassXES, JoinType.LEFT)
                 .notDeleted()
                 .join(TeacherClassX_.teacher, JoinType.LEFT),
         params.getTeacherIds());
@@ -94,11 +88,7 @@ public interface ClassXRepository
     classX.supplier(
         () ->
             classX
-                .join(
-                    ClassX_.studentClassXES,
-                    JoinType.LEFT,
-                    StudentClassX::getClassX,
-                    ClassX::setStudentClassXES)
+                .join(ClassX_.studentClassXES, JoinType.LEFT)
                 .notDeleted()
                 .join(StudentClassX_.student, JoinType.LEFT),
         params.getStudentIds());
@@ -109,22 +99,13 @@ public interface ClassXRepository
 
     if (params.getIncludeAssignments().isPresent()) {
       AssignmentRepository.configureQuery(
-              classX.join(
-                  ClassX_.assignments,
-                  JoinType.LEFT,
-                  Assignment::getClassX,
-                  ClassX::setAssignments),
-              params.getIncludeAssignments().get())
+              classX.join(ClassX_.assignments, JoinType.LEFT), params.getIncludeAssignments().get())
           .notDeleted();
     }
 
     if (params.getIncludeKnowledgeAndSkills().orElse(false)) {
       classX
-          .join(
-              ClassX_.classXKnowledgeAndSkills,
-              JoinType.LEFT,
-              ClassXKnowledgeAndSkill::getClassX,
-              ClassX::setClassXKnowledgeAndSkills)
+          .join(ClassX_.classXKnowledgeAndSkills, JoinType.LEFT)
           .notDeleted()
           .join(ClassXKnowledgeAndSkill_.knowledgeAndSkill, JoinType.LEFT)
           .fetch();

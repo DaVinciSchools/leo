@@ -22,7 +22,7 @@ public class AssignmentProjectDefinitionId implements Serializable {
 
   public static final String COLUMN_ASSIGNMENTID_NAME = "assignment_id";
   public static final String COLUMN_PROJECTDEFINITIONID_NAME = "project_definition_id";
-  private static final long serialVersionUID = 7439418820821846062L;
+  private static final long serialVersionUID = -7897921795353238059L;
 
   private Integer assignmentId;
 

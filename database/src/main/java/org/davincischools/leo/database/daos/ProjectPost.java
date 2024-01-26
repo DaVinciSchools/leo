@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
@@ -28,7 +29,14 @@ import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
 @Setter
 @Accessors(chain = true)
 @Entity(name = ProjectPost.ENTITY_NAME)
-@Table(name = ProjectPost.TABLE_NAME, schema = "leo_test")
+@Table(
+    name = ProjectPost.TABLE_NAME,
+    schema = "leo_test",
+    indexes = {
+      @Index(name = "creation_time", columnList = "creation_time"),
+      @Index(name = "post_time", columnList = "post_time"),
+      @Index(name = "being_edited", columnList = "being_edited")
+    })
 public class ProjectPost implements Serializable {
 
   public static final String ENTITY_NAME = "ProjectPost";
@@ -42,7 +50,7 @@ public class ProjectPost implements Serializable {
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_DESIREDFEEDBACK_NAME = "desired_feedback";
   public static final String COLUMN_BEINGEDITED_NAME = "being_edited";
-  private static final long serialVersionUID = 6660237520132538098L;
+  private static final long serialVersionUID = 1243334282346113455L;
 
   private Integer id;
 
@@ -65,6 +73,8 @@ public class ProjectPost implements Serializable {
   private UserX userX;
 
   private Project project;
+
+  private Set<Post> posts = new LinkedHashSet<>();
 
   private Set<ProjectPostComment> projectPostComments = new LinkedHashSet<>();
 
@@ -134,6 +144,11 @@ public class ProjectPost implements Serializable {
   @PropagateDeleteFrom
   public Project getProject() {
     return project;
+  }
+
+  @OneToMany(mappedBy = "projectPost")
+  public Set<Post> getPosts() {
+    return posts;
   }
 
   @OneToMany(mappedBy = "projectPost")

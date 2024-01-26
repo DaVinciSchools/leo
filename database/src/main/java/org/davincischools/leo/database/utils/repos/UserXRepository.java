@@ -8,16 +8,10 @@ import jakarta.persistence.criteria.JoinType;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import org.davincischools.leo.database.daos.Student;
-import org.davincischools.leo.database.daos.StudentClassX;
 import org.davincischools.leo.database.daos.StudentClassX_;
-import org.davincischools.leo.database.daos.StudentSchool;
 import org.davincischools.leo.database.daos.StudentSchool_;
 import org.davincischools.leo.database.daos.Student_;
-import org.davincischools.leo.database.daos.Teacher;
-import org.davincischools.leo.database.daos.TeacherClassX;
 import org.davincischools.leo.database.daos.TeacherClassX_;
-import org.davincischools.leo.database.daos.TeacherSchool;
 import org.davincischools.leo.database.daos.TeacherSchool_;
 import org.davincischools.leo.database.daos.Teacher_;
 import org.davincischools.leo.database.daos.UserX;
@@ -41,7 +35,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
   int MAX_LAST_NAME_LENGTH =
       EntityUtils.getColumn(UserX.class, UserX.COLUMN_LASTNAME_NAME).length();
 
-  static final int MIN_PASSWORD_LENGTH = 8;
+  int MIN_PASSWORD_LENGTH = 8;
   String INVALID_ENCODED_PASSWORD = "INVALID ENCODED PASSWORD";
 
   enum Role {
@@ -110,7 +104,10 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
     return getQueryHelper()
         .query(
             UserX.class,
-            userX -> configureQuery(userX, params),
+            userX -> {
+              userX.notDeleted();
+              return configureQuery(userX, params);
+            },
             params
                 .getPage()
                 .map(
@@ -120,7 +117,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
                 .orElse(Pageable.unpaged()));
   }
 
-  static Entity<?, UserX> configureQuery(Entity<?, UserX> userX, GetUserXsParams params) {
+  static Entity<?, ?, UserX> configureQuery(Entity<?, ?, UserX> userX, GetUserXsParams params) {
     checkNotNull(userX);
     checkNotNull(params);
 
@@ -141,22 +138,14 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
         teacher.supplier(
             () ->
                 teacher
-                    .join(
-                        Teacher_.teacherSchools,
-                        JoinType.LEFT,
-                        TeacherSchool::getTeacher,
-                        Teacher::setTeacherSchools)
+                    .join(Teacher_.teacherSchools, JoinType.LEFT)
                     .notDeleted()
                     .join(TeacherSchool_.school, JoinType.LEFT));
     var studentSchool =
         student.supplier(
             () ->
                 student
-                    .join(
-                        Student_.studentSchools,
-                        JoinType.LEFT,
-                        StudentSchool::getStudent,
-                        Student::setStudentSchools)
+                    .join(Student_.studentSchools, JoinType.LEFT)
                     .notDeleted()
                     .join(StudentSchool_.school, JoinType.LEFT));
     if (params.getInSchoolIds().isPresent() && !Iterables.isEmpty(params.getInSchoolIds().get())) {
@@ -174,22 +163,14 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
         teacher.supplier(
             () ->
                 teacher
-                    .join(
-                        Teacher_.teacherClassXES,
-                        JoinType.LEFT,
-                        TeacherClassX::getTeacher,
-                        Teacher::setTeacherClassXES)
+                    .join(Teacher_.teacherClassXES, JoinType.LEFT)
                     .notDeleted()
                     .join(TeacherClassX_.classX, JoinType.LEFT));
     var studentClassX =
         student.supplier(
             () ->
                 student
-                    .join(
-                        Student_.studentClassXES,
-                        JoinType.LEFT,
-                        StudentClassX::getStudent,
-                        Student::setStudentClassXES)
+                    .join(Student_.studentClassXES, JoinType.LEFT)
                     .notDeleted()
                     .join(StudentClassX_.classX, JoinType.LEFT));
     if (params.getInClassXIds().isPresent() && !Iterables.isEmpty(params.getInClassXIds().get())) {

@@ -36,10 +36,10 @@ import {
   DeepReadOnly,
   deepWritable,
   replaceInDeepReadOnly,
-  toProto,
+  writableForProto,
 } from '../misc';
 import {PROJECT_SORTER} from '../sorters';
-import {FormField, useFormFields} from '../form_utils/forms';
+import {useFormFields} from '../form_utils/forms';
 import ProjectManagementService = project_management.ProjectManagementService;
 import UserXManagementService = user_x_management.UserXManagementService;
 import IProject = pl_types.IProject;
@@ -103,7 +103,7 @@ export function ProjectBuilder(
     DeepReadOnly<IProject[]>
   >([]);
   const selectedExistingProject =
-    hiddenForm.useAutocompleteFormField<DeepReadOnly<IProject | null>>(
+    hiddenForm.useSingleAutocompleteFormField<DeepReadOnly<IProject>>(
       'project'
     );
   const [selectedExistingProjectUseType, setSelectedExistingProjectUseType] =
@@ -146,7 +146,7 @@ export function ProjectBuilder(
   function setActiveStep(step: State) {
     if (step === State.GETTING_STARTED) {
       setSelectExistingProject(false);
-      selectedExistingProject.setValue(null);
+      selectedExistingProject.setValue(undefined);
       setSelectedExistingProjectUseType(null);
     }
     if (step === State.PROJECT_DETAILS && selectedExistingProject.getValue()) {
@@ -159,7 +159,7 @@ export function ProjectBuilder(
     if (!userX?.isAuthenticated) {
       setSelectExistingProject(false);
       setSortedExistingProjects([]);
-      selectedExistingProject.setValue(null);
+      selectedExistingProject.setValue(undefined);
       setSelectedExistingProjectUseType(null);
     } else {
       createService(ProjectManagementService, 'ProjectManagementService')
@@ -172,7 +172,7 @@ export function ProjectBuilder(
         .then(response => {
           setSelectExistingProject(false);
           setSortedExistingProjects(response.projects.sort(PROJECT_SORTER));
-          selectedExistingProject.setValue(null);
+          selectedExistingProject.setValue(undefined);
           setSelectedExistingProjectUseType(null);
         })
         .catch(global.setError);
@@ -250,13 +250,13 @@ export function ProjectBuilder(
     createService(ProjectManagementService, 'ProjectManagementService')
       .generateProjects({
         definition: {
-          inputs: toProto(
+          inputs: writableForProto(
             allInputs
               .filter(i => i.selected)
               .map(i => i.input)
               .filter(i => i != null)
           ),
-          existingProject: toProto(selectedExistingProject.getValue()),
+          existingProject: writableForProto(selectedExistingProject.getValue()),
           existingProjectUseType: selectedExistingProjectUseType ?? undefined,
         },
       })
@@ -433,9 +433,7 @@ export function ProjectBuilder(
                       sortedProjects={
                         deepWritable(sortedExistingProjects) ?? []
                       }
-                      formField={
-                        selectedExistingProject as FormField<IProject | null>
-                      }
+                      formField={selectedExistingProject}
                       style={{width: '100%'}}
                     />
                   </div>

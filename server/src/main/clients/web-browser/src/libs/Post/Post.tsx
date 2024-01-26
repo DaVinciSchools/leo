@@ -15,8 +15,8 @@ import {
   formatAsTag,
   getHighlightStyle,
   isTextEmpty,
-  removeInPlace,
-  replaceInPlace,
+  removeInDeepReadOnly,
+  replaceInDeepReadOnly,
   textOrEmpty,
   toLong,
 } from '../misc';
@@ -200,8 +200,9 @@ export function Post(
     } as IProjectPostComment);
     setCommentBeingEdited(undefined);
 
-    replaceInPlace(sortedComments, newComment, c => c.id);
-    setSortedComments([...sortedComments]);
+    setSortedComments(
+      replaceInDeepReadOnly(sortedComments, newComment, c => c.id)
+    );
 
     props.postUpdated(
       Object.assign({}, props.post, {
@@ -254,8 +255,8 @@ export function Post(
   function deleteComment(comment: DeepReadOnly<IProjectPostComment>) {
     saveCommentBeingEdited();
 
-    const newSortedComments = removeInPlace(
-      sortedComments.slice(),
+    const newSortedComments = removeInDeepReadOnly(
+      sortedComments,
       comment,
       c => c.id
     );

@@ -5,4 +5,5 @@ enum EntityType {
   GET,
   JOIN,
   FETCH,
+  SUBQUERY,
 }

@@ -1,0 +1,27 @@
+@use '../../libs/color';
+
+.section-heading {
+  padding-bottom: 3px;
+  border-bottom: color.$primary-800 solid 2px;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  white-space: nowrap;
+
+  .section-title {
+    font-weight: bold;
+    white-space: nowrap;
+  }
+
+  .section-links {
+    white-space: nowrap;
+    display: flex;
+    gap: 1em;
+    flex-flow: row nowrap;
+
+    .clickable {
+      color: color.$primary-800;
+    }
+  }
+}
+

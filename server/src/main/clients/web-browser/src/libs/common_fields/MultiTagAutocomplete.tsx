@@ -4,15 +4,13 @@ import {addClassName} from '../tags';
 
 export function MultiTagAutocomplete(props: {
   sortedTags: readonly string[];
-  formField: FormField<readonly string[]>;
+  formField: FormField<string, true, false, true>;
   placeholder?: (hasOptions: boolean) => string;
 }) {
   return (
     <Autocomplete
-      {...props.formField.autocompleteParams()}
-      multiple
+      {...props.formField.getAutocompleteParams()}
       disableCloseOnSelect
-      freeSolo
       options={props.sortedTags}
       renderOption={(params, option, {selected}) => (
         <li {...params} key={option}>
@@ -29,7 +27,7 @@ export function MultiTagAutocomplete(props: {
       )}
       renderInput={params => (
         <TextField
-          {...props.formField.textFieldParams(params)}
+          {...props.formField.getTextFieldParams(params)}
           placeholder={
             props.placeholder
               ? props.placeholder(props.sortedTags.length > 0)

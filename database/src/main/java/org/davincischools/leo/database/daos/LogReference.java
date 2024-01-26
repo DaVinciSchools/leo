@@ -31,7 +31,7 @@ public class LogReference implements Serializable {
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = 5972493909007696874L;
+  private static final long serialVersionUID = 1307169341290313374L;
 
   private Integer id;
 

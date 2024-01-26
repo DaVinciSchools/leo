@@ -88,6 +88,10 @@ public class AssignmentManagementService {
                                       request.getIncludeProjectDefinitions()
                                           ? new GetProjectDefinitionsParams()
                                           : null))
+                          .setSchoolIds(
+                              listOrNull(request, GetAssignmentsRequest.SCHOOL_IDS_FIELD_NUMBER))
+                          .setClassXIds(
+                              listOrNull(request, GetAssignmentsRequest.CLASS_X_IDS_FIELD_NUMBER))
                           .setTeacherIds(
                               listOrNull(request, GetAssignmentsRequest.TEACHER_ID_FIELD_NUMBER))
                           .setStudentIds(

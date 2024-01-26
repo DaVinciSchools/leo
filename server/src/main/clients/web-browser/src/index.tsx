@@ -13,13 +13,9 @@ import {Login} from './pages/user_xs/Login/Login';
 import {EditDistricts} from './pages/profiles/EditDistricts/EditDistricts';
 import {EditSchools} from './pages/profiles/EditSchools/EditSchools';
 import {DefaultPageNav} from './libs/DefaultPage/DefaultPageNav';
-import {ProjectBuilder} from './pages/projects/ProjectBuilder/ProjectBuilder';
-import {MyProjects} from './pages/projects/MyProjects/MyProjects';
 import {MyAccount} from './pages/user_xs/MyAccount/MyAccount';
 import {PrivacyPolicy} from './pages/docs/PrivacyPolicy';
-import {Overview} from './pages/projects/Overview/Overview';
 import {Logout} from './pages/user_xs/Logout/Logout';
-import {AllProjects} from './pages/projects/AllProjects/AllProjects';
 import {Accounts} from './pages/admin_x/Accounts/Accounts';
 import {StudentDashboard} from './pages/dashboards/StudentDashboard/StudentDashboard';
 import {TeacherDashboard} from './pages/dashboards/TeacherDashboard/TeacherDashboard';
@@ -27,10 +23,11 @@ import {AdminXDashboard} from './pages/dashboards/AdminXDashboard/AdminXDashboar
 import {RedirectToDashboard} from './pages/dashboards/RedirectToDashboard';
 import {DemoProjectBuilder} from './pages/demos/DemoProjectBuilder/DemoProjectBuilder';
 import {GlobalState} from './libs/GlobalState';
-import {TeacherEditClassXs} from './pages/class_xs/TeacherEditClassXs/TeacherEditClassXs';
 import {MechanicalEngineering} from './pages/schools/dvs/MechanicalEngineering';
 import {SchoolsIndex} from './pages/schools/SchoolsIndex';
 import {MetricType} from 'web-vitals';
+import {ClassXManagement} from './pages/class_x_management/ClassXManagement';
+import {ProjectsDashboard} from './pages/projects/ProjectsDashboard';
 
 function GaTags(props: PropsWithChildren<{title: string}>) {
   const location = useLocation();
@@ -96,14 +93,14 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: '/classes',
+    path: '/class-management',
     element: <DefaultPageNav />,
     children: [
       {
-        path: 'teacher-edit-classes.html',
+        path: 'class-management.html',
         element: (
-          <GaTags title="Edit Classes">
-            <TeacherEditClassXs />
+          <GaTags title="Class Management">
+            <ClassXManagement />
           </GaTags>
         ),
       },
@@ -211,34 +208,10 @@ const router = createBrowserRouter([
     element: <DefaultPageNav />,
     children: [
       {
-        path: 'overview.html',
+        path: 'projects.html',
         element: (
-          <GaTags title="Projects Overview">
-            <Overview />
-          </GaTags>
-        ),
-      },
-      {
-        path: 'project-builder.html',
-        element: (
-          <GaTags title="Project Builder">
-            <ProjectBuilder />
-          </GaTags>
-        ),
-      },
-      {
-        path: 'my-projects.html',
-        element: (
-          <GaTags title="My Projects">
-            <MyProjects />
-          </GaTags>
-        ),
-      },
-      {
-        path: 'all-projects.html',
-        element: (
-          <GaTags title="All Projects">
-            <AllProjects />
+          <GaTags title="Projects Dashboard">
+            <ProjectsDashboard />
           </GaTags>
         ),
       },

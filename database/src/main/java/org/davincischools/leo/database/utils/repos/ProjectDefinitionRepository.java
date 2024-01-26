@@ -9,9 +9,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.ProjectDefinition;
-import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory_;
 import org.davincischools.leo.database.daos.ProjectDefinition_;
 import org.davincischools.leo.database.daos.UserX;
@@ -68,8 +66,8 @@ public interface ProjectDefinitionRepository
             projectDefinition -> configureQuery(projectDefinition, params));
   }
 
-  static Entity<?, ProjectDefinition> configureQuery(
-      Entity<?, ProjectDefinition> projectDefinition, GetProjectDefinitionsParams params) {
+  static <P, S> Entity<P, S, ProjectDefinition> configureQuery(
+      Entity<P, S, ProjectDefinition> projectDefinition, GetProjectDefinitionsParams params) {
     checkNotNull(projectDefinition);
     checkNotNull(params);
 
@@ -79,21 +77,13 @@ public interface ProjectDefinitionRepository
     projectDefinition.supplier(
         () ->
             projectDefinition
-                .join(
-                    ProjectDefinition_.assignmentProjectDefinitions,
-                    JoinType.LEFT,
-                    AssignmentProjectDefinition::getProjectDefinition,
-                    ProjectDefinition::setAssignmentProjectDefinitions)
+                .join(ProjectDefinition_.assignmentProjectDefinitions, JoinType.LEFT)
                 .notDeleted()
                 .requireId(params.getAssignmentIds()));
 
     // var categoryType =
     projectDefinition
-        .join(
-            ProjectDefinition_.projectDefinitionCategories,
-            JoinType.LEFT,
-            ProjectDefinitionCategory::getProjectDefinition,
-            ProjectDefinition::setProjectDefinitionCategories)
+        .join(ProjectDefinition_.projectDefinitionCategories, JoinType.LEFT)
         .notDeleted()
         .join(ProjectDefinitionCategory_.projectDefinitionCategoryType, JoinType.LEFT)
         .fetch();

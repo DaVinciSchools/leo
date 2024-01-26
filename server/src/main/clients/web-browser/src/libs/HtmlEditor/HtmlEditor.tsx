@@ -1,5 +1,5 @@
 import {DeepReadOnly} from '../misc';
-import React, {useEffect, useRef} from 'react';
+import React, {MouseEvent, useEffect, useRef, useState} from 'react';
 import 'froala-editor/css/froala_editor.pkgd.min.css';
 import 'froala-editor/css/froala_style.min.css';
 import 'froala-editor/js/plugins.pkgd.min.js';
@@ -88,15 +88,15 @@ const ALLOWED_FILE_TYPES = [
 
 const MAX_FILE_SIZE = 1024 * 1024 * 16 - 1;
 
-export function HtmlEditor(props: DeepReadOnly<HtmlEditorProps>) {
-  const [requestEditing, setRequestEditing] = React.useState(false);
-  const [currentlyEditing, setCurrentlyEditing] = React.useState<
+export function HtmlEditor(props: DeepReadOnly<Partial<HtmlEditorProps>>) {
+  const [requestEditing, setRequestEditing] = useState(false);
+  const [currentlyEditing, setCurrentlyEditing] = useState<
     boolean | undefined
   >();
-  const [haveRequestedFocus, setHaveRequestedFocus] = React.useState(false);
+  const [haveRequestedFocus, setHaveRequestedFocus] = useState(false);
   const editor = useRef<FroalaEditor | null>(null);
 
-  function possiblyShowEditor(e: React.MouseEvent<HTMLElement>) {
+  function possiblyShowEditor(e: MouseEvent<HTMLElement>) {
     if (e.target instanceof HTMLElement) {
       if (e.target?.nodeName?.toLowerCase() === 'a') {
         return;

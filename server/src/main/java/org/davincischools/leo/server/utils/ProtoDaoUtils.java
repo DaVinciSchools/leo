@@ -47,6 +47,7 @@ import org.davincischools.leo.database.daos.ClassX;
 import org.davincischools.leo.database.daos.District;
 import org.davincischools.leo.database.daos.Interest;
 import org.davincischools.leo.database.daos.KnowledgeAndSkill;
+import org.davincischools.leo.database.daos.KnowledgeAndSkill.Type;
 import org.davincischools.leo.database.daos.Motivation;
 import org.davincischools.leo.database.daos.Project;
 import org.davincischools.leo.database.daos.ProjectDefinitionCategory;
@@ -110,8 +111,14 @@ public class ProtoDaoUtils {
     return null;
   }
 
-  public static <T extends Enum<?>> String enumNameOrNull(T enumValue) {
-    return enumValue != null && enumValue.ordinal() != 0 ? enumValue.name() : null;
+  public static <F extends Enum<?>, T extends Enum<?>> T enumNameOrNull(
+      F enumValue, Class<T> enumClass) {
+    return enumValue != null && enumValue.ordinal() != 0
+        ? Arrays.stream(enumClass.getEnumConstants())
+            .filter(e -> e.name().equals(enumValue.name()))
+            .findFirst()
+            .orElseThrow()
+        : null;
   }
 
   private record ProtoDaoFields(
@@ -397,7 +404,10 @@ public class ProtoDaoUtils {
             options.computeIfAbsent(
                 projectInputCategory.getValueType(),
                 valueType ->
-                    db.getKnowledgeAndSkillRepository().findAll(valueType.name()).stream()
+                    db
+                        .getKnowledgeAndSkillRepository()
+                        .findAll(Type.valueOf(valueType.name()))
+                        .stream()
                         .filter(knowledgeAndSkill -> knowledgeAndSkill.getDeleted() == null)
                         .map(
                             knowledgeAndSkill ->
@@ -602,7 +612,9 @@ public class ProtoDaoUtils {
                               .setProjectDefinitionCategoryType(
                                   new ProjectDefinitionCategoryType()
                                       .setName(ratingCategory.getCategory())
-                                      .setValueType(valueType.name())));
+                                      .setValueType(
+                                          ProjectDefinitionCategoryType.ValueType.valueOf(
+                                              valueType.name()))));
                       var projectInputFulfillment =
                           new ProjectInputFulfillment()
                               .setId(inputFulfillmentId)
@@ -671,7 +683,8 @@ public class ProtoDaoUtils {
                                               inputValue
                                                   .getProjectDefinitionCategory()
                                                   .getProjectDefinitionCategoryType()
-                                                  .getValueType());
+                                                  .getValueType()
+                                                  .name());
                                       var rating =
                                           b.addRatingCategoriesBuilder()
                                               .setProjectInputFulfillmentId(

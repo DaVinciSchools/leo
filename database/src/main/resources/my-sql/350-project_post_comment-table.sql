@@ -2,13 +2,16 @@ CREATE TABLE IF NOT EXISTS project_post_comment
 (
     id                         INT PRIMARY KEY AUTO_INCREMENT,
     creation_time              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX (creation_time DESC),
     deleted                    DATETIME,
 
     post_time                  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX (post_time DESC),
     -- Deprecated. Use long_descr_html instead.
     comment_html               TEXT,
     long_descr_html            MEDIUMTEXT,
     being_edited               BOOLEAN,
+    INDEX (being_edited),
 
     positive_feedback          TEXT,
     how_improved_feedback      TEXT,

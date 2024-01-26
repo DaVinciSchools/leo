@@ -39,7 +39,7 @@ public class FileX implements Serializable {
   public static final String COLUMN_FILECONTENT_NAME = "file_content";
   public static final String COLUMN_FILEKEY_NAME = "file_key";
   public static final String COLUMN_MIMETYPE_NAME = "mime_type";
-  private static final long serialVersionUID = -6339924224847307229L;
+  private static final long serialVersionUID = 5811610774933144472L;
 
   private Integer id;
 
@@ -86,7 +86,7 @@ public class FileX implements Serializable {
     return fileContent;
   }
 
-  @Column(name = COLUMN_FILEKEY_NAME, nullable = false, length = 24)
+  @Column(name = COLUMN_FILEKEY_NAME, nullable = false, length = 20)
   public String getFileKey() {
     return fileKey;
   }

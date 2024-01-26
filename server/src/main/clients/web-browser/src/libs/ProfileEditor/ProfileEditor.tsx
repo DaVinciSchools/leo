@@ -8,22 +8,23 @@ import {
   school_management,
   user_x_management,
 } from 'pl-pb';
-import IClassX = pl_types.IClassX;
-import IUserX = pl_types.IUserX;
-import ISchool = pl_types.ISchool;
-import IDistrict = pl_types.IDistrict;
 import {useContext, useEffect, useState} from 'react';
-import DistrictManagementService = district_management.DistrictManagementService;
 import {createService} from '../protos';
 import {CLASS_X_SORTER, DISTRICT_SORTER, SCHOOL_SORTER} from '../sorters';
 import {GlobalStateContext} from '../GlobalState';
-import SchoolManagementService = school_management.SchoolManagementService;
-import ClassXManagementService = class_x_management_service.ClassXManagementService;
 import {spread} from '../tags';
 import {AccountCircle, Email, Lock} from '@mui/icons-material';
 import {DistrictAutocomplete} from '../common_fields/DistrictAutocomplete';
 import {MultiSchoolAutocomplete} from '../common_fields/MultiSchoolAutocomplete';
 import {MultiClassXAutocomplete} from '../common_fields/MultiClassXAutocomplete';
+import {DeepReadOnly} from '../misc';
+import IClassX = pl_types.IClassX;
+import IUserX = pl_types.IUserX;
+import ISchool = pl_types.ISchool;
+import IDistrict = pl_types.IDistrict;
+import DistrictManagementService = district_management.DistrictManagementService;
+import SchoolManagementService = school_management.SchoolManagementService;
+import ClassXManagementService = class_x_management_service.ClassXManagementService;
 import UserXManagementService = user_x_management.UserXManagementService;
 
 export interface EditorProfile extends IUserX {
@@ -47,9 +48,9 @@ export function ProfileEditor(props: {
   const global = useContext(GlobalStateContext);
   const userX = global.requireUserX('You must be logged in to edit a profile.');
 
-  const [sortedDistricts, setSortedDistricts] = useState<readonly IDistrict[]>(
-    []
-  );
+  const [sortedDistricts, setSortedDistricts] = useState<
+    DeepReadOnly<IDistrict[]>
+  >([]);
   const [sortedSchools, setSortedSchools] = useState<readonly ISchool[]>([]);
   const [sortedClassXs, setSortedClassXs] = useState<readonly IClassX[]>([]);
 
@@ -104,6 +105,7 @@ export function ProfileEditor(props: {
     createService(ClassXManagementService, 'ClassXManagementService')
       .getClassXs({
         schoolIds: profileSchools.getValue()?.map(e => e.id ?? 0) ?? [],
+        includeSchool: true,
       })
       .then(response => {
         setSortedClassXs(response.classXs.sort(CLASS_X_SORTER));
@@ -111,27 +113,21 @@ export function ProfileEditor(props: {
       .catch(global.setError);
   }
 
-  const profileDistrict =
-    props.profileForm.useAutocompleteFormField<IDistrict | null>('district', {
-      isAutocomplete: {},
-      onChange: refreshClassXs,
-      disabled: userX?.isAdminX !== true,
-    });
-  const profileSchools = props.profileForm.useAutocompleteFormField<
-    readonly ISchool[]
+  const profileDistrict = props.profileForm.useSingleAutocompleteFormField<
+    DeepReadOnly<IDistrict>
+  >('district', {
+    onChange: refreshClassXs,
+    disabled: userX?.isAdminX !== true,
+  });
+  const profileSchools = props.profileForm.useMultipleAutocompleteFormField<
+    DeepReadOnly<ISchool>
   >('schools', {
-    isAutocomplete: {
-      isMultiple: true,
-    },
     onChange: refreshClassXs,
   });
-  const profileClassXs = props.profileForm.useAutocompleteFormField<
-    readonly IClassX[]
-  >('classXs', {
-    isAutocomplete: {
-      isMultiple: true,
-    },
-  });
+  const profileClassXs =
+    props.profileForm.useMultipleAutocompleteFormField<DeepReadOnly<IClassX>>(
+      'classXs'
+    );
   const profileIsAdminX = props.profileForm.useBooleanFormField('isAdminX');
   const profileIsTeacher = props.profileForm.useBooleanFormField('isTeacher');
   const profileIsStudent = props.profileForm.useBooleanFormField('isStudent');
@@ -214,7 +210,7 @@ export function ProfileEditor(props: {
               autoComplete="given-name"
               label="First Name"
               InputLabelProps={{shrink: true}}
-              {...profileFirstName.textFieldParams()}
+              {...profileFirstName.getTextFieldParams()}
             />
           </Grid>
           <Grid item {...spread({sm: 12, md: 6})}>
@@ -223,7 +219,7 @@ export function ProfileEditor(props: {
               autoComplete="family-name"
               label="Last Name"
               InputLabelProps={{shrink: true}}
-              {...profileLastName.textFieldParams()}
+              {...profileLastName.getTextFieldParams()}
             />
           </Grid>
           <Grid item xs={12}>
@@ -232,7 +228,7 @@ export function ProfileEditor(props: {
               autoComplete="email"
               label="Email Address"
               InputLabelProps={{shrink: true}}
-              {...profileEmailAddress.textFieldParams()}
+              {...profileEmailAddress.getTextFieldParams()}
             />
           </Grid>
           <Grid item xs={12} className="global-section-heading">
@@ -243,7 +239,7 @@ export function ProfileEditor(props: {
               autoComplete="current-password"
               label="Current Password"
               InputLabelProps={{shrink: true}}
-              {...profileCurrentPassword.textFieldParams()}
+              {...profileCurrentPassword.getTextFieldParams()}
             />
           </Grid>
           <Grid item xs={12}>
@@ -251,7 +247,7 @@ export function ProfileEditor(props: {
               autoComplete="new-password"
               label="New Password"
               InputLabelProps={{shrink: true}}
-              {...profileNewPassword.textFieldParams()}
+              {...profileNewPassword.getTextFieldParams()}
             />
           </Grid>
           <Grid item xs={12}>
@@ -259,7 +255,7 @@ export function ProfileEditor(props: {
               autoComplete="new-password"
               label="Re-enter New Password"
               InputLabelProps={{shrink: true}}
-              {...profileVerifyNewPassword.textFieldParams()}
+              {...profileVerifyNewPassword.getTextFieldParams()}
             />
           </Grid>
           <Grid item xs={12} className="global-section-heading">
@@ -269,7 +265,6 @@ export function ProfileEditor(props: {
             <DistrictAutocomplete
               sortedDistricts={sortedDistricts}
               formField={profileDistrict}
-              InputLabelProps={{shrink: true}}
               placeholder={hasOptions =>
                 hasOptions ? 'Select a district' : 'Districts are loading...'
               }
@@ -306,15 +301,15 @@ export function ProfileEditor(props: {
             <div className="global-section-title">Roles</div>
           </Grid>
           <Grid item xs={12} display={userX?.isAdminX ? undefined : 'none'}>
-            <Checkbox {...profileIsAdminX.checkboxParams()} />
+            <Checkbox {...profileIsAdminX.getCheckboxParams()} />
             Is Administrator
           </Grid>
           <Grid item xs={12} display={userX?.isAdminX ? undefined : 'none'}>
-            <Checkbox {...profileIsTeacher.checkboxParams()} />
+            <Checkbox {...profileIsTeacher.getCheckboxParams()} />
             Is Teacher
           </Grid>
           <Grid item xs={12} display={userX?.isAdminX ? undefined : 'none'}>
-            <Checkbox {...profileIsStudent.checkboxParams()} />
+            <Checkbox {...profileIsStudent.getCheckboxParams()} />
             Is Student
           </Grid>
         </Grid>

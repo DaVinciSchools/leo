@@ -2,13 +2,15 @@ import {Autocomplete, TextField} from '@mui/material';
 import {FormField} from '../form_utils/forms';
 import {pl_types} from 'pl-pb';
 import {useEffect, useState} from 'react';
-
+import {DeepReadOnly} from '../misc';
 import IAssignment = pl_types.IAssignment;
 
-export function AssignmentAutocomplete(props: {
-  sortedAssignments: readonly IAssignment[];
-  formField: FormField<IAssignment | null>;
-}) {
+export function AssignmentAutocomplete(
+  props: DeepReadOnly<{
+    sortedAssignments: IAssignment[];
+    formField: FormField<DeepReadOnly<IAssignment>>;
+  }>
+) {
   const [hasMultipleClasses, setHasMultipleClasses] = useState(true);
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export function AssignmentAutocomplete(props: {
       isOptionEqualToValue={(option, value) => option.id === value.id}
       groupBy={
         hasMultipleClasses
-          ? option => option?.classX?.name ?? 'No Class Selected'
+          ? option => option.classX?.name ?? 'No Class Selected'
           : undefined
       }
       renderOption={(props, option) => (
@@ -42,11 +44,11 @@ export function AssignmentAutocomplete(props: {
         <TextField
           label="Select Assignment"
           size="small"
-          {...props.formField.textFieldParams(params)}
+          {...props.formField.getTextFieldParams(params)}
         />
       )}
       getOptionLabel={option => option.name ?? 'Unnamed Assignment'}
-      {...props.formField.autocompleteParams()}
+      {...props.formField.getAutocompleteParams()}
     />
   );
 }
