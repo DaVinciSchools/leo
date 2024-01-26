@@ -56,7 +56,6 @@ Failed to restart Project Leo service for ${USER}.
 Do you have the following in your /etc/sudoers.d folder?
 $(whoami) ALL=NOPASSWD: /bin/systemctl start restart_project_leo@[a-z]*.service
 EOF
-              exit 1
             )
             '''
       }
