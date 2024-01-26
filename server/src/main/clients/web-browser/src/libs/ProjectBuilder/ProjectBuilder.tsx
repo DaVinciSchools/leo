@@ -355,33 +355,30 @@ export function ProjectBuilder(
                 />
               </Box>
               <div className="project-builder-getting-started-title">
-                Choose how you want to start creating your project
+                {userX?.isDemo
+                  ? 'Choose how you want to start creating your project'
+                  : 'Begin by choosing your starting point.'}
               </div>
-              <Box padding={1}>
-                You can start with an existing project,
-                <br />
-                select a favorite from the Ikigai Project Builder,
-                <br />
-                or create a project from scratch.
-              </Box>
               <Box
                 padding={1}
                 className="project-builder-getting-started-buttons"
               >
-                <Button
-                  variant="contained"
-                  className="project-builder-button"
-                  disabled={!userX?.isAuthenticated}
-                  onClick={() => {
-                    setSelectExistingProject(true);
-                    setActiveStep(activeStep + 1);
-                  }}
-                >
-                  Start with an
-                  <br />
-                  existing project
-                </Button>
-                <Button
+                {userX?.isDemo && (
+                  <Button
+                    variant="contained"
+                    className="project-builder-button"
+                    disabled={!userX?.isAuthenticated}
+                    onClick={() => {
+                      setSelectExistingProject(true);
+                      setActiveStep(activeStep + 1);
+                    }}
+                  >
+                    Start with an
+                    <br />
+                    existing project
+                  </Button>
+                )}
+                {/* <Button
                   variant="contained"
                   className="project-builder-button"
                   disabled={true}
@@ -389,7 +386,7 @@ export function ProjectBuilder(
                   Create for
                   <br />
                   an assignment
-                </Button>
+                </Button> */}
                 <Button
                   variant="contained"
                   className="project-builder-button"
@@ -399,14 +396,14 @@ export function ProjectBuilder(
                   <br />
                   Ikigai project
                 </Button>
-                <Button
+                {/* <Button
                   variant="contained"
                   className="project-builder-button"
                   disabled={true}
                 >
                   Manually create
                   <br />a new project
-                </Button>
+                </Button> */}
               </Box>
             </div>
           )}

@@ -15,7 +15,6 @@ export function DemoProjectBuilder() {
               style={{maxHeight: '33px'}}
             />
           </Link>
-          <span>Create New Projects</span>
         </div>
         <div className="demo-project-builder-project-builder">
           <ProjectBuilder noCategoriesText={'Select categories on the left'} />
