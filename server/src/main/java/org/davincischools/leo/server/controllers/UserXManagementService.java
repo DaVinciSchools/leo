@@ -464,14 +464,6 @@ public class UserXManagementService {
                         .build();
               }
 
-              if (!userX.isAdminX() && !userX.isTeacher()) {
-                if (!request
-                    .getInUserXIdsList()
-                    .equals(List.of(checkNotNull(userX.getUserXIdOrNull())))) {
-                  return userX.returnForbidden(GetUserXsResponse.getDefaultInstance());
-                }
-              }
-
               var response = GetUserXsResponse.newBuilder();
 
               Page<UserX> userXs =

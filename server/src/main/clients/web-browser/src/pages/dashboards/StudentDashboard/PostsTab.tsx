@@ -18,7 +18,7 @@ export function PostsTab() {
   const global = useContext(GlobalStateContext);
   const userX = global.requireUserX(
     'You must be a teacher to view posts.',
-    userX => userX.isAdminX || userX.isTeacher
+    userX => userX.isAdminX || userX.isStudent
   );
 
   const filterForm = useFormFields();
