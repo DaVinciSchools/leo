@@ -7,6 +7,7 @@ import {
   useLocation,
 } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
+import {ThemeProvider, createTheme} from '@mui/material/styles';
 
 import {Root} from './pages/Root';
 import {Login} from './pages/user_xs/Login/Login';
@@ -266,11 +267,15 @@ const router = createBrowserRouter([
   },
 ]);
 
+const theme = createTheme();
+
 root.render(
   <StrictMode>
-    <GlobalState>
-      <RouterProvider router={router} />
-    </GlobalState>
+    <ThemeProvider theme={theme}>
+      <GlobalState>
+        <RouterProvider router={router} />
+      </GlobalState>
+    </ThemeProvider>
   </StrictMode>
 );
 
