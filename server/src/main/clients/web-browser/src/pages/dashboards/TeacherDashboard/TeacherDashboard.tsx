@@ -64,7 +64,12 @@ export function TeacherDashboard() {
               {
                 key: TabValue.ASSIGNMENTS,
                 label: 'Assignments',
-                content: <AssignmentsTab />,
+                content: (
+                  <AssignmentsTab
+                    educationFilters={educationFilters}
+                    assignmentsFilter={educationFilters.assignmentsFilter}
+                  />
+                ),
               },
               {
                 key: TabValue.STUDENTS,
