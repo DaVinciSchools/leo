@@ -8,12 +8,11 @@ import {
   North,
   South,
 } from '@mui/icons-material';
-import {useContext, useEffect, useState} from 'react';
+import {CSSProperties, useContext, useEffect, useState} from 'react';
 import {
   DeepReadOnly,
   deepWritable,
   formatAsTag,
-  getHighlightStyle,
   isTextEmpty,
   removeInDeepReadOnly,
   replaceInDeepReadOnly,
@@ -112,17 +111,13 @@ const RATING_CATEGORY_SORTER = (
   (a.category ?? '').localeCompare(b.category ?? '') ||
   (a.value ?? '').localeCompare(b.value ?? '');
 
-export interface PostHighlights {
-  getUserXHue?: (userX: DeepReadOnly<IUserX>) => number | undefined;
-}
-
 export function Post(
   props: DeepReadOnly<{
     post: IProjectPost;
     postUpdated: (post: DeepReadOnly<IProjectPost>) => void;
     showComments?: boolean | null | undefined;
     showRatings?: boolean | null | undefined;
-    postHighlights?: PostHighlights;
+    getUserXHighlightStyle?: (userX: DeepReadOnly<IUserX>) => CSSProperties;
   }>
 ) {
   const userX = useContext(GlobalStateContext).requireUserX(
@@ -130,7 +125,7 @@ export function Post(
   );
   const global = useContext(GlobalStateContext);
   const hasHighlightedComment = props.post.comments
-    ?.map(c => props.postHighlights?.getUserXHue?.(c.userX ?? {}) != null)
+    ?.map(c => props?.getUserXHighlightStyle?.(c.userX ?? {}) != null)
     .includes(true);
 
   const [sortedRatingColumns, setSortedRatingColumns] = useState<
@@ -285,9 +280,7 @@ export function Post(
             style={{
               flexGrow: 1,
               gap: 0,
-              ...getHighlightStyle(
-                props.postHighlights?.getUserXHue?.(props.post?.userX ?? {})
-              ),
+              ...props?.getUserXHighlightStyle?.(props.post?.userX ?? {}),
             }}
           >
             <PostHeader
@@ -540,8 +533,8 @@ export function Post(
                 <UserXAvatar userX={comment?.userX} />
                 <div className="global-flex-column" style={{gap: 0}}>
                   <div
-                    style={getHighlightStyle(
-                      props.postHighlights?.getUserXHue?.(comment?.userX ?? {})
+                    style={props?.getUserXHighlightStyle?.(
+                      props.post?.userX ?? {}
                     )}
                   >
                     <PostHeader

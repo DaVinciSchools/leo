@@ -2,12 +2,14 @@ import './StudentDashboard.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {TabbedSwiper} from '../../../libs/TabbedSwiper/TabbedSwiper';
 import {OverviewTab} from './OverviewTab';
-import {useContext} from 'react';
+import {useContext, useEffect} from 'react';
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {PostsTab} from './PostsTab';
 import {ClassesTab} from './ClassesTab';
 import {AssignmentsTab} from './AssignmentsTab';
 import {CreatePostTab} from './CreatePostTab';
+import {defaultEducationFilters} from '../../../libs/EducationFilter/EducationFilters';
+import {useFormFields} from '../../../libs/form_utils/forms';
 
 enum TabValue {
   ASSIGNMENTS,
@@ -23,6 +25,16 @@ export function StudentDashboard() {
     'You must be a student to view this dashboard.',
     userX => userX.isAdminX || userX.isStudent
   );
+
+  const filterForm = useFormFields();
+  const educationFilters = defaultEducationFilters(userX, filterForm);
+
+  useEffect(() => {
+    if (!userX) {
+      filterForm.setValuesObject({});
+      return;
+    }
+  }, [userX]);
 
   if (!userX) {
     return <></>;
@@ -41,7 +53,7 @@ export function StudentDashboard() {
             {
               key: TabValue.POSTS,
               label: 'Posts',
-              content: <PostsTab />,
+              content: <PostsTab educationFilters={educationFilters} />,
             },
             {
               key: TabValue.CREATE_POST,

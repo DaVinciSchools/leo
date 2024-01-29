@@ -1,14 +1,15 @@
 import './TeacherDashboard.scss';
-
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {TabbedSwiper} from '../../../libs/TabbedSwiper/TabbedSwiper';
 import {PostsTab} from './PostsTab';
-import {useContext} from 'react';
+import {useContext, useEffect} from 'react';
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {OverviewTab} from './OverviewTab';
 import {AssignmentsTab} from './AssignmentsTab';
 import {StudentsTab} from './StudentsTab';
 import {ClassesTab} from './ClassesTab';
+import {useFormFields} from '../../../libs/form_utils/forms';
+import {defaultEducationFilters} from '../../../libs/EducationFilter/EducationFilters';
 
 enum TabValue {
   ASSIGNMENTS,
@@ -24,6 +25,16 @@ export function TeacherDashboard() {
     'You must be a teacher to view this dashboard.',
     userX => userX.isAdminX || userX.isTeacher
   );
+
+  const filterForm = useFormFields();
+  const educationFilters = defaultEducationFilters(userX, filterForm);
+
+  useEffect(() => {
+    if (!userX) {
+      filterForm.setValuesObject({});
+      return;
+    }
+  }, [userX]);
 
   if (!userX) {
     return <></>;
@@ -43,7 +54,7 @@ export function TeacherDashboard() {
               {
                 key: TabValue.POSTS,
                 label: 'Posts',
-                content: <PostsTab />,
+                content: <PostsTab educationFilters={educationFilters} />,
               },
               {
                 key: TabValue.CLASSES,

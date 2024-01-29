@@ -1,12 +1,13 @@
-import {Post, PostHighlights} from '../Post/Post';
+import {Post} from '../Post/Post';
 import {pl_types, post_service} from 'pl-pb';
-import {useContext, useEffect, useRef, useState} from 'react';
+import {CSSProperties, useContext, useEffect, useRef, useState} from 'react';
 import {createService} from '../protos';
 import {GlobalStateContext} from '../GlobalState';
 import {DeepReadOnly, replaceInDeepReadOnly} from '../misc';
 import IProjectPost = pl_types.IProjectPost;
 import PostService = post_service.PostService;
 import IGetProjectPostsRequest = post_service.IGetProjectPostsRequest;
+import IUserX = pl_types.IUserX;
 
 const PAGE_SIZE = 25;
 
@@ -15,8 +16,7 @@ export function PostsFeed(
     posts?: IProjectPost[];
     request?: IGetProjectPostsRequest;
     paged?: boolean;
-    // UserX.id to hue highlight.
-    postHighlights?: PostHighlights;
+    getUserXHighlightStyle?: (userX: DeepReadOnly<IUserX>) => CSSProperties;
   }>
 ) {
   const global = useContext(GlobalStateContext);
@@ -98,7 +98,7 @@ export function PostsFeed(
             }}
             showComments={props.request?.includeComments}
             showRatings={props.request?.includeRatings}
-            postHighlights={props.postHighlights}
+            getUserXHighlightStyle={props.getUserXHighlightStyle}
           />
         ))}
         <div

@@ -1,38 +1,40 @@
 import '../global.scss';
 
-import {DeepReadOnly} from '../misc';
-import {FormField} from '../form_utils/forms';
+import {deepReadOnly, DeepReadOnly, getUniqueHues} from '../misc';
+import {FormField, FormFields} from '../form_utils/forms';
 import {pl_types, user_x_management} from 'pl-pb';
 import {DynamicSchoolAutocomplete} from '../common_fields/DynamicSchoolAutocomplete';
-import {CSSProperties, useContext} from 'react';
+import {CSSProperties, useContext, useState} from 'react';
 import {GlobalStateContext} from '../GlobalState';
 import {DynamicClassXAutocomplete} from '../common_fields/DynamicClassXAutocomplete';
 import {DynamicAssignmentAutocomplete} from '../common_fields/DynamicAssignmentAutocomplete';
 import {DynamicUserXAutocomplete} from '../common_fields/DynamicUserXAutocomplete';
 import {Grid} from '@mui/material';
 import {DynamicDistrictAutocomplete} from '../common_fields/DynamicDistrictAutocomplete';
+import {FULL_USER_X_SORTER} from '../sorters';
 import IAssignment = pl_types.IAssignment;
 import ISchool = pl_types.ISchool;
 import IClassX = pl_types.IClassX;
 import IFullUserXDetails = user_x_management.IFullUserXDetails;
 import IDistrict = pl_types.IDistrict;
+import IUserX = pl_types.IUserX;
 
-// TODO: cache and share results so that multiple instances are not hitting the database over and over again.
+export type EducationFilters = {
+  districtFilter?: FormField<DeepReadOnly<IDistrict>>;
+  schoolsFilter?: FormField<DeepReadOnly<ISchool>, true>;
+  classXsFilter?: FormField<DeepReadOnly<IClassX>, true>;
+  assignmentsFilter?: FormField<DeepReadOnly<IAssignment>, true>;
+  userXsFilter?: FormField<DeepReadOnly<IFullUserXDetails>, true>;
+
+  highlightUserXsField?: FormField<DeepReadOnly<IFullUserXDetails>, true>;
+  getUserXHighlightStyle?: (userX: DeepReadOnly<IUserX>) => CSSProperties;
+};
+
 export function EducationFilters(
   props: DeepReadOnly<{
     label: string;
-    districtField?: FormField<DeepReadOnly<IDistrict>>;
-    schoolsField?: FormField<DeepReadOnly<ISchool>, true>;
-    classXsField?: FormField<DeepReadOnly<IClassX>, true>;
-    assignmentsField?: FormField<DeepReadOnly<IAssignment>, true>;
-    userXsField?: FormField<DeepReadOnly<IFullUserXDetails>, true>;
-
     highlightLabel?: string;
-    highlightUserXsField?: FormField<DeepReadOnly<IFullUserXDetails>, true>;
-
-    renderUserXsStyle?: (
-      userX: DeepReadOnly<IFullUserXDetails>
-    ) => CSSProperties;
+    educationFilters: EducationFilters;
   }>
 ) {
   const global = useContext(GlobalStateContext);
@@ -53,32 +55,33 @@ export function EducationFilters(
               <div className="global-section-title">{props.label}</div>
             </div>
           </Grid>
-          {props.districtField && (
+          {props.educationFilters.districtFilter && (
             <Grid item xs={12}>
               <DynamicDistrictAutocomplete
                 label={'Filter by District'}
-                districtField={props.districtField}
+                districtField={props.educationFilters.districtFilter}
               />
             </Grid>
           )}
-          {props.schoolsField && (
+          {props.educationFilters.schoolsFilter && (
             <Grid item xs={12}>
               <DynamicSchoolAutocomplete
                 label={'Filter by School'}
                 baseRequest={{
                   districtId:
-                    props.districtField?.getValue?.()?.id ?? userX.districtId,
+                    props.educationFilters.districtFilter?.getValue?.()?.id ??
+                    userX.districtId,
                 }}
-                schoolField={props.schoolsField}
+                schoolField={props.educationFilters.schoolsFilter}
               />
             </Grid>
           )}
-          {props.classXsField && (
+          {props.educationFilters.classXsFilter && (
             <Grid item xs={12}>
               <DynamicClassXAutocomplete
                 label={'Filter by Class'}
                 baseRequest={{
-                  schoolIds: props.schoolsField
+                  schoolIds: props.educationFilters.schoolsFilter
                     ?.getValue?.()
                     ?.map?.(s => s.id ?? 0),
                   teacherIds: userX.isTeacher
@@ -89,43 +92,50 @@ export function EducationFilters(
                     : undefined,
                   includeSchool: true,
                 }}
-                classXField={props.classXsField}
+                classXField={props.educationFilters.classXsFilter}
               />
             </Grid>
           )}
-          {props.assignmentsField && (
+          {props.educationFilters.assignmentsFilter && (
             <Grid item xs={12}>
               <DynamicAssignmentAutocomplete
                 label={'Filter by Assignment'}
                 baseRequest={{
                   teacherId: userX.teacherId,
                   studentId: userX.studentId,
-                  schoolIds: props.schoolsField
+                  schoolIds: props.educationFilters.schoolsFilter
                     ?.getValue?.()
                     ?.map?.(s => s.id ?? 0),
-                  classXIds: props.classXsField
+                  classXIds: props.educationFilters.classXsFilter
                     ?.getValue?.()
                     ?.map?.(c => c.id ?? 0),
                 }}
-                assignmentField={props.assignmentsField}
+                assignmentField={props.educationFilters.assignmentsFilter}
               />
             </Grid>
           )}
-          {props.userXsField && (
+          {props.educationFilters.userXsFilter && (
             <Grid item xs={12}>
               <DynamicUserXAutocomplete
                 label={'Filter by User'}
                 baseRequest={{
                   inDistrictIds: [userX.districtId ?? 0],
-                  inSchoolIds: props.schoolsField
+                  inSchoolIds: props.educationFilters.schoolsFilter
                     ?.getValue?.()
                     ?.map?.(s => s.id ?? 0),
-                  inClassXIds: props.classXsField
+                  inClassXIds: props.educationFilters.classXsFilter
                     ?.getValue?.()
                     ?.map?.(s => s.id ?? 0),
                 }}
-                userXField={props.userXsField}
-                renderTagStyle={props.renderUserXsStyle}
+                userXField={props.educationFilters.userXsFilter}
+                renderTagStyle={
+                  props.educationFilters.getUserXHighlightStyle
+                    ? fullUserX =>
+                        props.educationFilters.getUserXHighlightStyle?.(
+                          fullUserX.userX ?? {}
+                        ) ?? {}
+                    : undefined
+                }
               />
             </Grid>
           )}
@@ -138,21 +148,25 @@ export function EducationFilters(
                   </div>
                 </div>
               </Grid>
-              {props.highlightUserXsField && (
+              {props.educationFilters.highlightUserXsField && (
                 <Grid item xs={12}>
                   <DynamicUserXAutocomplete
                     label={'Highlight by User'}
                     baseRequest={{
                       inDistrictIds: [userX.districtId ?? 0],
-                      inSchoolIds: props.schoolsField
+                      inSchoolIds: props.educationFilters.schoolsFilter
                         ?.getValue?.()
                         ?.map?.(s => s.id ?? 0),
-                      inClassXIds: props.classXsField
+                      inClassXIds: props.educationFilters.classXsFilter
                         ?.getValue?.()
                         ?.map?.(s => s.id ?? 0),
                     }}
-                    userXField={props.highlightUserXsField}
-                    renderTagStyle={props.renderUserXsStyle}
+                    userXField={props.educationFilters.highlightUserXsField}
+                    renderTagStyle={fullUserX =>
+                      props.educationFilters.getUserXHighlightStyle?.(
+                        fullUserX.userX ?? {}
+                      ) ?? {}
+                    }
                   />
                 </Grid>
               )}
@@ -162,4 +176,71 @@ export function EducationFilters(
       </div>
     </>
   );
+}
+
+export function defaultEducationFilters(
+  userX: IUserX | null | undefined,
+  filterForm: FormFields
+) {
+  const districtFilter = userX?.isAdminX
+    ? filterForm.useSingleAutocompleteFormField<DeepReadOnly<IDistrict>>(
+        'districtFilter'
+      )
+    : undefined;
+  const schoolFilter = userX?.isAdminX
+    ? filterForm.useMultipleAutocompleteFormField<DeepReadOnly<ISchool>>(
+        'schoolFilter'
+      )
+    : undefined;
+  const classXFilter =
+    filterForm.useMultipleAutocompleteFormField<DeepReadOnly<IClassX>>(
+      'classXFilter'
+    );
+  const assignmentFilter =
+    filterForm.useMultipleAutocompleteFormField<DeepReadOnly<IAssignment>>(
+      'assignmentFilter'
+    );
+  const userXFilter =
+    filterForm.useMultipleAutocompleteFormField<
+      DeepReadOnly<IFullUserXDetails>
+    >('userXFilter');
+
+  const [highlightedUserXHues, internal_setHighlightedUserXHues] = useState(
+    deepReadOnly(new Map<number, number>())
+  );
+  const highlightedUserXs = filterForm.useMultipleAutocompleteFormField<
+    DeepReadOnly<IFullUserXDetails>
+  >('highlightUserXs', {
+    onChange: formField => {
+      internal_setHighlightedUserXHues(
+        getUniqueHues(
+          highlightedUserXHues,
+          formField
+            .getValue()
+            .slice()
+            .sort(FULL_USER_X_SORTER)
+            .map(userX => userX.userX?.id ?? 0)
+        )
+      );
+    },
+  });
+
+  return deepReadOnly<EducationFilters>({
+    districtFilter: districtFilter,
+    schoolsFilter: schoolFilter,
+    classXsFilter: classXFilter,
+    assignmentsFilter: assignmentFilter,
+    userXsFilter: userXFilter,
+
+    highlightUserXsField: highlightedUserXs,
+
+    getUserXHighlightStyle: userX =>
+      highlightedUserXHues.has(userX?.id ?? 0)
+        ? {
+            backgroundColor: `hsl(${
+              highlightedUserXHues.get(userX?.id ?? 0) ?? 0
+            }, 100%, 80%)`,
+          }
+        : {},
+  });
 }
