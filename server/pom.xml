@@ -228,7 +228,7 @@
                         <phase>initialize</phase>
                         <configuration>
                             <skip>${settings.offline}</skip>
-                            <arguments>install --ignore-scripts</arguments>
+                            <arguments>ci --ignore-scripts</arguments>
                         </configuration>
                     </execution>
 
@@ -489,7 +489,6 @@
                                 <include>*/build/**/*</include>
                                 <include>*/coverage/**/*</include>
                                 <include>*/node_modules/**/*</include>
-                                <include>*/package-lock.json</include>
                                 <include>*/modules/pl-pb/src/**/*</include>
                                 <include>*/modules/pl-pb/types/**/*</include>
                             </includes>
