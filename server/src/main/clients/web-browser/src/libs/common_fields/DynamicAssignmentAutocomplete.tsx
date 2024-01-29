@@ -16,7 +16,9 @@ export function DynamicAssignmentAutocomplete<
     label: string;
     baseRequest: IGetAssignmentsRequest;
     assignmentField: FormField<DeepReadOnly<IAssignment>, Multiple>;
-    renderTagStyle?: (option: DeepReadOnly<IAssignment>) => CSSProperties;
+    renderTagStyle?: (
+      option?: DeepReadOnly<IAssignment> | null | undefined
+    ) => CSSProperties | undefined;
   }>
 ) {
   function loadMoreOptions(page: number, pageSize: number, searchText: string) {

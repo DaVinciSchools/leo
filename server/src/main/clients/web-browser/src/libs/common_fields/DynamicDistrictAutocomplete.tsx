@@ -15,7 +15,9 @@ export function DynamicDistrictAutocomplete<
   props: DeepReadOnly<{
     label: string;
     districtField: FormField<DeepReadOnly<IDistrict>, Multiple>;
-    renderTagStyle?: (option: DeepReadOnly<IDistrict>) => CSSProperties;
+    renderTagStyle?: (
+      option?: DeepReadOnly<IDistrict> | null | undefined
+    ) => CSSProperties | undefined;
   }>
 ) {
   function loadMoreOptions(page: number, pageSize: number, searchText: string) {

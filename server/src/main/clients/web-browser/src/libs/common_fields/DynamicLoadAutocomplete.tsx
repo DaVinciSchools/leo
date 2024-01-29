@@ -52,7 +52,9 @@ export function DynamicLoadAutocomplete<
       getTagProps: AutocompleteRenderGetTagProps
     ) => ReactNode;
     renderTagLabel?: (option: DeepReadOnly<T>) => ReactNode;
-    renderTagStyle?: (option: DeepReadOnly<T>) => CSSProperties;
+    renderTagStyle?: (
+      option?: DeepReadOnly<T> | null | undefined
+    ) => CSSProperties | undefined;
     groupBy?: (option: DeepReadOnly<T>) => string;
   }>
 ) {

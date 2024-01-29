@@ -117,7 +117,9 @@ export function Post(
     postUpdated: (post: DeepReadOnly<IProjectPost>) => void;
     showComments?: boolean | null | undefined;
     showRatings?: boolean | null | undefined;
-    getUserXHighlightStyle?: (userX: DeepReadOnly<IUserX>) => CSSProperties;
+    getUserXHighlightStyle?: (
+      userX?: DeepReadOnly<IUserX> | null | undefined
+    ) => CSSProperties | undefined;
   }>
 ) {
   const userX = useContext(GlobalStateContext).requireUserX(
@@ -125,7 +127,7 @@ export function Post(
   );
   const global = useContext(GlobalStateContext);
   const hasHighlightedComment = props.post.comments
-    ?.map(c => props?.getUserXHighlightStyle?.(c.userX ?? {}) != null)
+    ?.map(c => props.getUserXHighlightStyle?.(c.userX) != null)
     .includes(true);
 
   const [sortedRatingColumns, setSortedRatingColumns] = useState<
@@ -280,7 +282,7 @@ export function Post(
             style={{
               flexGrow: 1,
               gap: 0,
-              ...props?.getUserXHighlightStyle?.(props.post?.userX ?? {}),
+              ...props.getUserXHighlightStyle?.(props.post?.userX),
             }}
           >
             <PostHeader
@@ -533,9 +535,7 @@ export function Post(
                 <UserXAvatar userX={comment?.userX} />
                 <div className="global-flex-column" style={{gap: 0}}>
                   <div
-                    style={props?.getUserXHighlightStyle?.(
-                      props.post?.userX ?? {}
-                    )}
+                    style={props?.getUserXHighlightStyle?.(props.post?.userX)}
                   >
                     <PostHeader
                       userX={comment?.userX}

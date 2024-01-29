@@ -16,7 +16,9 @@ export function DynamicClassXAutocomplete<
     label: string;
     baseRequest: IGetClassXsRequest;
     classXField: FormField<DeepReadOnly<IClassX>, Multiple>;
-    renderTagStyle?: (option: DeepReadOnly<IClassX>) => CSSProperties;
+    renderTagStyle?: (
+      option?: DeepReadOnly<IClassX> | null | undefined
+    ) => CSSProperties | undefined;
   }>
 ) {
   function loadMoreOptions(page: number, pageSize: number, searchText: string) {

@@ -16,7 +16,9 @@ export function DynamicSchoolAutocomplete<
     label: string;
     baseRequest: IGetSchoolsRequest;
     schoolField: FormField<DeepReadOnly<ISchool>, Multiple>;
-    renderTagStyle?: (option: DeepReadOnly<ISchool>) => CSSProperties;
+    renderTagStyle?: (
+      option?: DeepReadOnly<ISchool> | null | undefined
+    ) => CSSProperties | undefined;
   }>
 ) {
   function loadMoreOptions(page: number, pageSize: number, searchText: string) {

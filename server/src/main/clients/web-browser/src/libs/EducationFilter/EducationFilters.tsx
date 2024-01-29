@@ -27,7 +27,9 @@ export type EducationFilters = {
   userXsFilter?: FormField<DeepReadOnly<IFullUserXDetails>, true>;
 
   highlightUserXsField?: FormField<DeepReadOnly<IFullUserXDetails>, true>;
-  getUserXHighlightStyle?: (userX: DeepReadOnly<IUserX>) => CSSProperties;
+  getUserXHighlightStyle?: (
+    userX?: DeepReadOnly<IUserX> | null | undefined
+  ) => CSSProperties | undefined;
 };
 
 export function EducationFilters(
@@ -128,13 +130,10 @@ export function EducationFilters(
                     ?.map?.(s => s.id ?? 0),
                 }}
                 userXField={props.educationFilters.userXsFilter}
-                renderTagStyle={
-                  props.educationFilters.getUserXHighlightStyle
-                    ? fullUserX =>
-                        props.educationFilters.getUserXHighlightStyle?.(
-                          fullUserX.userX ?? {}
-                        ) ?? {}
-                    : undefined
+                renderTagStyle={fullUserX =>
+                  props.educationFilters.getUserXHighlightStyle?.(
+                    fullUserX?.userX
+                  )
                 }
               />
             </Grid>
@@ -164,8 +163,8 @@ export function EducationFilters(
                     userXField={props.educationFilters.highlightUserXsField}
                     renderTagStyle={fullUserX =>
                       props.educationFilters.getUserXHighlightStyle?.(
-                        fullUserX.userX ?? {}
-                      ) ?? {}
+                        fullUserX?.userX
+                      )
                     }
                   />
                 </Grid>
@@ -241,6 +240,6 @@ export function defaultEducationFilters(
               highlightedUserXHues.get(userX?.id ?? 0) ?? 0
             }, 100%, 80%)`,
           }
-        : {},
+        : undefined,
   });
 }

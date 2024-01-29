@@ -16,7 +16,9 @@ export function PostsFeed(
     posts?: IProjectPost[];
     request?: IGetProjectPostsRequest;
     paged?: boolean;
-    getUserXHighlightStyle?: (userX: DeepReadOnly<IUserX>) => CSSProperties;
+    getUserXHighlightStyle?: (
+      userX?: DeepReadOnly<IUserX> | null | undefined
+    ) => CSSProperties | undefined;
   }>
 ) {
   const global = useContext(GlobalStateContext);

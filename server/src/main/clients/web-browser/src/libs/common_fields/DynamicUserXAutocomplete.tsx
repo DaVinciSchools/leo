@@ -18,7 +18,9 @@ export function DynamicUserXAutocomplete<
     label: string;
     baseRequest: IGetUserXsRequest;
     userXField: FormField<DeepReadOnly<IFullUserXDetails>, Multiple>;
-    renderTagStyle?: (option: DeepReadOnly<IFullUserXDetails>) => CSSProperties;
+    renderTagStyle?: (
+      option?: DeepReadOnly<IFullUserXDetails> | null | undefined
+    ) => CSSProperties | undefined;
   }>
 ) {
   function loadMoreOptions(page: number, pageSize: number, searchText: string) {
