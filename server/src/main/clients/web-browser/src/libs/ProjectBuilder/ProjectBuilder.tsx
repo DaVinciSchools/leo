@@ -562,14 +562,15 @@ export function ProjectBuilder(
                   }}
                 >
                   Select categories below to include in the Ikigai Project
-                  Builder diagram on the right. You can also drag them up and
-                  down to reorder them.
+                  Builder diagram on the right.
                 </div>
                 <div
                   className="project-builder-project-details-widget"
                   style={{
                     gridColumn: 1,
                     gridRow: 3,
+                    overflow: 'scroll',
+                    position: 'relative',
                   }}
                 >
                   <IkigaiProjectConfigurer

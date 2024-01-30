@@ -181,8 +181,7 @@ public class AdminXUtils {
                       type ->
                           type.setShortDescr(
                                   "Include this category to allow a student to enter their"
-                                      + " personal interests. They will be considered when"
-                                      + " creating projects for that individual student.")
+                                      + " personal interests.")
                               .setIncludeInDemo(true)
                               .setHint("Click to add your personal interests.")
                               .setInputDescr(
@@ -204,8 +203,7 @@ public class AdminXUtils {
                       type ->
                           type.setShortDescr(
                                   "Include this category to allow a student to enter their"
-                                      + " career interests. They will be considered when"
-                                      + " creating projects for that individual student.")
+                                      + " career interests.")
                               .setIncludeInDemo(true)
                               .setHint("Click to add careers.")
                               .setInputDescr(
