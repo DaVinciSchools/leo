@@ -1,6 +1,6 @@
 import './HandleError.scss';
 
-import Box from '@mui/material/Box';
+import Box, {BoxProps} from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import React, {useContext, useEffect, useState} from 'react';
 import Typography from '@mui/material/Typography';
@@ -19,7 +19,7 @@ enum LogErrorStatus {
   FAILED,
 }
 
-const style = {
+const style: BoxProps['sx'] = {
   position: 'absolute' as const,
   top: '50%',
   left: '50%',
@@ -27,7 +27,7 @@ const style = {
   width: 400,
   bgcolor: 'background.paper',
   border: '2px solid #000',
-  boxShadow: 24,
+  boxShadow: '24px',
   p: 4,
 };
 
@@ -36,8 +36,6 @@ const baseMailToLink = 'mailto:support@projectleo.net';
 // See the following for why this number:
 // https://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url-in-different-browsers
 const maximumEmailUrlLength = 2000;
-
-export type HandleErrorType = Error | unknown | undefined | null;
 
 export function HandleError() {
   const global = useContext(GlobalStateContext);

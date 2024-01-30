@@ -1,5 +1,4 @@
 import Cookies from 'js-cookie';
-import {HandleErrorType} from './HandleError/HandleError';
 import {IGlobalState, LoadedState} from './GlobalState';
 import {pl_types, user_x_management} from 'pl-pb';
 import {createService} from './protos';
@@ -41,7 +40,7 @@ export function usernamePasswordLogin(
   password: string,
   onSuccess: () => void,
   onFailure: () => void,
-  onError: (error?: HandleErrorType) => void
+  onError: (error?: unknown) => void
 ) {
   const loginUrl = new URLSearchParams();
   loginUrl.append(USERNAME_PARAM, username);
@@ -103,7 +102,7 @@ export function loadCredentialsLogin(
   global: IGlobalState,
   onSuccess: () => void,
   onFailure: () => void,
-  onError: (error?: HandleErrorType) => void
+  onError: (error?: unknown) => void
 ) {
   logout(global)
     .catch(error => {

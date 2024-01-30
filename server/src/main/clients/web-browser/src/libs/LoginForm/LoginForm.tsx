@@ -6,7 +6,6 @@ import {GlobalStateContext} from '../GlobalState';
 import {Lock, Person} from '@mui/icons-material';
 import {addBaseUrl, usernamePasswordLogin} from '../authentication';
 import {useFormFields} from '../form_utils/forms';
-import {HandleErrorType} from '../HandleError/HandleError';
 import {Link} from 'react-router-dom';
 
 const AUTHENTICATION_FAILURE =
@@ -15,7 +14,7 @@ const AUTHENTICATION_FAILURE =
 export function LoginForm(props: {
   onSuccess: () => void;
   onFailure: () => void;
-  onError: (error?: HandleErrorType) => void;
+  onError: (error?: unknown) => void;
   onCancel: () => void;
 }) {
   const global = useContext(GlobalStateContext);

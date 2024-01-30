@@ -26,7 +26,6 @@ export function AssignmentsTab(
 
   useEffect(() => {
     const assignments = props.assignmentsFilter?.getValue?.() ?? [];
-    console.log(assignments);
     if (assignments.length === 1) {
       createService(AssignmentManagementService, 'AssignmentManagementService')
         .getAssignments({

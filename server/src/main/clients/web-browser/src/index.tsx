@@ -7,7 +7,7 @@ import {
   useLocation,
 } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
-import {ThemeProvider, createTheme} from '@mui/material/styles';
+import {createTheme, ThemeProvider} from '@mui/material/styles';
 
 import {Root} from './pages/Root';
 import {Login} from './pages/user_xs/Login/Login';
@@ -23,12 +23,12 @@ import {TeacherDashboard} from './pages/dashboards/TeacherDashboard/TeacherDashb
 import {AdminXDashboard} from './pages/dashboards/AdminXDashboard/AdminXDashboard';
 import {RedirectToDashboard} from './pages/dashboards/RedirectToDashboard';
 import {DemoProjectBuilder} from './pages/demos/DemoProjectBuilder/DemoProjectBuilder';
-import {GlobalState} from './libs/GlobalState';
 import {MechanicalEngineering} from './pages/schools/dvs/MechanicalEngineering';
 import {SchoolsIndex} from './pages/schools/SchoolsIndex';
 import {MetricType} from 'web-vitals';
 import {ClassXManagement} from './pages/class_x_management/ClassXManagement';
 import {ProjectsDashboard} from './pages/projects/ProjectsDashboard';
+import {GlobalStateProvider} from './libs/GlobalState';
 
 function GaTags(props: PropsWithChildren<{title: string}>) {
   const location = useLocation();
@@ -272,9 +272,9 @@ const theme = createTheme();
 root.render(
   <StrictMode>
     <ThemeProvider theme={theme}>
-      <GlobalState>
+      <GlobalStateProvider>
         <RouterProvider router={router} />
-      </GlobalState>
+      </GlobalStateProvider>
     </ThemeProvider>
   </StrictMode>
 );

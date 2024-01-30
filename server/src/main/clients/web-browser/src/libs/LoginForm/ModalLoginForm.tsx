@@ -2,13 +2,12 @@ import './LoginForm.scss';
 
 import {Backdrop, Box, Modal} from '@mui/material';
 import {LoginForm} from './LoginForm';
-import {HandleErrorType} from '../HandleError/HandleError';
 
 export function ModalLoginForm(props: {
   open: boolean;
   onSuccess: () => void;
   onFailure: () => void;
-  onError: (error?: HandleErrorType) => void;
+  onError: (error?: unknown) => void;
   onCancel: () => void;
 }) {
   return (

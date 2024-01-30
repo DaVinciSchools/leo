@@ -7,14 +7,13 @@ import {
 } from '../authentication';
 import {useNavigate} from 'react-router';
 import {GlobalStateContext} from '../GlobalState';
-import {HandleErrorType} from '../HandleError/HandleError';
 import {Link} from 'react-router-dom';
 
 export function LoadCredentials(props: {
   loadCredentials: boolean;
   onSuccess: () => void;
   onFailure: () => void;
-  onError: (error?: HandleErrorType) => void;
+  onError: (error?: unknown) => void;
 }) {
   const global = useContext(GlobalStateContext);
   const navigate = useNavigate();

@@ -1,9 +1,16 @@
-import {HandleError, HandleErrorType} from './HandleError/HandleError';
-import {createContext, PropsWithChildren, useState} from 'react';
+import {HandleError} from './HandleError/HandleError';
+import {
+  createContext,
+  PropsWithChildren,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {createService} from './protos';
 import {pl_types, user_x_management} from 'pl-pb';
 import {useNavigate} from 'react-router';
 import {FORWARD_PARAM, logout} from './authentication';
+import {DeepReadOnly} from './misc';
 import UserXManagementService = user_x_management.UserXManagementService;
 
 export enum LoadedState {
@@ -13,53 +20,65 @@ export enum LoadedState {
 }
 
 export interface IGlobalState {
-  readonly error?: HandleErrorType;
+  readonly error?: unknown;
   readonly loaded: LoadedState;
-  setError: (error?: HandleErrorType) => void;
-  optionalUserX: () => pl_types.IUserX | undefined;
+  setError: (error?: unknown) => void;
+  optionalUserX: () => DeepReadOnly<pl_types.IUserX> | undefined;
   requireUserX: (
     loginPrompt?: string,
-    userXReq?: (userX: pl_types.IUserX) => boolean | null | undefined,
+    userXReq?: (
+      userX: DeepReadOnly<pl_types.IUserX>
+    ) => boolean | null | undefined,
     forwardUrl?: string
-  ) => pl_types.IUserX | undefined;
-  setUserX: (userX: pl_types.IUserX | null | undefined) => void;
+  ) => DeepReadOnly<pl_types.IUserX> | undefined;
+  setUserX: (userX: DeepReadOnly<pl_types.IUserX> | null | undefined) => void;
 }
 
-export const GlobalStateContext = createContext<IGlobalState>({
+const DEFAULT_GLOBAL_STATE: IGlobalState = {
   loaded: LoadedState.NOT_LOADED,
   setError: throwUnimplementedError,
-  optionalUserX: throwUnimplementedError,
-  requireUserX: throwUnimplementedError,
+  optionalUserX: () => undefined,
+  requireUserX: () => undefined,
   setUserX: throwUnimplementedError,
-});
+};
 
-export function GlobalState(props: PropsWithChildren<{}>) {
-  const [userX, setUserX] = useState<pl_types.IUserX | undefined>();
-  const [error, setError] = useState<HandleErrorType>();
-  const [loaded, setLoaded] = useState(LoadedState.NOT_LOADED);
+export const GlobalStateContext = createContext(DEFAULT_GLOBAL_STATE);
 
-  function setErrorIntercept(error: HandleErrorType) {
-    console.error('Error occurred. ', error);
+export function GlobalStateProvider(props: PropsWithChildren<{}>) {
+  const [userX, setUserX] = useState<
+    DeepReadOnly<pl_types.IUserX> | undefined
+  >();
+  const [error, setError] = useState<unknown>();
+  const [globalState, setGlobalState] =
+    useState<IGlobalState>(DEFAULT_GLOBAL_STATE);
+  const loadedRef = useRef(LoadedState.NOT_LOADED);
+
+  function setErrorIntercept(error: unknown) {
     setError(error);
   }
 
   function loadUserX() {
-    if (loaded === LoadedState.NOT_LOADED) {
-      setLoaded(LoadedState.LOADING);
+    if (loadedRef.current === LoadedState.NOT_LOADED) {
+      loadedRef.current = LoadedState.LOADING;
       createService(UserXManagementService, 'UserXManagementService')
         .getUserXs({ofSelf: true})
         .then(response => {
-          if (response?.userXs?.length === 1 && response.userXs[0]?.userX) {
-            setUserX(response.userXs[0].userX);
-          } else {
-            logout(global);
+          if (
+            response?.userXs?.length === 1 &&
+            response.userXs[0]?.userX != null
+          ) {
+            setUserXIntercept(response.userXs[0].userX);
+          } else if (globalState !== DEFAULT_GLOBAL_STATE) {
+            logout(globalState);
           }
         })
         .catch(error => {
           setError(error);
-          logout(global);
+          if (globalState !== DEFAULT_GLOBAL_STATE) {
+            logout(globalState);
+          }
         })
-        .finally(() => setLoaded(LoadedState.LOADED));
+        .finally(() => (loadedRef.current = LoadedState.LOADED));
     }
   }
 
@@ -68,9 +87,9 @@ export function GlobalState(props: PropsWithChildren<{}>) {
     userXReq?: (userX: pl_types.IUserX) => boolean | null | undefined,
     forwardUrl?: string
   ) {
-    if (loaded !== LoadedState.LOADED) {
-      loadUserX();
-      return undefined;
+    if (loadedRef.current !== LoadedState.LOADED) {
+      setTimeout(loadUserX, 0);
+      return;
     }
 
     if (userXReq) {
@@ -85,36 +104,45 @@ export function GlobalState(props: PropsWithChildren<{}>) {
             )}`
           );
         }
-        return undefined;
+        return;
       }
     }
 
     return userX;
   }
 
-  function setSetUserXIntercept(userX: pl_types.IUserX | null | undefined) {
-    if (userX) {
+  function setUserXIntercept(userX: pl_types.IUserX | null | undefined) {
+    if (userX != null) {
       setUserX(userX);
     } else {
       setUserX(undefined);
     }
-    setLoaded(LoadedState.LOADED);
+    loadedRef.current = LoadedState.LOADED;
   }
 
-  const global = {
-    error,
-    loaded,
-    setError: setErrorIntercept,
-    requireUserX,
-    optionalUserX: () => userX,
-    setUserX: setSetUserXIntercept,
-  } as IGlobalState;
+  useEffect(
+    () =>
+      setGlobalState({
+        error,
+        loaded: loadedRef.current,
+        setError: (...args) => setTimeout(setErrorIntercept, 0, ...args),
+        requireUserX,
+        optionalUserX: () => userX,
+        setUserX: (...args) => setTimeout(setUserXIntercept, 0, ...args),
+      }),
+    [loadedRef.current, error, userX]
+  );
 
   return (
-    <GlobalStateContext.Provider value={global}>
-      <HandleError />
-      {props.children}
-    </GlobalStateContext.Provider>
+    <GlobalStateContext.Provider
+      value={globalState}
+      children={
+        <>
+          <HandleError />
+          {props.children}
+        </>
+      }
+    />
   );
 }
 
