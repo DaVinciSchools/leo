@@ -6,9 +6,9 @@ export function RedirectToDashboard() {
   const global = useContext(GlobalStateContext);
   const userX = global.requireUserX();
 
-  if (userX != null) {
-    const navigate = useNavigate();
-    useEffect(() => {
+  useEffect(() => {
+    if (userX != null) {
+      const navigate = useNavigate();
       if (userX?.isAdminX) {
         navigate('/dashboards/admin-dashboard.html');
       } else if (userX?.isTeacher) {
@@ -18,8 +18,8 @@ export function RedirectToDashboard() {
       } else {
         navigate('/projects/all-projects.html');
       }
-    });
-  }
+    }
+  });
 
   return <>Redirecting...</>;
 }

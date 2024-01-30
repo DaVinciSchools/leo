@@ -181,16 +181,14 @@ export function defaultEducationFilters(
   userX: IUserX | null | undefined,
   filterForm: FormFields
 ) {
-  const districtFilter = userX?.isAdminX
-    ? filterForm.useSingleAutocompleteFormField<DeepReadOnly<IDistrict>>(
-        'districtFilter'
-      )
-    : undefined;
-  const schoolFilter = userX?.isAdminX
-    ? filterForm.useMultipleAutocompleteFormField<DeepReadOnly<ISchool>>(
-        'schoolFilter'
-      )
-    : undefined;
+  const districtFilter =
+    filterForm.useSingleAutocompleteFormField<DeepReadOnly<IDistrict>>(
+      'districtFilter'
+    );
+  const schoolFilter =
+    filterForm.useMultipleAutocompleteFormField<DeepReadOnly<ISchool>>(
+      'schoolFilter'
+    );
   const classXFilter =
     filterForm.useMultipleAutocompleteFormField<DeepReadOnly<IClassX>>(
       'classXFilter'
@@ -225,8 +223,8 @@ export function defaultEducationFilters(
   });
 
   return deepReadOnly<EducationFilters>({
-    districtFilter: districtFilter,
-    schoolsFilter: schoolFilter,
+    districtFilter: userX?.isAdminX ? districtFilter : undefined,
+    schoolsFilter: userX?.isAdminX ? schoolFilter : undefined,
     classXsFilter: classXFilter,
     assignmentsFilter: assignmentFilter,
     userXsFilter: userXFilter,
