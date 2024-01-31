@@ -53,7 +53,7 @@ export function Root() {
           style={{display: 'flex', alignItems: 'flex-start', gap: '15px'}}
         >
           <div>
-            <h1>Empowering Teachers, Engaging Students</h1>
+            <h1>Engaging Students. Empowering Teachers.</h1>
             <div className="subheading">
               Unlock Your Classroom's Full Potential with Project Leo
             </div>

@@ -250,7 +250,7 @@ const router = createBrowserRouter([
       {
         path: '',
         element: (
-          <GaTags title="Empowering Teachers, Engaging Students">
+          <GaTags title="Engaging Students. Empowering Teachers.">
             <Root />
           </GaTags>
         ),
@@ -258,7 +258,7 @@ const router = createBrowserRouter([
       {
         path: '/',
         element: (
-          <GaTags title="Empowering Teachers, Engaging Students">
+          <GaTags title="Engaging Students. Empowering Teachers.">
             <Root />
           </GaTags>
         ),
