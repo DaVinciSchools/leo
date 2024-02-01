@@ -11,6 +11,7 @@ import org.davincischools.leo.database.utils.repos.ClassXKnowledgeAndSkillReposi
 import org.davincischools.leo.database.utils.repos.ClassXRepository;
 import org.davincischools.leo.database.utils.repos.CommentXRepository;
 import org.davincischools.leo.database.utils.repos.DeadlineRepository;
+import org.davincischools.leo.database.utils.repos.DeadlineSourceRepository;
 import org.davincischools.leo.database.utils.repos.DeadlineStatusRepository;
 import org.davincischools.leo.database.utils.repos.DistrictRepository;
 import org.davincischools.leo.database.utils.repos.FileXRepository;
@@ -65,6 +66,7 @@ public class Database {
   private final ClassXRepository classXRepository;
   private final CommentXRepository commentXRepository;
   private final DeadlineRepository deadlineRepository;
+  private final DeadlineSourceRepository deadlineSourceRepository;
   private final DeadlineStatusRepository deadlineStatusRepository;
   private final DistrictRepository districtRepository;
   private final FileXRepository fileXRepository;

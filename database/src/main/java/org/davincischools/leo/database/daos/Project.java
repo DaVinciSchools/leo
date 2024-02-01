@@ -13,6 +13,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -47,7 +48,7 @@ public class Project implements Serializable {
   public static final String COLUMN_THUMBSSTATEREASON_NAME = "thumbs_state_reason";
   public static final String COLUMN_ARCHIVED_NAME = "archived";
   public static final String COLUMN_ACTIVE_NAME = "active";
-  private static final long serialVersionUID = -4906058996811272258L;
+  @Serial private static final long serialVersionUID = 422934045571680818L;
 
   private Integer id;
 
@@ -78,8 +79,6 @@ public class Project implements Serializable {
   private ProjectInput projectInput;
 
   private Set<CommentX> commentXES = new LinkedHashSet<>();
-
-  private Set<DeadlineStatus> deadlineStatuses = new LinkedHashSet<>();
 
   private Set<LogReference> logReferences = new LinkedHashSet<>();
 
@@ -183,11 +182,6 @@ public class Project implements Serializable {
   @OneToMany(mappedBy = "project")
   public Set<CommentX> getCommentXES() {
     return commentXES;
-  }
-
-  @OneToMany(mappedBy = "project")
-  public Set<DeadlineStatus> getDeadlineStatuses() {
-    return deadlineStatuses;
   }
 
   @OneToMany(mappedBy = "project")

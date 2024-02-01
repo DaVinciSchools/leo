@@ -10,12 +10,10 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,7 +41,7 @@ public class CommentX implements Serializable {
   public static final String COLUMN_LASTUPDATED_NAME = "last_updated";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_LONGDESCRTEXT_NAME = "long_descr_text";
-  private static final long serialVersionUID = 4780402062151491025L;
+  @Serial private static final long serialVersionUID = -1499129360895008462L;
 
   private Integer id;
 
@@ -62,8 +60,6 @@ public class CommentX implements Serializable {
   private Post post;
 
   private Project project;
-
-  private Set<DeadlineStatus> deadlineStatuses = new LinkedHashSet<>();
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -118,10 +114,5 @@ public class CommentX implements Serializable {
   @PropagateDeleteFrom
   public Project getProject() {
     return project;
-  }
-
-  @OneToMany(mappedBy = "commentX")
-  public Set<DeadlineStatus> getDeadlineStatuses() {
-    return deadlineStatuses;
   }
 }

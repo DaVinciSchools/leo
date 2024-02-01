@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
@@ -20,7 +21,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.davincischools.leo.database.dao_interfaces.PropagateDeleteFrom;
-import org.davincischools.leo.database.daos.Notification.StatusType;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -37,8 +37,8 @@ public class DeadlineStatus implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_STATUS_NAME = "status";
-  public static final String COLUMN_ASSIGNMENT_NAME = "assignment";
-  private static final long serialVersionUID = 7904148426487768279L;
+  public static final String COLUMN_METREQUIREMENTCOUNT_NAME = "met_requirement_count";
+  @Serial private static final long serialVersionUID = -8771917465439930712L;
 
   private Integer id;
 
@@ -48,17 +48,11 @@ public class DeadlineStatus implements Serializable {
 
   private StatusType status;
 
+  private Integer metRequirementCount;
+
   private UserX userX;
 
   private Deadline deadline;
-
-  private Boolean assignment;
-
-  private Project project;
-
-  private Post post;
-
-  private CommentX commentX;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -84,8 +78,14 @@ public class DeadlineStatus implements Serializable {
     return status;
   }
 
+  @Column(name = COLUMN_METREQUIREMENTCOUNT_NAME, nullable = false)
+  public Integer getMetRequirementCount() {
+    return metRequirementCount;
+  }
+
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "user_x_id", nullable = false)
+  @PropagateDeleteFrom
   public UserX getUserX() {
     return userX;
   }
@@ -97,26 +97,12 @@ public class DeadlineStatus implements Serializable {
     return deadline;
   }
 
-  @Column(name = COLUMN_ASSIGNMENT_NAME)
-  public Boolean getAssignment() {
-    return assignment;
-  }
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "project_id")
-  public Project getProject() {
-    return project;
-  }
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "post_id")
-  public Post getPost() {
-    return post;
-  }
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "comment_x_id")
-  public CommentX getCommentX() {
-    return commentX;
+  public enum StatusType {
+    NONE,
+    TEACHER_TO_REVIEW,
+    STUDENT_TO_REVIEW,
+    DONE,
+    EXCUSED,
+    LATE
   }
 }

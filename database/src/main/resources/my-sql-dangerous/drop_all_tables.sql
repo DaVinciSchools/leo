@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS tag;
 DROP TABLE IF EXISTS notification;
 DROP TABLE IF EXISTS deadline_status;
 DROP TABLE IF EXISTS deadline;
+DROP TABLE IF EXISTS deadline_source;
 DROP TABLE IF EXISTS comment_x;
 DROP TABLE IF EXISTS post;
 DROP TABLE IF EXISTS project_post_rating;

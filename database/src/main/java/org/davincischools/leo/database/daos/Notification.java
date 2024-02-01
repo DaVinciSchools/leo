@@ -45,7 +45,7 @@ public class Notification implements Serializable {
   public static final String COLUMN_COMPLETEBYDATE_NAME = "complete_by_date";
   public static final String COLUMN_COMPLETEDDATE_NAME = "completed_date";
   public static final String COLUMN_SNOOZEDUNTILDATE_NAME = "snoozed_until_date";
-  private static final long serialVersionUID = -7719834417438003204L;
+  private static final long serialVersionUID = -559738785454574115L;
 
   private Integer id;
 
@@ -153,6 +153,7 @@ public class Notification implements Serializable {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "posted_by_user_x_id")
+  @PropagateDeleteFrom
   public UserX getPostedByUserX() {
     return postedByUserX;
   }
@@ -166,6 +167,7 @@ public class Notification implements Serializable {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "deadline_id")
+  @PropagateDeleteFrom
   public Deadline getDeadline() {
     return deadline;
   }
