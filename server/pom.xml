@@ -338,7 +338,7 @@
                                         dir="${clients.directory}/web-browser" failonerror="true"
                                         parallel="true" skipemptyfilesets="true"
                                         output="${project.build.directory}/eslint-output.xml"
-                                        error="${project.build.directory}/eslint-output.xml.error.txt">
+                                        error="${project.build.directory}/eslint-error.txt">
                                     <env key="PATH"
                                             path="${npm.binary.directory}/node:${env.PATH}"/>
                                     <env key="CI" value="true"/>
@@ -359,29 +359,32 @@
                                         <exclude name="*/modules/pl-pb/src/**/*"/>
                                         <exclude name="*/modules/pl-pb/types/**/*"/>
                                         <exclude name="*/build/**/*"/>
-                                        <exclude name="*/.prettierrc.js"/>
                                     </fileset>
                                 </apply>
 
-                                <apply executable="${npm.binary.directory}/node/npx"
+                                <exec executable="${npm.binary.directory}/node/npx"
                                         dir="${clients.directory}/web-browser" failonerror="true"
-                                        parallel="true" skipemptyfilesets="true"
-                                        output="${project.build.directory}/stylelint-output.xml"
-                                        error="${project.build.directory}/stylelint-output.xml.error.txt">
+                                        output="${project.build.directory}/prettier-debug-check-output.txt"
+                                        error="${project.build.directory}/prettier-debug-check-error.txt">
                                     <env key="PATH"
                                             path="${npm.binary.directory}/node:${env.PATH}"/>
                                     <env key="CI" value="true"/>
-                                    <arg value="stylelint"/>
-                                    <arg value="--fix"/>
-                                    <arg value="--custom-formatter"/>
-                                    <arg value="./node_modules/stylelint-checkstyle-formatter"/>
-                                    <fileset dir="${clients.directory}" erroronmissingdir="false">
-                                        <include name="**/*.css"/>
-                                        <include name="**/*.scss"/>
-                                        <exclude name="*/node_modules/**/*"/>
-                                        <exclude name="*/build/**/*"/>
-                                    </fileset>
-                                </apply>
+                                    <arg value="prettier"/>
+                                    <arg value="--debug-check"/>
+                                    <arg value="."/>
+                                </exec>
+
+                                <exec executable="${npm.binary.directory}/node/npx"
+                                        dir="${clients.directory}/web-browser" failonerror="true"
+                                        output="${project.build.directory}/prettier-output.txt"
+                                        error="${project.build.directory}/prettier-error.txt">
+                                    <env key="PATH"
+                                            path="${npm.binary.directory}/node:${env.PATH}"/>
+                                    <env key="CI" value="true"/>
+                                    <arg value="prettier"/>
+                                    <arg value="--write"/>
+                                    <arg value="."/>
+                                </exec>
                             </target>
                         </configuration>
                     </execution>

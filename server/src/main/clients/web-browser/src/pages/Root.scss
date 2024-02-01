@@ -1,6 +1,6 @@
 @use '../libs/color';
 @use '../libs/form_utils/forms';
-@import "../index";
+@import '../index';
 
 header {
   background-color: color.$primary-600;

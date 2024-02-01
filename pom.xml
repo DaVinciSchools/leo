@@ -90,6 +90,7 @@
         <dependency>
             <groupId>com.google.googlejavaformat</groupId>
             <artifactId>google-java-format</artifactId>
+            <!-- When this version changes, update the path in .vscode/settings.json. -->
             <version>1.18.1</version>
             <scope>compile</scope>
         </dependency>

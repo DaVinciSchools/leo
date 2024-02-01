@@ -1,3 +1,4 @@
 build/
 modules/pl-pb/src
 modules/pl-pb/types
+node_modules/

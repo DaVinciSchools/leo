@@ -33,7 +33,7 @@
     padding: 0.25em 0.5em;
   }
 
-  div.ant-card ul.ant-card-actions>li {
+  div.ant-card ul.ant-card-actions > li {
     padding: 0.25em 0.5em;
   }
 
@@ -50,7 +50,9 @@
     }
   }
 
-  &.like, &.dislike, &.active {
+  &.like,
+  &.dislike,
+  &.active {
     .details-link {
       color: color.$neutral-500;
     }
@@ -71,7 +73,7 @@
   .ant-card-actions {
     background-color: unset;
 
-    >li {
+    > li {
       padding: 0.25em 0.5em;
     }
   }

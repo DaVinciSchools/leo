@@ -10,7 +10,8 @@ $body-font-family: hind;
   margin: 0;
 }
 
-ol, ul {
+ol,
+ul {
   margin: 1em;
   padding-left: 2.5em;
 }
@@ -28,21 +29,21 @@ p {
 }
 
 body {
-    font-family: $body-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-        sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  font-family: $body-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
+    'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-        monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
 }
 
 .nav-link {
-    color: inherit;
-    text-decoration: none;
+  color: inherit;
+  text-decoration: none;
 }
 
 h1,
@@ -51,134 +52,134 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: $heading-font-family;
+  font-family: $heading-font-family;
 }
 
 h1 {
-    font-size: 2.5em;
+  font-size: 2.5em;
 }
 
 h2 {
-    font-size: 2em;
+  font-size: 2em;
 }
 
 h3 {
-    font-size: 1.25em;
+  font-size: 1.25em;
 }
 
 h4 {
-    font-size: 1.5em;
+  font-size: 1.5em;
 }
 
 h5 {
-    font-size: 1.25em;
+  font-size: 1.25em;
 }
 
 h6 {
-    font-size: 1.12em;
+  font-size: 1.12em;
 }
 
 #root,
 html,
 body {
-    height: 100%;
-    width: 100%;
+  height: 100%;
+  width: 100%;
 }
 
 #root,
 body {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 @mixin left {
-    text-align: left;
-    float: left;
+  text-align: left;
+  float: left;
 }
 
 @mixin center {
-    text-align: center;
-    float: initial;
-    margin-left: auto;
-    margin-right: auto;
+  text-align: center;
+  float: initial;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 @mixin right {
-    text-align: right;
-    float: right;
+  text-align: right;
+  float: right;
 }
 
 @mixin top {
-    align-items: initial;
+  align-items: initial;
 }
 
 @mixin middle {
-    align-items: center;
+  align-items: center;
 }
 
 @mixin bottom {
-    align-items: flex-end;
+  align-items: flex-end;
 }
 
 .delete-button {
-    border-color: red !important;
-    background-color: lightpink !important;
+  border-color: red !important;
+  background-color: lightpink !important;
 }
 
 button {
-    border-radius: 0.5em;
-    border: none;
-    padding: 0.7em 2.4em;
-    background-color: color.$neutral-200;
+  border-radius: 0.5em;
+  border: none;
+  padding: 0.7em 2.4em;
+  background-color: color.$neutral-200;
 
-    --hover-bg-color: #{color.$neutral-250};
+  --hover-bg-color: #{color.$neutral-250};
 
-    color: color.$neutral-750;
-    font-weight: 600;
-    cursor: pointer;
+  color: color.$neutral-750;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--hover-bg-color) !important;
+  }
+
+  &.light {
+    background-color: color.$neutral-0;
+    color: color.$primary-800;
+    border: 1px solid color.$neutral-100;
 
     &:hover {
-        background-color: var(--hover-bg-color) !important;
+      border: 1px solid color.$neutral-150;
     }
+  }
 
-    &.light {
-        background-color: color.$neutral-0;
-        color: color.$primary-800;
-        border: 1px solid color.$neutral-100;
+  &.primary {
+    background-color: color.$primary-800;
+    color: color.$neutral-0;
 
-        &:hover {
-            border: 1px solid color.$neutral-150;
-        }
-    }
+    --hover-bg-color: #{color.$primary-700};
+  }
 
-    &.primary {
-        background-color: color.$primary-800;
-        color: color.$neutral-0;
+  &.info {
+    background-color: color.$info;
+    color: color.$neutral-0;
 
-        --hover-bg-color: #{color.$primary-700};
-    }
+    --hover-bg-color: #{color.$info-active};
+  }
 
-    &.info {
-        background-color: color.$info;
-        color: color.$neutral-0;
+  &.delete {
+    background-color: color.$destructive;
+    color: color.$neutral-0;
 
-        --hover-bg-color: #{color.$info-active};
-    }
+    --hover-bg-color: #{color.$destructive-active};
+  }
 
-    &.delete {
-        background-color: color.$destructive;
-        color: color.$neutral-0;
+  &.prev {
+    /* To be added */
+  }
 
-        --hover-bg-color: #{color.$destructive-active};
-    }
-
-    &.prev {
-        /* To be added */
-    }
-
-    &.next {
-        /* To be added */
-    }
+  &.next {
+    /* To be added */
+  }
 }
 
 .ql-container .ql-editor {

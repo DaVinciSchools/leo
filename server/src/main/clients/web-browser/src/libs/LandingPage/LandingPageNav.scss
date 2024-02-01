@@ -1,62 +1,61 @@
 @use '../color';
 
 header {
-    background-color: color.$primary-600;
-    color: white;
-    padding: 1em;
-    height: 3em;
-    display: flex;
-    flex-flow: row nowrap;
-    align-items: center;
+  background-color: color.$primary-600;
+  color: white;
+  padding: 1em;
+  height: 3em;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
 
-    img {
-        height: 100%;
-    }
+  img {
+    height: 100%;
+  }
 
-    .nav-link {
-        font-weight: unset;
-        font-size: unset;
-    }
+  .nav-link {
+    font-weight: unset;
+    font-size: unset;
+  }
 }
 
 .header-section {
-    display: flex;
-    flex-flow: row nowrap;
-    align-items: center;
-    flex-basis: 0;
-    flex-grow: 1;
-    height: 100%;
-    gap: 1em;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  flex-basis: 0;
+  flex-grow: 1;
+  height: 100%;
+  gap: 1em;
 
-    &-left {
-        justify-content: flex-start;
-    }
+  &-left {
+    justify-content: flex-start;
+  }
 
-    &-center {
-        justify-content: center;
-    }
+  &-center {
+    justify-content: center;
+  }
 
-    &-right {
-        justify-content: flex-end;
-    }
-
+  &-right {
+    justify-content: flex-end;
+  }
 }
 
 .header-title {
-    gap: 0.5em;
+  gap: 0.5em;
 }
 
 #site-title {
-    font-weight: 700;
-    font-size: 2em;
+  font-weight: 700;
+  font-size: 2em;
 }
 
 main {
-    flex: auto;
+  flex: auto;
 }
 
 footer {
-    background-color: color.$primary-600;
-    color: white;
-    text-align: center;
+  background-color: color.$primary-600;
+  color: white;
+  text-align: center;
 }

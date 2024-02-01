@@ -3,9 +3,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "build",
-    "lib": [
-      "dom"
-    ],
+    "lib": ["dom"],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
@@ -14,9 +12,7 @@
     "moduleResolution": "Node",
     "skipLibCheck": true,
     "paths": {
-      "@mui/styled-engine": [
-        "./node_modules/@mui/styled-engine-sc"
-      ]
+      "@mui/styled-engine": ["./node_modules/@mui/styled-engine-sc"]
     }
   },
   "include": [

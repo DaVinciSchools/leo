@@ -1,49 +1,66 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic",
-    "java.configuration.updateBuildConfiguration": "automatic",
-    "[javascript]": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    "[typescript]": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    "[javascriptreact]": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    "[typescriptreact]": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    "[jsonc]": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "vscode.json-language-features"
-    },
-    "eslint.format.enable": true,
-    "eslint.ignoreUntitled": true,
-    "eslint.options": {
-        "overrideConfigFile": "server/src/main/clients/web-browser/.eslintrc.json",
-        "ignorePath": "server/src/main/clients/web-browser/.eslintignore"
-    },
-    "java.sources.organizeImports.starThreshold": 999999,
-    "java.sources.organizeImports.staticStarThreshold": 999999,
-    "maven.pomfile.autoUpdateEffectivePOM": true,
-    "files.eol": "\n",
-    "java.format.enabled": false,
-    "java.maven.downloadSources": true,
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "[javascript]": {
     "editor.formatOnSave": true,
-    "editor.tabSize": 2,
-    "google-java-format.executable": "${env.HOME}/.m2/repository/com/google/googlejavaformat/google-java-format/1.18.1/google-java-format-1.18.1.jar",
-    "eslint.codeActionsOnSave.rules": [
-        "eslint:fix"
-    ],
-    "eslint.run": "onSave",
-    "eslint.validate": [
-        "javascript",
-        "javascriptreact",
-        "typescript",
-        "typescriptreact"
-    ],
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "eslint.format.enable": true,
+  "eslint.ignoreUntitled": true,
+  "eslint.options": {
+    "overrideConfigFile": "server/src/main/clients/web-browser/.eslintrc.json",
+    "ignorePath": "server/src/main/clients/web-browser/.eslintignore"
+  },
+  "java.sources.organizeImports.starThreshold": 999999,
+  "java.sources.organizeImports.staticStarThreshold": 999999,
+  "maven.pomfile.autoUpdateEffectivePOM": true,
+  "files.eol": "\n",
+  "java.format.enabled": true,
+  "java.maven.downloadSources": true,
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "eslint.codeActionsOnSave.rules": [
+    "eslint:fix"
+  ],
+  "eslint.run": "onSave",
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "prettier.configPath": "server/src/main/clients/web-browser/.prettierrc.js",
+  "prettier.requireConfig": true,
+  "prettier.ignorePath": "server/src/main/clients/web-browser/.prettierignore",
+  "prettier.prettierPath": "server/src/main/clients/web-browser/node_modules/prettier",
+  "prettier.documentSelectors": [
+    "server/src/main/clients/web-browser/**/{*.js,*.ts,*.jsx,*.tsx,*.vue,*.astro,*.json,*.html,.*.js}"
+  ],
+  "[scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[java]": {
+    "editor.defaultFormatter": "mngrm3a.vscode-google-java-formatter"
+  },
+  "gjf.jarPath": "~/.m2/repository/com/google/googlejavaformat/google-java-format/1.18.1/google-java-format-1.18.1.jar",
+  "html.format.enable": true
 }

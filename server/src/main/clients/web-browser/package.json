@@ -50,10 +50,10 @@
     "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject",
-    "lint": "gts lint",
+    "lint": "eslint '**/*.{js,ts,jsx,tsx}' '**/.*.{js,ts,jsx,tsx}' --max-warnings=0 && prettier --debug-check . && prettier --check .",
     "clean": "gts clean",
     "compile": "tsc",
-    "fix": "gts fix",
+    "fix": "eslint  '**/*.{js,ts,jsx,tsx}' '**/.*.{js,ts,jsx,tsx}' --max-warnings=0 --fix && prettier --debug-check . && prettier --write .",
     "prepare": "npm run compile",
     "pretest": "npm run compile",
     "posttest": "npm run lint"
@@ -95,10 +95,7 @@
     "long": "^5.2.3",
     "npm-check-updates": "^16.10.12",
     "protobufjs-cli": "~1.1.2",
-    "react-scripts": "5.0.1",
-    "stylelint": "^15.11.0",
-    "stylelint-checkstyle-formatter": "^0.1.2",
-    "stylelint-config-standard-scss": "^11.0.0"
+    "react-scripts": "5.0.1"
   },
   "engines": {
     "node": "v18.18.2"
