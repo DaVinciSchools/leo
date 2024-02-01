@@ -126,7 +126,7 @@ public class Entity<P, S, F> implements Expression<F> {
   }
 
   public <S2, F2> Supplier<Entity<?, S2, F2>> supplier(
-      Supplier<Entity<?, S2, F2>> supplier, Optional<Iterable<Integer>> inIds) {
+      Supplier<Entity<?, S2, F2>> supplier, Optional<? extends Iterable<?>> inIds) {
     checkNotNull(supplier);
     checkNotNull(inIds);
 
@@ -236,21 +236,21 @@ public class Entity<P, S, F> implements Expression<F> {
     return this;
   }
 
-  public <ID> Entity<P, S, F> requireId(Optional<Iterable<ID>> optionalIds) {
+  public Entity<P, S, F> requireId(Optional<? extends Iterable<?>> optionalIds) {
     checkNotNull(optionalIds);
 
     optionalIds.ifPresent(
         ids -> {
-          where(Predicate.in(getId(), Sets.newHashSet(ids)));
+          on(Predicate.in(getId(), Sets.newHashSet(ids)));
         });
     return this;
   }
 
-  public <ID> Entity<P, S, F> requireNotId(Optional<Iterable<ID>> optionalIds) {
+  public Entity<P, S, F> requireNotId(Optional<? extends Iterable<?>> optionalIds) {
     checkNotNull(optionalIds);
 
     if (optionalIds.isPresent() && !Iterables.isEmpty(optionalIds.get())) {
-      where(
+      on(
           Predicate.or(
               Predicate.isNull(this),
               Predicate.not(Predicate.in(getId(), Sets.newHashSet(optionalIds.get())))));
