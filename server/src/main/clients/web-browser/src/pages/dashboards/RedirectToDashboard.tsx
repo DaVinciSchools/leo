@@ -1,6 +1,8 @@
 import {useNavigate} from 'react-router';
 import {useContext, useEffect} from 'react';
 import {GlobalStateContext} from '../../libs/GlobalState';
+import {TAB_PARAM_NAME} from '../../libs/TabbedPanel/TabbedPanel';
+import {ProjectsTab} from '../projects/ProjectsDashboard';
 
 export function RedirectToDashboard() {
   const global = useContext(GlobalStateContext);
@@ -16,7 +18,11 @@ export function RedirectToDashboard() {
       } else if (userX?.isStudent) {
         navigate('/dashboards/student-dashboard.html');
       } else {
-        navigate('/projects/all-projects.html');
+        navigate(
+          `/projects/projects.html?${TAB_PARAM_NAME}=${
+            ProjectsTab[ProjectsTab.ALL_PROJECTS]
+          }`
+        );
       }
     }
   });

@@ -1,6 +1,6 @@
 import './TeacherDashboard.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {TabbedSwiper} from '../../../libs/TabbedSwiper/TabbedSwiper';
+import {TabbedPanel} from '../../../libs/TabbedPanel/TabbedPanel';
 import {PostsTab} from './PostsTab';
 import {useContext, useEffect} from 'react';
 import {GlobalStateContext} from '../../../libs/GlobalState';
@@ -11,7 +11,7 @@ import {ClassesTab} from './ClassesTab';
 import {useFormFields} from '../../../libs/form_utils/forms';
 import {defaultEducationFilters} from '../../../libs/EducationFilter/EducationFilters';
 
-enum TabValue {
+enum TeacherTab {
   ASSIGNMENTS,
   CLASSES,
   OVERVIEW,
@@ -44,25 +44,27 @@ export function TeacherDashboard() {
     <>
       <DefaultPage title={(userX?.isAdminX ? 'Teacher ' : '') + 'Dashboard'}>
         <div style={{height: '100%'}}>
-          <TabbedSwiper
+          <TabbedPanel
+            tabKeyEnum={TeacherTab}
+            defaultTabKey={TeacherTab.OVERVIEW}
             tabs={[
               {
-                key: TabValue.OVERVIEW,
+                key: TeacherTab.OVERVIEW,
                 label: 'Overview',
                 content: <OverviewTab />,
               },
               {
-                key: TabValue.POSTS,
+                key: TeacherTab.POSTS,
                 label: 'Posts',
                 content: <PostsTab educationFilters={educationFilters} />,
               },
               {
-                key: TabValue.CLASSES,
+                key: TeacherTab.CLASSES,
                 label: 'Classes',
                 content: <ClassesTab />,
               },
               {
-                key: TabValue.ASSIGNMENTS,
+                key: TeacherTab.ASSIGNMENTS,
                 label: 'Assignments',
                 content: (
                   <AssignmentsTab
@@ -72,7 +74,7 @@ export function TeacherDashboard() {
                 ),
               },
               {
-                key: TabValue.STUDENTS,
+                key: TeacherTab.STUDENTS,
                 label: 'Students',
                 content: <StudentsTab />,
               },

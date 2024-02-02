@@ -13,10 +13,5 @@ export function ClassesTab() {
     return <></>;
   }
 
-  return (
-    <>
-      TODO: Create a summary of classes and assignment statuses. Include
-      upcoming deadlines with overall completion.
-    </>
-  );
+  return <>TODO: Display class information.</>;
 }

@@ -3,15 +3,15 @@ import './ClassXManagement.scss';
 import {useContext} from 'react';
 import {GlobalStateContext} from '../../libs/GlobalState';
 import {DefaultPage} from '../../libs/DefaultPage/DefaultPage';
-import {TabbedSwiper} from '../../libs/TabbedSwiper/TabbedSwiper';
+import {TabbedPanel} from '../../libs/TabbedPanel/TabbedPanel';
 import {OverviewTab} from './OverviewTab';
 import {EditClassXsTab} from './EditClassXsTab';
 import {EditAssignmentsTab} from './EditAssignmentsTab';
 
-enum TabValue {
+enum ClassManagementTab {
   OVERVIEW,
-  CLASS,
-  ASSIGNMENTS,
+  EDIT_CLASSES,
+  EDIT_ASSIGNMENTS,
 }
 
 export function ClassXManagement() {
@@ -29,20 +29,22 @@ export function ClassXManagement() {
     <>
       <DefaultPage title="Class Management">
         <div style={{height: '100%'}}>
-          <TabbedSwiper
+          <TabbedPanel
+            tabKeyEnum={ClassManagementTab}
+            defaultTabKey={ClassManagementTab.OVERVIEW}
             tabs={[
               {
-                key: TabValue.OVERVIEW,
+                key: ClassManagementTab.OVERVIEW,
                 label: 'Overview',
                 content: <OverviewTab />,
               },
               {
-                key: TabValue.CLASS,
+                key: ClassManagementTab.EDIT_CLASSES,
                 label: 'Edit Classes',
                 content: <EditClassXsTab />,
               },
               {
-                key: TabValue.ASSIGNMENTS,
+                key: ClassManagementTab.EDIT_ASSIGNMENTS,
                 label: 'Edit Assignments',
                 content: <EditAssignmentsTab />,
               },

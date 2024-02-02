@@ -1,6 +1,6 @@
 import './StudentDashboard.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
-import {TabbedSwiper} from '../../../libs/TabbedSwiper/TabbedSwiper';
+import {TabbedPanel} from '../../../libs/TabbedPanel/TabbedPanel';
 import {OverviewTab} from './OverviewTab';
 import {useContext, useEffect} from 'react';
 import {GlobalStateContext} from '../../../libs/GlobalState';
@@ -11,7 +11,7 @@ import {CreatePostTab} from './CreatePostTab';
 import {defaultEducationFilters} from '../../../libs/EducationFilter/EducationFilters';
 import {useFormFields} from '../../../libs/form_utils/forms';
 
-enum TabValue {
+enum StudentTab {
   ASSIGNMENTS,
   CLASSES,
   CREATE_POST,
@@ -43,30 +43,32 @@ export function StudentDashboard() {
   return (
     <>
       <DefaultPage title={(userX?.isAdminX ? 'Student ' : '') + 'Dashboard'}>
-        <TabbedSwiper
+        <TabbedPanel
+          tabKeyEnum={StudentTab}
+          defaultTabKey={StudentTab.OVERVIEW}
           tabs={[
             {
-              key: TabValue.OVERVIEW,
+              key: StudentTab.OVERVIEW,
               label: 'Overview',
               content: <OverviewTab />,
             },
             {
-              key: TabValue.POSTS,
+              key: StudentTab.POSTS,
               label: 'Posts',
               content: <PostsTab educationFilters={educationFilters} />,
             },
             {
-              key: TabValue.CREATE_POST,
+              key: StudentTab.CREATE_POST,
               label: 'Create Post',
               content: <CreatePostTab />,
             },
             {
-              key: TabValue.CLASSES,
+              key: StudentTab.CLASSES,
               label: 'Classes',
               content: <ClassesTab />,
             },
             {
-              key: TabValue.ASSIGNMENTS,
+              key: StudentTab.ASSIGNMENTS,
               label: 'Assignments',
               content: <AssignmentsTab />,
             },

@@ -25,7 +25,7 @@ export function Root() {
             Our Mission
           </a>
           <Link
-            to="/projects/overview.html"
+            to="/projects/projects.html"
             className="nav-link"
             reloadDocument={true}
           >

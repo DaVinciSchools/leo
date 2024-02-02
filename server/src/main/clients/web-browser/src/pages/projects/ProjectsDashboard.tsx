@@ -2,12 +2,12 @@ import './ProjectsDashboard.scss';
 import {useContext} from 'react';
 import {GlobalStateContext} from '../../libs/GlobalState';
 import {DefaultPage} from '../../libs/DefaultPage/DefaultPage';
-import {TabbedSwiper} from '../../libs/TabbedSwiper/TabbedSwiper';
+import {TabbedPanel} from '../../libs/TabbedPanel/TabbedPanel';
 import {OverviewTab} from './OverviewTab';
 import {ProjectBuilderTab} from './ProjectBuilderTab';
 import {AllProjectsTab} from './AllProjectsTab';
 
-enum TabValue {
+export enum ProjectsTab {
   OVERVIEW,
   PROJECT_BUILDER,
   ALL_PROJECTS,
@@ -27,20 +27,22 @@ export function ProjectsDashboard() {
     <>
       <DefaultPage title="Projects">
         <div style={{height: '100%'}}>
-          <TabbedSwiper
+          <TabbedPanel
+            tabKeyEnum={ProjectsTab}
+            defaultTabKey={ProjectsTab.OVERVIEW}
             tabs={[
               {
-                key: TabValue.OVERVIEW,
+                key: ProjectsTab.OVERVIEW,
                 label: 'Overview',
                 content: <OverviewTab />,
               },
               {
-                key: TabValue.PROJECT_BUILDER,
+                key: ProjectsTab.PROJECT_BUILDER,
                 label: 'Builder',
                 content: <ProjectBuilderTab />,
               },
               {
-                key: TabValue.ALL_PROJECTS,
+                key: ProjectsTab.ALL_PROJECTS,
                 label: 'All Projects',
                 content: <AllProjectsTab />,
               },
