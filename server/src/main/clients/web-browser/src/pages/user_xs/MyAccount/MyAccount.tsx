@@ -17,7 +17,7 @@ import IFullUserXDetails = user_x_management.IFullUserXDetails;
 
 export function MyAccount() {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be signed in to view your account information.'
   );
 

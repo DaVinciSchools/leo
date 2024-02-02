@@ -46,7 +46,7 @@ export function ProfileEditor(props: {
   profileSaveStatus: string;
 }) {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX('You must be logged in to edit a profile.');
+  const userX = global.useUserX('You must be logged in to edit a profile.');
 
   const [sortedDistricts, setSortedDistricts] = useState<
     DeepReadOnly<IDistrict[]>

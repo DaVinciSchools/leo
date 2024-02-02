@@ -15,7 +15,7 @@ export enum ProjectsTab {
 
 export function ProjectsDashboard() {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be logged in to view this dashboard.'
   );
 

@@ -24,7 +24,7 @@ export interface IGlobalState {
   readonly loaded: LoadedState;
   setError: (error?: unknown) => void;
   optionalUserX: () => DeepReadOnly<pl_types.IUserX> | undefined;
-  requireUserX: (
+  useUserX: (
     loginPrompt?: string,
     userXReq?: (
       userX: DeepReadOnly<pl_types.IUserX>
@@ -38,7 +38,7 @@ const DEFAULT_GLOBAL_STATE: IGlobalState = {
   loaded: LoadedState.NOT_LOADED,
   setError: throwUnimplementedError,
   optionalUserX: () => undefined,
-  requireUserX: () => undefined,
+  useUserX: () => undefined,
   setUserX: throwUnimplementedError,
 };
 
@@ -52,6 +52,19 @@ export function GlobalStateProvider(props: PropsWithChildren<{}>) {
   const [globalState, setGlobalState] =
     useState<IGlobalState>(DEFAULT_GLOBAL_STATE);
   const loadedRef = useRef(LoadedState.NOT_LOADED);
+
+  useEffect(
+    () =>
+      setGlobalState({
+        error,
+        loaded: loadedRef.current,
+        setError: (...args) => setTimeout(setErrorIntercept, 0, ...args),
+        useUserX,
+        optionalUserX: () => userX,
+        setUserX: (...args) => setTimeout(setUserXIntercept, 0, ...args),
+      }),
+    [loadedRef.current, error, userX]
+  );
 
   function setErrorIntercept(error: unknown) {
     setError(error);
@@ -82,11 +95,14 @@ export function GlobalStateProvider(props: PropsWithChildren<{}>) {
     }
   }
 
-  function requireUserX(
+  // This must only be called from components inside the router.
+  function useUserX(
     loginPrompt?: string,
     userXReq?: (userX: pl_types.IUserX) => boolean | null | undefined,
     forwardUrl?: string
   ) {
+    const navigate = useNavigate();
+
     if (loadedRef.current !== LoadedState.LOADED) {
       setTimeout(loadUserX, 0);
       return;
@@ -94,7 +110,6 @@ export function GlobalStateProvider(props: PropsWithChildren<{}>) {
 
     if (userXReq) {
       if (userX == null || !userXReq(userX)) {
-        const navigate = useNavigate();
         if (forwardUrl) {
           navigate(forwardUrl ?? '/users/login.html');
         } else {
@@ -119,19 +134,6 @@ export function GlobalStateProvider(props: PropsWithChildren<{}>) {
     }
     loadedRef.current = LoadedState.LOADED;
   }
-
-  useEffect(
-    () =>
-      setGlobalState({
-        error,
-        loaded: loadedRef.current,
-        setError: (...args) => setTimeout(setErrorIntercept, 0, ...args),
-        requireUserX,
-        optionalUserX: () => userX,
-        setUserX: (...args) => setTimeout(setUserXIntercept, 0, ...args),
-      }),
-    [loadedRef.current, error, userX]
-  );
 
   return (
     <GlobalStateContext.Provider

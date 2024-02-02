@@ -21,7 +21,7 @@ enum StudentTab {
 
 export function StudentDashboard() {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be a student to view this dashboard.',
     userX => userX.isAdminX || userX.isStudent
   );

@@ -48,7 +48,7 @@ import AssignmentManagementService = assignment_management.AssignmentManagementS
 
 export function EditAssignmentsTab() {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be a teacher to administer assignments.',
     userX => userX.isAdminX || userX.isTeacher
   );

@@ -17,7 +17,7 @@ export function AssignmentsTab(
   }>
 ) {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be a teacher to view this dashboard.',
     userX => userX.isAdminX || userX.isTeacher
   );

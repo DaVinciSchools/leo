@@ -18,7 +18,7 @@ import IFullUserXDetails = user_x_management.IFullUserXDetails;
 
 export function Accounts() {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be an administrator to edit profiles.',
     userX => userX.isAdminX
   );

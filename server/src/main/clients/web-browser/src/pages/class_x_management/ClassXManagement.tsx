@@ -16,7 +16,7 @@ enum ClassManagementTab {
 
 export function ClassXManagement() {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be a teacher to administer classes.',
     userX => userX.isAdminX || userX.isTeacher
   );

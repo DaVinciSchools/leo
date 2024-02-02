@@ -13,7 +13,7 @@ export function DefaultPage(
     bodyStyle?: CSSProperties;
   }>
 ) {
-  const userX = useContext(GlobalStateContext).requireUserX();
+  const userX = useContext(GlobalStateContext).useUserX();
 
   const avatarPanel =
     userX != null ? (

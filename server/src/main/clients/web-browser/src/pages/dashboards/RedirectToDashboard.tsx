@@ -6,11 +6,11 @@ import {ProjectsTab} from '../projects/ProjectsDashboard';
 
 export function RedirectToDashboard() {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX();
+  const userX = global.useUserX();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (userX != null) {
-      const navigate = useNavigate();
       if (userX?.isAdminX) {
         navigate('/dashboards/admin-dashboard.html');
       } else if (userX?.isTeacher) {

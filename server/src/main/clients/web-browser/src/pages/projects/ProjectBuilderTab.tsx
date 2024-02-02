@@ -4,7 +4,7 @@ import {ProjectBuilder as MainProjectBuilder} from '../../libs/ProjectBuilder/Pr
 
 export function ProjectBuilderTab() {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be logged in to view this dashboard.'
   );
 

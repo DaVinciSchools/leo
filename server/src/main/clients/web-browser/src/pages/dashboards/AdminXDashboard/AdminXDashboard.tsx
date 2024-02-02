@@ -24,7 +24,7 @@ import ITaskQueueStatus = task_service.ITaskQueueStatus;
 
 export function AdminXDashboard() {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be an administrator to view this dashboard.',
     userX => userX.isAdminX
   );

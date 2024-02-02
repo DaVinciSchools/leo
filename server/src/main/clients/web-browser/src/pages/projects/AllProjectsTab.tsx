@@ -18,7 +18,7 @@ import State = pl_types.ProjectDefinition.State;
 
 export function AllProjectsTab() {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be logged in to view this dashboard.'
   );
 
