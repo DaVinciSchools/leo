@@ -28,7 +28,7 @@ export function Accounts() {
     formFields.useSingleAutocompleteFormField<DeepReadOnly<IFullUserXDetails>>(
       'userX'
     );
-  const disabled = editingUserX.getValue() != null;
+  const disabled = editingUserX.getValue() == null;
 
   const profileForm = useFormFields({
     onChange: () => autoSave.trigger(),
