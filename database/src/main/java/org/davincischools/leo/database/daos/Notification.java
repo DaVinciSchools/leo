@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
@@ -45,7 +46,7 @@ public class Notification implements Serializable {
   public static final String COLUMN_COMPLETEBYDATE_NAME = "complete_by_date";
   public static final String COLUMN_COMPLETEDDATE_NAME = "completed_date";
   public static final String COLUMN_SNOOZEDUNTILDATE_NAME = "snoozed_until_date";
-  private static final long serialVersionUID = -559738785454574115L;
+  @Serial private static final long serialVersionUID = -4248186099426294917L;
 
   private Integer id;
 

@@ -13,6 +13,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -47,7 +48,7 @@ public class DeadlineSource implements Serializable {
   public static final String COLUMN_REPEATTYPE_NAME = "repeat_type";
   public static final String COLUMN_REPEATFREQUENCYMS_NAME = "repeat_frequency_ms";
   public static final String COLUMN_REPEATCOUNT_NAME = "repeat_count";
-  private static final long serialVersionUID = 5394721548454360696L;
+  @Serial private static final long serialVersionUID = -1789499411976484554L;
 
   private Integer id;
 

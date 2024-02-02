@@ -11,6 +11,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -39,7 +40,7 @@ public class ProjectInputFulfillment implements Serializable {
   public static final String COLUMN_HOWPROJECTFULFILLS_NAME = "how_project_fulfills";
   public static final String COLUMN_FULFILLMENTPERCENTAGE_NAME = "fulfillment_percentage";
   public static final String COLUMN_VISIBLEINDICATOR_NAME = "visible_indicator";
-  private static final long serialVersionUID = 985565278186588826L;
+  @Serial private static final long serialVersionUID = -415424085051128114L;
 
   private Integer id;
 

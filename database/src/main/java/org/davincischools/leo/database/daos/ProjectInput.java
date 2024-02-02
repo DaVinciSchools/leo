@@ -13,6 +13,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -41,7 +42,7 @@ public class ProjectInput implements Serializable {
   public static final String COLUMN_TIMEOUT_NAME = "timeout";
   public static final String COLUMN_STATE_NAME = "state";
   public static final String COLUMN_EXISTINGPROJECTUSETYPE_NAME = "existing_project_use_type";
-  private static final long serialVersionUID = 6237200163263475851L;
+  @Serial private static final long serialVersionUID = -7603831579439755168L;
 
   private Integer id;
 

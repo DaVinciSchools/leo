@@ -11,6 +11,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -42,7 +43,7 @@ public class ClassX implements Serializable {
   public static final String COLUMN_GRADE_NAME = "grade";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = -5632151905594902451L;
+  @Serial private static final long serialVersionUID = 3911099305702102144L;
 
   private Integer id;
 

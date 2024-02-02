@@ -4,6 +4,7 @@ import static org.davincischools.leo.database.utils.DaoUtils.getDaoClass;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,7 @@ public class ProjectImageId implements Serializable {
 
   public static final String COLUMN_PROJECTID_NAME = "project_id";
   public static final String COLUMN_FILEXID_NAME = "file_x_id";
-  private static final long serialVersionUID = -1649723595512797026L;
+  @Serial private static final long serialVersionUID = -1649723595512797026L;
 
   private Integer projectId;
 

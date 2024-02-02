@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -42,7 +43,7 @@ public class ProjectDefinitionCategoryType implements Serializable {
   public static final String COLUMN_INPUTPLACEHOLDER_NAME = "input_placeholder";
   public static final String COLUMN_QUERYPREFIX_NAME = "query_prefix";
   public static final String COLUMN_VALUETYPE_NAME = "value_type";
-  private static final long serialVersionUID = 4328954611307630679L;
+  @Serial private static final long serialVersionUID = -2637626314001734646L;
 
   private Integer id;
 

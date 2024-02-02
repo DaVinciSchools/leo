@@ -8,6 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
@@ -30,7 +31,7 @@ public class TeacherSchool implements Serializable {
   public static final String TABLE_NAME = "teacher__school";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  private static final long serialVersionUID = -8397194360220736290L;
+  @Serial private static final long serialVersionUID = -8397194360220736290L;
 
   private TeacherSchoolId id;
 

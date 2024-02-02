@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -38,7 +39,7 @@ public class ProjectDefinitionCategory implements Serializable, DaoWithPosition 
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_POSITION_NAME = "position";
   public static final String COLUMN_MAXNUMVALUES_NAME = "max_num_values";
-  private static final long serialVersionUID = 4361866229766535153L;
+  @Serial private static final long serialVersionUID = 8710240537712217289L;
 
   private Integer id;
 

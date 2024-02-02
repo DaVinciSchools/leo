@@ -12,6 +12,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -54,7 +55,7 @@ public class ProjectPostComment implements Serializable {
   public static final String COLUMN_HASENOUGHCONTENTPERCENT_NAME = "has_enough_content_percent";
   public static final String COLUMN_INCREMENTALPOSTSUMMARY_NAME = "incremental_post_summary";
   public static final String COLUMN_FEEDBACKRESPONSEHTML_NAME = "feedback_response_html";
-  private static final long serialVersionUID = 727389957033701817L;
+  @Serial private static final long serialVersionUID = 3061404119727693085L;
 
   private Integer id;
 

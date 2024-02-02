@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -38,7 +39,7 @@ public class Deadline implements Serializable {
   public static final String COLUMN_SOURCEDEADLINEINDEX_NAME = "source_deadline_index";
   public static final String COLUMN_STARTTIME_NAME = "start_time";
   public static final String COLUMN_DEADLINETIME_NAME = "deadline_time";
-  private static final long serialVersionUID = 771692114093950565L;
+  @Serial private static final long serialVersionUID = -1148831749684806852L;
 
   private Integer id;
 

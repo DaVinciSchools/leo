@@ -12,6 +12,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -50,7 +51,7 @@ public class ProjectPost implements Serializable {
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_DESIREDFEEDBACK_NAME = "desired_feedback";
   public static final String COLUMN_BEINGEDITED_NAME = "being_edited";
-  private static final long serialVersionUID = 1243334282346113455L;
+  @Serial private static final long serialVersionUID = -189521540772048229L;
 
   private Integer id;
 

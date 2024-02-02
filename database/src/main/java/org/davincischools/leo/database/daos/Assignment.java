@@ -11,6 +11,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -40,7 +41,7 @@ public class Assignment implements Serializable {
   public static final String COLUMN_NICKNAME_NAME = "nickname";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = 4655263991454177718L;
+  @Serial private static final long serialVersionUID = 4655263991454177718L;
 
   private Integer id;
 

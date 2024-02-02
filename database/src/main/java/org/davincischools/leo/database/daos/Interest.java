@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
@@ -45,7 +46,7 @@ public class Interest implements Serializable {
   public static final String COLUMN_ZIPCODE_NAME = "zip_code";
   public static final String COLUMN_NUMTEACHERS_NAME = "num_teachers";
   public static final String COLUMN_NUMSTUDENTS_NAME = "num_students";
-  private static final long serialVersionUID = -1532644478730841187L;
+  @Serial private static final long serialVersionUID = -7584579189306687225L;
 
   private Integer id;
 

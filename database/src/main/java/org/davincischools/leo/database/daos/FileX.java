@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -39,7 +40,7 @@ public class FileX implements Serializable {
   public static final String COLUMN_FILECONTENT_NAME = "file_content";
   public static final String COLUMN_FILEKEY_NAME = "file_key";
   public static final String COLUMN_MIMETYPE_NAME = "mime_type";
-  private static final long serialVersionUID = 5811610774933144472L;
+  @Serial private static final long serialVersionUID = -785062908385251915L;
 
   private Integer id;
 

@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -51,7 +52,7 @@ public class School implements Serializable {
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_NICKNAME_NAME = "nickname";
   public static final String COLUMN_ADDRESS_NAME = "address";
-  private static final long serialVersionUID = -8076782436439313985L;
+  @Serial private static final long serialVersionUID = -8076782436439313985L;
 
   private Integer id;
 

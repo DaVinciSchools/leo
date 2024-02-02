@@ -13,6 +13,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -43,7 +44,7 @@ public class KnowledgeAndSkill implements Serializable {
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_GLOBAL_NAME = "global";
-  private static final long serialVersionUID = 7679377034674098270L;
+  @Serial private static final long serialVersionUID = 4000749926367398020L;
 
   private Integer id;
 
