@@ -4,6 +4,7 @@ import {DetailedHTMLProps, HTMLAttributes, ReactNode, useEffect} from 'react';
 import {Tab, TabProps, Tabs, TabsProps} from '@mui/material';
 import {useURLSearchParam} from '../url_search_param';
 import {DeepReadOnly} from '../misc';
+import deepmerge from 'deepmerge';
 
 export const TAB_PARAM_NAME = 'tab';
 
@@ -16,9 +17,8 @@ export function TabbedPanel(
   }> & {
     tabsProps?: TabsProps;
     tabProps?: TabProps;
-    tabPanelStyle?: DetailedHTMLProps<
-      HTMLAttributes<HTMLDivElement>,
-      HTMLDivElement
+    tabPanelStyle?: Partial<
+      DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>
     >;
   }
 ) {
@@ -68,9 +68,14 @@ export function TabbedPanel(
         </Tabs>
         {props.tabs.map(tab => (
           <div
-            key={tab.key as number}
-            hidden={activeTabKey !== tab.key}
-            {...props.tabPanelStyle}
+            {...deepmerge(
+              {
+                key: tab.key as number,
+                hidden: activeTabKey !== tab.key,
+                style: {height: '100%'},
+              },
+              props.tabPanelStyle ?? {}
+            )}
           >
             {activeTabKey === tab.key && <>{tab.content}</>}
           </div>
