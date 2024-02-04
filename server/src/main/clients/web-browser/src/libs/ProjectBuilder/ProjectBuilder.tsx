@@ -44,6 +44,9 @@ import ProjectManagementService = project_management.ProjectManagementService;
 import UserXManagementService = user_x_management.UserXManagementService;
 import IProject = pl_types.IProject;
 import ExistingProjectUseType = pl_types.ProjectDefinition.ExistingProjectUseType;
+import FreeTextInputModal from '../IkigaiProjectBuilder/FreeTextInputModal';
+import ValueType = pl_types.ProjectInputCategory.ValueType;
+import {DropdownSelectInputModal} from '../IkigaiProjectBuilder/DropdownSelectInputModal';
 
 enum State {
   GETTING_STARTED,
@@ -79,6 +82,10 @@ export function ProjectBuilder(
     style?: Partial<CSSProperties>;
   }>
 ) {
+  const [openCategoryModalId, setOpenCategoryModalId] = useState<
+    number | undefined | null
+  >();
+
   const global = useContext(GlobalStateContext);
   const userX = global.optionalUserX();
   const navigate = useNavigate();
@@ -315,6 +322,14 @@ export function ProjectBuilder(
     navigate('/projects/all-projects.html');
   }
 
+  function handleClickEditInputValues(input: ProjectInput) {
+    setOpenCategoryModalId(getCategoryId(input.input.category));
+  }
+
+  function handleModalClose() {
+    setOpenCategoryModalId(null);
+  }
+
   useEffect(() => {
     loadAndSetInputs();
   }, [demoInputs, selectedExistingProject.getValue()]);
@@ -544,6 +559,39 @@ export function ProjectBuilder(
           )}
           {steps[activeStep] === State.PROJECT_DETAILS && (
             <>
+              {allInputs?.map(input => {
+                switch (
+                  input.input.category?.valueType ??
+                  ValueType.UNSET_VALUE_TYPE
+                ) {
+                  case pl_types.ProjectInputCategory.ValueType.FREE_TEXT:
+                    return (
+                      <FreeTextInputModal
+                        open={
+                          openCategoryModalId ===
+                          getCategoryId(input.input.category)
+                        }
+                        key={getCategoryId(input?.input?.category)}
+                        input={input}
+                        setInput={setInput}
+                        onClickClose={handleModalClose}
+                      />
+                    );
+                  default:
+                    return (
+                      <DropdownSelectInputModal
+                        open={
+                          openCategoryModalId ===
+                          getCategoryId(input.input.category)
+                        }
+                        key={getCategoryId(input?.input?.category)}
+                        input={input}
+                        setInput={setInput}
+                        onClickClose={handleModalClose}
+                      />
+                    );
+                }
+              })}
               <Box className="project-builder-project-details">
                 <div
                   className="project-builder-project-details-title"
@@ -576,6 +624,7 @@ export function ProjectBuilder(
                   <IkigaiProjectConfigurer
                     inputs={allInputs}
                     setInputs={setAllInputs}
+                    onClickEditInputValues={handleClickEditInputValues}
                   />
                 </div>
                 <div
@@ -669,6 +718,7 @@ export function ProjectBuilder(
                       (Math.min(width, height) / 4) * 0.85
                     }
                     enabled={true}
+                    onInputClick={handleClickEditInputValues}
                     onSpinClick={startGeneratingProjects}
                   />
                 </div>
