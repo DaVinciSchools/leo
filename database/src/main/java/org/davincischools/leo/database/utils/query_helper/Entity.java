@@ -241,7 +241,7 @@ public class Entity<P, S, F> implements Expression<F> {
 
     optionalIds.ifPresent(
         ids -> {
-          on(Predicate.in(getId(), Sets.newHashSet(ids)));
+          where(Predicate.in(getId(), Sets.newHashSet(ids)));
         });
     return this;
   }
@@ -250,7 +250,7 @@ public class Entity<P, S, F> implements Expression<F> {
     checkNotNull(optionalIds);
 
     if (optionalIds.isPresent() && !Iterables.isEmpty(optionalIds.get())) {
-      on(
+      where(
           Predicate.or(
               Predicate.isNull(this),
               Predicate.not(Predicate.in(getId(), Sets.newHashSet(optionalIds.get())))));
