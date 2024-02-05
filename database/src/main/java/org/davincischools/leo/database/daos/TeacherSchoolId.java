@@ -4,6 +4,7 @@ import static org.davincischools.leo.database.utils.DaoUtils.getDaoClass;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,7 @@ public class TeacherSchoolId implements Serializable {
 
   public static final String COLUMN_TEACHERID_NAME = "teacher_id";
   public static final String COLUMN_SCHOOLID_NAME = "school_id";
-  private static final long serialVersionUID = 2771265595447998581L;
+  @Serial private static final long serialVersionUID = 2771265595447998581L;
 
   private Integer teacherId;
 

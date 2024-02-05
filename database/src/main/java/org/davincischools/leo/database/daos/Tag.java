@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
@@ -32,7 +33,7 @@ public class Tag implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_TEXT_NAME = "text";
-  private static final long serialVersionUID = 7205730829734460024L;
+  @Serial private static final long serialVersionUID = -6315474935401160365L;
 
   private Integer id;
 

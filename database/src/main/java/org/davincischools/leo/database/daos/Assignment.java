@@ -11,6 +11,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -40,7 +41,7 @@ public class Assignment implements Serializable {
   public static final String COLUMN_NICKNAME_NAME = "nickname";
   public static final String COLUMN_SHORTDESCR_NAME = "short_descr";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
-  private static final long serialVersionUID = 9088997727098926739L;
+  @Serial private static final long serialVersionUID = 4655263991454177718L;
 
   private Integer id;
 
@@ -62,7 +63,7 @@ public class Assignment implements Serializable {
 
   private Set<AssignmentProjectDefinition> assignmentProjectDefinitions = new LinkedHashSet<>();
 
-  private Set<Deadline> deadlines = new LinkedHashSet<>();
+  private Set<DeadlineSource> deadlineSources = new LinkedHashSet<>();
 
   private Set<Project> projects = new LinkedHashSet<>();
 
@@ -129,8 +130,8 @@ public class Assignment implements Serializable {
   }
 
   @OneToMany(mappedBy = "assignment")
-  public Set<Deadline> getDeadlines() {
-    return deadlines;
+  public Set<DeadlineSource> getDeadlineSources() {
+    return deadlineSources;
   }
 
   @OneToMany(mappedBy = "assignment")

@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -57,7 +58,7 @@ public class UserX implements Serializable {
   public static final String COLUMN_TEMPORARYPASSWORDGOODUNTIL_NAME =
       "temporary_password_good_until";
   public static final String COLUMN_TEMPORARYENCODEDPASSWORD_NAME = "temporary_encoded_password";
-  private static final long serialVersionUID = -2099206053928132935L;
+  @Serial private static final long serialVersionUID = 5283474159939137511L;
 
   private Integer id;
 
@@ -93,7 +94,7 @@ public class UserX implements Serializable {
 
   private Set<CommentX> commentXES = new LinkedHashSet<>();
 
-  private Set<Deadline> deadlines = new LinkedHashSet<>();
+  private Set<DeadlineSource> deadlineSources = new LinkedHashSet<>();
 
   private Set<DeadlineStatus> deadlineStatuses = new LinkedHashSet<>();
 
@@ -103,13 +104,13 @@ public class UserX implements Serializable {
 
   private Set<Log> logs = new LinkedHashSet<>();
 
-  private Set<Notification> posted_by_user_x_notifications = new LinkedHashSet<>();
+  private Set<Notification> postedByUserXNotifications = new LinkedHashSet<>();
 
-  private Set<Notification> posted_to_user_x_notifications = new LinkedHashSet<>();
+  private Set<Notification> postedToUserXNotifications = new LinkedHashSet<>();
 
-  private Set<Post> user_x_posts = new LinkedHashSet<>();
+  private Set<Post> userXPosts = new LinkedHashSet<>();
 
-  private Set<Post> to_user_x_posts = new LinkedHashSet<>();
+  private Set<Post> postToUserXPosts = new LinkedHashSet<>();
 
   private Set<ProjectDefinition> projectDefinitions = new LinkedHashSet<>();
 
@@ -221,8 +222,8 @@ public class UserX implements Serializable {
   }
 
   @OneToMany(mappedBy = "userX")
-  public Set<Deadline> getDeadlines() {
-    return deadlines;
+  public Set<DeadlineSource> getDeadlineSources() {
+    return deadlineSources;
   }
 
   @OneToMany(mappedBy = "userX")
@@ -246,23 +247,23 @@ public class UserX implements Serializable {
   }
 
   @OneToMany(mappedBy = "postedByUserX")
-  public Set<Notification> getPosted_by_user_x_notifications() {
-    return posted_by_user_x_notifications;
+  public Set<Notification> getPostedByUserXNotifications() {
+    return postedByUserXNotifications;
   }
 
   @OneToMany(mappedBy = "postedToUserX")
-  public Set<Notification> getPosted_to_user_x_notifications() {
-    return posted_to_user_x_notifications;
+  public Set<Notification> getPostedToUserXNotifications() {
+    return postedToUserXNotifications;
   }
 
   @OneToMany(mappedBy = "userX")
-  public Set<Post> getUser_x_posts() {
-    return user_x_posts;
+  public Set<Post> getUserXPosts() {
+    return userXPosts;
   }
 
   @OneToMany(mappedBy = "postToUserX")
-  public Set<Post> getTo_user_x_posts() {
-    return to_user_x_posts;
+  public Set<Post> getPostToUserXPosts() {
+    return postToUserXPosts;
   }
 
   @OneToMany(mappedBy = "userX")

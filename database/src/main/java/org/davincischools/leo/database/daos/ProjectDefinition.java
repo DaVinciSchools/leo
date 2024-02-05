@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -36,7 +37,7 @@ public class ProjectDefinition implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
   public static final String COLUMN_TEMPLATE_NAME = "template";
-  private static final long serialVersionUID = -2999000606552826382L;
+  @Serial private static final long serialVersionUID = 4310536244888704608L;
 
   private Integer id;
 

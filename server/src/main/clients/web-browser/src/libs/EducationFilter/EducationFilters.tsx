@@ -40,7 +40,7 @@ export function EducationFilters(
   }>
 ) {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be logged in to use EducationFilters.'
   );
 

@@ -4,6 +4,7 @@ import static org.davincischools.leo.database.utils.DaoUtils.getDaoClass;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -22,7 +23,7 @@ public class StudentClassXId implements Serializable {
 
   public static final String COLUMN_STUDENTID_NAME = "student_id";
   public static final String COLUMN_CLASSXID_NAME = "class_x_id";
-  private static final long serialVersionUID = -521514334135328966L;
+  @Serial private static final long serialVersionUID = -521514334135328966L;
 
   private Integer studentId;
 

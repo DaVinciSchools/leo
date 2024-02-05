@@ -40,6 +40,8 @@ import {
 } from '../misc';
 import {PROJECT_SORTER} from '../sorters';
 import {useFormFields} from '../form_utils/forms';
+import {ProjectsTab} from '../../pages/projects/ProjectsDashboard';
+import {TAB_PARAM_NAME} from '../TabbedPanel/TabbedPanel';
 import ProjectManagementService = project_management.ProjectManagementService;
 import UserXManagementService = user_x_management.UserXManagementService;
 import IProject = pl_types.IProject;
@@ -319,7 +321,11 @@ export function ProjectBuilder(
   }
 
   function onSeeProjects() {
-    navigate('/projects/all-projects.html');
+    navigate(
+      `/projects/projects.html?${TAB_PARAM_NAME}=${
+        ProjectsTab[ProjectsTab.ALL_PROJECTS]
+      }`
+    );
   }
 
   function handleClickEditInputValues(input: ProjectInput) {

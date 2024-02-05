@@ -90,7 +90,7 @@ export function SelectMultipleSchoolsFromList(props: {
 
 export function EditSchools() {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be an administrator to edit schools.',
     userX => userX.isAdminX
   );

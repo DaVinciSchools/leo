@@ -11,7 +11,7 @@ export function PostsTab(
   props: DeepReadOnly<{educationFilters: EducationFilters}>
 ) {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be a student to view posts.',
     userX => userX.isAdminX || userX.isStudent
   );

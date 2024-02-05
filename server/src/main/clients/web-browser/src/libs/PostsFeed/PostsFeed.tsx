@@ -22,12 +22,6 @@ export function PostsFeed(
   }>
 ) {
   const global = useContext(GlobalStateContext);
-
-  console.assert(
-    props.posts || props.request,
-    'PostsFeed: requires posts or request.'
-  );
-
   const [posts, setPosts] = useState<DeepReadOnly<IProjectPost>[]>([]);
   // This request is expensive. So, verify that the request has changed before issuing it again.
   const lastGetProjectsPostRequest = useRef('');
@@ -87,6 +81,11 @@ export function PostsFeed(
         .catch(global.setError);
     }
   }
+
+  console.assert(
+    props.posts || props.request,
+    'PostsFeed: requires posts or request.'
+  );
 
   return (
     <>

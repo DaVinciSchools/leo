@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -35,7 +36,7 @@ public class Student implements Serializable {
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_DISTRICTSTUDENTID_NAME = "district_student_id";
   public static final String COLUMN_GRADE_NAME = "grade";
-  private static final long serialVersionUID = -5118960743104337877L;
+  @Serial private static final long serialVersionUID = -909589863217239732L;
 
   private Integer id;
 

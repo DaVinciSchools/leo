@@ -13,6 +13,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -54,7 +55,7 @@ public class Log implements Serializable {
   public static final String COLUMN_LASTINPUT_NAME = "last_input";
   public static final String COLUMN_LASTINPUTTYPE_NAME = "last_input_type";
   public static final String COLUMN_LASTINPUTTIME_NAME = "last_input_time";
-  private static final long serialVersionUID = -2621644071711615716L;
+  @Serial private static final long serialVersionUID = -5323470866745018909L;
 
   private Integer id;
 

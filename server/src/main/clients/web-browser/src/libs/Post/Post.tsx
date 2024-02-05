@@ -123,7 +123,7 @@ export function Post(
   }>
 ) {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX('You must be logged in to view posts.');
+  const userX = global.useUserX('You must be logged in to view posts.');
   const hasHighlightedComment = props.post.comments
     ?.map(c => props.getUserXHighlightStyle?.(c.userX) != null)
     .includes(true);

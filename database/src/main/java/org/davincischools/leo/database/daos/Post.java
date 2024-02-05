@@ -12,6 +12,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -44,7 +45,7 @@ public class Post implements Serializable {
   public static final String COLUMN_LASTUPDATED_NAME = "last_updated";
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_LONGDESCRTEXT_NAME = "long_descr_text";
-  private static final long serialVersionUID = -9099638175467225427L;
+  @Serial private static final long serialVersionUID = -6552774988126536653L;
 
   private Integer id;
 
@@ -69,8 +70,6 @@ public class Post implements Serializable {
   private ProjectPost projectPost;
 
   private Set<CommentX> commentXES = new LinkedHashSet<>();
-
-  private Set<DeadlineStatus> deadlineStatuses = new LinkedHashSet<>();
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -119,7 +118,7 @@ public class Post implements Serializable {
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "post_to_user_x", nullable = false)
+  @JoinColumn(name = "post_to_user_x_id", nullable = false)
   public UserX getPostToUserX() {
     return postToUserX;
   }
@@ -140,10 +139,5 @@ public class Post implements Serializable {
   @OneToMany(mappedBy = "post")
   public Set<CommentX> getCommentXES() {
     return commentXES;
-  }
-
-  @OneToMany(mappedBy = "post")
-  public Set<DeadlineStatus> getDeadlineStatuses() {
-    return deadlineStatuses;
   }
 }

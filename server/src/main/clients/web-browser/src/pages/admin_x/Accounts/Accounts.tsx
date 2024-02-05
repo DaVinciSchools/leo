@@ -18,7 +18,7 @@ import IFullUserXDetails = user_x_management.IFullUserXDetails;
 
 export function Accounts() {
   const global = useContext(GlobalStateContext);
-  const userX = global.requireUserX(
+  const userX = global.useUserX(
     'You must be an administrator to edit profiles.',
     userX => userX.isAdminX
   );
@@ -28,7 +28,7 @@ export function Accounts() {
     formFields.useSingleAutocompleteFormField<DeepReadOnly<IFullUserXDetails>>(
       'userX'
     );
-  const disabled = editingUserX.getValue() != null;
+  const disabled = editingUserX.getValue() == null;
 
   const profileForm = useFormFields({
     onChange: () => autoSave.trigger(),

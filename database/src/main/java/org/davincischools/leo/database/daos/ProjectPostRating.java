@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
@@ -40,7 +41,7 @@ public class ProjectPostRating implements Serializable {
   public static final String COLUMN_LONGDESCRHTML_NAME = "long_descr_html";
   public static final String COLUMN_GOALPROGRESS_NAME = "goal_progress";
   public static final String COLUMN_GOALREMAINING_NAME = "goal_remaining";
-  private static final long serialVersionUID = -3555794504784466084L;
+  @Serial private static final long serialVersionUID = 4432181590534748441L;
 
   private Integer id;
 
