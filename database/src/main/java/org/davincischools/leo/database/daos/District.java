@@ -37,7 +37,8 @@ public class District implements Serializable {
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
   public static final String COLUMN_NAME_NAME = "name";
-  @Serial private static final long serialVersionUID = -7038666320676051398L;
+  public static final String COLUMN_DEMO_NAME = "demo";
+  @Serial private static final long serialVersionUID = -6404012584007719358L;
 
   private Integer id;
 
@@ -46,6 +47,8 @@ public class District implements Serializable {
   private Instant deleted;
 
   private String name;
+
+  private Boolean demo;
 
   private Set<School> schools = new LinkedHashSet<>();
 
@@ -71,6 +74,11 @@ public class District implements Serializable {
   @Column(name = COLUMN_NAME_NAME, nullable = false)
   public String getName() {
     return name;
+  }
+
+  @Column(name = COLUMN_DEMO_NAME)
+  public Boolean getDemo() {
+    return demo;
   }
 
   @OneToMany(mappedBy = "district")
