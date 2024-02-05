@@ -139,7 +139,7 @@ button {
   cursor: pointer;
 
   &:hover {
-    background-color: var(--hover-bg-color) !important;
+    background-color: var(--hover-bg-color);
   }
 
   &.light {
