@@ -10,8 +10,8 @@ import {
 } from '@mui/icons-material';
 import {CSSProperties, useContext, useEffect, useState} from 'react';
 import {
+  deepClone,
   DeepReadOnly,
-  deepWritable,
   formatAsTag,
   isTextEmpty,
   removeInDeepReadOnly,
@@ -184,67 +184,68 @@ export function Post(
     );
   }, [props.post]);
 
-  function saveCommentBeingEdited(then?: () => void) {
+  function saveCommentBeingEdited(): Promise<IProjectPostComment | undefined> {
     if (commentBeingEdited == null) {
-      then && then();
-      return;
+      return Promise.resolve(undefined);
     }
 
-    const newComment = Object.assign({}, deepWritable(commentBeingEdited), {
-      longDescrHtml: newCommentContent,
-    } as IProjectPostComment);
-    setCommentBeingEdited(undefined);
-
-    setSortedComments(
-      replaceInDeepReadOnly(sortedComments, newComment, c => c.id)
+    const newComment = deepClone(
+      commentBeingEdited,
+      c => (c.longDescrHtml = newCommentContent)
     );
 
-    props.postUpdated(
-      Object.assign({}, props.post, {
-        comments: sortedComments,
-      } as IProjectPost)
-    );
-
-    createService(PostService, 'PostService')
+    return createService(PostService, 'PostService')
       .upsertProjectPostComment({
         projectPostComment: newComment,
       })
       .then(() => {
-        then && then();
-      })
-      .catch(global.setError);
+        const newSortedComments = replaceInDeepReadOnly(
+          sortedComments,
+          newComment,
+          c => c.id
+        );
+
+        setSortedComments(newSortedComments);
+        setCommentBeingEdited(undefined);
+        props.postUpdated(
+          deepClone(
+            props.post,
+            p => (p.comments = deepClone(newSortedComments))
+          )
+        );
+
+        return newComment;
+      });
   }
 
   function addComment() {
     setExpandComments(true);
-    saveCommentBeingEdited(() => {
-      createService(PostService, 'PostService')
-        .upsertProjectPostComment({
+    saveCommentBeingEdited()
+      .then(() =>
+        createService(PostService, 'PostService').upsertProjectPostComment({
           projectPostComment: {
             longDescrHtml: '',
             projectPost: {id: props.post.id},
           },
         })
-        .then(response => {
-          const newSortedComments = [
-            response.projectPostComment!,
-            ...sortedComments,
-          ];
-          setSortedComments(newSortedComments);
+      )
+      .then(response => {
+        const newSortedComments = [
+          response.projectPostComment!,
+          ...sortedComments,
+        ];
 
-          props.postUpdated(
-            Object.assign({}, props.post, {
-              comments: newSortedComments,
-            } as IProjectPost)
-          );
-
-          saveCommentBeingEdited(() => {
-            setCommentBeingEdited(newSortedComments[0]);
-            setNewCommentContent(newSortedComments[0].longDescrHtml ?? '');
-          });
-        })
-        .catch(global.setError);
-    });
+        setSortedComments(newSortedComments);
+        setCommentBeingEdited(newSortedComments[0]);
+        setNewCommentContent('');
+        props.postUpdated(
+          deepClone(
+            props.post,
+            p => (p.comments = deepClone(newSortedComments))
+          )
+        );
+      })
+      .catch(global.setError);
   }
 
   function deleteComment(comment: DeepReadOnly<IProjectPostComment>) {
@@ -258,9 +259,7 @@ export function Post(
     setSortedComments(newSortedComments);
 
     props.postUpdated(
-      Object.assign({}, props.post, {
-        comments: newSortedComments,
-      } as IProjectPost)
+      deepClone(props.post, p => (p.comments = deepClone(newSortedComments)))
     );
 
     createService(PostService, 'PostService')
@@ -449,23 +448,15 @@ export function Post(
                                     e.target.value === ''
                                       ? 0
                                       : parseInt(String(e.target.value));
-                                  let oldRating = ratings.get(
-                                    JSON.stringify(ratingKey)
-                                  );
-                                  if (oldRating == null) {
-                                    oldRating = {
-                                      userX: ratingColumn.userX,
-                                      rating: value,
-                                      ratingType: ratingColumn.ratingType,
-                                      projectInputFulfillmentId:
-                                        ratingCategory.projectInputFulfillmentId,
-                                    };
-                                  }
-                                  const newRating = Object.assign(
-                                    {},
-                                    deepWritable(oldRating),
-                                    {
-                                      rating: value,
+                                  const newRating = deepClone(
+                                    ratings.get(JSON.stringify(ratingKey)) ??
+                                      {},
+                                    r => {
+                                      r.userX = ratingColumn.userX;
+                                      r.rating = value;
+                                      r.ratingType = ratingColumn.ratingType;
+                                      r.projectInputFulfillmentId =
+                                        ratingCategory.projectInputFulfillmentId;
                                     }
                                   );
                                   createService(PostService, 'PostService')
@@ -474,15 +465,18 @@ export function Post(
                                     })
                                     .then(response => {
                                       newRating.id = response.id ?? 0;
-                                      props.postUpdated(
-                                        Object.assign({}, props.post, {
-                                          ratings: Array.from(ratings.values()),
-                                        } as IProjectPost)
+                                      const newRatings = new Map(ratings).set(
+                                        JSON.stringify(ratingKey),
+                                        newRating
                                       );
-                                      setRatings(
-                                        new Map(ratings).set(
-                                          JSON.stringify(ratingKey),
-                                          newRating
+                                      setRatings(newRatings);
+                                      props.postUpdated(
+                                        deepClone(
+                                          props.post,
+                                          p =>
+                                            (p.ratings = deepClone(
+                                              Array.from(newRatings.values())
+                                            ))
                                         )
                                       );
                                     })
@@ -528,48 +522,58 @@ export function Post(
             {sortedComments.length === 0 && (
               <span className="post-in-feed-empty-post">No Comments</span>
             )}
-            {sortedComments.map(comment => (
-              <div key={comment.id ?? 0} className="post-in-feed-comment">
-                <UserXAvatar userX={comment?.userX} />
-                <div className="global-flex-column" style={{gap: 0}}>
-                  <div
-                    style={props?.getUserXHighlightStyle?.(props.post?.userX)}
-                  >
-                    <PostHeader
-                      userX={comment?.userX}
-                      postTimeMs={toLong(comment?.postTimeMs ?? 0)}
-                      deleteIconClicked={() => deleteComment(comment)}
+            {sortedComments.map(comment => {
+              const readOnly =
+                comment.userX?.id !== userX?.id &&
+                !userX?.isTeacher &&
+                !userX?.isAdminX;
+              return (
+                <div key={comment.id ?? 0} className="post-in-feed-comment">
+                  <UserXAvatar userX={comment?.userX} />
+                  <div className="global-flex-column" style={{gap: 0}}>
+                    <div
+                      style={props?.getUserXHighlightStyle?.(props.post?.userX)}
+                    >
+                      <PostHeader
+                        userX={comment?.userX}
+                        postTimeMs={toLong(comment?.postTimeMs ?? 0)}
+                        deleteIconClicked={() => deleteComment(comment)}
+                        readOnly={readOnly}
+                      />
+                    </div>
+                    <HtmlEditor
+                      id={comment.id?.toString() ?? ''}
+                      value={
+                        comment.id === commentBeingEdited?.id
+                          ? newCommentContent
+                          : comment.longDescrHtml
+                      }
+                      readOnly={readOnly}
+                      placeholder="No comment. Click to edit."
+                      editingPlaceholder="Type your comment here..."
+                      startEditing={() => {
+                        if (comment.id !== commentBeingEdited?.id) {
+                          saveCommentBeingEdited()
+                            .then(() => {
+                              setCommentBeingEdited(comment);
+                              setNewCommentContent(comment.longDescrHtml ?? '');
+                            })
+                            .catch(global.setError);
+                        }
+                      }}
+                      finishEditing={() => {
+                        saveCommentBeingEdited().catch(global.setError);
+                      }}
+                      onChange={value => {
+                        if (comment.id === commentBeingEdited?.id) {
+                          setNewCommentContent(value);
+                        }
+                      }}
                     />
                   </div>
-                  <HtmlEditor
-                    id={comment.id?.toString() ?? ''}
-                    value={
-                      comment.id === commentBeingEdited?.id
-                        ? newCommentContent
-                        : comment.longDescrHtml
-                    }
-                    placeholder="No comment. Click to edit."
-                    editingPlaceholder="Type your comment here..."
-                    startEditing={() => {
-                      if (comment.id !== commentBeingEdited?.id) {
-                        saveCommentBeingEdited(() => {
-                          setCommentBeingEdited(comment);
-                          setNewCommentContent(comment.longDescrHtml ?? '');
-                        });
-                      }
-                    }}
-                    finishEditing={() => {
-                      saveCommentBeingEdited();
-                    }}
-                    onChange={value => {
-                      if (comment.id === commentBeingEdited?.id) {
-                        setNewCommentContent(value);
-                      }
-                    }}
-                  />
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

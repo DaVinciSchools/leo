@@ -160,8 +160,13 @@ export function deepReadOnly<T>(value: T | DeepWritable<T>) {
   return value as DeepReadOnly<T>;
 }
 
-export function deepClone<T>(value: T | DeepReadOnly<T>) {
-  return structuredClone(deepWritable(value)) as DeepWritable<T>;
+export function deepClone<T>(
+  value: DeepReadOnly<T>,
+  update?: (value: DeepWritable<T>) => void
+) {
+  const clone = structuredClone(value as DeepWritable<T>);
+  update?.(clone);
+  return clone;
 }
 
 // Proto types are mutable by default. So, to store a DeepReadOnly value in a proto

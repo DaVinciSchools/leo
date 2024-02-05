@@ -1,14 +1,15 @@
 import './Post.scss';
 
 import {pl_types} from 'pl-pb';
-import {RemoveCircleTwoTone, EditTwoTone} from '@mui/icons-material';
-import IUserX = pl_types.IUserX;
+import {EditTwoTone, RemoveCircleTwoTone} from '@mui/icons-material';
 import Long from 'long';
+import IUserX = pl_types.IUserX;
 
 export function PostHeader(props: {
   userX: IUserX | null | undefined;
   saveStatus?: string | null | undefined;
   postTimeMs?: Long | null | undefined;
+  readOnly?: boolean | undefined;
 
   editIconClicked?: () => void;
   deleteIconClicked?: () => void;
@@ -32,12 +33,14 @@ export function PostHeader(props: {
         <div className="post-in-feed-date">
           {new Date(props.postTimeMs?.toNumber() ?? 0).toLocaleDateString()}
         </div>
-        <RemoveCircleTwoTone
-          className="global-two-tone-delete-color"
-          onClick={props.deleteIconClicked}
-          cursor="pointer"
-          style={{display: props.deleteIconClicked ? undefined : 'none'}}
-        />
+        {!props.readOnly && (
+          <RemoveCircleTwoTone
+            className="global-two-tone-delete-color"
+            onClick={props.deleteIconClicked}
+            cursor="pointer"
+            style={{display: props.deleteIconClicked ? undefined : 'none'}}
+          />
+        )}
       </div>
     </>
   );

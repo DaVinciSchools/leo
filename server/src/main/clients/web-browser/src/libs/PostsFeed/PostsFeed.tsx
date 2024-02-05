@@ -22,7 +22,7 @@ export function PostsFeed(
   }>
 ) {
   const global = useContext(GlobalStateContext);
-  const [posts, setPosts] = useState<DeepReadOnly<IProjectPost>[]>([]);
+  const [posts, setPosts] = useState<DeepReadOnly<IProjectPost[]>>([]);
   // This request is expensive. So, verify that the request has changed before issuing it again.
   const lastGetProjectsPostRequest = useRef('');
   const [pageToLoad, setPageToLoad] = useState(0);

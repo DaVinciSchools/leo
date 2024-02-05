@@ -253,15 +253,11 @@ public class PostService {
                       .getFullProjectPostCommentById(request.getProjectPostCommentId())
                       .orElse(null);
               if (fullProjectPostComment == null) {
-                if (userX.isAdminX()) {
-                  return DeleteProjectPostCommentResponse.getDefaultInstance();
-                } else {
-                  return userX.returnForbidden(
-                      DeleteProjectPostCommentResponse.getDefaultInstance());
-                }
+                return DeleteProjectPostCommentResponse.getDefaultInstance();
               }
 
               if (!userX.isAdminX()
+                  && !userX.isTeacher()
                   && !Objects.equals(
                       fullProjectPostComment.getProjectPostComment().getUserX().getId(),
                       userX.getUserXIdOrNull())) {
