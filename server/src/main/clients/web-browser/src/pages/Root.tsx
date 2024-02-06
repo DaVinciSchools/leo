@@ -31,9 +31,6 @@ export function Root() {
           >
             Projects
           </Link>
-          <Link to="" className="nav-link">
-            Blog
-          </Link>
         </div>
         <div className="header-section header-section-right">
           <Link to="/users/login.html">
