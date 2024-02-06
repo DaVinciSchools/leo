@@ -615,8 +615,10 @@ export function ProjectBuilder(
                     gridRow: 2,
                   }}
                 >
-                  Select categories below to include in the Ikigai Project
-                  Builder diagram on the right.
+                  Project Leo generates student project ideas from three key
+                  information sources. The first two, contributed by students,
+                  guide the project suggestions made by Project Leo. The third,
+                  'Assignment Topic,' is predetermined by the teacher.
                 </div>
                 <div
                   className="project-builder-project-details-widget"
