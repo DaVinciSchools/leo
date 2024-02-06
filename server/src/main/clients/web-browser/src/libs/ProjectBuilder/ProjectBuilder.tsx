@@ -376,9 +376,7 @@ export function ProjectBuilder(
                 />
               </Box>
               <div className="project-builder-getting-started-title">
-                {userX?.isDemo
-                  ? 'Choose how you want to start creating your project'
-                  : 'Begin by choosing your starting point.'}
+                Let's get started!
               </div>
               <Box
                 padding={1}
