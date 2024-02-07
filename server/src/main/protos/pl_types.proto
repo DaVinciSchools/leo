@@ -120,6 +120,10 @@ message UserX {
 
   optional bool is_demo = 12;
   optional bool is_authenticated = 13;
+
+  optional bool cross_district_admin = 15;
+  optional bool view_ai_prompts = 16;
+  optional bool view_ids = 17;
 }
 
 message ProjectDefinition {
@@ -148,6 +152,8 @@ message ProjectDefinition {
   // Sorted by position already.
   repeated ProjectInputValue inputs = 6;
   optional Assignment assignment = 8;
+  optional string ai_prompt = 11;
+  optional string ai_response = 12;
 }
 
 message ProjectInputValue {
@@ -210,6 +216,8 @@ message ProjectPostComment {
   optional string long_descr_html = 4;
   optional int64 post_time_ms = 8;
   optional bool being_edited = 9;
+  optional string ai_prompt = 12;
+  optional string ai_response = 13;
 
   reserved 10;
   reserved 'project_post_id';

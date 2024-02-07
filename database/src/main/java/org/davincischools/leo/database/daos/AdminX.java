@@ -31,13 +31,16 @@ public class AdminX implements Serializable {
   public static final String COLUMN_ID_NAME = "id";
   public static final String COLUMN_CREATIONTIME_NAME = "creation_time";
   public static final String COLUMN_DELETED_NAME = "deleted";
-  @Serial private static final long serialVersionUID = 3432691567895645040L;
+  public static final String COLUMN_CROSSDISTRICTADMIN_NAME = "cross_district_admin";
+  @Serial private static final long serialVersionUID = -116641551248200567L;
 
   private Integer id;
 
   private Instant creationTime;
 
   private Instant deleted;
+
+  private Boolean crossDistrictAdmin;
 
   private UserX userX;
 
@@ -56,6 +59,11 @@ public class AdminX implements Serializable {
   @Column(name = COLUMN_DELETED_NAME)
   public Instant getDeleted() {
     return deleted;
+  }
+
+  @Column(name = COLUMN_CROSSDISTRICTADMIN_NAME)
+  public Boolean getCrossDistrictAdmin() {
+    return crossDistrictAdmin;
   }
 
   @OneToOne(fetch = FetchType.LAZY, mappedBy = "adminX")
