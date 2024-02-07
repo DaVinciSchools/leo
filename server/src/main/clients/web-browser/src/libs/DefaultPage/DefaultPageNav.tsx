@@ -1,7 +1,6 @@
 import './DefaultPage.scss';
 
 import {
-  BookOutlined,
   HomeOutlined,
   RocketOutlined,
   SettingOutlined,
@@ -26,7 +25,7 @@ enum MenuKeys {
   DASHBOARD_STUDENT,
   DASHBOARD_TEACHER,
   MY_ACCOUNT,
-  PORTFOLIOS,
+  // PORTFOLIOS,
   PROJECTS,
 }
 
@@ -74,14 +73,14 @@ export function DefaultPageNav() {
       key: MenuKeys.PROJECTS,
       icon: <RocketOutlined />,
     },
-    {
-      label: 'Portfolios',
-      key: MenuKeys.PORTFOLIOS,
-      icon: <BookOutlined />,
-      style: {
-        display: userX?.isAdminX || userX?.isStudent ? 'block' : 'none',
-      },
-    },
+    // {
+    //   label: 'Portfolios',
+    //   key: MenuKeys.PORTFOLIOS,
+    //   icon: <BookOutlined />,
+    //   style: {
+    //     display: userX?.isAdminX || userX?.isStudent ? 'block' : 'none',
+    //   },
+    // },
     {
       label: 'Administration',
       key: MenuKeys.ADMIN,

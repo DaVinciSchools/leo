@@ -1,21 +1,18 @@
 import './StudentDashboard.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {TabbedPanel} from '../../../libs/TabbedPanel/TabbedPanel';
-import {OverviewTab} from './OverviewTab';
 import {useContext, useEffect} from 'react';
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {PostsTab} from './PostsTab';
-import {ClassesTab} from './ClassesTab';
-import {AssignmentsTab} from './AssignmentsTab';
 import {CreatePostTab} from './CreatePostTab';
 import {defaultEducationFilters} from '../../../libs/EducationFilter/EducationFilters';
 import {useFormFields} from '../../../libs/form_utils/forms';
 
 enum StudentTab {
-  ASSIGNMENTS,
-  CLASSES,
+  // ASSIGNMENTS,
+  // CLASSES,
   CREATE_POST,
-  OVERVIEW,
+  // OVERVIEW,
   POSTS,
 }
 
@@ -45,13 +42,13 @@ export function StudentDashboard() {
       <DefaultPage title={(userX?.isAdminX ? 'Student ' : '') + 'Dashboard'}>
         <TabbedPanel
           tabKeyEnum={StudentTab}
-          defaultTabKey={StudentTab.OVERVIEW}
+          defaultTabKey={StudentTab.POSTS}
           tabs={[
-            {
-              key: StudentTab.OVERVIEW,
-              label: 'Overview',
-              content: <OverviewTab />,
-            },
+            // {
+            //   key: StudentTab.OVERVIEW,
+            //   label: 'Overview',
+            //   content: <OverviewTab />,
+            // },
             {
               key: StudentTab.POSTS,
               label: 'Posts',
@@ -62,16 +59,16 @@ export function StudentDashboard() {
               label: 'Create Post',
               content: <CreatePostTab />,
             },
-            {
-              key: StudentTab.CLASSES,
-              label: 'Classes',
-              content: <ClassesTab />,
-            },
-            {
-              key: StudentTab.ASSIGNMENTS,
-              label: 'Assignments',
-              content: <AssignmentsTab />,
-            },
+            // {
+            //   key: StudentTab.CLASSES,
+            //   label: 'Classes',
+            //   content: <ClassesTab />,
+            // },
+            // {
+            //   key: StudentTab.ASSIGNMENTS,
+            //   label: 'Assignments',
+            //   content: <AssignmentsTab />,
+            // },
           ]}
         />
       </DefaultPage>

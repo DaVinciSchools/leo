@@ -3,12 +3,11 @@ import {useContext} from 'react';
 import {GlobalStateContext} from '../../libs/GlobalState';
 import {DefaultPage} from '../../libs/DefaultPage/DefaultPage';
 import {TabbedPanel} from '../../libs/TabbedPanel/TabbedPanel';
-import {OverviewTab} from './OverviewTab';
 import {ProjectBuilderTab} from './ProjectBuilderTab';
 import {AllProjectsTab} from './AllProjectsTab';
 
 export enum ProjectsTab {
-  OVERVIEW,
+  // OVERVIEW,
   PROJECT_BUILDER,
   ALL_PROJECTS,
 }
@@ -29,13 +28,13 @@ export function ProjectsDashboard() {
         <div style={{height: '100%'}}>
           <TabbedPanel
             tabKeyEnum={ProjectsTab}
-            defaultTabKey={ProjectsTab.OVERVIEW}
+            defaultTabKey={ProjectsTab.PROJECT_BUILDER}
             tabs={[
-              {
-                key: ProjectsTab.OVERVIEW,
-                label: 'Overview',
-                content: <OverviewTab />,
-              },
+              // {
+              //   key: ProjectsTab.OVERVIEW,
+              //   label: 'Overview',
+              //   content: <OverviewTab />,
+              // },
               {
                 key: ProjectsTab.PROJECT_BUILDER,
                 label: 'Builder',

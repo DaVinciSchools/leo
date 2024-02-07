@@ -413,7 +413,12 @@ export function EditAssignmentsTab() {
             editingPlaceholder="Enter the assignment description here..."
           />
         </Grid>
-        <Grid item xs={12} className="section-heading">
+        <Grid
+          item
+          xs={12}
+          className="section-heading"
+          style={{display: 'none'}}
+        >
           <div className="section-title">
             Edit Ikigai Project Definition:{' '}
             <span
@@ -423,7 +428,7 @@ export function EditAssignmentsTab() {
             </span>
           </div>
         </Grid>
-        <Grid item xs={5}>
+        <Grid item xs={5} style={{display: 'none'}}>
           <Autocomplete
             id="projectDefinition"
             value={projectDefinition}
@@ -458,7 +463,7 @@ export function EditAssignmentsTab() {
             loadingText="Select Assignment"
           />
         </Grid>
-        <Grid item xs={7}>
+        <Grid item xs={7} style={{display: 'none'}}>
           <Grid container rowGap={2} columns={{xs: 6}} width="100%">
             <Grid item xs={7}>
               <TextField
