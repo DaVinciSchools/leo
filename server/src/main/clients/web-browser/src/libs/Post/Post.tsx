@@ -531,9 +531,7 @@ export function Post(
                 <div key={comment.id ?? 0} className="post-in-feed-comment">
                   <UserXAvatar userX={comment?.userX} />
                   <div className="global-flex-column" style={{gap: 0}}>
-                    <div
-                      style={props?.getUserXHighlightStyle?.(props.post?.userX)}
-                    >
+                    <div style={props?.getUserXHighlightStyle?.(comment.userX)}>
                       <PostHeader
                         userX={comment?.userX}
                         postTimeMs={toLong(comment?.postTimeMs ?? 0)}
