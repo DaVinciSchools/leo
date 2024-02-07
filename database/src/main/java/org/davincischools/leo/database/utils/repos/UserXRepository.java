@@ -60,7 +60,7 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
   }
 
   static boolean isDemo(UserX userX) {
-    return userX.getDistrict() != null && !Boolean.FALSE.equals(userX.getDistrict().getDemo());
+    return isAuthenticated(userX) && !isAdminX(userX) && !isTeacher(userX) && !isStudent(userX);
   }
 
   static boolean isAuthenticated(UserX userX) {

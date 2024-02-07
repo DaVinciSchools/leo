@@ -14,9 +14,6 @@ CREATE TABLE IF NOT EXISTS project_input
 
     existing_project_use_type ENUM ('USE_CONFIGURATION', 'MORE_LIKE_THIS', 'SUB_PROJECTS'),
 
-    ai_prompt                 MEDIUMTEXT,
-    ai_response               MEDIUMTEXT,
-
     project_definition_id     INT                                        NOT NULL,
     CONSTRAINT project_input__project_definition_id
         FOREIGN KEY (project_definition_id)

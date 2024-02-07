@@ -194,7 +194,7 @@ public class ProtoDaoUtilsTest {
     District proto =
         TextFormat.parse(
             """
-            id: 114
+            id: 1
             name: "name"
             """, District.class);
 
@@ -423,11 +423,31 @@ public class ProtoDaoUtilsTest {
                 teacher_id: 4
                 is_student: true
                 student_id: 5
+                is_demo: false
+                is_authenticated: true
+                """,
+            UserX.class);
+
+    assertThat(
+            toUserXProto(toUserXDao(proto).orElseThrow(), UserX::newBuilder).orElseThrow().build())
+        .isEqualTo(proto);
+  }
+
+  @Test
+  public void toUserXRoundTripDemoOnly() throws ParseException {
+    UserX proto =
+        TextFormat.parse(
+            """
+                id: 1
+                district_id: 2
+                first_name: "first"
+                last_name: "last"
+                email_address: "email"
+                is_admin_x: false
+                is_teacher: false
+                is_student: false
                 is_demo: true
                 is_authenticated: true
-                cross_district_admin: true
-                view_ai_prompts: true
-                view_ids: true
                 """,
             UserX.class);
 
@@ -905,8 +925,6 @@ public class ProtoDaoUtilsTest {
                 long_descr_html: "long_descr_html"
                 post_time_ms: 4
                 being_edited: true
-                ai_prompt: 'ai_prompt'
-                ai_response: 'ai_response'
                 """,
             ProjectPostComment.class);
 
@@ -1104,8 +1122,6 @@ public class ProtoDaoUtilsTest {
                     max_num_values: 10
                   }
                 }
-                ai_prompt: 'ai_prompt'
-                ai_response: 'ai_response'
                 """,
             ProjectDefinition.class);
 

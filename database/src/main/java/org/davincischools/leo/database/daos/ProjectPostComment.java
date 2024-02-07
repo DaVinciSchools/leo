@@ -55,9 +55,7 @@ public class ProjectPostComment implements Serializable {
   public static final String COLUMN_HASENOUGHCONTENTPERCENT_NAME = "has_enough_content_percent";
   public static final String COLUMN_INCREMENTALPOSTSUMMARY_NAME = "incremental_post_summary";
   public static final String COLUMN_FEEDBACKRESPONSEHTML_NAME = "feedback_response_html";
-  public static final String COLUMN_AIPROMPT_NAME = "ai_prompt";
-  public static final String COLUMN_AIRESPONSE_NAME = "ai_response";
-  @Serial private static final long serialVersionUID = 8300945491055191413L;
+  @Serial private static final long serialVersionUID = 3061404119727693085L;
 
   private Integer id;
 
@@ -84,10 +82,6 @@ public class ProjectPostComment implements Serializable {
   private String incrementalPostSummary;
 
   private String feedbackResponseHtml;
-
-  private String aiPrompt;
-
-  private String aiResponse;
 
   private UserX userX;
 
@@ -167,18 +161,6 @@ public class ProjectPostComment implements Serializable {
   @Column(name = COLUMN_FEEDBACKRESPONSEHTML_NAME)
   public String getFeedbackResponseHtml() {
     return feedbackResponseHtml;
-  }
-
-  @Lob
-  @Column(name = COLUMN_AIPROMPT_NAME)
-  public String getAiPrompt() {
-    return aiPrompt;
-  }
-
-  @Lob
-  @Column(name = COLUMN_AIRESPONSE_NAME)
-  public String getAiResponse() {
-    return aiResponse;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)

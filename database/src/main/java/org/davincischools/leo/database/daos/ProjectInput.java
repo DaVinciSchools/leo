@@ -42,9 +42,7 @@ public class ProjectInput implements Serializable {
   public static final String COLUMN_TIMEOUT_NAME = "timeout";
   public static final String COLUMN_STATE_NAME = "state";
   public static final String COLUMN_EXISTINGPROJECTUSETYPE_NAME = "existing_project_use_type";
-  public static final String COLUMN_AIPROMPT_NAME = "ai_prompt";
-  public static final String COLUMN_AIRESPONSE_NAME = "ai_response";
-  @Serial private static final long serialVersionUID = 2381382217983898421L;
+  @Serial private static final long serialVersionUID = -7603831579439755168L;
 
   private Integer id;
 
@@ -59,10 +57,6 @@ public class ProjectInput implements Serializable {
   private Project existingProject;
 
   private ExistingProjectUseType existingProjectUseType;
-
-  private String aiPrompt;
-
-  private String aiResponse;
 
   private ProjectDefinition projectDefinition;
 
@@ -118,18 +112,6 @@ public class ProjectInput implements Serializable {
   @Column(name = COLUMN_EXISTINGPROJECTUSETYPE_NAME)
   public ExistingProjectUseType getExistingProjectUseType() {
     return existingProjectUseType;
-  }
-
-  @Lob
-  @Column(name = COLUMN_AIPROMPT_NAME)
-  public String getAiPrompt() {
-    return aiPrompt;
-  }
-
-  @Lob
-  @Column(name = COLUMN_AIRESPONSE_NAME)
-  public String getAiResponse() {
-    return aiResponse;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)

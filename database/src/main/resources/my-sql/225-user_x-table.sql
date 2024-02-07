@@ -20,9 +20,6 @@ CREATE TABLE IF NOT EXISTS user_x
     temporary_password_good_until DATETIME,
     temporary_encoded_password    TEXT,
 
-    view_ai_prompts               BOOLEAN,
-    view_ids                      BOOLEAN,
-
     district_id                   INT, -- Nullable for demo users.
     CONSTRAINT user_x__district_id
         FOREIGN KEY (district_id)

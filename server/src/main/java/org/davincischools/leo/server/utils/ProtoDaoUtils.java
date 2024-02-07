@@ -41,7 +41,6 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.davincischools.leo.database.daos.AdminX;
 import org.davincischools.leo.database.daos.Assignment;
 import org.davincischools.leo.database.daos.AssignmentProjectDefinition;
 import org.davincischools.leo.database.daos.ClassX;
@@ -209,14 +208,12 @@ public class ProtoDaoUtils {
                                         + "."));
 
                 switch (projectInputValueProto.getCategory().getValueType()) {
-                  case FREE_TEXT ->
-                      projectInputValueProto.addFreeTexts(projectInputValue.getFreeTextValue());
-                  case MOTIVATION ->
-                      projectInputValueProto.addSelectedIds(
-                          projectInputValue.getMotivationValue().getId());
-                  default ->
-                      projectInputValueProto.addSelectedIds(
-                          projectInputValue.getKnowledgeAndSkillValue().getId());
+                  case FREE_TEXT -> projectInputValueProto.addFreeTexts(
+                      projectInputValue.getFreeTextValue());
+                  case MOTIVATION -> projectInputValueProto.addSelectedIds(
+                      projectInputValue.getMotivationValue().getId());
+                  default -> projectInputValueProto.addSelectedIds(
+                      projectInputValue.getKnowledgeAndSkillValue().getId());
                 }
               });
         },
@@ -294,33 +291,28 @@ public class ProtoDaoUtils {
                                             input.getCategory().getId())));
 
                     switch (input.getCategory().getValueType()) {
-                      case FREE_TEXT ->
-                          projectInputValues.addAll(
-                              input.getFreeTextsList().stream()
-                                  .map(
-                                      freeText ->
-                                          newProjectInputValue.get().setFreeTextValue(freeText))
-                                  .toList());
-                      case MOTIVATION ->
-                          projectInputValues.addAll(
-                              input.getSelectedIdsList().stream()
-                                  .map(
-                                      motivationId ->
-                                          newProjectInputValue
-                                              .get()
-                                              .setMotivationValue(
-                                                  new Motivation().setId(motivationId)))
-                                  .toList());
-                      default ->
-                          projectInputValues.addAll(
-                              input.getSelectedIdsList().stream()
-                                  .map(
-                                      selectedId ->
-                                          newProjectInputValue
-                                              .get()
-                                              .setKnowledgeAndSkillValue(
-                                                  new KnowledgeAndSkill().setId(selectedId)))
-                                  .toList());
+                      case FREE_TEXT -> projectInputValues.addAll(
+                          input.getFreeTextsList().stream()
+                              .map(
+                                  freeText -> newProjectInputValue.get().setFreeTextValue(freeText))
+                              .toList());
+                      case MOTIVATION -> projectInputValues.addAll(
+                          input.getSelectedIdsList().stream()
+                              .map(
+                                  motivationId ->
+                                      newProjectInputValue
+                                          .get()
+                                          .setMotivationValue(new Motivation().setId(motivationId)))
+                              .toList());
+                      default -> projectInputValues.addAll(
+                          input.getSelectedIdsList().stream()
+                              .map(
+                                  selectedId ->
+                                      newProjectInputValue
+                                          .get()
+                                          .setKnowledgeAndSkillValue(
+                                              new KnowledgeAndSkill().setId(selectedId)))
+                              .toList());
                     }
                   });
           dao.setProjectInputValues(new LinkedHashSet<>(projectInputValues));
@@ -396,36 +388,34 @@ public class ProtoDaoUtils {
     var options = new HashMap<ValueType, List<Option>>();
     for (var projectInputCategory : projectInputCategories) {
       switch (projectInputCategory.getValueType()) {
-        case MOTIVATION ->
-            projectInputCategory.addAllOptions(
-                options.computeIfAbsent(
-                    projectInputCategory.getValueType(),
-                    valueType ->
-                        db.getMotivationRepository().findAll().stream()
-                            .filter(knowledgeAndSkill -> knowledgeAndSkill.getDeleted() == null)
-                            .map(motivation -> toOptionProto(motivation, Option::newBuilder))
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .map(Option.Builder::build)
-                            .toList()));
+        case MOTIVATION -> projectInputCategory.addAllOptions(
+            options.computeIfAbsent(
+                projectInputCategory.getValueType(),
+                valueType ->
+                    db.getMotivationRepository().findAll().stream()
+                        .filter(knowledgeAndSkill -> knowledgeAndSkill.getDeleted() == null)
+                        .map(motivation -> toOptionProto(motivation, Option::newBuilder))
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .map(Option.Builder::build)
+                        .toList()));
         case FREE_TEXT -> {}
-        default ->
-            projectInputCategory.addAllOptions(
-                options.computeIfAbsent(
-                    projectInputCategory.getValueType(),
-                    valueType ->
-                        db
-                            .getKnowledgeAndSkillRepository()
-                            .findAll(Type.valueOf(valueType.name()))
-                            .stream()
-                            .filter(knowledgeAndSkill -> knowledgeAndSkill.getDeleted() == null)
-                            .map(
-                                knowledgeAndSkill ->
-                                    toOptionProto(knowledgeAndSkill, Option::newBuilder))
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .map(Option.Builder::build)
-                            .toList()));
+        default -> projectInputCategory.addAllOptions(
+            options.computeIfAbsent(
+                projectInputCategory.getValueType(),
+                valueType ->
+                    db
+                        .getKnowledgeAndSkillRepository()
+                        .findAll(Type.valueOf(valueType.name()))
+                        .stream()
+                        .filter(knowledgeAndSkill -> knowledgeAndSkill.getDeleted() == null)
+                        .map(
+                            knowledgeAndSkill ->
+                                toOptionProto(knowledgeAndSkill, Option::newBuilder))
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .map(Option.Builder::build)
+                        .toList()));
       }
     }
   }
@@ -610,14 +600,12 @@ public class ProtoDaoUtils {
                       var valueType = ratingCategory.getValueType();
                       var projectInputValue = new ProjectInputValue();
                       switch (valueType) {
-                        case MOTIVATION ->
-                            projectInputValue.setMotivationValue(
-                                new Motivation().setName(ratingCategory.getValue()));
-                        case FREE_TEXT ->
-                            projectInputValue.setFreeTextValue(ratingCategory.getValue());
-                        default ->
-                            projectInputValue.setKnowledgeAndSkillValue(
-                                new KnowledgeAndSkill().setName(ratingCategory.getValue()));
+                        case MOTIVATION -> projectInputValue.setMotivationValue(
+                            new Motivation().setName(ratingCategory.getValue()));
+                        case FREE_TEXT -> projectInputValue.setFreeTextValue(
+                            ratingCategory.getValue());
+                        default -> projectInputValue.setKnowledgeAndSkillValue(
+                            new KnowledgeAndSkill().setName(ratingCategory.getValue()));
                       }
                       projectInputValue.setProjectDefinitionCategory(
                           new ProjectDefinitionCategory()
@@ -714,8 +702,8 @@ public class ProtoDaoUtils {
                                                   motivationValue ->
                                                       rating.setValue(motivationValue.getName()));
                                         }
-                                        case FREE_TEXT ->
-                                            rating.setValue(inputValue.getFreeTextValue());
+                                        case FREE_TEXT -> rating.setValue(
+                                            inputValue.getFreeTextValue());
                                         default -> {
                                           ifInitialized(inputValue.getKnowledgeAndSkillValue())
                                               .ifPresent(
@@ -846,22 +834,12 @@ public class ProtoDaoUtils {
     return translateToDao(
         userX,
         () -> new UserX().setCreationTime(Instant.now()),
-        dao -> {
-          if (!isInitialized(dao.getAdminX())) {
-            dao.setAdminX(new AdminX());
-          }
-          dao.getAdminX().setCrossDistrictAdmin(userX.getCrossDistrictAdmin());
-          if (!isInitialized(dao.getDistrict())) {
-            dao.setDistrict(new District());
-          }
-          dao.getDistrict().setDemo(userX.getIsDemo());
-        },
+        dao -> {},
         org.davincischools.leo.protos.pl_types.UserX.IS_ADMIN_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.UserX.IS_TEACHER_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.UserX.IS_STUDENT_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.UserX.IS_DEMO_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.UserX.IS_AUTHENTICATED_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.UserX.CROSS_DISTRICT_ADMIN_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.UserX.IS_AUTHENTICATED_FIELD_NUMBER);
   }
 
   public static Optional<org.davincischools.leo.protos.pl_types.UserX.Builder> toUserXProto(
@@ -875,16 +853,12 @@ public class ProtoDaoUtils {
                 .setIsTeacher(UserXRepository.isTeacher(userX))
                 .setIsStudent(UserXRepository.isStudent(userX))
                 .setIsDemo(UserXRepository.isDemo(userX))
-                .setIsAuthenticated(UserXRepository.isAuthenticated(userX))
-                .setCrossDistrictAdmin(
-                    isInitialized(userX.getAdminX())
-                        && Boolean.TRUE.equals(userX.getAdminX().getCrossDistrictAdmin())),
+                .setIsAuthenticated(UserXRepository.isAuthenticated(userX)),
         org.davincischools.leo.protos.pl_types.UserX.IS_ADMIN_X_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.UserX.IS_TEACHER_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.UserX.IS_STUDENT_FIELD_NUMBER,
         org.davincischools.leo.protos.pl_types.UserX.IS_DEMO_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.UserX.IS_AUTHENTICATED_FIELD_NUMBER,
-        org.davincischools.leo.protos.pl_types.UserX.CROSS_DISTRICT_ADMIN_FIELD_NUMBER);
+        org.davincischools.leo.protos.pl_types.UserX.IS_AUTHENTICATED_FIELD_NUMBER);
   }
 
   public static Optional<FullUserXDetails.Builder> toFullUserXDetailsProto(
