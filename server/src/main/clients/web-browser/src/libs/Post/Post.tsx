@@ -381,8 +381,8 @@ export function Post(
                   <th key={-1}></th>
                   {sortedRatingColumns.map(column => (
                     <th key={column.userX?.id ?? 0}>
-                      {userX?.lastName ?? ''},&nbsp;
-                      {(userX?.firstName ?? '').charAt(0)}
+                      {column.userX?.lastName ?? ''},&nbsp;
+                      {(column.userX?.firstName ?? '').charAt(0)}
                     </th>
                   ))}
                 </tr>
