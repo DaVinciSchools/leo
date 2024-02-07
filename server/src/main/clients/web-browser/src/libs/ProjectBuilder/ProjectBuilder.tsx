@@ -42,13 +42,13 @@ import {PROJECT_SORTER} from '../sorters';
 import {useFormFields} from '../form_utils/forms';
 import {ProjectsTab} from '../../pages/projects/ProjectsDashboard';
 import {TAB_PARAM_NAME} from '../TabbedPanel/TabbedPanel';
+import FreeTextInputModal from '../IkigaiProjectBuilder/FreeTextInputModal';
+import {DropdownSelectInputModal} from '../IkigaiProjectBuilder/DropdownSelectInputModal';
 import ProjectManagementService = project_management.ProjectManagementService;
 import UserXManagementService = user_x_management.UserXManagementService;
 import IProject = pl_types.IProject;
 import ExistingProjectUseType = pl_types.ProjectDefinition.ExistingProjectUseType;
-import FreeTextInputModal from '../IkigaiProjectBuilder/FreeTextInputModal';
 import ValueType = pl_types.ProjectInputCategory.ValueType;
-import {DropdownSelectInputModal} from '../IkigaiProjectBuilder/DropdownSelectInputModal';
 
 enum State {
   GETTING_STARTED,
@@ -81,6 +81,7 @@ export function getCategoryId(
 export function ProjectBuilder(
   props: DeepReadOnly<{
     noCategoriesText: ReactNode;
+    isDemoPage?: boolean;
     style?: Partial<CSSProperties>;
   }>
 ) {
@@ -382,7 +383,7 @@ export function ProjectBuilder(
                 padding={1}
                 className="project-builder-getting-started-buttons"
               >
-                {userX?.isDemo && (
+                {props.isDemoPage !== true && (
                   <Button
                     variant="contained"
                     className="project-builder-button"

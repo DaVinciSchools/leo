@@ -17,7 +17,10 @@ export function DemoProjectBuilder() {
           </Link>
         </div>
         <div className="demo-project-builder-project-builder">
-          <ProjectBuilder noCategoriesText={'Select categories on the left'} />
+          <ProjectBuilder
+            noCategoriesText={'Select categories on the left'}
+            isDemoPage={true}
+          />
         </div>
       </div>
     </>
