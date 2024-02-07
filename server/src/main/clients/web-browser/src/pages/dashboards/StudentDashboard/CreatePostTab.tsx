@@ -161,7 +161,6 @@ export function CreatePostTab() {
 
   return (
     <>
-      <p>TODO: Move this inline with viewing and editing posts.</p>
       <div
         className="global-flex-row"
         style={{gap: '1em', alignItems: 'center', justifyContent: 'stretch'}}
