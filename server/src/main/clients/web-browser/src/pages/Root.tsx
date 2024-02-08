@@ -16,7 +16,7 @@ const Hero = styled.div`
   padding: ${props => props.theme.spacing(6)};
   margin: 0 auto;
   font-size: 20px;
-  margin-bottom: ${props => props.theme.spacing(16)};
+  margin-bottom: ${props => props.theme.spacing(12)};
 
   h1 {
     font-size: 54px;
@@ -61,20 +61,16 @@ const GridBodySectionContent = styled.section`
   gap: ${props => props.theme.spacing(4)};
   font-size: 18px;
   margin-bottom: ${props => props.theme.spacing(16)};
-
-  p {
-    margin: 0;
-  }
 `;
 
 const BodySectionHeader = styled.h2`
+  font-size: 48px;
   margin-bottom: ${props => props.theme.spacing(4)};
 `;
 
 const BodySectionContent = styled.section`
-  font-size: 20px;
-
   p {
+    font-size: 20px;
     margin: 0;
   }
 `;
@@ -88,6 +84,11 @@ const BodyBlock = styled.div`
   div {
     font-size: 22px;
     font-weight: 600;
+  }
+
+  p {
+    font-size: 20px;
+    margin: 0;
   }
 `;
 
@@ -148,17 +149,69 @@ export function Root() {
           <BodySectionContent>
             <BodySectionHeader>What is Project Leo?</BodySectionHeader>
             <p>
-              Project Leo is an AI-powered classroom platform designed for
-              students and teachers engaged in project-based learning,
-              portfolio, or similar curricula. Our platform draws inspiration
-              from the ikigai philosophy to engage students in their educational
-              journey. Project Leo also allows teachers to incorporate
-              differentiation more easily into their classes, thus helping
-              students find their own unique paths to success.
+              Project Leo is an innovative educational tool designed to inspire
+              both teachers and students. With Project Leo, teachers can easily
+              incorporate differentiation into their classes, helping students
+              find their own unique paths to success. By removing the rigidity
+              of traditional classrooms, Project Leo gives students the freedom
+              to pursue their passions and explore their own interests. By
+              engaging students and empowering them to take control of their own
+              learning, Project Leo helps to give school a purpose and prepares
+              them for their future careers.
             </p>
           </BodySectionContent>
           <img src="/images/landing/group.png" />
         </BodySection>
+        <div>
+          <BodySectionHeader>How does it work?</BodySectionHeader>
+          <GridBodySectionContent style={{flexDirection: 'column'}}>
+            <BodyBlock>
+              <div>Students generate a unique project</div>
+              <p>
+                Project Leo allows students to take ownership of their learning
+                by generating personalized projects based on their interests.
+                Using AI technology, Project Leo aligns students' interests with
+                class objectives and possible career paths, creating a truly
+                customized and engaging learning experience.
+              </p>
+            </BodyBlock>
+            <BodyBlock>
+              <div>Teachers and professionals review and provide feedback</div>
+              <p>
+                Teachers and professionals in related fields can monitor student
+                progress and provide valuable feedback throughout the project
+                process. This collaborative approach promotes a supportive
+                learning environment where students can receive guidance and
+                support from multiple sources, including those with specialized
+                knowledge and expertise. With this approach, students are able
+                to work closely with both their teachers and industry
+                professionals, fostering both academic and personal growth.
+              </p>
+            </BodyBlock>
+            <BodyBlock>
+              <div>Project Leo outputs final results</div>
+              <p>
+                Project Leo generates a summary of project results for both
+                students and teachers, providing a clear understanding of
+                project outcomes and serving as a tool for continuous
+                improvement. Students can use the information to reflect on
+                their learning and set future goals, while teachers can easily
+                grade projects and provide feedback to students, promoting a
+                collaborative and effective learning environment.
+              </p>
+            </BodyBlock>
+            <BodyBlock>
+              <div>Move on to the next project</div>
+              <p>
+                Project Leo generates an unlimited amount of engaging project
+                ideas, allowing students to explore new topics and areas of
+                interest, while building upon existing skills. This feature
+                promotes a love of lifelong learning, while keeping students
+                engaged and motivated to continue exploring and learning.
+              </p>
+            </BodyBlock>
+          </GridBodySectionContent>
+        </div>
         <BodySection>
           <div>
             <BodySectionContent>
