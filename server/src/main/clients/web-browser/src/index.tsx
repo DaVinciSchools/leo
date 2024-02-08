@@ -267,7 +267,14 @@ const router = createBrowserRouter([
   },
 ]);
 
-const theme = createTheme();
+const theme = createTheme({
+  typography: {
+    button: {
+      textTransform: 'none',
+      fontWeight: 600,
+    },
+  },
+});
 
 root.render(
   <StrictMode>
