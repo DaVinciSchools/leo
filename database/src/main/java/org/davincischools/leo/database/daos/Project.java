@@ -48,7 +48,9 @@ public class Project implements Serializable {
   public static final String COLUMN_THUMBSSTATEREASON_NAME = "thumbs_state_reason";
   public static final String COLUMN_ARCHIVED_NAME = "archived";
   public static final String COLUMN_ACTIVE_NAME = "active";
-  @Serial private static final long serialVersionUID = 422934045571680818L;
+  public static final String COLUMN_AIPROMPT_NAME = "ai_prompt";
+  public static final String COLUMN_AIRESPONSE_NAME = "ai_response";
+  @Serial private static final long serialVersionUID = -5016678802374286258L;
 
   private Integer id;
 
@@ -73,6 +75,10 @@ public class Project implements Serializable {
   private Boolean archived;
 
   private Boolean active;
+
+  private String aiPrompt;
+
+  private String aiResponse;
 
   private Assignment assignment;
 
@@ -164,6 +170,18 @@ public class Project implements Serializable {
   @Column(name = COLUMN_ACTIVE_NAME)
   public Boolean getActive() {
     return active;
+  }
+
+  @Lob
+  @Column(name = COLUMN_AIPROMPT_NAME)
+  public String getAiPrompt() {
+    return aiPrompt;
+  }
+
+  @Lob
+  @Column(name = COLUMN_AIRESPONSE_NAME)
+  public String getAiResponse() {
+    return aiResponse;
   }
 
   @ManyToOne(fetch = FetchType.LAZY)

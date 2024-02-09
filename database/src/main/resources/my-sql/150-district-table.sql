@@ -5,6 +5,6 @@ CREATE TABLE IF NOT EXISTS district
     deleted       DATETIME,
 
     name          VARCHAR(255) UNIQUE NOT NULL,
-    demo          BOOLEAN
+    is_demo       BOOLEAN
 ) ENGINE InnoDB
   CHAR SET UTF8MB4;

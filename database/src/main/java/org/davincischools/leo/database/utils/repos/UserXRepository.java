@@ -1,6 +1,7 @@
 package org.davincischools.leo.database.utils.repos;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.davincischools.leo.database.utils.DaoUtils.isInitialized;
 import static org.davincischools.leo.database.utils.query_helper.QueryHelper.DEFAULT_PAGE_SIZE;
 
 import com.google.common.collect.Iterables;
@@ -48,19 +49,20 @@ public interface UserXRepository extends JpaRepository<UserX, Integer>, Autowire
   String PROJECT_LEO_COACH_EMAIL = "coach_leo@projectleo.net";
 
   static boolean isAdminX(UserX userX) {
-    return userX.getAdminX() != null && userX.getAdminX().getId() != null;
+    return userX.getAdminX() != null;
   }
 
   static boolean isTeacher(UserX userX) {
-    return userX.getTeacher() != null && userX.getTeacher().getId() != null;
+    return userX.getTeacher() != null;
   }
 
   static boolean isStudent(UserX userX) {
-    return userX.getStudent() != null && userX.getStudent().getId() != null;
+    return userX.getStudent() != null;
   }
 
   static boolean isDemo(UserX userX) {
-    return isAuthenticated(userX) && !isAdminX(userX) && !isTeacher(userX) && !isStudent(userX);
+    return !isInitialized(userX.getDistrict())
+        || !Boolean.FALSE.equals(userX.getDistrict().getIsDemo());
   }
 
   static boolean isAuthenticated(UserX userX) {
