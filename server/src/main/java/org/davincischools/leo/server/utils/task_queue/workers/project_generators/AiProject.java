@@ -7,6 +7,7 @@ import static org.davincischools.leo.database.utils.DaoUtils.streamIfInitialized
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -143,9 +144,9 @@ public class AiProject {
             .setGenerator(OpenAi3V3ProjectGenerator.class.getName())
             .setCreationTime(Instant.now())
             .setProjectInput(generatorInput.getProjectInput())
-            .setName(aiProject.name)
-            .setShortDescr(aiProject.shortDescr)
-            .setLongDescrHtml(aiProject.longDescrHtml);
+            .setName(Strings.nullToEmpty(aiProject.name))
+            .setShortDescr(Strings.nullToEmpty(aiProject.shortDescr))
+            .setLongDescrHtml(Strings.nullToEmpty(aiProject.longDescrHtml));
     project.setProjectMilestones(
         aiProject.milestones.stream()
             .map(
@@ -154,7 +155,7 @@ public class AiProject {
                       new ProjectMilestone()
                           .setCreationTime(Instant.now())
                           .setPosition((float) position.incrementAndGet())
-                          .setName(m.name)
+                          .setName(Strings.nullToEmpty(m.name))
                           .setProject(project);
                   milestone.setProjectMilestoneSteps(
                       m.steps.stream()
@@ -163,7 +164,7 @@ public class AiProject {
                                   new ProjectMilestoneStep()
                                       .setCreationTime(Instant.now())
                                       .setPosition((float) position.incrementAndGet())
-                                      .setName(s)
+                                      .setName(Strings.nullToEmpty(s))
                                       .setProjectMilestone(milestone))
                           .collect(toImmutableSet()));
                   return milestone;
@@ -195,9 +196,9 @@ public class AiProject {
                   .setCreationTime(Instant.now())
                   .setProject(project)
                   .setProjectInputValue(inputValue)
-                  .setHowProjectFulfills(criteria.howProjectFulfills)
+                  .setHowProjectFulfills(Strings.nullToEmpty(criteria.howProjectFulfills))
                   .setFulfillmentPercentage(criteria.fulfillmentPercentage)
-                  .setVisibleIndicator(criteria.assessmentApproach);
+                  .setVisibleIndicator(Strings.nullToEmpty(criteria.assessmentApproach));
 
           project.getProjectInputFulfillments().add(projectInputFulfillment);
 
