@@ -54,7 +54,7 @@
     "lint": "eslint '**/*.{js,ts,jsx,tsx}' '**/.*.{js,ts,jsx,tsx}' --max-warnings=0 && prettier --debug-check . && prettier --check .",
     "clean": "gts clean",
     "compile": "tsc",
-    "fix": "eslint  '**/*.{js,ts,jsx,tsx}' '**/.*.{js,ts,jsx,tsx}' --max-warnings=0 --fix && prettier --debug-check . && prettier --write .",
+    "fix": "eslint '**/*.{js,ts,jsx,tsx}' '**/.*.{js,ts,jsx,tsx}' --fix && prettier --debug-check . && prettier --write .",
     "prepare": "npm run compile",
     "pretest": "npm run compile",
     "posttest": "npm run lint"
@@ -92,9 +92,10 @@
     "@types/styled-components": "^5.1.34",
     "craco-alias": "^3.0.1",
     "eslint-plugin-react-hooks": "^5.0.0-next-9fb2469a6-20230308",
-    "gts": "^4.0.1",
+    "gts": "^5.2.0",
     "long": "^5.2.3",
     "npm-check-updates": "^16.10.12",
+    "prettier": "^3.2.5",
     "protobufjs-cli": "~1.1.2",
     "react-scripts": "5.0.1"
   },

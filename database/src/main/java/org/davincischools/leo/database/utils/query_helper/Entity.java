@@ -367,26 +367,30 @@ public class Entity<P, S, F> implements Expression<F> {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     switch (entityType) {
-      case ROOT -> sb.append("Root(")
-          .append(fromClass.getSimpleName())
-          .append("->")
-          .append(selectClass.getSimpleName())
-          .append(")");
-      case SUBQUERY -> sb.append("Subquery(")
-          .append(fromClass.getSimpleName())
-          .append("->")
-          .append(selectClass.getSimpleName())
-          .append(")");
-      case GET -> sb.append("Get(")
-          .append(attribute.getName())
-          .append(":")
-          .append(fromClass.getSimpleName())
-          .append(")");
-      case JOIN, FETCH -> sb.append("Join(")
-          .append(attribute.getName())
-          .append(":")
-          .append(fromClass.getSimpleName())
-          .append(")");
+      case ROOT ->
+          sb.append("Root(")
+              .append(fromClass.getSimpleName())
+              .append("->")
+              .append(selectClass.getSimpleName())
+              .append(")");
+      case SUBQUERY ->
+          sb.append("Subquery(")
+              .append(fromClass.getSimpleName())
+              .append("->")
+              .append(selectClass.getSimpleName())
+              .append(")");
+      case GET ->
+          sb.append("Get(")
+              .append(attribute.getName())
+              .append(":")
+              .append(fromClass.getSimpleName())
+              .append(")");
+      case JOIN, FETCH ->
+          sb.append("Join(")
+              .append(attribute.getName())
+              .append(":")
+              .append(fromClass.getSimpleName())
+              .append(")");
     }
 
     return sb.toString();

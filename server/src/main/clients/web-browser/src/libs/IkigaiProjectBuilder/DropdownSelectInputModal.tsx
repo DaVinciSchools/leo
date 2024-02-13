@@ -15,7 +15,7 @@ import {addClassName} from '../tags';
 import Markdown from 'react-markdown';
 import {deepClone, deepReadOnly, DeepReadOnly} from '../misc';
 import {ProjectInput} from '../ProjectBuilder/ProjectBuilder';
-import {MODAL_STYLE, MODAL_PAPER_PROPS} from './IkigaiProjectBuilder';
+import {MODAL_PAPER_PROPS, MODAL_STYLE} from './IkigaiProjectBuilder';
 import {pl_types} from 'pl-pb';
 import IOption = pl_types.ProjectInputCategory.IOption;
 

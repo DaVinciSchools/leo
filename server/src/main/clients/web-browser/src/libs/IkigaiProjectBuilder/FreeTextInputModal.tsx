@@ -9,7 +9,7 @@ import Markdown from 'react-markdown';
 import {deepClone, DeepReadOnly} from '../misc';
 import {ProjectInput} from '../ProjectBuilder/ProjectBuilder';
 import {getInputField} from '../form_utils/forms';
-import {MODAL_STYLE, MODAL_PAPER_PROPS} from './IkigaiProjectBuilder';
+import {MODAL_PAPER_PROPS, MODAL_STYLE} from './IkigaiProjectBuilder';
 
 export default function FreeTextInputModal(
   props: DeepReadOnly<{

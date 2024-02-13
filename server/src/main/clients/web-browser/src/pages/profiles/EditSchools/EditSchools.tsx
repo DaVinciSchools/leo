@@ -11,13 +11,12 @@ import {
 import {SelectDistrictFromList} from '../EditDistricts/EditDistricts';
 import {createService} from '../../../libs/protos';
 import {district_management, pl_types, school_management} from 'pl-pb';
-
+import {SCHOOL_SORTER} from '../../../libs/sorters';
 import DistrictManagementService = district_management.DistrictManagementService;
 import IDistrict = pl_types.IDistrict;
 import ISchool = pl_types.ISchool;
 import ISchoolInformationResponse = school_management.ISchoolInformationResponse;
 import SchoolManagementService = school_management.SchoolManagementService;
-import {SCHOOL_SORTER} from '../../../libs/sorters';
 
 export function SelectSchoolFromList(props: {
   id: string;

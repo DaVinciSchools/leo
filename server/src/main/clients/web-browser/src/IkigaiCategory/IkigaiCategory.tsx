@@ -27,20 +27,20 @@ function getOrientationStyle(radians: number) {
     segment < 1
       ? Orientation.EAST
       : segment < 3
-      ? Orientation.SOUTHEAST
-      : segment < 5
-      ? Orientation.SOUTH
-      : segment < 7
-      ? Orientation.SOUTHWEST
-      : segment < 9
-      ? Orientation.WEST
-      : segment < 11
-      ? Orientation.NORTHWEST
-      : segment < 13
-      ? Orientation.NORTH
-      : segment < 15
-      ? Orientation.NORTHEAST
-      : Orientation.EAST;
+        ? Orientation.SOUTHEAST
+        : segment < 5
+          ? Orientation.SOUTH
+          : segment < 7
+            ? Orientation.SOUTHWEST
+            : segment < 9
+              ? Orientation.WEST
+              : segment < 11
+                ? Orientation.NORTHWEST
+                : segment < 13
+                  ? Orientation.NORTH
+                  : segment < 15
+                    ? Orientation.NORTHEAST
+                    : Orientation.EAST;
 
   // Position vertically.
   switch (orientation) {

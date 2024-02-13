@@ -113,12 +113,12 @@ export function ProjectCard(props: {
           props.active
             ? 'active'
             : props.favorite
-            ? 'favorite'
-            : props.thumbsState === ThumbsState.THUMBS_UP
-            ? 'like'
-            : props.thumbsState === ThumbsState.THUMBS_DOWN
-            ? 'dislike'
-            : undefined
+              ? 'favorite'
+              : props.thumbsState === ThumbsState.THUMBS_UP
+                ? 'like'
+                : props.thumbsState === ThumbsState.THUMBS_DOWN
+                  ? 'dislike'
+                  : undefined
         }
       >
         {props.shortDescr}
@@ -130,10 +130,10 @@ export function ProjectCard(props: {
               props.active
                 ? 'Why did you choose this project?'
                 : props.thumbsState === ThumbsState.THUMBS_UP
-                ? 'Why do you like this project?'
-                : props.thumbsState === ThumbsState.THUMBS_DOWN
-                ? 'Why do you dislike this project?'
-                : 'What do you think about this project?'
+                  ? 'Why do you like this project?'
+                  : props.thumbsState === ThumbsState.THUMBS_DOWN
+                    ? 'Why do you dislike this project?'
+                    : 'What do you think about this project?'
             }
             name="thumbs_reason"
             value={thumbsStateReason}

@@ -247,7 +247,7 @@ export function ProjectBuilder(
             input: i,
             selected: true,
             highlightHue: 0,
-          } as ProjectInput)
+          }) as ProjectInput
       );
 
       setAllInputs([...newProjectInputs, ...newDemoInputs]);

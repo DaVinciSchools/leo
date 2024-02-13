@@ -6,11 +6,10 @@ import {Display, SelectFromList} from '../../../SelectFromList/SelectFromList';
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {createService} from '../../../libs/protos';
 import {district_management, pl_types} from 'pl-pb';
-
+import {DISTRICT_SORTER} from '../../../libs/sorters';
 import DistrictInformationResponse = district_management.DistrictInformationResponse;
 import DistrictManagementService = district_management.DistrictManagementService;
 import IDistrict = pl_types.IDistrict;
-import {DISTRICT_SORTER} from '../../../libs/sorters';
 
 export function SelectDistrictFromList(props: {
   id: string;

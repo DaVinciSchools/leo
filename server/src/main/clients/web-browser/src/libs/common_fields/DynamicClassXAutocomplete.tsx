@@ -10,7 +10,7 @@ import IClassX = pl_types.IClassX;
 import ClassXManagementService = class_x_management_service.ClassXManagementService;
 
 export function DynamicClassXAutocomplete<
-  Multiple extends boolean | undefined = false
+  Multiple extends boolean | undefined = false,
 >(
   props: DeepReadOnly<{
     label: string;

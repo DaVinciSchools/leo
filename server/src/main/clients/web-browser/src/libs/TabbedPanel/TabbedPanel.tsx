@@ -29,8 +29,8 @@ export function TabbedPanel(
       value === false
         ? undefined
         : value in props.tabKeyEnum
-        ? (props.tabKeyEnum[value] as string)
-        : undefined,
+          ? (props.tabKeyEnum[value] as string)
+          : undefined,
     param =>
       param in props.tabKeyEnum ? (props.tabKeyEnum[param] as number) : false
   );
