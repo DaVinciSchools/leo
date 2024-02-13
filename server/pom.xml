@@ -21,8 +21,8 @@
         <clients.directory>${basedir}/src/main/clients</clients.directory>
         <npm.binary.directory>${project.build.directory}/org.davincischools.leo/npm
         </npm.binary.directory>
-        <proto.version>3.24.4</proto.version>
-        <surefire.version>3.2.1</surefire.version>
+        <proto.version>3.25.2</proto.version>
+        <surefire.version>3.2.5</surefire.version>
     </properties>
 
     <dependencies>
@@ -107,21 +107,21 @@
         <dependency>
             <groupId>io.projectreactor.netty</groupId>
             <artifactId>reactor-netty-http</artifactId>
-            <version>1.1.13</version>
+            <version>1.1.15</version>
         </dependency>
 
         <!-- Google Cloud APIs. -->
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client</artifactId>
-            <version>2.2.0</version>
+            <version>2.3.0</version>
         </dependency>
 
         <!-- Google partner to send e-mail. -->
         <dependency>
             <groupId>com.mailjet</groupId>
             <artifactId>mailjet-client</artifactId>
-            <version>5.2.4</version>
+            <version>5.2.5</version>
         </dependency>
 
         <!-- OpenAI API. -->
@@ -140,7 +140,7 @@
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.17.1</version>
+            <version>1.17.2</version>
         </dependency>
     </dependencies>
 
@@ -250,7 +250,7 @@
                     <!-- NOTE: nodeVersion need to remain in sync with
                          the versions in web-browser/package.json, commented
                          there. -->
-                    <nodeVersion>v18.18.2</nodeVersion>
+                    <nodeVersion>v20.11.0</nodeVersion>
                     <installDirectory>${npm.binary.directory}</installDirectory>
                     <workingDirectory>${clients.directory}/web-browser</workingDirectory>
                     <environmentVariables>
