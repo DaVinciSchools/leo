@@ -298,8 +298,10 @@ public class Entity<P, S, F> implements Expression<F> {
   Entity<P, S, F> setEntityType(EntityType entityType) {
     checkNotNull(entityType);
 
-    this.entityType = entityType;
-
+    // A fetch should not be downgraded to a join.
+    if (entityType != EntityType.JOIN || this.entityType != EntityType.FETCH) {
+      this.entityType = entityType;
+    }
     return this;
   }
 
