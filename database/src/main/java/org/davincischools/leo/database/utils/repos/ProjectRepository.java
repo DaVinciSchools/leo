@@ -34,6 +34,7 @@ public interface ProjectRepository
     checkNotNull(params);
 
     project.fetch().requireId(params.getProjectIds());
+    project.join(Project_.projectInput, JoinType.LEFT).fetch();
 
     project.supplier(
         () ->

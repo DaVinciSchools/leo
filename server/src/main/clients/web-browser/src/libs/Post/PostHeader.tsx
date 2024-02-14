@@ -1,7 +1,11 @@
 import './Post.scss';
 
 import {pl_types} from 'pl-pb';
-import {EditTwoTone, RemoveCircleTwoTone} from '@mui/icons-material';
+import {
+  EditTwoTone,
+  PsychologyTwoTone,
+  RemoveCircleTwoTone,
+} from '@mui/icons-material';
 import Long from 'long';
 import IUserX = pl_types.IUserX;
 
@@ -13,6 +17,7 @@ export function PostHeader(props: {
 
   editIconClicked?: () => void;
   deleteIconClicked?: () => void;
+  aiIconClicked?: () => void;
 }) {
   return (
     <>
@@ -39,6 +44,13 @@ export function PostHeader(props: {
             onClick={props.deleteIconClicked}
             cursor="pointer"
             style={{display: props.deleteIconClicked ? undefined : 'none'}}
+          />
+        )}
+        {props.aiIconClicked && (
+          <PsychologyTwoTone
+            className="global-two-tone-ai-color"
+            onClick={props.aiIconClicked}
+            cursor="pointer"
           />
         )}
       </div>
