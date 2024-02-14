@@ -21,7 +21,6 @@ import org.davincischools.leo.database.daos.ProjectInputFulfillment;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
-import org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai.OpenAi3V1ProjectGenerator.InitialChatMessage;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai.OpenAi3V3ProjectGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -134,16 +133,13 @@ public class AiProject {
   }
 
   @NotNull
-  public static Project aiProjectToProject(
-      ProjectGeneratorInput generatorInput,
-      InitialChatMessage initialChatMessage,
-      AiProject aiProject) {
+  public static Project aiProjectToProject(ProjectGeneratorIo generatorIo, AiProject aiProject) {
     AtomicInteger position = new AtomicInteger(0);
     var project =
         new Project()
             .setGenerator(OpenAi3V3ProjectGenerator.class.getName())
             .setCreationTime(Instant.now())
-            .setProjectInput(generatorInput.getProjectInput())
+            .setProjectInput(generatorIo.getProjectInput())
             .setName(Strings.nullToEmpty(aiProject.name))
             .setShortDescr(Strings.nullToEmpty(aiProject.shortDescr))
             .setLongDescrHtml(Strings.nullToEmpty(aiProject.longDescrHtml));
@@ -172,7 +168,7 @@ public class AiProject {
             .collect(toImmutableSet()));
 
     var inputValues =
-        generatorInput.getSortedProjectInputs().stream()
+        generatorIo.getSortedProjectInputs().stream()
             .flatMap(p -> p.getInputValues().stream())
             .toList();
     inputValues.forEach(
@@ -187,7 +183,7 @@ public class AiProject {
                 .log(
                     "Unable to find input value with id {} for project input {}.",
                     criteria.criteriaNumber,
-                    generatorInput.getProjectInput().getId());
+                    generatorIo.getProjectInput().getId());
             return;
           }
 

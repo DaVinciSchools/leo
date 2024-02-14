@@ -1,8 +1,9 @@
-package org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators;
-
-import static org.davincischools.leo.server.utils.OpenAiUtils.chatToString;
+package org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.open_ai;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -20,33 +21,35 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.davincischools.leo.server.utils.HtmlUtils;
 import org.davincischools.leo.server.utils.OpenAiUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.AiComment;
+import org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.AiCommentGenerator;
+import org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.CommentGeneratorIo;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class OpenAiCommentGenerator implements AiCommentGenerator {
 
   private static final Logger logger = LogManager.getLogger();
   private static final AtomicLong counter = new AtomicLong(System.currentTimeMillis());
+  private static final Joiner EOL_JOINER = Joiner.on("\n\n");
+  private static final ObjectWriter OBJECT_WRITER =
+      new ObjectMapper().writer().withDefaultPrettyPrinter();
 
-  @Autowired OpenAiUtils openAiUtils;
+  private final OpenAiUtils openAiUtils;
 
   private static String normalizeAndQuote(String text) {
     return "\"" + StringEscapeUtils.escapeJava(text.replaceAll("\\s+", " ").trim()) + "\"";
   }
 
   @Override
-  public org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.AiComment
-      generateComment(
-          org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators
-                  .AiCommentPrompt
-              promptContent)
-          throws IOException {
+  public void generateComment(CommentGeneratorIo generatorIo) throws IOException {
 
     // Build system message.
 
@@ -60,7 +63,7 @@ public class OpenAiCommentGenerator implements AiCommentGenerator {
                 + " brackets, e.g., [variable_name]."
                 + " All text in quotes is escaped as a String in the Java language."
                 + " The student's project is: ")
-        .append(normalizeAndQuote(promptContent.projectSummary))
+        .append(normalizeAndQuote(generatorIo.getProjectSummary()))
         .append(".\n\n");
 
     // Include goal information.
@@ -70,17 +73,19 @@ public class OpenAiCommentGenerator implements AiCommentGenerator {
             + " No one knows the id of each goal, so they should be referred to by their"
             + " 'what_needs_to_be_completed' description."
             + " These goals are:\n");
-    promptContent.goals.forEach(
-        goal ->
-            sys.append("Goal: id=")
-                .append(goal.goalIdNumber)
-                .append(", what_needs_to_be_completed=")
-                .append(
-                    normalizeAndQuote(
-                        goal.howTheProjectFulfillsThisGoal
-                            + " "
-                            + goal.whatToLookForToShowCompletionOfThisGoal))
-                .append("\n"));
+    generatorIo
+        .getGoals()
+        .forEach(
+            goal ->
+                sys.append("Goal: id=")
+                    .append(goal.getGoalIdNumber())
+                    .append(", what_needs_to_be_completed=")
+                    .append(
+                        normalizeAndQuote(
+                            goal.getHowTheProjectFulfillsThisGoal()
+                                + " "
+                                + goal.getWhatToLookForToShowCompletionOfThisGoal()))
+                    .append("\n"));
     sys.append("\n");
 
     // Include post information.
@@ -92,17 +97,16 @@ public class OpenAiCommentGenerator implements AiCommentGenerator {
             + " The name of each variable indicates what it contains."
             + " These variables are:\n");
     ImmutableMap.<String, String>builder()
-        .put("new_post_content", promptContent.getNewPostContent())
-        .put("new_post_questions", promptContent.getNewPostFeedbackRequest())
-        .put("previous_posts_summaries", promptContent.getPreviousPostsSummary())
-        .put("previous_positive_feedback", promptContent.getPreviousPositiveFeedback())
+        .put("new_post_content", generatorIo.getNewPostContent())
+        .put("new_post_questions", generatorIo.getNewPostFeedbackRequest())
+        .put("previous_posts_summaries", generatorIo.getPreviousPostsSummary())
+        .put("previous_positive_feedback", generatorIo.getPreviousPositiveFeedback())
         .put(
-            "previous_things_to_improve_feedback",
-            promptContent.getPreviousThingsToImproveFeedback())
+            "previous_things_to_improve_feedback", generatorIo.getPreviousThingsToImproveFeedback())
         .put(
             "previous_what_things_have_improved_feedback",
-            promptContent.getPreviousHowImprovedFeedback())
-        .put("previous_new_post_question_responses", promptContent.getPreviousFeedbackResponses())
+            generatorIo.getPreviousHowImprovedFeedback())
+        .put("previous_new_post_question_responses", generatorIo.getPreviousFeedbackResponses())
         .build()
         .forEach(
             (variable, value) ->
@@ -116,7 +120,7 @@ public class OpenAiCommentGenerator implements AiCommentGenerator {
     // Prepare OpenAI client.
 
     // Create the client.
-    var timeout = Duration.ofMinutes(10);
+    var timeout = Duration.ofMinutes(20);
     var okHttpClient =
         OpenAiService.defaultClient(openAiUtils.getOpenAiKey().orElseThrow(), timeout)
             .newBuilder()
@@ -162,39 +166,41 @@ public class OpenAiCommentGenerator implements AiCommentGenerator {
     // Query AI and return comment.
     long count = counter.incrementAndGet();
     ChatCompletionResult chatCompletionResponse = null;
+    AiComment aiComment = null;
     try {
       logger.atDebug().log("Chat completion request [[{}]]: {}", count, chatCompletionRequest);
       chatCompletionResponse = openAiService.createChatCompletion(chatCompletionRequest);
       logger.atDebug().log("Chat completion response: [[{}]] {}", count, chatCompletionResponse);
-      org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.AiComment
-          aiComment =
-              Iterables.getOnlyElement(
-                  chatCompletionResponse.getChoices().stream()
-                      .map(ChatCompletionChoice::getMessage)
-                      .map(ChatMessage::getFunctionCall)
-                      .map(functionExecutor::execute)
-                      .map(
-                          org.davincischools.leo.server.utils.task_queue.workers
-                                  .reply_to_post_generators.AiComment.class
-                              ::cast)
-                      .toList());
+      aiComment =
+          Iterables.getOnlyElement(
+              chatCompletionResponse.getChoices().stream()
+                  .map(ChatCompletionChoice::getMessage)
+                  .map(ChatMessage::getFunctionCall)
+                  .map(functionExecutor::execute)
+                  .map(AiComment.class::cast)
+                  .toList());
+
       if (!HtmlUtils.stripOutHtml(Strings.nullToEmpty(aiComment.getFeedbackSummary()))
           .trim()
           .isEmpty()) {
-        return aiComment;
+        return;
       }
-      throw new IOException(
-          "Failed to get AI comment due to empty feedback [["
-              + count
-              + "]]:\n\n"
-              + chatToString(chatCompletionRequest, chatCompletionResponse));
-    } catch (Exception e) {
-      throw new IOException(
-          "Failed to get AI comment due to exception [["
-              + count
-              + "]]:\n\n"
-              + chatToString(chatCompletionRequest, chatCompletionResponse),
-          e);
+      throw new IOException("AI comment was empty [[" + count + "]]");
+    } finally {
+      generatorIo.setAiPrompt(chatCompletionRequest.toString()).setAiComment(aiComment);
+      if (chatCompletionResponse != null) {
+        generatorIo.setAiResponse(
+            EOL_JOINER
+                .join(
+                    chatCompletionResponse.toString(),
+                    aiComment != null ? OBJECT_WRITER.writeValueAsString(aiComment) : "")
+                .trim());
+      }
+      try {
+        openAiService.shutdownExecutor();
+      } catch (NullPointerException e) {
+        // An otherwise successful transaction throws an NPE for some reason.
+      }
     }
   }
 }

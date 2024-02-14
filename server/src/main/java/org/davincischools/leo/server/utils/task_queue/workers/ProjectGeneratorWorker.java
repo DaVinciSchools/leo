@@ -1,6 +1,7 @@
 package org.davincischools.leo.server.utils.task_queue.workers;
 
 import static org.davincischools.leo.database.utils.DaoUtils.getId;
+import static org.davincischools.leo.database.utils.DaoUtils.removeTransientValues;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.davincischools.leo.database.daos.ProjectInput.StateType;
@@ -10,7 +11,8 @@ import org.davincischools.leo.protos.task_service.GenerateProjectsTask;
 import org.davincischools.leo.server.utils.OpenAiUtils;
 import org.davincischools.leo.server.utils.task_queue.DefaultTaskMetadata;
 import org.davincischools.leo.server.utils.task_queue.TaskQueue;
-import org.davincischools.leo.server.utils.task_queue.workers.project_generators.ProjectGeneratorInput;
+import org.davincischools.leo.server.utils.task_queue.workers.project_generators.AiProject;
+import org.davincischools.leo.server.utils.task_queue.workers.project_generators.ProjectGeneratorIo;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai.OpenAi3V3ProjectGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -51,21 +53,39 @@ public class ProjectGeneratorWorker extends TaskQueue<GenerateProjectsTask, Defa
   @Override
   protected boolean processTask(GenerateProjectsTask task, DefaultTaskMetadata metadata)
       throws JsonProcessingException {
-
-    var generatorInput =
-        ProjectGeneratorInput.getProjectGeneratorInput(db, task.getProjectInputId());
-    if (generatorInput == null) {
-      throw new IllegalArgumentException("Unable to create project generator input.");
+    var generatorIo = ProjectGeneratorIo.getProjectGeneratorIo(db, task.getProjectInputId());
+    if (generatorIo == null) {
+      throw new IllegalArgumentException("Unable to create projects.");
     }
-    if (!(generatorInput.getProjectInput().getState() == StateType.PROCESSING
-        && getId(generatorInput.getProjectInput().getExistingProject()).isEmpty())) {
+
+    // If the expected data is not there yet, fail and retry later.
+    if (generatorIo.getProjectInput().getState() != StateType.PROCESSING
+        || getId(generatorIo.getProjectInput().getExistingProject()).isPresent()) {
       return false;
     }
 
-    var projects = new OpenAi3V3ProjectGenerator(openAiUtils).generateProjects(generatorInput, 5);
-    db.getProjectRepository().deeplySaveProjects(db, projects);
-    db.getProjectInputRepository()
-        .updateState(generatorInput.getProjectInput().getId(), StateType.COMPLETED);
+    generatorIo.setExistingProject(null).setFillInProject(null).setNumberOfProjects(5);
+
+    try {
+      new OpenAi3V3ProjectGenerator(openAiUtils).generateProjects(generatorIo);
+
+      db.getProjectRepository()
+          .deeplySaveProjects(
+              db,
+              generatorIo.getAiProjects().projects.stream()
+                  .map(p -> AiProject.aiProjectToProject(generatorIo, p))
+                  .toList());
+
+      generatorIo.getProjectInput().setState(StateType.COMPLETED);
+    } finally {
+      generatorIo
+          .getProjectInput()
+          .setAiPrompt(generatorIo.getAiPrompt())
+          .setAiResponse(generatorIo.getAiResponse());
+
+      removeTransientValues(generatorIo.getProjectInput(), db.getProjectInputRepository()::save);
+    }
+
     return true;
   }
 

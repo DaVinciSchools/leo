@@ -186,6 +186,9 @@ public class DaoUtils {
 
   @SuppressWarnings("unchecked")
   public static <T> T removeTransientValues(T daoOrIterableDaos, Consumer<T> processor) {
+    if (daoOrIterableDaos == null) {
+      return null;
+    }
     if (daoOrIterableDaos instanceof Iterable) {
       List<Object> daos = Lists.newArrayList((Iterable<Object>) daoOrIterableDaos);
       List<Object> nonTransientDaos = daos.stream().map(DaoUtils::removeTransientValues).toList();
