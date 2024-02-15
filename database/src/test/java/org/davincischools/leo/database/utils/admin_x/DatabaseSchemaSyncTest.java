@@ -110,7 +110,11 @@ public class DatabaseSchemaSyncTest {
         if (TABLE_COLUMNS_TO_IGNORE.contains(metadata.getColumnName(i))) {
           continue;
         }
-        tableSchema.put(metadata.getColumnName(i), columns.getObject(i));
+        Object value = columns.getObject(i);
+        if (value instanceof String) {
+          value = ((String) value).replaceAll("(?m)^\\s+", "");
+        }
+        tableSchema.put(metadata.getColumnName(i), value);
       }
       columnsMap.put(
           columns.getString(TABLE_NAME) + "." + columns.getString(COLUMN_NAME), tableSchema);
@@ -128,7 +132,11 @@ public class DatabaseSchemaSyncTest {
         if (TRIGGER_COLUMNS_TO_IGNORE.contains(triggers.getMetaData().getColumnName(i))) {
           continue;
         }
-        tableSchema.put(triggers.getMetaData().getColumnName(i), triggers.getObject(i));
+        Object value = triggers.getObject(i);
+        if (value instanceof String) {
+          value = ((String) value).replaceAll("(?m)^\\s+", "");
+        }
+        tableSchema.put(triggers.getMetaData().getColumnName(i), value);
       }
       triggerMap.put(triggers.getString(TRIGGER), tableSchema);
     }
