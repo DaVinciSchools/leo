@@ -14,7 +14,7 @@ import {useContext, useEffect, useState} from 'react';
 import {DeepReadOnly} from '../misc';
 import {Person} from '@mui/icons-material';
 import {createService} from '../protos';
-import {GlobalStateContext} from '../GlobalState';
+import {GlobalStateContext} from '../GlobalStateProvider/GlobalStateProvider';
 import IFullUserXDetails = user_x_management.IFullUserXDetails;
 import UserXManagementService = user_x_management.UserXManagementService;
 import IGetUserXsRequest = user_x_management.IGetUserXsRequest;

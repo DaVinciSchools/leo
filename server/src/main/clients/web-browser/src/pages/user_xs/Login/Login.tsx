@@ -1,19 +1,20 @@
 import {
   DEFAULT_FORWARD_URL,
-  FORWARD_PARAM,
+  GlobalStateContext,
   LOAD_CREDENTIALS_PARAM,
-} from '../../../libs/authentication';
+  RETURN_TO_PARAM,
+} from '../../../libs/GlobalStateProvider/GlobalStateProvider';
 import {LoginForm} from '../../../libs/LoginForm/LoginForm';
 import {useNavigate} from 'react-router';
 import {LoadCredentials} from '../../../libs/LoginForm/LoadCredentials';
 import {useContext} from 'react';
-import {GlobalStateContext} from '../../../libs/GlobalState';
 
 export function Login() {
   const global = useContext(GlobalStateContext);
   const navigate = useNavigate();
   const queryParameters = new URLSearchParams(window.location.search);
-  const forwardUrl = queryParameters.get(FORWARD_PARAM) ?? DEFAULT_FORWARD_URL;
+  const forwardUrl =
+    queryParameters.get(RETURN_TO_PARAM) ?? DEFAULT_FORWARD_URL;
   const loadCredentials = queryParameters.get(LOAD_CREDENTIALS_PARAM) != null;
 
   return (
@@ -23,16 +24,16 @@ export function Login() {
           <LoadCredentials
             loadCredentials={loadCredentials}
             onSuccess={() => navigate(forwardUrl)}
-            onFailure={() => navigate('/')}
             onError={global.setError}
           />
         ) : (
           <LoginForm
             onSuccess={() => navigate(forwardUrl)}
-            onFailure={() => {
-              // TODO: Don't do anything after 3 attempts for now.
+            onError={error => {
+              if (!(error instanceof CredentialsError)) {
+                global.setError(error);
+              }
             }}
-            onError={global.setError}
             onCancel={() => navigate('/')}
           />
         )}

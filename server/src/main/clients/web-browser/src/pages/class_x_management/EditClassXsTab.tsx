@@ -15,7 +15,7 @@ import {
   KNOWLEDGE_AND_SKILL_SORTER,
   SCHOOL_SORTER,
 } from '../../libs/sorters';
-import {GlobalStateContext} from '../../libs/GlobalState';
+import {GlobalStateContext} from '../../libs/GlobalStateProvider/GlobalStateProvider';
 import {addClassName, spread} from '../../libs/tags';
 import {
   class_x_management_service,
@@ -44,7 +44,7 @@ import SchoolManagementService = school_management.SchoolManagementService;
 
 export function EditClassXsTab() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be a teacher to administer classes.',
     userX => userX.isAdminX || userX.isTeacher
   );

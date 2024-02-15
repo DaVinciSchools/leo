@@ -17,7 +17,7 @@ import {
   ListItemText,
   TextField,
 } from '@mui/material';
-import {GlobalStateContext} from '../../libs/GlobalState';
+import {GlobalStateContext} from '../../libs/GlobalStateProvider/GlobalStateProvider';
 import {
   assignment_management,
   class_x_management_service,
@@ -48,7 +48,7 @@ import AssignmentManagementService = assignment_management.AssignmentManagementS
 
 export function EditAssignmentsTab() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be a teacher to administer assignments.',
     userX => userX.isAdminX || userX.isTeacher
   );

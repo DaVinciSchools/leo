@@ -3,14 +3,13 @@ import './EditDistricts.scss';
 import {ChangeEvent, useContext, useEffect, useState} from 'react';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {Display, SelectFromList} from '../../../SelectFromList/SelectFromList';
-import {GlobalStateContext} from '../../../libs/GlobalState';
+import {GlobalStateContext} from '../../../libs/GlobalStateProvider/GlobalStateProvider';
 import {createService} from '../../../libs/protos';
 import {district_management, pl_types} from 'pl-pb';
-
+import {DISTRICT_SORTER} from '../../../libs/sorters';
 import DistrictInformationResponse = district_management.DistrictInformationResponse;
 import DistrictManagementService = district_management.DistrictManagementService;
 import IDistrict = pl_types.IDistrict;
-import {DISTRICT_SORTER} from '../../../libs/sorters';
 
 export function SelectDistrictFromList(props: {
   id: string;
@@ -37,7 +36,7 @@ export function SelectDistrictFromList(props: {
 
 export function EditDistricts() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be an administrator to edit districts.',
     userX => userX.isAdminX
   );

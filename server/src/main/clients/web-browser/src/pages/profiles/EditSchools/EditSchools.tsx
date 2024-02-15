@@ -3,7 +3,7 @@ import './EditSchools.scss';
 import {ChangeEvent, useContext, useEffect, useState} from 'react';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {Display, SelectFromList} from '../../../SelectFromList/SelectFromList';
-import {GlobalStateContext} from '../../../libs/GlobalState';
+import {GlobalStateContext} from '../../../libs/GlobalStateProvider/GlobalStateProvider';
 import {
   MultipleDisplay,
   SelectMultipleFromList,
@@ -11,13 +11,12 @@ import {
 import {SelectDistrictFromList} from '../EditDistricts/EditDistricts';
 import {createService} from '../../../libs/protos';
 import {district_management, pl_types, school_management} from 'pl-pb';
-
+import {SCHOOL_SORTER} from '../../../libs/sorters';
 import DistrictManagementService = district_management.DistrictManagementService;
 import IDistrict = pl_types.IDistrict;
 import ISchool = pl_types.ISchool;
 import ISchoolInformationResponse = school_management.ISchoolInformationResponse;
 import SchoolManagementService = school_management.SchoolManagementService;
-import {SCHOOL_SORTER} from '../../../libs/sorters';
 
 export function SelectSchoolFromList(props: {
   id: string;
@@ -90,7 +89,7 @@ export function SelectMultipleSchoolsFromList(props: {
 
 export function EditSchools() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be an administrator to edit schools.',
     userX => userX.isAdminX
   );

@@ -1,4 +1,4 @@
-import {GlobalStateContext} from '../../libs/GlobalState';
+import {GlobalStateContext} from '../../libs/GlobalStateProvider/GlobalStateProvider';
 import {Modal} from 'antd';
 import {ProjectCard} from '../../libs/ProjectCard/ProjectCard';
 import {ProjectPage} from '../../libs/ProjectPage/ProjectPage';
@@ -18,7 +18,7 @@ import State = pl_types.ProjectDefinition.State;
 
 export function AllProjectsTab() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be logged in to view this dashboard.'
   );
 

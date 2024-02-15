@@ -1,9 +1,9 @@
 import {useContext} from 'react';
-import {GlobalStateContext} from '../../libs/GlobalState';
+import {GlobalStateContext} from '../../libs/GlobalStateProvider/GlobalStateProvider';
 
 export function OverviewTab() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be logged in to view this dashboard.'
   );
 

@@ -7,7 +7,7 @@ import {
   SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import {GlobalStateContext} from '../GlobalState';
+import {GlobalStateContext} from '../GlobalStateProvider/GlobalStateProvider';
 import {Layout, Menu, MenuItemProps, MenuProps} from 'antd';
 import {Link} from 'react-router-dom';
 import {Outlet, useNavigate} from 'react-router';
@@ -32,7 +32,7 @@ enum MenuKeys {
 
 export function DefaultPageNav() {
   const global = useContext(GlobalStateContext);
-  const userX = global.optionalUserX();
+  const userX = global.getUserX();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 

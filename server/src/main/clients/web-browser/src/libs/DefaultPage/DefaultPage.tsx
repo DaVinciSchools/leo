@@ -1,7 +1,7 @@
 import './DefaultPage.scss';
 
 import {BellOutlined, QuestionCircleOutlined} from '@ant-design/icons';
-import {GlobalStateContext} from '../GlobalState';
+import {GlobalStateContext} from '../GlobalStateProvider/GlobalStateProvider';
 import {Link} from 'react-router-dom';
 import {Popover} from 'antd';
 import {CSSProperties, PropsWithChildren, ReactNode, useContext} from 'react';
@@ -13,7 +13,7 @@ export function DefaultPage(
     bodyStyle?: CSSProperties;
   }>
 ) {
-  const userX = useContext(GlobalStateContext).useUserX();
+  const userX = useContext(GlobalStateContext).useUserXLogin();
 
   const avatarPanel =
     userX != null ? (

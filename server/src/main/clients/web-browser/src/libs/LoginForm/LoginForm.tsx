@@ -2,25 +2,28 @@ import './LoginForm.scss';
 
 import {Button, TextField} from '@mui/material';
 import {FormEvent, useContext, useEffect, useState} from 'react';
-import {GlobalStateContext} from '../GlobalState';
+import {
+  GlobalStateContext,
+  usernamePasswordLogin,
+} from '../GlobalStateProvider/GlobalStateProvider';
 import {Lock, Person} from '@mui/icons-material';
-import {addBaseUrl, usernamePasswordLogin} from '../authentication';
 import {useFormFields} from '../form_utils/forms';
 import {Link} from 'react-router-dom';
+import {pl_types} from 'pl-pb';
+import {DeepReadOnly} from '../misc';
+import IUserX = pl_types.IUserX;
 
-const AUTHENTICATION_FAILURE =
+const USERNAME_PASSWORD_FAILURE =
   'Invalid username or password. Please try again.';
 
 export function LoginForm(props: {
-  onSuccess: () => void;
-  onFailure: () => void;
+  onSuccess: (userX: DeepReadOnly<IUserX>) => void;
   onError: (error?: unknown) => void;
   onCancel: () => void;
 }) {
   const global = useContext(GlobalStateContext);
 
   const [failure, setFailure] = useState(false);
-  const [attempts, setAttempts] = useState(1);
 
   const formFields = useFormFields();
   const username = formFields.useStringFormField('username', {
@@ -37,16 +40,16 @@ export function LoginForm(props: {
 
   useEffect(() => {
     if (failure) {
-      username.setError(AUTHENTICATION_FAILURE);
-      password.setError(AUTHENTICATION_FAILURE);
+      username.setError(USERNAME_PASSWORD_FAILURE);
+      password.setError(USERNAME_PASSWORD_FAILURE);
       setTimeout(() => {
         setFailure(false);
       }, 5000);
     } else {
-      if (username.error === AUTHENTICATION_FAILURE) {
+      if (username.error === USERNAME_PASSWORD_FAILURE) {
         username.setError('');
       }
-      if (password.error === AUTHENTICATION_FAILURE) {
+      if (password.error === USERNAME_PASSWORD_FAILURE) {
         password.setError('');
       }
     }
@@ -60,20 +63,9 @@ export function LoginForm(props: {
       return;
     }
 
-    usernamePasswordLogin(
-      global,
-      username.getValue()!,
-      password.getValue()!,
-      props.onSuccess,
-      () => {
-        if (attempts > 3) {
-          props.onFailure();
-        }
-        setAttempts(attempts + 1);
-        setFailure(true);
-      },
-      props.onError
-    );
+    usernamePasswordLogin(global, username.getValue()!, password.getValue()!)
+      .then(props.onSuccess)
+      .catch(props.onError);
   }
 
   useEffect(() => {
@@ -108,7 +100,10 @@ export function LoginForm(props: {
               data-client_id="321696446071-vets88d1bisljtralb1l7en27a3qp9i8.apps.googleusercontent.com"
               data-context="signin"
               data-ux_mode="popup"
-              data-login_uri={addBaseUrl('/oauth2/authorization/google')}
+              data-login_uri={
+                new URL('/oauth2/authorization/google', window.location.href)
+                  .href
+              }
               data-cancel_on_tap_outside="true"
               data-itp_support="true"
               data-use_fedcm_for_prompt="true"

@@ -28,7 +28,7 @@ import {SchoolsIndex} from './pages/schools/SchoolsIndex';
 import {MetricType} from 'web-vitals';
 import {ClassXManagement} from './pages/class_x_management/ClassXManagement';
 import {ProjectsDashboard} from './pages/projects/ProjectsDashboard';
-import {GlobalStateProvider} from './libs/GlobalState';
+import {GlobalStateProvider} from './libs/GlobalStateProvider/GlobalStateProvider';
 
 function GaTags(props: PropsWithChildren<{title: string}>) {
   const location = useLocation();

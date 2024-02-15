@@ -20,13 +20,16 @@ import {
   useRef,
   useState,
 } from 'react';
-import {GlobalStateContext} from '../GlobalState';
+import {
+  CredentialsError,
+  GlobalStateContext,
+  usernamePasswordLogin,
+} from '../GlobalStateProvider/GlobalStateProvider';
 import {IkigaiProjectBuilder} from '../IkigaiProjectBuilder/IkigaiProjectBuilder';
 import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectConfigurer';
 import {ModalLoginForm} from '../LoginForm/ModalLoginForm';
 import {ModalRegistrationForm} from '../RegistrationForm/ModalRegistrationForm';
 import {createService} from '../protos';
-import {usernamePasswordLogin} from '../authentication';
 import {pl_types, project_management, user_x_management} from 'pl-pb';
 import {useNavigate} from 'react-router';
 import {ProjectsAutocomplete} from '../common_fields/ProjectsAutocomplete';
@@ -82,7 +85,7 @@ export function ProjectBuilder(
   }>
 ) {
   const global = useContext(GlobalStateContext);
-  const userX = global.optionalUserX();
+  const userX = global.getUserX();
   const navigate = useNavigate();
   const hiddenForm = useFormFields();
 
@@ -286,27 +289,19 @@ export function ProjectBuilder(
       .then(response => {
         if (response.accountAlreadyExists) {
           setAccountAlreadyExistsVisible(true);
+          return Promise.resolve();
         } else {
-          usernamePasswordLogin(
+          return usernamePasswordLogin(
             global,
             request.emailAddress ?? '',
-            request.password ?? '',
-            () => {
-              createService(
-                ProjectManagementService,
-                'ProjectManagementService'
-              )
-                .registerAnonymousProjects({projectInputId})
-                .then(() => {
-                  // The act of logging in should advance the step due to the removal of the REGISTER step.
-                  setProjectInputId(undefined);
-                })
-                .catch(global.setError);
-            },
-            () => {
-              global.setError('Failed to log registered user in.');
-            },
-            global.setError
+            request.password ?? ''
+          ).then(() =>
+            createService(ProjectManagementService, 'ProjectManagementService')
+              .registerAnonymousProjects({projectInputId})
+              .then(() => {
+                // The act of logging in should advance the step due to the removal of the REGISTER step.
+                setProjectInputId(undefined);
+              })
           );
         }
       })
@@ -715,11 +710,12 @@ export function ProjectBuilder(
               <ModalLoginForm
                 open={loginUserXVisible}
                 onSuccess={onLoggedIn}
-                onFailure={() => {
-                  // Do nothing. Allow the user to retry.
-                }}
                 onCancel={() => setLoginUserXVisible(false)}
-                onError={global.setError}
+                onError={error => {
+                  if (!(error instanceof CredentialsError)) {
+                    global.setError(error);
+                  }
+                }}
               />
               <ModalRegistrationForm
                 open={registerUserXVisible}

@@ -3,7 +3,7 @@ import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {TabbedPanel} from '../../../libs/TabbedPanel/TabbedPanel';
 import {PostsTab} from './PostsTab';
 import {useContext, useEffect} from 'react';
-import {GlobalStateContext} from '../../../libs/GlobalState';
+import {GlobalStateContext} from '../../../libs/GlobalStateProvider/GlobalStateProvider';
 import {OverviewTab} from './OverviewTab';
 import {AssignmentsTab} from './AssignmentsTab';
 import {StudentsTab} from './StudentsTab';
@@ -21,7 +21,7 @@ enum TeacherTab {
 
 export function TeacherDashboard() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be a teacher to view this dashboard.',
     userX => userX.isAdminX || userX.isTeacher
   );

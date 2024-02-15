@@ -1,10 +1,10 @@
 import './ClassXManagement.scss';
 import {useContext} from 'react';
-import {GlobalStateContext} from '../../libs/GlobalState';
+import {GlobalStateContext} from '../../libs/GlobalStateProvider/GlobalStateProvider';
 
 export function OverviewTab() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be a teacher to administer classes.',
     userX => userX.isAdminX || userX.isTeacher
   );

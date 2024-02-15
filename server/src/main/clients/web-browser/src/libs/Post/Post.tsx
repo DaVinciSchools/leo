@@ -20,7 +20,7 @@ import {
   toLong,
 } from '../misc';
 import {PostHeader} from './PostHeader';
-import {GlobalStateContext} from '../GlobalState';
+import {GlobalStateContext} from '../GlobalStateProvider/GlobalStateProvider';
 import {
   PROJECT_POST_COMMENT_SORTER,
   TAG_SORTER,
@@ -123,7 +123,7 @@ export function Post(
   }>
 ) {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX('You must be logged in to view posts.');
+  const userX = global.useUserXLogin('You must be logged in to view posts.');
   const hasHighlightedComment = props.post.comments
     ?.map(c => props.getUserXHighlightStyle?.(c.userX) != null)
     .includes(true);

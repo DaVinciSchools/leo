@@ -1,6 +1,6 @@
 import './CreatePostTab.scss';
 import '../../../libs/global.scss';
-import {GlobalStateContext} from '../../../libs/GlobalState';
+import {GlobalStateContext} from '../../../libs/GlobalStateProvider/GlobalStateProvider';
 import {createService} from '../../../libs/protos';
 import {pl_types, post_service, project_management, tag_service} from 'pl-pb';
 import {useContext, useEffect, useRef, useState} from 'react';
@@ -21,7 +21,7 @@ import ITag = pl_types.ITag;
 
 export function CreatePostTab() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be a student to view this dashboard.',
     userX => userX.isAdminX || userX.isStudent
   );

@@ -3,7 +3,7 @@ import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {TabbedPanel} from '../../../libs/TabbedPanel/TabbedPanel';
 import {OverviewTab} from './OverviewTab';
 import {useContext, useEffect} from 'react';
-import {GlobalStateContext} from '../../../libs/GlobalState';
+import {GlobalStateContext} from '../../../libs/GlobalStateProvider/GlobalStateProvider';
 import {PostsTab} from './PostsTab';
 import {ClassesTab} from './ClassesTab';
 import {AssignmentsTab} from './AssignmentsTab';
@@ -21,7 +21,7 @@ enum StudentTab {
 
 export function StudentDashboard() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be a student to view this dashboard.',
     userX => userX.isAdminX || userX.isStudent
   );

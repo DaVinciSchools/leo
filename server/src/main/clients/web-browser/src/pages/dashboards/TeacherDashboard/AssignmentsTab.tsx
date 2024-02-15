@@ -1,6 +1,6 @@
 import './TeacherDashboard.scss';
 import {useContext, useEffect, useState} from 'react';
-import {GlobalStateContext} from '../../../libs/GlobalState';
+import {GlobalStateContext} from '../../../libs/GlobalStateProvider/GlobalStateProvider';
 import {DeepReadOnly} from '../../../libs/misc';
 import {EducationFilters} from '../../../libs/EducationFilter/EducationFilters';
 import {Grid} from '@mui/material';
@@ -17,7 +17,7 @@ export function AssignmentsTab(
   }>
 ) {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be a teacher to view this dashboard.',
     userX => userX.isAdminX || userX.isTeacher
   );

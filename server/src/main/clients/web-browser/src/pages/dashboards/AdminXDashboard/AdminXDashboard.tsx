@@ -1,7 +1,7 @@
 import './AdminXDashboard.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import React, {Fragment, useContext, useEffect, useState} from 'react';
-import {GlobalStateContext} from '../../../libs/GlobalState';
+import {GlobalStateContext} from '../../../libs/GlobalStateProvider/GlobalStateProvider';
 import {
   Button,
   Collapse,
@@ -24,7 +24,7 @@ import ITaskQueueStatus = task_service.ITaskQueueStatus;
 
 export function AdminXDashboard() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be an administrator to view this dashboard.',
     userX => userX.isAdminX
   );

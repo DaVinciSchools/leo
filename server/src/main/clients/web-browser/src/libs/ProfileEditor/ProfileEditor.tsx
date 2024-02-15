@@ -11,7 +11,7 @@ import {
 import {useContext, useEffect, useState} from 'react';
 import {createService} from '../protos';
 import {CLASS_X_SORTER, DISTRICT_SORTER, SCHOOL_SORTER} from '../sorters';
-import {GlobalStateContext} from '../GlobalState';
+import {GlobalStateContext} from '../GlobalStateProvider/GlobalStateProvider';
 import {spread} from '../tags';
 import {AccountCircle, Email, Lock} from '@mui/icons-material';
 import {DistrictAutocomplete} from '../common_fields/DistrictAutocomplete';
@@ -46,7 +46,9 @@ export function ProfileEditor(props: {
   profileSaveStatus: string;
 }) {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX('You must be logged in to edit a profile.');
+  const userX = global.useUserXLogin(
+    'You must be logged in to edit a profile.'
+  );
 
   const [sortedDistricts, setSortedDistricts] = useState<
     DeepReadOnly<IDistrict[]>

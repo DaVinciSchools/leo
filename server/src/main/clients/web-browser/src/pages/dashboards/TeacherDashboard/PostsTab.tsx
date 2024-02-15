@@ -1,6 +1,6 @@
 import './TeacherDashboard.scss';
 import {useContext} from 'react';
-import {GlobalStateContext} from '../../../libs/GlobalState';
+import {GlobalStateContext} from '../../../libs/GlobalStateProvider/GlobalStateProvider';
 import {DeepReadOnly} from '../../../libs/misc';
 import {PostsFeed} from '../../../libs/PostsFeed/PostsFeed';
 import {Grid} from '@mui/material';
@@ -10,7 +10,7 @@ export function PostsTab(
   props: DeepReadOnly<{educationFilters: EducationFilters}>
 ) {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be a teacher to view posts.',
     userX => userX.isAdminX || userX.isTeacher
   );

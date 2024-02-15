@@ -5,7 +5,7 @@ import {FormField, FormFields} from '../form_utils/forms';
 import {pl_types, user_x_management} from 'pl-pb';
 import {DynamicSchoolAutocomplete} from '../common_fields/DynamicSchoolAutocomplete';
 import {CSSProperties, useContext, useState} from 'react';
-import {GlobalStateContext} from '../GlobalState';
+import {GlobalStateContext} from '../GlobalStateProvider/GlobalStateProvider';
 import {DynamicClassXAutocomplete} from '../common_fields/DynamicClassXAutocomplete';
 import {DynamicAssignmentAutocomplete} from '../common_fields/DynamicAssignmentAutocomplete';
 import {DynamicUserXAutocomplete} from '../common_fields/DynamicUserXAutocomplete';
@@ -40,7 +40,7 @@ export function EducationFilters(
   }>
 ) {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be logged in to use EducationFilters.'
   );
 

@@ -4,7 +4,7 @@ import Box, {BoxProps} from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import React, {useContext, useEffect, useState} from 'react';
 import Typography from '@mui/material/Typography';
-import {GlobalStateContext} from '../GlobalState';
+import {GlobalStateContext} from '../GlobalStateProvider/GlobalStateProvider';
 import {createService} from '../protos';
 import {error_service} from 'pl-pb';
 import {asObject} from '../misc';
@@ -45,14 +45,14 @@ export function HandleError() {
   const [issueLink, setIssueLink] = useState<string>();
 
   useEffect(() => {
-    if (global.error == null) {
+    if (global.getError() == null) {
       setLogErrorStatus(LogErrorStatus.IDLE);
       setMailToLink('');
       setIssueLink(undefined);
       return;
     }
 
-    const error = asObject(global.error);
+    const error = asObject(global.getError());
 
     const name =
       (error?.name ?? 'Unknown') +
@@ -66,7 +66,7 @@ export function HandleError() {
    From: ${window.location.href}
      To: ${error?.request?.url ?? 'Unknown'}
     Via: ${error?.response?.url ?? 'Unknown'}
-User Id: ${global.optionalUserX()?.id ?? 'Unknown'}
+User Id: ${global.getUserX()?.id ?? 'Unknown'}
 
 ${error ?? 'No more information.'}
 `.trim();
@@ -108,7 +108,7 @@ ${error ?? 'No more information.'}
    From: ${window.location.href}
      To: ${error?.request?.url ?? 'Unknown'}
     Via: ${error?.response?.url ?? 'Unknown'}
-User Id: ${global.optionalUserX()?.id ?? 'Unknown'}
+User Id: ${global.getUserX()?.id ?? 'Unknown'}
 
 Message:
 ${error.message ?? 'Unknown'}
@@ -132,7 +132,7 @@ ${error.stack ?? 'Unknown'}`.trim();
     if (mailToLink !== mailUrlString) {
       setMailToLink(mailUrlString);
     }
-  }, [global.error, global.optionalUserX(), issueLink]);
+  }, [global.getError(), global.getUserX(), issueLink]);
 
   function closeWarning() {
     global.setError(undefined);
@@ -148,7 +148,7 @@ ${error.stack ?? 'Unknown'}`.trim();
 
   return (
     <Modal
-      open={global.error != null}
+      open={global.getError() != null}
       onClose={() => closeWarning}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"

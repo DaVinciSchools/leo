@@ -2,7 +2,7 @@ import '../../../libs/global.scss';
 
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {useContext, useEffect, useState} from 'react';
-import {GlobalStateContext} from '../../../libs/GlobalState';
+import {GlobalStateContext} from '../../../libs/GlobalStateProvider/GlobalStateProvider';
 import {useFormFields} from '../../../libs/form_utils/forms';
 import {useDelayedAction} from '../../../libs/delayed_action';
 import {
@@ -18,7 +18,7 @@ import IFullUserXDetails = user_x_management.IFullUserXDetails;
 
 export function Accounts() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be an administrator to edit profiles.',
     userX => userX.isAdminX
   );

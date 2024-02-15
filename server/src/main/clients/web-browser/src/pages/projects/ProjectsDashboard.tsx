@@ -1,6 +1,6 @@
 import './ProjectsDashboard.scss';
 import {useContext} from 'react';
-import {GlobalStateContext} from '../../libs/GlobalState';
+import {GlobalStateContext} from '../../libs/GlobalStateProvider/GlobalStateProvider';
 import {DefaultPage} from '../../libs/DefaultPage/DefaultPage';
 import {TabbedPanel} from '../../libs/TabbedPanel/TabbedPanel';
 import {OverviewTab} from './OverviewTab';
@@ -15,7 +15,7 @@ export enum ProjectsTab {
 
 export function ProjectsDashboard() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be logged in to view this dashboard.'
   );
 

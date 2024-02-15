@@ -1,7 +1,7 @@
 import './ClassXManagement.scss';
 
 import {useContext} from 'react';
-import {GlobalStateContext} from '../../libs/GlobalState';
+import {GlobalStateContext} from '../../libs/GlobalStateProvider/GlobalStateProvider';
 import {DefaultPage} from '../../libs/DefaultPage/DefaultPage';
 import {TabbedPanel} from '../../libs/TabbedPanel/TabbedPanel';
 import {OverviewTab} from './OverviewTab';
@@ -16,7 +16,7 @@ enum ClassManagementTab {
 
 export function ClassXManagement() {
   const global = useContext(GlobalStateContext);
-  const userX = global.useUserX(
+  const userX = global.useUserXLogin(
     'You must be a teacher to administer classes.',
     userX => userX.isAdminX || userX.isTeacher
   );

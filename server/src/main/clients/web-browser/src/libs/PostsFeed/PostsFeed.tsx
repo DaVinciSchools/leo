@@ -2,7 +2,7 @@ import {Post} from '../Post/Post';
 import {pl_types, post_service} from 'pl-pb';
 import {CSSProperties, useContext, useEffect, useRef, useState} from 'react';
 import {createService} from '../protos';
-import {GlobalStateContext} from '../GlobalState';
+import {GlobalStateContext} from '../GlobalStateProvider/GlobalStateProvider';
 import {DeepReadOnly, replaceInDeepReadOnly} from '../misc';
 import IProjectPost = pl_types.IProjectPost;
 import PostService = post_service.PostService;

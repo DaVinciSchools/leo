@@ -13,7 +13,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import {GlobalStateContext} from '../GlobalState';
+import {GlobalStateContext} from '../GlobalStateProvider/GlobalStateProvider';
 import {
   AutocompleteRenderGetTagProps,
   AutocompleteRenderOptionState,
