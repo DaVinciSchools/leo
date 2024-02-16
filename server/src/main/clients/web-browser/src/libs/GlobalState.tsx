@@ -10,7 +10,7 @@ import {createService} from './protos';
 import {pl_types, user_x_management} from 'pl-pb';
 import {useNavigate} from 'react-router';
 import {FORWARD_PARAM, logout} from './authentication';
-import {DeepReadOnly} from './misc';
+import {DeepReadOnly, genericJsonReplacer} from './misc';
 import UserXManagementService = user_x_management.UserXManagementService;
 
 export enum LoadedState {
@@ -20,9 +20,9 @@ export enum LoadedState {
 }
 
 export interface IGlobalState {
-  readonly error?: unknown;
+  readonly error?: Error;
   readonly loaded: LoadedState;
-  setError: (error?: unknown) => void;
+  setError: (error?: string | Error | unknown) => void;
   optionalUserX: () => DeepReadOnly<pl_types.IUserX> | undefined;
   useUserX: (
     loginPrompt?: string,
@@ -48,7 +48,7 @@ export function GlobalStateProvider(props: PropsWithChildren<{}>) {
   const [userX, setUserX] = useState<
     DeepReadOnly<pl_types.IUserX> | undefined
   >();
-  const [error, setError] = useState<unknown>();
+  const [error, setError] = useState<Error>();
   const globalStateRef = useRef(DEFAULT_GLOBAL_STATE);
   const loadedRef = useRef(LoadedState.NOT_LOADED);
 
@@ -63,8 +63,14 @@ export function GlobalStateProvider(props: PropsWithChildren<{}>) {
     };
   }, [loadedRef.current, error, userX]);
 
-  function setErrorIntercept(error: unknown) {
-    setError(error);
+  function setErrorIntercept(error?: string | Error | unknown) {
+    if (typeof error === 'undefined' || error instanceof Error) {
+      setError(error);
+    } else if (typeof error === 'string') {
+      setError(new Error(error));
+    } else {
+      setError(new Error(JSON.stringify(error, genericJsonReplacer)));
+    }
   }
 
   function loadUserX() {

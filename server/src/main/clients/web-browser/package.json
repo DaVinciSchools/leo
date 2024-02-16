@@ -23,6 +23,7 @@
     "font-awesome": "^4.7.0",
     "format-duration": "^3.0.2",
     "froala-editor": "^4.1.4",
+    "js-base64": "^3.7.6",
     "js-cookie": "^3.0.5",
     "long": "^5.2.3",
     "pl-pb": "file:modules/pl-pb",

@@ -40,6 +40,7 @@ public class HttpExecutorArgumentResolver implements HandlerMethodArgumentResolv
             db,
             webRequest.getNativeRequest(HttpServletRequest.class),
             webRequest.getNativeResponse(HttpServletResponse.class),
-            entityManager));
+            entityManager),
+        webRequest.getNativeResponse(HttpServletResponse.class));
   }
 }

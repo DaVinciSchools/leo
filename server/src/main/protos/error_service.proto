@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "pl_types.proto";
+
 option java_multiple_files = true;
 option java_package = "org.davincischools.leo.protos.error_service";
 
@@ -11,24 +13,19 @@ service ErrorService {
 
 message ReportErrorRequest {
   optional string name = 1;
-  optional string message = 2;
-  optional string stack = 3;
-  optional string url = 4;
+  optional string error = 7;
+  optional string source_url = 13;
+  optional pl_types.UserX user_x = 8;
 
-  message Request {
-    optional string url = 1;
-    optional bytes body = 2;
-  }
+  optional string request = 9;
+  optional string request_url = 4;
+  optional bytes request_body = 14;
 
-  message Response {
-    optional int32 status = 1;
-    optional string status_text = 2;
-    optional string url = 3;
-    optional bytes body = 4;
-  }
+  optional string response = 10;
+  optional string response_url = 11;
+  optional bytes response_body = 12;
 
-  optional Request request = 5;
-  optional Response response = 6;
+  reserved 2, 3, 5, 6;
 }
 
 message ReportErrorResponse {

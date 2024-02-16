@@ -2,7 +2,7 @@ import {Message, Method, rpc, RPCImpl, RPCImplCallback} from 'protobufjs';
 import {REPORT_ERROR_REQUEST_PROP_NAME} from './HandleError/HandleError';
 import {addXsrfHeader} from './authentication';
 import {error_service} from 'pl-pb';
-
+import {genericJsonReplacer} from './misc';
 import IReportErrorRequest = error_service.IReportErrorRequest;
 
 const memoizedServices: Map<string, unknown> = new Map();
@@ -61,86 +61,43 @@ function createNewService<Service>(
       .then((response: Response) => {
         fetchResponse = response;
         if (!response.ok) {
-          const error = new Error(String(response));
-          error.name =
-            'Unexpected status code: ' +
-            response.status +
-            ' - ' +
-            response.statusText;
-          throw error;
+          throw new Error('Unexpected status code: ' + response.status);
         }
         if (
           !(response.headers.get('Content-Type') ?? '').startsWith(
             'application/x-protobuf'
           )
         ) {
-          const error = new Error(String(response));
-          error.name =
-            'Unexpected content type: ' + response.headers.get('Content-Type');
-          throw error;
+          throw new Error(
+            'Unexpected content type: ' + response.headers.get('Content-Type')
+          );
         }
         return response;
       })
       .then(response => response.arrayBuffer())
       .then(buffer => (fetchResponseBody = new Uint8Array(buffer)))
       .then(bytes => callback(null, bytes))
-      .catch(reason => {
-        if (!(reason instanceof Error)) {
-          reason = new Error(JSON.stringify(reason));
-          reason.name = 'Unexpected error of unknown type';
+      .catch(error => {
+        if (!(error instanceof Error)) {
+          error = new Error(
+            'Unexpected error: ' + JSON.stringify(error, genericJsonReplacer)
+          );
         }
 
-        if (fetchResponse) {
-          const headers: string[] = [];
-          fetchResponse.headers.forEach((value, key) =>
-            headers.push(key + ' = ' + JSON.stringify(value))
-          );
-
-          const error = new Error(
-            `From: ${window.location.href}
-  To: ${fullUrl}
- Via: ${fetchResponse.url}
-
-Headers:
-${headers.sort().join('\n')}` +
-              (reason.message && '\nOriginal Message: ' + reason.message)
-          );
-
-          error.name =
-            (reason.name ? reason.name + ': ' : '') +
-            `HTTP ${fetchResponse.status}${
-              fetchResponse.statusText && '- ' + fetchResponse.statusText
-            }`;
-
-          error.stack = (reason.stack ?? '')
-            .replace(reason.name ?? '', '[name]')
-            .replace(reason.message ?? '', '[message]');
-
-          reason = error;
-        }
-
-        const reportErrorRequest: IReportErrorRequest = {
-          name: reason.name,
-          message: reason.message,
-          stack: (reason.stack ?? '')
-            .replace(reason.name ?? '', '[name]')
-            .replace(reason.message ?? '', '[message]'),
-          url: window.location.href,
-          request: {
-            url: fullUrl,
-            body: requestData,
-          },
-          response: {
-            status: fetchResponse?.status,
-            statusText: fetchResponse?.statusText,
-            url: fetchResponse?.url,
-            body: fetchResponseBody,
-          },
-        };
-        (reason as {} as {[key: string]: IReportErrorRequest})[
+        (error as {} as {[key: string]: IReportErrorRequest})[
           REPORT_ERROR_REQUEST_PROP_NAME
-        ] = reportErrorRequest;
-        callback(reason);
+        ] = {
+          name: error.name,
+          error: JSON.stringify(error, genericJsonReplacer, 2),
+          sourceUrl: window.location.href,
+          requestBody: requestData,
+          requestUrl: fullUrl,
+          response: JSON.stringify(fetchResponse, genericJsonReplacer, 2),
+          responseUrl: fetchResponse?.url ?? 'Unknown',
+          responseBody: fetchResponseBody,
+        };
+
+        callback(error);
       });
   };
 
