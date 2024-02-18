@@ -22,7 +22,6 @@
         <npm.binary.directory>${project.build.directory}/org.davincischools.leo/npm
         </npm.binary.directory>
         <proto.version>3.25.2</proto.version>
-        <surefire.version>3.2.5</surefire.version>
     </properties>
 
     <dependencies>
@@ -462,20 +461,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!-- Run the vintage JUnit 4 tests. -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire-junit47</artifactId>
-                        <version>${surefire.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
 
             <!-- Delete additional files for mvn clean. -->
