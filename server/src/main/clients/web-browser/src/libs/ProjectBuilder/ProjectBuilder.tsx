@@ -193,7 +193,7 @@ export function ProjectBuilder(
               freeTexts: [],
               selectedIds: [],
             },
-            selected: index < 4,
+            selected: index < 3,
             highlightHue: 0,
           }));
           setDemoInputs(inputCategories);
