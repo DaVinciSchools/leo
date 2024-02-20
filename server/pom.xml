@@ -21,8 +21,7 @@
         <clients.directory>${basedir}/src/main/clients</clients.directory>
         <npm.binary.directory>${project.build.directory}/org.davincischools.leo/npm
         </npm.binary.directory>
-        <proto.version>3.24.4</proto.version>
-        <surefire.version>3.2.1</surefire.version>
+        <proto.version>3.25.2</proto.version>
     </properties>
 
     <dependencies>
@@ -107,40 +106,40 @@
         <dependency>
             <groupId>io.projectreactor.netty</groupId>
             <artifactId>reactor-netty-http</artifactId>
-            <version>1.1.13</version>
+            <version>1.1.15</version>
         </dependency>
 
         <!-- Google Cloud APIs. -->
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client</artifactId>
-            <version>2.2.0</version>
+            <version>2.3.0</version>
         </dependency>
 
         <!-- Google partner to send e-mail. -->
         <dependency>
             <groupId>com.mailjet</groupId>
             <artifactId>mailjet-client</artifactId>
-            <version>5.2.4</version>
+            <version>5.2.5</version>
         </dependency>
 
         <!-- OpenAI API. -->
         <dependency>
             <groupId>com.theokanning.openai-gpt3-java</groupId>
             <artifactId>service</artifactId>
-            <version>0.16.1</version>
+            <version>0.18.2</version>
         </dependency>
         <dependency>
             <groupId>com.theokanning.openai-gpt3-java</groupId>
             <artifactId>api</artifactId>
-            <version>0.16.1</version>
+            <version>0.18.2</version>
         </dependency>
 
         <!-- HTML parsing -->
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.17.1</version>
+            <version>1.17.2</version>
         </dependency>
     </dependencies>
 
@@ -250,7 +249,7 @@
                     <!-- NOTE: nodeVersion need to remain in sync with
                          the versions in web-browser/package.json, commented
                          there. -->
-                    <nodeVersion>v18.18.2</nodeVersion>
+                    <nodeVersion>v20.11.0</nodeVersion>
                     <installDirectory>${npm.binary.directory}</installDirectory>
                     <workingDirectory>${clients.directory}/web-browser</workingDirectory>
                     <environmentVariables>
@@ -462,20 +461,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!-- Run the vintage JUnit 4 tests. -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire-junit47</artifactId>
-                        <version>${surefire.version}</version>
-                    </dependency>
-                </dependencies>
             </plugin>
 
             <!-- Delete additional files for mvn clean. -->

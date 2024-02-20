@@ -35,9 +35,7 @@
   "java.maven.downloadSources": true,
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
-  "eslint.codeActionsOnSave.rules": [
-    "eslint:fix"
-  ],
+  "eslint.codeActionsOnSave.rules": ["eslint:fix"],
   "eslint.run": "onSave",
   "eslint.validate": [
     "javascript",
@@ -59,8 +57,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[java]": {
-    "editor.defaultFormatter": "mngrm3a.vscode-google-java-formatter"
+    "editor.defaultFormatter": "mmilic.java-google-format"
   },
-  "gjf.jarPath": "~/.m2/repository/com/google/googlejavaformat/google-java-format/1.18.1/google-java-format-1.18.1.jar",
   "html.format.enable": true
 }

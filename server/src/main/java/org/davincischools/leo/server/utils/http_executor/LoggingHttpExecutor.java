@@ -43,8 +43,10 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
   private static final Joiner ADDITIONAL_ERROR_JOINER =
       Joiner.on("\n\n" + ADDITIONAL_ERROR_MESSAGE);
   private static final Joiner EOL_JOINER = Joiner.on("\n");
+  private static final String LOG_ID_HEADER_NAME = "x-pl-log-id";
 
   final Database db;
+  final HttpServletResponse response;
   final Log log;
   final List<LogReference> logReferences = new ArrayList<>();
   final R originalRequest;
@@ -65,9 +67,15 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
 
   final List<Throwable> throwables = new ArrayList<>();
 
-  LoggingHttpExecutor(@Autowired Database db, @Autowired HttpUserX user, String caller, R input) {
+  LoggingHttpExecutor(
+      @Autowired Database db,
+      @Autowired HttpUserX user,
+      @Autowired HttpServletResponse response,
+      String caller,
+      R input) {
     this.db = checkNotNull(db);
     this.log = new Log().setCreationTime(Instant.now());
+    this.response = response;
 
     user.get().ifPresent(log::setUserX);
 
@@ -206,78 +214,80 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
   @CheckReturnValue
   @SuppressWarnings("unchecked")
   public I finish(ErrorConsumer<R, I> errorConsumer) throws HttpExecutorException {
-    if (log.getFinalResponseTime() == null) {
-      log.setFinalResponseTime(lastSuccessfulInputTime);
-    }
+    try {
+      if (log.getFinalResponseTime() == null) {
+        log.setFinalResponseTime(lastSuccessfulInputTime);
+      }
 
-    if (!throwables.isEmpty()) {
+      if (!throwables.isEmpty()) {
+        try {
+          if (lastSuccessfulInput != null) {
+            log.setLastInputType(lastSuccessfulInput.getClass().getName());
+          } else {
+            log.setLastInputType("null");
+          }
+          log.setLastInput(trimToLogLength(ioToString(lastSuccessfulInput)));
+          log.setLastInputTime(lastSuccessfulInputTime);
+
+          log.setStackTrace(
+              ADDITIONAL_ERROR_JOINER.join(
+                  Lists.transform(throwables, Throwables::getStackTraceAsString)));
+
+          Optional<I> errorConsumerResponse =
+              errorConsumer.accept(
+                  new Error<>(
+                      originalRequest, lastSuccessfulInput, ImmutableList.copyOf(throwables)),
+                  this);
+
+          if (errorConsumerResponse.isPresent()) {
+            lastSuccessfulInput = errorConsumerResponse.get();
+            lastSuccessfulInputTime = Instant.now();
+          } else {
+            log.setStatus(StatusType.ERROR);
+
+            throw new HttpExecutorException(
+                new Error<>(
+                    originalRequest, lastSuccessfulInput, ImmutableList.copyOf(throwables)));
+          }
+        } catch (HttpExecutorException e) {
+          throw e;
+        } catch (Throwable t) {
+          throwables.add(t);
+        }
+      }
+
       try {
+        if (throwables.isEmpty() && onlyLogOnFailure) {
+          return (I) lastSuccessfulInput;
+        }
+
         if (lastSuccessfulInput != null) {
-          log.setLastInputType(lastSuccessfulInput.getClass().getName());
+          log.setFinalResponseType(lastSuccessfulInput.getClass().getName());
         } else {
-          log.setLastInputType("null");
+          log.setFinalResponseType("null");
         }
-        log.setLastInput(trimToLogLength(ioToString(lastSuccessfulInput)));
-        log.setLastInputTime(lastSuccessfulInputTime);
+        log.setFinalResponse(trimToLogLength(ioToString(lastSuccessfulInput)));
 
-        log.setStackTrace(
-            ADDITIONAL_ERROR_JOINER.join(
-                Lists.transform(throwables, Throwables::getStackTraceAsString)));
-
-        Optional<I> errorConsumerResponse =
-            errorConsumer.accept(
-                new Error<>(originalRequest, lastSuccessfulInput, ImmutableList.copyOf(throwables)),
-                this);
-
-        if (errorConsumerResponse.isPresent()) {
-          lastSuccessfulInput = errorConsumerResponse.get();
-          lastSuccessfulInputTime = Instant.now();
-        } else {
-          log.setStatus(StatusType.ERROR);
-
-          db.getLogRepository().save(log);
-          db.getLogReferenceRepository().saveAll(logReferences);
-
-          throw new HttpExecutorException(
-              new Error<>(originalRequest, lastSuccessfulInput, ImmutableList.copyOf(throwables)));
-        }
-      } catch (HttpExecutorException e) {
-        throw e;
+        return (I) lastSuccessfulInput;
       } catch (Throwable t) {
         throwables.add(t);
       }
-    }
 
-    try {
-      if (throwables.isEmpty() && onlyLogOnFailure) {
-        return (I) lastSuccessfulInput;
-      }
-
-      if (lastSuccessfulInput != null) {
-        log.setFinalResponseType(lastSuccessfulInput.getClass().getName());
-      } else {
-        log.setFinalResponseType("null");
-      }
-      log.setFinalResponse(trimToLogLength(ioToString(lastSuccessfulInput)));
-
+      logger
+          .atError()
+          .withThrowable(throwables.get(0))
+          .log("An error occurred while finishing the executor: {}", ioToString(originalRequest));
+      throw new HttpExecutorException(
+          new Error<>(originalRequest, lastSuccessfulInput, ImmutableList.copyOf(throwables)));
+    } finally {
       if (log.getStatus() == null) {
         log.setStatus(StatusType.SUCCESS);
       }
 
       db.getLogRepository().save(log);
       db.getLogReferenceRepository().saveAll(logReferences);
-
-      return (I) lastSuccessfulInput;
-    } catch (Throwable t) {
-      throwables.add(t);
+      response.addHeader(LOG_ID_HEADER_NAME, log.getId().toString());
     }
-
-    logger
-        .atError()
-        .withThrowable(throwables.get(0))
-        .log("An error occurred while finishing the executor: {}", ioToString(originalRequest));
-    throw new HttpExecutorException(
-        new Error<>(originalRequest, lastSuccessfulInput, ImmutableList.copyOf(throwables)));
   }
 
   public I finish() throws HttpExecutorException {
@@ -288,11 +298,10 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
   private static String ioToString(@Nullable Object o) {
     // TODO: Make this Annotation based so that we can add more types.
     if (o == null) {
-      return null;
+      return "null";
     } else if (o instanceof Message) {
       return TextFormat.printer().printToString((Message) o);
-    } else if (o instanceof HttpServletRequest) {
-      HttpServletRequest r = (HttpServletRequest) o;
+    } else if (o instanceof HttpServletRequest r) {
       Iterator<String> e1 = r.getHeaderNames().asIterator();
       return EOL_JOINER.join(
           ImmutableList.builder()
@@ -311,8 +320,7 @@ public class LoggingHttpExecutor<R, I> implements HttpExecutor<R, I>, HttpExecut
                                       .toList())
                       .toList())
               .build());
-    } else if (o instanceof HttpServletResponse) {
-      HttpServletResponse r = (HttpServletResponse) o;
+    } else if (o instanceof HttpServletResponse r) {
       return EOL_JOINER.join(
           ImmutableList.builder()
               .add("STATUS: " + r.getStatus())

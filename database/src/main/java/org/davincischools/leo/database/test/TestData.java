@@ -238,7 +238,7 @@ public class TestData {
             district,
             "admin@projectleo.net",
             userX -> {
-              userX.setFirstName("Admin").setLastName("Project Leo");
+              userX.setFirstName("Admin").setLastName("Project Leo").setViewAiPrompts(true);
               createAdminX(db, userX);
               createTeacher(db, userX);
               createStudent(db, userX, student -> student.setDistrictStudentId(1111).setGrade(12));

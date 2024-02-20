@@ -194,9 +194,11 @@ public class ProtoDaoUtilsTest {
     District proto =
         TextFormat.parse(
             """
-            id: 1
+            id: 114
             name: "name"
-            """, District.class);
+            is_demo: true
+            """,
+            District.class);
 
     assertThat(
             toDistrictProto(toDistrictDao(proto).orElseThrow(), District::newBuilder)
@@ -418,13 +420,16 @@ public class ProtoDaoUtilsTest {
                 last_name: "last"
                 email_address: "email"
                 is_admin_x: true
+                is_cross_district_admin_x: true
                 admin_x_id: 3
                 is_teacher: true
                 teacher_id: 4
                 is_student: true
                 student_id: 5
-                is_demo: false
+                is_demo: true
                 is_authenticated: true
+                view_ai_prompts: true
+                view_ids: true
                 """,
             UserX.class);
 
@@ -434,20 +439,24 @@ public class ProtoDaoUtilsTest {
   }
 
   @Test
-  public void toUserXRoundTripDemoOnly() throws ParseException {
+  public void toUserXNoDistrictRoundTrip() throws ParseException {
     UserX proto =
         TextFormat.parse(
             """
                 id: 1
-                district_id: 2
                 first_name: "first"
                 last_name: "last"
                 email_address: "email"
-                is_admin_x: false
-                is_teacher: false
-                is_student: false
+                is_admin_x: true
+                is_cross_district_admin_x: false
+                is_teacher: true
+                teacher_id: 4
+                is_student: true
+                student_id: 5
                 is_demo: true
                 is_authenticated: true
+                view_ai_prompts: true
+                view_ids: true
                 """,
             UserX.class);
 
@@ -800,6 +809,8 @@ public class ProtoDaoUtilsTest {
                 thumbs_state_reason: "reason"
                 archived: true
                 active: true
+                ai_prompt: "AI prompt"
+                ai_response: "AI response"
                 assignment {
                   id: 2
                   name: "assignment name"
@@ -925,6 +936,8 @@ public class ProtoDaoUtilsTest {
                 long_descr_html: "long_descr_html"
                 post_time_ms: 4
                 being_edited: true
+                ai_prompt: "AI prompt"
+                ai_response: "AI response"
                 """,
             ProjectPostComment.class);
 
@@ -1232,6 +1245,8 @@ public class ProtoDaoUtilsTest {
                   long_descr_html: "existing project long"
                 }
                 existing_project_use_type: USE_CONFIGURATION
+                ai_prompt: "AI prompt"
+                ai_response: "AI response"
                 """,
             ProjectDefinition.class);
 

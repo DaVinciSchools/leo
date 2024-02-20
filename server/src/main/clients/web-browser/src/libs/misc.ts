@@ -3,6 +3,7 @@
 import {Long as PbLong} from 'protobufjs';
 import Long from 'long';
 import {CSSProperties} from 'react';
+import {Base64} from 'js-base64';
 
 export function isObject(value: any) {
   return value != null && typeof value === 'object';
@@ -128,12 +129,12 @@ export type DeepWritable<T> = T extends
   | Function
   ? T
   : T extends ReadonlyArray<infer E>
-  ? Array<DeepWritable<E>>
-  : T extends ReadonlyMap<infer K, infer V>
-  ? Map<DeepWritable<K>, DeepWritable<V>>
-  : T extends ReadonlySet<infer E>
-  ? Set<DeepWritable<E>>
-  : {-readonly [K in keyof T]: DeepWritable<T[K]>};
+    ? Array<DeepWritable<E>>
+    : T extends ReadonlyMap<infer K, infer V>
+      ? Map<DeepWritable<K>, DeepWritable<V>>
+      : T extends ReadonlySet<infer E>
+        ? Set<DeepWritable<E>>
+        : {-readonly [K in keyof T]: DeepWritable<T[K]>};
 
 export function deepWritable<T>(value: T | DeepReadOnly<T>): DeepWritable<T> {
   return value as DeepWritable<T>;
@@ -149,12 +150,12 @@ export type DeepReadOnly<T> = T extends
   | Function
   ? T
   : T extends Array<infer E>
-  ? ReadonlyArray<DeepReadOnly<E>>
-  : T extends Map<infer K, infer V>
-  ? ReadonlyMap<DeepReadOnly<K>, DeepReadOnly<V>>
-  : T extends Set<infer E>
-  ? ReadonlySet<DeepReadOnly<E>>
-  : {readonly [K in keyof T]: DeepReadOnly<T[K]>};
+    ? ReadonlyArray<DeepReadOnly<E>>
+    : T extends Map<infer K, infer V>
+      ? ReadonlyMap<DeepReadOnly<K>, DeepReadOnly<V>>
+      : T extends Set<infer E>
+        ? ReadonlySet<DeepReadOnly<E>>
+        : {readonly [K in keyof T]: DeepReadOnly<T[K]>};
 
 export function deepReadOnly<T>(value: T | DeepWritable<T>) {
   return value as DeepReadOnly<T>;
@@ -222,4 +223,34 @@ export function getUniqueHues<ID>(
   }
 
   return newHuesById as Map<DeepReadOnly<ID>, number>;
+}
+
+export function genericJsonReplacer(_: string, value: unknown): any {
+  if (value instanceof Error) {
+    const plainObject = {};
+    for (const propName in value) {
+      (plainObject as any)[propName] = (value as any)[propName];
+    }
+    if (value.stack != null) {
+      (plainObject as any)['stack'] = value.stack
+        .replace(value.name ?? '', '[name]')
+        .replace(value.message ?? '', '[message]');
+    }
+    return plainObject;
+  } else if (value instanceof Headers) {
+    const plainObject: any = {};
+    value.forEach((value, key) => {
+      plainObject[key] = value;
+    });
+    return plainObject;
+  } else if (value instanceof Uint8Array) {
+    return 'base64:' + Base64.fromUint8Array(value);
+  } else if (typeof value === 'object' && value !== null) {
+    const plainObject = {};
+    for (const propName in value) {
+      (plainObject as any)[propName] = (value as any)[propName];
+    }
+    return plainObject;
+  }
+  return value;
 }

@@ -10,7 +10,7 @@ import IDistrict = pl_types.IDistrict;
 import DistrictManagementService = district_management.DistrictManagementService;
 
 export function DynamicDistrictAutocomplete<
-  Multiple extends boolean | undefined = false
+  Multiple extends boolean | undefined = false,
 >(
   props: DeepReadOnly<{
     label: string;

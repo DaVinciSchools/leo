@@ -1,3 +1,0 @@
-[submodule "lib/google/styleguild.git"]
-	path = libs/google/styleguild.git
-	url = https://github.com/google/styleguide.git

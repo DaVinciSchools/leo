@@ -7,6 +7,7 @@ import static org.davincischools.leo.database.utils.DaoUtils.streamIfInitialized
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -20,7 +21,6 @@ import org.davincischools.leo.database.daos.ProjectInputFulfillment;
 import org.davincischools.leo.database.daos.ProjectInputValue;
 import org.davincischools.leo.database.daos.ProjectMilestone;
 import org.davincischools.leo.database.daos.ProjectMilestoneStep;
-import org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai.OpenAi3V1ProjectGenerator.InitialChatMessage;
 import org.davincischools.leo.server.utils.task_queue.workers.project_generators.open_ai.OpenAi3V3ProjectGenerator;
 import org.jetbrains.annotations.NotNull;
 
@@ -133,19 +133,16 @@ public class AiProject {
   }
 
   @NotNull
-  public static Project aiProjectToProject(
-      ProjectGeneratorInput generatorInput,
-      InitialChatMessage initialChatMessage,
-      AiProject aiProject) {
+  public static Project aiProjectToProject(ProjectGeneratorIo generatorIo, AiProject aiProject) {
     AtomicInteger position = new AtomicInteger(0);
     var project =
         new Project()
             .setGenerator(OpenAi3V3ProjectGenerator.class.getName())
             .setCreationTime(Instant.now())
-            .setProjectInput(generatorInput.getProjectInput())
-            .setName(aiProject.name)
-            .setShortDescr(aiProject.shortDescr)
-            .setLongDescrHtml(aiProject.longDescrHtml);
+            .setProjectInput(generatorIo.getProjectInput())
+            .setName(Strings.nullToEmpty(aiProject.name))
+            .setShortDescr(Strings.nullToEmpty(aiProject.shortDescr))
+            .setLongDescrHtml(Strings.nullToEmpty(aiProject.longDescrHtml));
     project.setProjectMilestones(
         aiProject.milestones.stream()
             .map(
@@ -154,7 +151,7 @@ public class AiProject {
                       new ProjectMilestone()
                           .setCreationTime(Instant.now())
                           .setPosition((float) position.incrementAndGet())
-                          .setName(m.name)
+                          .setName(Strings.nullToEmpty(m.name))
                           .setProject(project);
                   milestone.setProjectMilestoneSteps(
                       m.steps.stream()
@@ -163,7 +160,7 @@ public class AiProject {
                                   new ProjectMilestoneStep()
                                       .setCreationTime(Instant.now())
                                       .setPosition((float) position.incrementAndGet())
-                                      .setName(s)
+                                      .setName(Strings.nullToEmpty(s))
                                       .setProjectMilestone(milestone))
                           .collect(toImmutableSet()));
                   return milestone;
@@ -171,7 +168,7 @@ public class AiProject {
             .collect(toImmutableSet()));
 
     var inputValues =
-        generatorInput.getSortedProjectInputs().stream()
+        generatorIo.getSortedProjectInputs().stream()
             .flatMap(p -> p.getInputValues().stream())
             .toList();
     inputValues.forEach(
@@ -186,7 +183,7 @@ public class AiProject {
                 .log(
                     "Unable to find input value with id {} for project input {}.",
                     criteria.criteriaNumber,
-                    generatorInput.getProjectInput().getId());
+                    generatorIo.getProjectInput().getId());
             return;
           }
 
@@ -195,9 +192,9 @@ public class AiProject {
                   .setCreationTime(Instant.now())
                   .setProject(project)
                   .setProjectInputValue(inputValue)
-                  .setHowProjectFulfills(criteria.howProjectFulfills)
+                  .setHowProjectFulfills(Strings.nullToEmpty(criteria.howProjectFulfills))
                   .setFulfillmentPercentage(criteria.fulfillmentPercentage)
-                  .setVisibleIndicator(criteria.assessmentApproach);
+                  .setVisibleIndicator(Strings.nullToEmpty(criteria.assessmentApproach));
 
           project.getProjectInputFulfillments().add(projectInputFulfillment);
 

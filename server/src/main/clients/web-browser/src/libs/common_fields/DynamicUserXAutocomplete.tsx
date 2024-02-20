@@ -12,7 +12,7 @@ import IGetUserXsRequest = user_x_management.IGetUserXsRequest;
 import UserXManagementService = user_x_management.UserXManagementService;
 
 export function DynamicUserXAutocomplete<
-  Multiple extends boolean | undefined = false
+  Multiple extends boolean | undefined = false,
 >(
   props: DeepReadOnly<{
     label: string;

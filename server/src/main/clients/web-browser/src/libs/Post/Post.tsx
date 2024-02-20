@@ -31,6 +31,7 @@ import {
   InputLabel,
   LinearProgress,
   MenuItem,
+  Modal,
   Select,
 } from '@mui/material';
 import {linearProgressClasses} from '@mui/material/LinearProgress';
@@ -152,6 +153,8 @@ export function Post(
 
   const [expandComments, setExpandComments] = useState<boolean>(true);
   const [expandRatings, setExpandRatings] = useState<boolean>(false);
+  const [showAiPrompt, setShowAiPrompt] =
+    useState<DeepReadOnly<IProjectPostComment>>();
 
   useEffect(() => {
     setSortedRatingColumns(
@@ -537,6 +540,11 @@ export function Post(
                         postTimeMs={toLong(comment?.postTimeMs ?? 0)}
                         deleteIconClicked={() => deleteComment(comment)}
                         readOnly={readOnly}
+                        aiIconClicked={
+                          userX?.viewAiPrompts && comment.aiPrompt
+                            ? () => setShowAiPrompt(comment)
+                            : undefined
+                        }
                       />
                     </div>
                     <HtmlEditor
@@ -575,6 +583,24 @@ export function Post(
           </div>
         )}
       </div>
+      {showAiPrompt && (
+        <Modal open={!!showAiPrompt} onClose={() => setShowAiPrompt(undefined)}>
+          <textarea
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '90%',
+              height: '90%',
+              overflow: 'auto',
+              padding: '2em',
+            }}
+          >
+            {showAiPrompt.aiPrompt + '\n\n-----\n\n' + showAiPrompt.aiResponse}
+          </textarea>
+        </Modal>
+      )}
     </>
   );
 }

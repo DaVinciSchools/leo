@@ -22,15 +22,18 @@ import org.davincischools.leo.database.utils.Database;
 import org.davincischools.leo.database.utils.repos.GetAssignmentsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectInputsParams;
 import org.davincischools.leo.database.utils.repos.GetProjectsParams;
+import org.davincischools.leo.server.utils.task_queue.workers.project_generators.AiProject.AiProjects;
 
 @Getter
 @Setter
 @Accessors(chain = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProjectGeneratorInput {
+public class ProjectGeneratorIo {
+  private Database db;
 
   private ProjectInput projectInput;
+  private int numberOfProjects;
   /* Ordered project input values grouped by ordered categories. */
   private final List<ProjectDefinitionCategoryInputValues> sortedProjectInputs = new ArrayList<>();
 
@@ -39,7 +42,12 @@ public class ProjectGeneratorInput {
   private Project existingProject;
   private ExistingProjectUseType existingProjectUseType;
 
-  public static @Nullable ProjectGeneratorInput getProjectGeneratorInput(
+  // Project generation results.
+  private AiProjects aiProjects;
+  private String aiPrompt;
+  private String aiResponse;
+
+  public static @Nullable ProjectGeneratorIo getProjectGeneratorIo(
       Database db, int projectInputId) {
     ProjectInput projectInput =
         Iterables.getOnlyElement(
@@ -60,19 +68,19 @@ public class ProjectGeneratorInput {
       return null;
     }
 
-    var generatorInput = new ProjectGeneratorInput().setProjectInput(projectInput);
+    var generatorIo = new ProjectGeneratorIo().setDb(db).setProjectInput(projectInput);
     sortByPosition(
             listIfInitialized(projectInput.getProjectDefinition().getProjectDefinitionCategories()))
         .forEach(
             category -> {
-              generatorInput
+              generatorIo
                   .getSortedProjectInputs()
                   .add(new ProjectDefinitionCategoryInputValues(category, new ArrayList<>()));
             });
 
     var indexedDefinitionCategory =
         Maps.uniqueIndex(
-            generatorInput.getSortedProjectInputs(), p -> p.getDefinitionCategory().getId());
+            generatorIo.getSortedProjectInputs(), p -> p.getDefinitionCategory().getId());
     sortByPosition(listIfInitialized(projectInput.getProjectInputValues()))
         .forEach(
             inputValue -> {
@@ -86,6 +94,6 @@ public class ProjectGeneratorInput {
                       });
             });
 
-    return generatorInput;
+    return generatorIo;
   }
 }

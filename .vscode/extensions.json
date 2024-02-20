@@ -1,6 +1,3 @@
 {
-  "recommendations": [
-    "esbenp.prettier-vscode",
-    "mngrm3a.vscode-google-java-formatter"
-  ]
+  "recommendations": ["esbenp.prettier-vscode", "mmilic.java-google-format"]
 }

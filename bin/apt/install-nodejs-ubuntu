@@ -13,7 +13,7 @@ fi
 SOURCES_FILE=/etc/apt/sources.list.d/nodejs.sources
 
 # The major node version to use.
-NODE_REPO=node_18.x
+NODE_REPO=node_20.x
 
 # Create the repository definition. It includes the key for verification.
 cat <<EOF | sudo tee "${SOURCES_FILE}"
@@ -23,9 +23,9 @@ Architectures: amd64
 Types: deb deb-src
 URIs: https://deb.nodesource.com/${NODE_REPO}
 Components: main
-Suites: $(lsb_release --codename --short)
+Suites: nodistro
 Signed-By:
-$(wget -qO - https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sed -r 's/^$/./' | sed -e 's/^/ /')
+$(wget -qO - https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sed -r 's/^$/./' | sed -e 's/^/ /')
 EOF
 sudo chmod a+r "${SOURCES_FILE}"
 

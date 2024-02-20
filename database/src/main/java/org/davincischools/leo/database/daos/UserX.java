@@ -58,7 +58,9 @@ public class UserX implements Serializable {
   public static final String COLUMN_TEMPORARYPASSWORDGOODUNTIL_NAME =
       "temporary_password_good_until";
   public static final String COLUMN_TEMPORARYENCODEDPASSWORD_NAME = "temporary_encoded_password";
-  @Serial private static final long serialVersionUID = 5283474159939137511L;
+  public static final String COLUMN_VIEWAIPROMPTS_NAME = "view_ai_prompts";
+  public static final String COLUMN_VIEWIDS_NAME = "view_ids";
+  @Serial private static final long serialVersionUID = 8818838563865810235L;
 
   private Integer id;
 
@@ -81,6 +83,10 @@ public class UserX implements Serializable {
   private Instant temporaryPasswordGoodUntil;
 
   private String temporaryEncodedPassword;
+
+  private Boolean viewAiPrompts;
+
+  private Boolean viewIds;
 
   private District district;
 
@@ -181,6 +187,16 @@ public class UserX implements Serializable {
   @Column(name = COLUMN_TEMPORARYENCODEDPASSWORD_NAME)
   public String getTemporaryEncodedPassword() {
     return temporaryEncodedPassword;
+  }
+
+  @Column(name = COLUMN_VIEWAIPROMPTS_NAME)
+  public Boolean getViewAiPrompts() {
+    return viewAiPrompts;
+  }
+
+  @Column(name = COLUMN_VIEWIDS_NAME)
+  public Boolean getViewIds() {
+    return viewIds;
   }
 
   @ManyToOne(fetch = FetchType.LAZY)

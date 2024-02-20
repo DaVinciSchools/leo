@@ -9,8 +9,11 @@ import {
   LikeOutlined,
   LikeTwoTone,
 } from '@ant-design/icons';
-import {ReactNode, useRef, useState} from 'react';
+import {ReactNode, useContext, useRef, useState} from 'react';
 import {pl_types} from 'pl-pb';
+import {PsychologyTwoTone} from '@mui/icons-material';
+import {GlobalStateContext} from '../GlobalState';
+import {Modal} from '@mui/material';
 import IProject = pl_types.IProject;
 import ThumbsState = pl_types.Project.ThumbsState;
 
@@ -25,7 +28,13 @@ export function ProjectCard(props: {
   thumbsStateReason: string;
   updateProject: (update: IProject) => void;
   showDetails: () => void;
+  aiPrompt?: string | null | undefined;
+  aiResponse?: string | null | undefined;
 }) {
+  const global = useContext(GlobalStateContext);
+  const userX = global.optionalUserX();
+
+  const [showAiPrompt, setShowAiPrompt] = useState(false);
   const thumbsQueryRef = useRef<InputRef>(null);
   const actions: readonly ReactNode[] = [
     <>
@@ -104,21 +113,30 @@ export function ProjectCard(props: {
         id={props.id.toString()}
         title={props.name}
         extra={
-          <span className="details-link" onClick={props.showDetails}>
-            Details
-          </span>
+          <>
+            <span className="details-link" onClick={props.showDetails}>
+              Details
+            </span>
+            {!!userX?.viewAiPrompts && !!props.aiPrompt && (
+              <PsychologyTwoTone
+                className="global-two-tone-ai-color"
+                onClick={() => setShowAiPrompt(true)}
+                cursor="pointer"
+              />
+            )}
+          </>
         }
         actions={actions.slice()}
         className={
           props.active
             ? 'active'
             : props.favorite
-            ? 'favorite'
-            : props.thumbsState === ThumbsState.THUMBS_UP
-            ? 'like'
-            : props.thumbsState === ThumbsState.THUMBS_DOWN
-            ? 'dislike'
-            : undefined
+              ? 'favorite'
+              : props.thumbsState === ThumbsState.THUMBS_UP
+                ? 'like'
+                : props.thumbsState === ThumbsState.THUMBS_DOWN
+                  ? 'dislike'
+                  : undefined
         }
       >
         {props.shortDescr}
@@ -130,10 +148,10 @@ export function ProjectCard(props: {
               props.active
                 ? 'Why did you choose this project?'
                 : props.thumbsState === ThumbsState.THUMBS_UP
-                ? 'Why do you like this project?'
-                : props.thumbsState === ThumbsState.THUMBS_DOWN
-                ? 'Why do you dislike this project?'
-                : 'What do you think about this project?'
+                  ? 'Why do you like this project?'
+                  : props.thumbsState === ThumbsState.THUMBS_DOWN
+                    ? 'Why do you dislike this project?'
+                    : 'What do you think about this project?'
             }
             name="thumbs_reason"
             value={thumbsStateReason}
@@ -146,6 +164,26 @@ export function ProjectCard(props: {
           />
         </Form>
       </Card>
+      {showAiPrompt && (
+        <Modal open={showAiPrompt} onClose={() => setShowAiPrompt(false)}>
+          <textarea
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '90%',
+              height: '90%',
+              overflow: 'auto',
+              padding: '2em',
+            }}
+          >
+            {(props.aiPrompt ?? '') +
+              '\n\n-----\n\n' +
+              (props.aiResponse ?? '')}
+          </textarea>
+        </Modal>
+      )}
     </>
   );
 }

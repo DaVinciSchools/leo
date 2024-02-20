@@ -17,6 +17,9 @@ CREATE TABLE IF NOT EXISTS project
     archived            BOOLEAN,
     active              BOOLEAN,
 
+    ai_prompt           MEDIUMTEXT,
+    ai_response         MEDIUMTEXT,
+
     assignment_id       INT,
     CONSTRAINT project__assignment_id
         FOREIGN KEY (assignment_id)

@@ -139,6 +139,8 @@ export function AllProjectsTab() {
             updateProject={modifications =>
               updateProject(project, modifications)
             }
+            aiPrompt={project.projectDefinition?.aiPrompt}
+            aiResponse={project.projectDefinition?.aiResponse}
           />
         ))}
       </div>

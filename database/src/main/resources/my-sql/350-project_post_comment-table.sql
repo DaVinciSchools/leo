@@ -20,6 +20,9 @@ CREATE TABLE IF NOT EXISTS project_post_comment
     incremental_post_summary   TEXT,
     feedback_response_html     TEXT,
 
+    ai_prompt                  MEDIUMTEXT,
+    ai_response                MEDIUMTEXT,
+
     user_x_id                  INT      NOT NULL,
     CONSTRAINT project_post_comment__user_x_id
         FOREIGN KEY (user_x_id)

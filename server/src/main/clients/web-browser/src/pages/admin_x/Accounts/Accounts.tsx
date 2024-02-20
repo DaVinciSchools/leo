@@ -114,8 +114,8 @@ export function Accounts() {
                   inDistrictIds: userX.isAdminX
                     ? undefined
                     : userX.districtId != null
-                    ? [userX.districtId]
-                    : undefined,
+                      ? [userX.districtId]
+                      : undefined,
                 }}
                 userXField={editingUserX}
               />

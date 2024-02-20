@@ -10,7 +10,7 @@ import AssignmentManagementService = assignment_management.AssignmentManagementS
 import IGetAssignmentsRequest = assignment_management.IGetAssignmentsRequest;
 
 export function DynamicAssignmentAutocomplete<
-  Multiple extends boolean | undefined = false
+  Multiple extends boolean | undefined = false,
 >(
   props: DeepReadOnly<{
     label: string;

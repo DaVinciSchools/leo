@@ -127,24 +127,28 @@ public class Predicate implements Expression<Boolean> {
     return switch (type) {
       case EQ -> builder.equal(left.toExpression(builder), right.toExpression(builder));
       case FALSE -> builder.isTrue(builder.literal(false));
-      case IN -> right != null
-          ? left.toExpression(builder).in(right.toExpression(builder))
-          : values != null && !values.isEmpty()
-              ? left.toExpression(builder)
-                  .in(values.stream().map(v -> v.toExpression(builder)).toList())
-              : FALSE.toPredicate(builder);
+      case IN ->
+          right != null
+              ? left.toExpression(builder).in(right.toExpression(builder))
+              : values != null && !values.isEmpty()
+                  ? left.toExpression(builder)
+                      .in(values.stream().map(v -> v.toExpression(builder)).toList())
+                  : FALSE.toPredicate(builder);
       case IS_NOT_NULL -> builder.isNotNull(value.toExpression(builder));
       case IS_NULL -> builder.isNull(value.toExpression(builder));
-      case LIKE -> builder.like(
-          (jakarta.persistence.criteria.Expression<String>) left.toExpression(builder),
-          (jakarta.persistence.criteria.Expression<String>) right.toExpression(builder));
+      case LIKE ->
+          builder.like(
+              (jakarta.persistence.criteria.Expression<String>) left.toExpression(builder),
+              (jakarta.persistence.criteria.Expression<String>) right.toExpression(builder));
       case NEQ -> builder.notEqual(left.toExpression(builder), right.toExpression(builder));
-      case NOT -> builder.isFalse(
-          (jakarta.persistence.criteria.Expression<Boolean>) value.toExpression(builder));
-      case OR -> builder.or(
-          values.stream()
-              .map(v -> Predicate.isTrue((Expression<Boolean>) v).toPredicate(builder))
-              .toArray(jakarta.persistence.criteria.Predicate[]::new));
+      case NOT ->
+          builder.isFalse(
+              (jakarta.persistence.criteria.Expression<Boolean>) value.toExpression(builder));
+      case OR ->
+          builder.or(
+              values.stream()
+                  .map(v -> Predicate.isTrue((Expression<Boolean>) v).toPredicate(builder))
+                  .toArray(jakarta.persistence.criteria.Predicate[]::new));
       case TRUE -> builder.isTrue(builder.literal(true));
     };
   }
@@ -159,19 +163,15 @@ public class Predicate implements Expression<Boolean> {
     return switch (type) {
       case EQ -> left.toString() + " = " + right.toString();
       case FALSE -> "FALSE";
-      case IN -> left.toString()
-          + " IN ("
-          + (right != null ? right.toString() : values.toString())
-          + ")";
+      case IN ->
+          left.toString() + " IN (" + (right != null ? right.toString() : values.toString()) + ")";
       case IS_NOT_NULL -> value.toString() + " IS NOT NULL";
       case IS_NULL -> value.toString() + " IS NULL";
       case LIKE -> left.toString() + " LIKE " + right.toString();
       case NEQ -> left.toString() + " != " + right.toString();
       case NOT -> "NOT " + value.toString();
-      case OR -> values.stream()
-          .map(Expression::toString)
-          .reduce((a, b) -> a + "\n  OR " + b)
-          .orElse("?");
+      case OR ->
+          values.stream().map(Expression::toString).reduce((a, b) -> a + "\n  OR " + b).orElse("?");
       case TRUE -> "TRUE";
     };
   }

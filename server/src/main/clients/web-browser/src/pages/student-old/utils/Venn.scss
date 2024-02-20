@@ -33,8 +33,10 @@
   position: absolute;
   top: 25%;
   left: 25%;
-  transition: transform 2s cubic-bezier(0.1, 0.5, 0.7, 2.5),
-    background-color 1s 2s, border-color 1s 2s;
+  transition:
+    transform 2s cubic-bezier(0.1, 0.5, 0.7, 2.5),
+    background-color 1s 2s,
+    border-color 1s 2s;
   border: 0.4em solid white;
   display: flex;
   flex-flow: column nowrap;

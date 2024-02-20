@@ -10,7 +10,7 @@ import ISchool = pl_types.ISchool;
 import SchoolManagementService = school_management.SchoolManagementService;
 
 export function DynamicSchoolAutocomplete<
-  Multiple extends boolean | undefined = false
+  Multiple extends boolean | undefined = false,
 >(
   props: DeepReadOnly<{
     label: string;

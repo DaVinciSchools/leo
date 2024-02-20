@@ -31,8 +31,8 @@ import org.davincischools.leo.server.utils.task_queue.DefaultTaskMetadata;
 import org.davincischools.leo.server.utils.task_queue.TaskQueue;
 import org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.AiComment;
 import org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.AiCommentGenerator;
-import org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.AiCommentPrompt;
-import org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.AiCommentPrompt.Goal;
+import org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.CommentGeneratorIo;
+import org.davincischools.leo.server.utils.task_queue.workers.reply_to_post_generators.CommentGeneratorIo.Goal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -88,11 +88,11 @@ public final class ReplyToPostsWorker extends TaskQueue<ReplyToPostTask, Default
       return false;
     }
 
-    AiCommentPrompt promptContent = new AiCommentPrompt();
+    CommentGeneratorIo generatorIo = new CommentGeneratorIo();
 
     // Add project information.
 
-    promptContent.setProjectSummary(
+    generatorIo.setProjectSummary(
         Strings.nullToEmpty(project.getName())
             + ": "
             + Strings.nullToEmpty(project.getShortDescr())
@@ -105,7 +105,7 @@ public final class ReplyToPostsWorker extends TaskQueue<ReplyToPostTask, Default
               goal.setGoalIdNumber(fulfillment.getId());
               goal.setHowTheProjectFulfillsThisGoal(fulfillment.getHowProjectFulfills());
               goal.setWhatToLookForToShowCompletionOfThisGoal(fulfillment.getVisibleIndicator());
-              promptContent.getGoals().add(goal);
+              generatorIo.getGoals().add(goal);
             });
 
     // Step through posts.
@@ -135,27 +135,26 @@ public final class ReplyToPostsWorker extends TaskQueue<ReplyToPostTask, Default
 
       // If the Coach Leo comment doesn't exist yet, create one.
       if (coachComment.isEmpty()) {
-        promptContent.setNewPostContent(
+        generatorIo.setNewPostContent(
             stripOutHtml(Strings.nullToEmpty(projectPost.getLongDescrHtml()).trim()));
-        promptContent.setNewPostFeedbackRequest(
+        generatorIo.setNewPostFeedbackRequest(
             stripOutHtml(Strings.nullToEmpty(projectPost.getDesiredFeedback()).trim()));
 
-        promptContent.setPreviousPostsSummary(
+        generatorIo.setPreviousPostsSummary(
             Strings.nullToEmpty(previousPostsSummary.toString().trim()));
-        promptContent.setPreviousPositiveFeedback(
+        generatorIo.setPreviousPositiveFeedback(
             Strings.nullToEmpty(previousPositiveFeedback.toString().trim()));
-        promptContent.setPreviousThingsToImproveFeedback(
+        generatorIo.setPreviousThingsToImproveFeedback(
             Strings.nullToEmpty(previousThingsToImproveFeedback.toString().trim()));
-        promptContent.setPreviousHowImprovedFeedback(
+        generatorIo.setPreviousHowImprovedFeedback(
             Strings.nullToEmpty(previousHowImprovedFeedback.toString().trim()));
-        promptContent.setPreviousFeedbackResponses(
+        generatorIo.setPreviousFeedbackResponses(
             Strings.nullToEmpty(previousFeedbackResponses.toString().trim()));
 
-        AiComment aiComment = aiCommentGenerator.generateComment(promptContent);
-        logger.atInfo().log(
-            "AI Comment Response: {}", jsonObjectMapper.writeValueAsString(aiComment));
+        aiCommentGenerator.generateComment(generatorIo);
 
         // Convert the AI comment into a Dao comment.
+        AiComment aiComment = generatorIo.getAiComment();
         ProjectPostComment newComment =
             new ProjectPostComment()
                 .setCreationTime(Instant.now())
@@ -168,7 +167,9 @@ public final class ReplyToPostsWorker extends TaskQueue<ReplyToPostTask, Default
                 .setHowImprovedFeedback(aiComment.getHowTheyImprovedFeedback())
                 .setFeedbackResponseHtml(aiComment.getFeedbackRequestResponse())
                 .setHasEnoughContentPercent(aiComment.getHasEnoughContent())
-                .setProjectPost(projectPost);
+                .setProjectPost(projectPost)
+                .setAiPrompt(generatorIo.getAiPrompt())
+                .setAiResponse(generatorIo.getAiResponse());
         db.getProjectPostCommentRepository().save(newComment);
 
         // Save the goal ratings.

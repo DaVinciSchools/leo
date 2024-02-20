@@ -27,7 +27,7 @@ const PAGE_SIZE = 20;
 
 export function DynamicLoadAutocomplete<
   T,
-  Multiple extends boolean | undefined = false
+  Multiple extends boolean | undefined = false,
 >(
   props: DeepReadOnly<{
     formField: FormField<DeepReadOnly<T>, Multiple>;
@@ -167,33 +167,33 @@ export function DynamicLoadAutocomplete<
         props.renderTags
           ? props.renderTags
           : !props.formField.multiple
-          ? undefined
-          : (options, getTagProps) =>
-              options.map(option => (
-                <Chip
-                  {...getTagProps}
-                  key={props.getId(option)}
-                  label={
-                    option
-                      ? props.renderTagLabel?.(option) ??
-                        props.getOptionLabel(option)
-                      : ''
-                  }
-                  size="small"
-                  onDelete={() => {
-                    props.formField.setValue(
-                      removeInDeepReadOnly(
-                        props.formField.getValue() as DeepReadOnly<T[]>,
-                        option,
-                        props.getId
-                      ) as Multiple extends true
-                        ? DeepReadOnly<T>[]
-                        : DeepReadOnly<T> | undefined
-                    );
-                  }}
-                  style={option ? props.renderTagStyle?.(option) ?? {} : {}}
-                />
-              ))
+            ? undefined
+            : (options, getTagProps) =>
+                options.map(option => (
+                  <Chip
+                    {...getTagProps}
+                    key={props.getId(option)}
+                    label={
+                      option
+                        ? props.renderTagLabel?.(option) ??
+                          props.getOptionLabel(option)
+                        : ''
+                    }
+                    size="small"
+                    onDelete={() => {
+                      props.formField.setValue(
+                        removeInDeepReadOnly(
+                          props.formField.getValue() as DeepReadOnly<T[]>,
+                          option,
+                          props.getId
+                        ) as Multiple extends true
+                          ? DeepReadOnly<T>[]
+                          : DeepReadOnly<T> | undefined
+                      );
+                    }}
+                    style={option ? props.renderTagStyle?.(option) ?? {} : {}}
+                  />
+                ))
       }
       renderInput={params => (
         <TextField

@@ -45,7 +45,7 @@ export interface FormFieldMetadata<
   Multiple extends boolean | undefined = false,
   DisableClearable extends boolean | undefined = false,
   FreeSolo extends boolean | undefined = false,
-  ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
 > {
   isPassword?: {
     skipPasswordCheck?: boolean;
@@ -82,7 +82,7 @@ export interface FormField<
   Multiple extends boolean | undefined = false,
   DisableClearable extends boolean | undefined = false,
   FreeSolo extends boolean | undefined = false,
-  ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
 > {
   readonly name: string;
   readonly disabled: boolean;
@@ -126,7 +126,7 @@ interface InternalFormField<
   Multiple extends boolean | undefined = false,
   DisableClearable extends boolean | undefined = false,
   FreeSolo extends boolean | undefined = false,
-  ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+  ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
 > extends FormField<T, Multiple, DisableClearable, FreeSolo, ChipComponent> {
   fieldRef: RefObject<HTMLDivElement | HTMLButtonElement | undefined>;
 
@@ -170,7 +170,7 @@ export interface FormFields {
     Multiple extends boolean | undefined = false,
     DisableClearable extends boolean | undefined = false,
     FreeSolo extends boolean | undefined = false,
-    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
   >(
     name: string,
     multiple: Multiple,
@@ -187,7 +187,7 @@ export interface FormFields {
   useSingleAutocompleteFormField<
     T,
     DisableClearable extends boolean | undefined = false,
-    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
   >(
     name: string,
     fieldMetadata?: FormFieldMetadata<
@@ -201,7 +201,7 @@ export interface FormFields {
 
   useSingleFreeSoloAutocompleteFormField<
     DisableClearable extends boolean | undefined = false,
-    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
   >(
     name: string,
     fieldMetadata?: FormFieldMetadata<
@@ -216,7 +216,7 @@ export interface FormFields {
   useMultipleAutocompleteFormField<
     T,
     DisableClearable extends boolean | undefined = false,
-    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
   >(
     name: string,
     fieldMetadata?: FormFieldMetadata<
@@ -231,7 +231,7 @@ export interface FormFields {
   useMultipleFreeSoloAutocompleteFormField<
     T,
     DisableClearable extends boolean | undefined = false,
-    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
   >(
     name: string,
     fieldMetadata?: FormFieldMetadata<
@@ -336,7 +336,7 @@ export function useFormFields(
     Multiple extends boolean | undefined = false,
     DisableClearable extends boolean | undefined = false,
     FreeSolo extends boolean | undefined = false,
-    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
   >(
     name: string,
     multiple: Multiple,
@@ -374,7 +374,7 @@ export function useFormFields(
   function useSingleAutocompleteFormField<
     T,
     DisableClearable extends boolean | undefined = false,
-    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
   >(
     name: string,
     fieldMetadata?: FormFieldMetadata<
@@ -390,7 +390,7 @@ export function useFormFields(
 
   function useSingleFreeSoloAutocompleteFormField<
     DisableClearable extends boolean | undefined = false,
-    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
   >(
     name: string,
     fieldMetadata?: FormFieldMetadata<
@@ -407,7 +407,7 @@ export function useFormFields(
   function useMultipleAutocompleteFormField<
     T,
     DisableClearable extends boolean | undefined = false,
-    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
   >(
     name: string,
     fieldMetadata?: FormFieldMetadata<
@@ -424,7 +424,7 @@ export function useFormFields(
   function useMultipleFreeSoloAutocompleteFormField<
     T,
     DisableClearable extends boolean | undefined = false,
-    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
   >(
     name: string,
     fieldMetadata?: FormFieldMetadata<
@@ -443,7 +443,7 @@ export function useFormFields(
     Multiple extends boolean | undefined = false,
     DisableClearable extends boolean | undefined = false,
     FreeSolo extends boolean | undefined = false,
-    ChipComponent extends ElementType = ChipTypeMap['defaultComponent']
+    ChipComponent extends ElementType = ChipTypeMap['defaultComponent'],
   >(
     name: string,
     fieldMetadata?: FormFieldMetadata<
@@ -511,12 +511,12 @@ export function useFormFields(
       return fieldMetadata?.isPassword && !showPasswords
         ? 'password'
         : fieldMetadata?.isEmail
-        ? 'email'
-        : fieldMetadata?.isInteger != null
-        ? 'number'
-        : fieldMetadata?.isBoolean
-        ? 'checkbox'
-        : 'text';
+          ? 'email'
+          : fieldMetadata?.isInteger != null
+            ? 'number'
+            : fieldMetadata?.isBoolean
+              ? 'checkbox'
+              : 'text';
     }
 
     function getTextFieldParams(
@@ -570,9 +570,9 @@ export function useFormFields(
               (fieldMetadata?.isZipCode
                 ? MAX_ZIP_CODE_LENGTH
                 : fieldMetadata?.isPassword &&
-                  fieldMetadata?.isPassword?.skipPasswordCheck !== true
-                ? MAX_PASSWORD_LENGTH
-                : undefined),
+                    fieldMetadata?.isPassword?.skipPasswordCheck !== true
+                  ? MAX_PASSWORD_LENGTH
+                  : undefined),
             min: fieldMetadata?.isInteger?.min,
             max: fieldMetadata?.isInteger?.max,
             onBlur: e => {
