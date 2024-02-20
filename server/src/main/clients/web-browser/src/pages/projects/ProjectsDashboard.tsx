@@ -25,29 +25,27 @@ export function ProjectsDashboard() {
   return (
     <>
       <DefaultPage title="Projects">
-        <div style={{height: '100%'}}>
-          <TabbedPanel
-            tabKeyEnum={ProjectsTab}
-            defaultTabKey={ProjectsTab.PROJECT_BUILDER}
-            tabs={[
-              // {
-              //   key: ProjectsTab.OVERVIEW,
-              //   label: 'Overview',
-              //   content: <OverviewTab />,
-              // },
-              {
-                key: ProjectsTab.PROJECT_BUILDER,
-                label: 'Builder',
-                content: <ProjectBuilderTab />,
-              },
-              {
-                key: ProjectsTab.ALL_PROJECTS,
-                label: 'All Projects',
-                content: <AllProjectsTab />,
-              },
-            ]}
-          />
-        </div>
+        <TabbedPanel
+          tabKeyEnum={ProjectsTab}
+          defaultTabKey={ProjectsTab.PROJECT_BUILDER}
+          tabs={[
+            // {
+            //   key: ProjectsTab.OVERVIEW,
+            //   label: 'Overview',
+            //   content: <OverviewTab />,
+            // },
+            {
+              key: ProjectsTab.PROJECT_BUILDER,
+              label: 'Builder',
+              content: <ProjectBuilderTab />,
+            },
+            {
+              key: ProjectsTab.ALL_PROJECTS,
+              label: 'All Projects',
+              content: <AllProjectsTab />,
+            },
+          ]}
+        />
       </DefaultPage>
     </>
   );

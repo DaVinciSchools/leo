@@ -12,14 +12,7 @@ import {
   StepButton,
   Stepper,
 } from '@mui/material';
-import {
-  CSSProperties,
-  ReactNode,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import {ReactNode, useContext, useEffect, useRef, useState} from 'react';
 import {GlobalStateContext} from '../GlobalState';
 import {IkigaiProjectBuilder} from '../IkigaiProjectBuilder/IkigaiProjectBuilder';
 import {IkigaiProjectConfigurer} from '../IkigaiProjectConfigurer/IkigaiProjectConfigurer';
@@ -82,7 +75,6 @@ export function ProjectBuilder(
   props: DeepReadOnly<{
     noCategoriesText: ReactNode;
     isDemoPage?: boolean;
-    style?: Partial<CSSProperties>;
   }>
 ) {
   const [openCategoryModalId, setOpenCategoryModalId] = useState<
@@ -345,7 +337,7 @@ export function ProjectBuilder(
 
   return (
     <>
-      <div className="project-builder-page-layout" style={props.style}>
+      <div className="project-builder-page-layout">
         <Box className="project-builder-stepper" paddingY={3}>
           <Stepper activeStep={activeStep}>
             {steps.map((value, index) => (
@@ -385,6 +377,7 @@ export function ProjectBuilder(
               >
                 {props.isDemoPage !== true && (
                   <Button
+                    color="secondary"
                     variant="contained"
                     className="project-builder-button"
                     disabled={!userX?.isAuthenticated}
@@ -408,6 +401,7 @@ export function ProjectBuilder(
                   an assignment
                 </Button> */}
                 <Button
+                  color="secondary"
                   variant="contained"
                   className="project-builder-button"
                   onClick={() => setActiveStep(activeStep + 1)}
@@ -829,6 +823,7 @@ export function ProjectBuilder(
                 className="project-builder-congratulations-buttons"
               >
                 <Button
+                  color="secondary"
                   variant="contained"
                   className="project-builder-button"
                   onClick={onSeeProjects}

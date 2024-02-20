@@ -1,5 +1,3 @@
-import './EditDistricts.scss';
-
 import {ChangeEvent, useContext, useEffect, useState} from 'react';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {Display, SelectFromList} from '../../../SelectFromList/SelectFromList';

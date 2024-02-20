@@ -132,8 +132,12 @@ export default function FreeTextInputModal(
               />
             </div>
             <div className="ikigai-project-builder-modal-buttons">
-              <Button onClick={onSave}>Save</Button>
-              <Button onClick={onCancel}>Cancel</Button>
+              <Button onClick={onSave} color="secondary" variant="contained">
+                Save
+              </Button>
+              <Button onClick={onCancel} color="secondary">
+                Cancel
+              </Button>
             </div>
           </div>
         </TitledPaper>

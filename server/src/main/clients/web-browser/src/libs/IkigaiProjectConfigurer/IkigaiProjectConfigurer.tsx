@@ -11,8 +11,11 @@ import {pl_types} from 'pl-pb';
 import ValueType = pl_types.ProjectInputCategory.ValueType;
 
 const Category = styled.div`
+  padding-bottom: ${props => props.theme.spacing(2)};
+`;
+
+const CategoryContent = styled.div`
   border: 1px solid ${props => props.theme.palette.grey[400]};
-  margin-bottom: ${props => props.theme.spacing(2)};
 `;
 
 const CategoryHeader = styled.div<{
@@ -87,79 +90,84 @@ export function IkigaiProjectConfigurer(
 
         return (
           <Category key={getCategoryId(input.input.category).toString()}>
-            <CategoryHeader
-              selected={input.selected}
-              $highlightHue={input.highlightHue}
-              onClick={() => handleSelect(input)}
-            >
-              <Checkbox
-                checked={input.selected}
-                onChange={() => {
-                  handleSelect(input);
-                }}
-              />
-              <div>{input.input.category?.name ?? '[Unknown Category]'}</div>
-            </CategoryHeader>
-            <CategoryBody>
-              <Markdown className="global-markdown">
-                {input.input?.category?.shortDescr ?? '[No Short Description]'}
-              </Markdown>
-              {hasValues ? (
-                <ChipList>
-                  {input.input.freeTexts?.map((freeText, i) => {
-                    return (
-                      <Chip
-                        key={`${freeText}-${i}`}
-                        sx={{
-                          height: 'auto',
-                          '& .MuiChip-label': {
-                            display: 'block',
-                            whiteSpace: 'normal',
-                            padding: '8px 12px',
-                          },
-                        }}
-                        label={freeText}
-                      />
-                    );
-                  })}
-                  {input.input.selectedIds?.map(id => {
-                    const option = input.input.category?.options?.find(
-                      option => option.id === id
-                    );
-
-                    return (
-                      <Chip
-                        key={id}
-                        sx={{
-                          height: 'auto',
-                          '& .MuiChip-label': {
-                            display: 'block',
-                            whiteSpace: 'normal',
-                            padding: '8px 12px',
-                          },
-                        }}
-                        label={option?.name}
-                      />
-                    );
-                  })}
-                </ChipList>
-              ) : (
-                <NoValues>No values</NoValues>
-              )}
-              <Button
-                sx={{
-                  alignSelf: 'end',
-                }}
-                onClick={() => {
-                  props.onClickEditInputValues(input);
-                }}
-                variant="outlined"
-                size="small"
-                disabled={!input.selected}
+            <CategoryContent>
+              <CategoryHeader
+                selected={input.selected}
+                $highlightHue={input.highlightHue}
+                onClick={() => handleSelect(input)}
               >
-                Edit
-              </Button>
-            </CategoryBody>
+                <Checkbox
+                  color="secondary"
+                  checked={input.selected}
+                  onChange={() => {
+                    handleSelect(input);
+                  }}
+                />
+                <div>{input.input.category?.name ?? '[Unknown Category]'}</div>
+              </CategoryHeader>
+              <CategoryBody>
+                <Markdown className="global-markdown">
+                  {input.input?.category?.shortDescr ??
+                    '[No Short Description]'}
+                </Markdown>
+                {hasValues ? (
+                  <ChipList>
+                    {input.input.freeTexts?.map((freeText, i) => {
+                      return (
+                        <Chip
+                          key={`${freeText}-${i}`}
+                          sx={{
+                            height: 'auto',
+                            '& .MuiChip-label': {
+                              display: 'block',
+                              whiteSpace: 'normal',
+                              padding: '8px 12px',
+                            },
+                          }}
+                          label={freeText}
+                        />
+                      );
+                    })}
+                    {input.input.selectedIds?.map(id => {
+                      const option = input.input.category?.options?.find(
+                        option => option.id === id
+                      );
+
+                      return (
+                        <Chip
+                          key={id}
+                          sx={{
+                            height: 'auto',
+                            '& .MuiChip-label': {
+                              display: 'block',
+                              whiteSpace: 'normal',
+                              padding: '8px 12px',
+                            },
+                          }}
+                          label={option?.name}
+                        />
+                      );
+                    })}
+                  </ChipList>
+                ) : (
+                  <NoValues>No values</NoValues>
+                )}
+                <Button
+                  sx={{
+                    alignSelf: 'end',
+                  }}
+                  onClick={() => {
+                    props.onClickEditInputValues(input);
+                  }}
+                  variant="outlined"
+                  size="small"
+                  disabled={!input.selected}
+                  color="secondary"
+                >
+                  Edit
+                </Button>
+              </CategoryBody>
+            </CategoryContent>
           </Category>
         );
       })}

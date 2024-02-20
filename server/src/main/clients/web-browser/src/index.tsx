@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
 import {createTheme, ThemeProvider} from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 
 import {Root} from './pages/Root';
 import {Login} from './pages/user_xs/Login/Login';
@@ -23,12 +24,11 @@ import {TeacherDashboard} from './pages/dashboards/TeacherDashboard/TeacherDashb
 import {AdminXDashboard} from './pages/dashboards/AdminXDashboard/AdminXDashboard';
 import {RedirectToDashboard} from './pages/dashboards/RedirectToDashboard';
 import {DemoProjectBuilder} from './pages/demos/DemoProjectBuilder/DemoProjectBuilder';
-import {MechanicalEngineering} from './pages/schools/dvs/MechanicalEngineering';
-import {SchoolsIndex} from './pages/schools/SchoolsIndex';
 import {MetricType} from 'web-vitals';
 import {ClassXManagement} from './pages/class_x_management/ClassXManagement';
 import {ProjectsDashboard} from './pages/projects/ProjectsDashboard';
 import {GlobalStateProvider} from './libs/GlobalState';
+import THEME from './theme';
 
 function GaTags(props: PropsWithChildren<{title: string}>) {
   const location = useLocation();
@@ -219,32 +219,6 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: '/schools',
-    children: [
-      {
-        path: 'index.html',
-        element: (
-          <GaTags title="Schools">
-            <SchoolsIndex />
-          </GaTags>
-        ),
-      },
-      {
-        path: 'dvs',
-        children: [
-          {
-            path: 'mechanical-engineering.html',
-            element: (
-              <GaTags title="School of Mechanical Engineering">
-                <MechanicalEngineering />
-              </GaTags>
-            ),
-          },
-        ],
-      },
-    ],
-  },
-  {
     path: '',
     children: [
       {
@@ -267,18 +241,12 @@ const router = createBrowserRouter([
   },
 ]);
 
-const theme = createTheme({
-  typography: {
-    button: {
-      textTransform: 'none',
-      fontWeight: 600,
-    },
-  },
-});
+const theme = createTheme(THEME);
 
 root.render(
   <StrictMode>
     <ThemeProvider theme={theme}>
+      <CssBaseline />
       <GlobalStateProvider>
         <RouterProvider router={router} />
       </GlobalStateProvider>

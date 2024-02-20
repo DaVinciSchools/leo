@@ -1,7 +1,10 @@
-import './LoginForm.scss';
-
-import {Backdrop, Box, Modal} from '@mui/material';
+import {Dialog, Paper} from '@mui/material';
 import {LoginForm} from './LoginForm';
+import {styled} from 'styled-components';
+
+const StyledDialog = styled(Paper)`
+  padding: ${props => props.theme.spacing(4)};
+`;
 
 export function ModalLoginForm(props: {
   open: boolean;
@@ -11,25 +14,17 @@ export function ModalLoginForm(props: {
   onCancel: () => void;
 }) {
   return (
-    <>
-      <Modal
-        open={props.open}
-        slots={{backdrop: Backdrop}}
-        slotProps={{
-          backdrop: {
-            timeout: 500,
-          },
-        }}
-      >
-        <Box className="login-form-modal" paddingX={8}>
-          <LoginForm
-            onSuccess={props.onSuccess}
-            onFailure={props.onFailure}
-            onError={props.onError}
-            onCancel={props.onCancel}
-          />
-        </Box>
-      </Modal>
-    </>
+    <Dialog
+      open={props.open}
+      onClose={() => props.onCancel()}
+      PaperComponent={StyledDialog}
+    >
+      <LoginForm
+        onSuccess={props.onSuccess}
+        onFailure={props.onFailure}
+        onError={props.onError}
+        onCancel={props.onCancel}
+      />
+    </Dialog>
   );
 }

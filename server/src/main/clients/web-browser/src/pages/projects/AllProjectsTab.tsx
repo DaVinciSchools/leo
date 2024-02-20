@@ -1,10 +1,11 @@
 import {GlobalStateContext} from '../../libs/GlobalState';
-import {Modal} from 'antd';
+import {Button, Dialog, Paper} from '@mui/material';
 import {ProjectCard} from '../../libs/ProjectCard/ProjectCard';
 import {ProjectPage} from '../../libs/ProjectPage/ProjectPage';
 import {createService} from '../../libs/protos';
 import {pl_types, project_management} from 'pl-pb';
 import {useContext, useEffect, useState} from 'react';
+import {styled} from 'styled-components';
 import {
   PROJECT_DEFINITION_SORTER,
   REVERSE_DATE_THEN_PROJECT_SORTER,
@@ -15,6 +16,16 @@ import ProjectManagementService = project_management.ProjectManagementService;
 import ThumbsState = pl_types.Project.ThumbsState;
 import IProjectDefinition = pl_types.IProjectDefinition;
 import State = pl_types.ProjectDefinition.State;
+
+const StyledDialog = styled(Paper)`
+  padding: ${props => props.theme.spacing(4)};
+`;
+
+const DialogActionBar = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+`;
 
 export function AllProjectsTab() {
   const global = useContext(GlobalStateContext);
@@ -131,32 +142,40 @@ export function AllProjectsTab() {
           />
         ))}
       </div>
-      <Modal
+      <Dialog
         open={projectDetails != null}
-        onOk={() => setProjectDetails(undefined)}
-        onCancel={() => setProjectDetails(undefined)}
-        cancelButtonProps={{style: {display: 'none'}}}
-        centered
-        style={{margin: '5%', minWidth: '60%'}}
+        onClose={() => setProjectDetails(undefined)}
+        PaperComponent={StyledDialog}
+        maxWidth="lg"
       >
         {projectDetails != null && (
-          <ProjectPage
-            id={projectDetails.id!}
-            key={projectDetails.id!}
-            name={projectDetails.name ?? 'undefined'}
-            shortDescr={projectDetails.shortDescr ?? 'undefined'}
-            longDescrHtml={projectDetails.longDescrHtml ?? 'undefined'}
-            milestones={projectDetails.milestones ?? []}
-            updateProject={modifications =>
-              updateProject(projectDetails, modifications)
-            }
-            onDeletePost={() => {}}
-            onSubmitPost={() => {}}
-            posts={[]}
-            editable={false}
-          />
+          <>
+            <ProjectPage
+              id={projectDetails.id!}
+              key={projectDetails.id!}
+              name={projectDetails.name ?? 'undefined'}
+              shortDescr={projectDetails.shortDescr ?? 'undefined'}
+              longDescrHtml={projectDetails.longDescrHtml ?? 'undefined'}
+              milestones={projectDetails.milestones ?? []}
+              updateProject={modifications =>
+                updateProject(projectDetails, modifications)
+              }
+              onDeletePost={() => {}}
+              onSubmitPost={() => {}}
+              posts={[]}
+              editable={false}
+            />
+            <DialogActionBar>
+              <Button
+                variant="contained"
+                onClick={() => setProjectDetails(undefined)}
+              >
+                Ok
+              </Button>
+            </DialogActionBar>
+          </>
         )}
-      </Modal>
+      </Dialog>
     </>
   );
 }

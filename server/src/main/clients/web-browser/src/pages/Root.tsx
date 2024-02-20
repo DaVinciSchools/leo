@@ -9,69 +9,129 @@ const Footer = styled.div`
   padding: ${props => props.theme.spacing(4)};
 `;
 
-const Hero = styled.div`
+const HeroContainer = styled(Container)`
   display: flex;
+  flex-direction: column;
   place-items: center;
-  max-width: 1440px;
-  padding: ${props => props.theme.spacing(6)};
-  margin: 0 auto;
-  font-size: 20px;
-  margin-bottom: ${props => props.theme.spacing(12)};
+  gap: ${props => props.theme.spacing(4)};
 
   h1 {
-    font-size: 54px;
-    margin-bottom: ${props => props.theme.spacing(2)};
+    font-size: 1.5em;
   }
 
-  p {
-    color: #424242;
-    font-size: 20px;
-    margin: 0 ${props => props.theme.spacing(6)}
-      ${props => props.theme.spacing(2)} 0;
+  img {
+    max-width: 100%;
+    display: none;
+  }
+
+  ${props => props.theme.breakpoints.up('sm')} {
+    flex-direction: row;
+    gap: ${props => props.theme.spacing(10)};
+    margin-bottom: ${props => props.theme.spacing(16)};
+    margin-top: ${props => props.theme.spacing(12)};
+
+    h1 {
+      font-size: 64px;
+      line-height: 1.2;
+      margin-bottom: 24px;
+    }
+
+    p {
+      font-size: 24px;
+    }
+  }
+
+  ${props => props.theme.breakpoints.up('lg')} {
+    img {
+      display: block;
+      width: 600px;
+    }
   }
 `;
 
 const HeroSubheader = styled.div`
   font-weight: bold;
-  margin-bottom: ${props => props.theme.spacing(4)};
+
+  ${props => props.theme.breakpoints.up('sm')} {
+    margin-bottom: ${props => props.theme.spacing(4)};
+    font-size: 24px;
+  }
+`;
+
+const HeroButton = styled(Button)`
+  ${props => props.theme.breakpoints.up('lg')} {
+    font-size: 1.3rem;
+  }
 `;
 
 const Header = styled.div`
   display: flex;
+  flex-direction: column;
   padding: ${props => props.theme.spacing(3)};
   gap: ${props => props.theme.spacing(2)};
   place-items: center;
+
+  ${props => props.theme.breakpoints.up('sm')} {
+    flex-direction: row;
+  }
+`;
+
+const HeaderLogo = styled(Link)`
+  flex-grow: 1;
+`;
+
+const HeaderActionContainer = styled.div`
+  display: flex;
+  gap: ${props => props.theme.spacing(2)};
 `;
 
 const BodySection = styled.section`
   display: flex;
+  flex-direction: column;
   place-items: center;
   gap: ${props => props.theme.spacing(10)};
   margin-bottom: ${props => props.theme.spacing(16)};
 
   img {
-    max-width: 440px;
+    width: 440px;
+    max-width: 100%;
+  }
+
+  ${props => props.theme.breakpoints.up('sm')} {
+    flex-direction: row;
   }
 `;
 
 const GridBodySectionContent = styled.section`
   display: flex;
+  flex-direction: column;
   place-items: center;
   align-items: stretch;
   gap: ${props => props.theme.spacing(4)};
-  font-size: 18px;
   margin-bottom: ${props => props.theme.spacing(16)};
+
+  ${props => props.theme.breakpoints.up('sm')} {
+    flex-direction: row;
+    font-size: 18px;
+  }
 `;
 
 const BodySectionHeader = styled.h2`
-  font-size: 48px;
-  margin-bottom: ${props => props.theme.spacing(4)};
+  ${props => props.theme.breakpoints.up('sm')} {
+    font-size: 48px;
+    margin-bottom: ${props => props.theme.spacing(4)};
+  }
 `;
 
 const BodySectionContent = styled.section`
   p {
-    font-size: 20px;
     margin: 0;
+  }
+
+  ${props => props.theme.breakpoints.up('sm')} {
+    p {
+      font-size: 20px;
+    }
   }
 `;
 
@@ -82,13 +142,21 @@ const BodyBlock = styled.div`
   padding: ${props => props.theme.spacing(3)};
 
   div {
-    font-size: 22px;
     font-weight: 600;
   }
 
   p {
-    font-size: 20px;
     margin: 0;
+  }
+
+  ${props => props.theme.breakpoints.up('sm')} {
+    div {
+      font-size: 22px;
+    }
+
+    p {
+      font-size: 20px;
+    }
   }
 `;
 
@@ -96,26 +164,21 @@ export function Root() {
   const navigate = useNavigate();
 
   return (
-    <header>
+    <>
       <Header>
-        <Link style={{flexGrow: 1}} to="/">
+        <HeaderLogo to="/">
           <img src="/images/logo-orange-on-white.svg" />
-        </Link>
-
-        <Link to="/users/login.html">
-          <Button variant="outlined" color="warning">
-            Log in
-          </Button>
-        </Link>
-        <Button
-          onClick={() => navigate('/demos/project-builder.html')}
-          variant="contained"
-          color="warning"
-        >
-          Try it out
-        </Button>
+        </HeaderLogo>
+        <HeaderActionContainer>
+          <Link to="/users/login.html">
+            <Button variant="outlined">Log in</Button>
+          </Link>
+          <Link to="/demos/project-builder.html">
+            <Button variant="contained">Try it out</Button>
+          </Link>
+        </HeaderActionContainer>
       </Header>
-      <Hero>
+      <HeroContainer maxWidth="xl">
         <div>
           <h1>
             Engaging Students.
@@ -133,17 +196,16 @@ export function Root() {
             build inspiring projects while receiving valuable feedback from
             teachers, professionals, and peers.
           </p>
-          <Button
+          <HeroButton
             onClick={() => navigate('/demos/project-builder.html')}
             variant="contained"
-            color="warning"
             size="large"
           >
             Try it out
-          </Button>
+          </HeroButton>
         </div>
         <img src="/images/landing/hero.png" />
-      </Hero>
+      </HeroContainer>
       <Container>
         <BodySection>
           <BodySectionContent>
@@ -285,6 +347,6 @@ export function Root() {
       <Footer>
         <img src="/images/landing/logo-footer.svg" />
       </Footer>
-    </header>
+    </>
   );
 }
