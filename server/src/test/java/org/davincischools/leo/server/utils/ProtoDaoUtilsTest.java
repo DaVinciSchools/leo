@@ -60,7 +60,6 @@ import org.davincischools.leo.protos.pl_types.School;
 import org.davincischools.leo.protos.pl_types.Tag;
 import org.davincischools.leo.protos.pl_types.UserX;
 import org.davincischools.leo.protos.user_x_management.RegisterUserXRequest;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +67,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
@@ -79,12 +77,6 @@ public class ProtoDaoUtilsTest {
   @ComponentScan(basePackageClasses = {TestDatabase.class, Database.class})
   @EnableAutoConfiguration
   public static class TestApplicationConfiguration {}
-
-  @BeforeClass
-  public static void initialSetup() {
-    ((DefaultConversionService) DefaultConversionService.getSharedInstance())
-        .addConverter(new QueryWithNullsToRecordConverter());
-  }
 
   @Autowired EntityManager entityManager;
 
