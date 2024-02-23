@@ -18,38 +18,6 @@ const THEME: ThemeOptions = {
     },
   },
   typography: {
-    fontFamily: [
-      'hind',
-      '-apple-system',
-      'BlinkMacSystemFont',
-      'Segoe UI',
-      'Roboto',
-      'Oxygen',
-      'Ubuntu',
-      'Cantarell',
-      'Fira Sans',
-      'Droid Sans',
-      'Helvetica Neue',
-      'sans-serif',
-    ].join(','),
-    h1: {
-      fontFamily: 'montserrat',
-    },
-    h2: {
-      fontFamily: 'montserrat',
-    },
-    h3: {
-      fontFamily: 'montserrat',
-    },
-    h4: {
-      fontFamily: 'montserrat',
-    },
-    h5: {
-      fontFamily: 'montserrat',
-    },
-    h6: {
-      fontFamily: 'montserrat',
-    },
     button: {
       textTransform: 'none',
       fontWeight: 600,

@@ -379,21 +379,17 @@ export function ProjectBuilder(
                   <Button
                     color="secondary"
                     variant="contained"
-                    className="project-builder-button"
                     disabled={!userX?.isAuthenticated}
                     onClick={() => {
                       setSelectExistingProject(true);
                       setActiveStep(activeStep + 1);
                     }}
                   >
-                    Start with an
-                    <br />
-                    existing project
+                    Start with an existing project
                   </Button>
                 )}
                 {/* <Button
                   variant="contained"
-                  className="project-builder-button"
                   disabled={true}
                 >
                   Create for
@@ -403,16 +399,12 @@ export function ProjectBuilder(
                 <Button
                   color="secondary"
                   variant="contained"
-                  className="project-builder-button"
                   onClick={() => setActiveStep(activeStep + 1)}
                 >
-                  Create a custom
-                  <br />
-                  Ikigai project
+                  Create a custom ikigai project
                 </Button>
                 {/* <Button
                   variant="contained"
-                  className="project-builder-button"
                   disabled={true}
                 >
                   Manually create
@@ -528,31 +520,29 @@ export function ProjectBuilder(
                     </RadioGroup>
                   </div>
                 </div>
-                <div
-                  className="global-flex-row"
-                  style={{justifyContent: 'space-evenly'}}
+                <Box
+                  padding={1}
+                  className="project-builder-getting-started-buttons"
                 >
                   <Button
                     variant="contained"
-                    className="project-builder-button"
+                    color="secondary"
                     onClick={() => setActiveStep(State.GETTING_STARTED)}
                   >
-                    <div style={{padding: '0.7em 0'}}>&lt;&nbsp;&nbsp;Back</div>
+                    Back
                   </Button>
                   <Button
                     variant="contained"
-                    className="project-builder-button"
+                    color="secondary"
                     disabled={
                       !selectedExistingProject.getValue() ||
                       selectedExistingProjectUseType == null
                     }
                     onClick={() => setActiveStep(activeStep + 1)}
                   >
-                    <div style={{padding: '0.7em 0'}}>
-                      Continue&nbsp;&nbsp;&gt;
-                    </div>
+                    Continue
                   </Button>
-                </div>
+                </Box>
               </div>
             </Box>
           )}

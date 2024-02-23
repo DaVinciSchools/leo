@@ -21,8 +21,8 @@ import {
   Rocket,
   Settings,
 } from '@mui/icons-material';
-import {Collapse, Divider, Menu, MenuItem} from '@mui/material';
-import {UserXAvatar} from '../UserXAvatar/UserXAvatar';
+import {Collapse, Divider} from '@mui/material';
+import {AvatarNavMenu} from './AvatarNavMenu';
 
 const drawerWidth = 220;
 
@@ -146,7 +146,6 @@ export function DefaultPageNav() {
   const location = useLocation();
   const userX = global.optionalUserX();
 
-  const [anchorElUser, setAnchorElUser] = useState<Element | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -223,41 +222,6 @@ export function DefaultPageNav() {
     }
   };
 
-  const handleOpenUserMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
-
-  const avatarMenu =
-    userX != null ? (
-      <>
-        <IconButton onClick={handleOpenUserMenu}>
-          <UserXAvatar userX={userX} />
-        </IconButton>
-        <Menu
-          anchorEl={anchorElUser}
-          open={Boolean(anchorElUser)}
-          onClose={handleCloseUserMenu}
-        >
-          <MenuItem
-            component={Link}
-            to="/users/my-account.html"
-            onClick={handleCloseUserMenu}
-          >
-            Account
-          </MenuItem>
-          <MenuItem component={Link} to="/users/logout.html">
-            Log out
-          </MenuItem>
-        </Menu>
-      </>
-    ) : (
-      <></>
-    );
-
   const drawer = (
     <div>
       <StyledLogoLink to="/">
@@ -293,7 +257,7 @@ export function DefaultPageNav() {
           <Typography variant="h6" noWrap component="div" sx={{flexGrow: 1}}>
             {' '}
           </Typography>
-          {avatarMenu}
+          <AvatarNavMenu />
         </Toolbar>
       </StyledAppBar>
       <Nav>
