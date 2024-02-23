@@ -1,4 +1,3 @@
-import './LoginForm.scss';
 import {useContext, useEffect} from 'react';
 import {
   DEFAULT_FORWARD_URL,

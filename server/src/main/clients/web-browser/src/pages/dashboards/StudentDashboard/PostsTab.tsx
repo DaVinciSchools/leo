@@ -1,5 +1,4 @@
 import '../../../libs/global.scss';
-import './StudentDashboard.scss';
 import {useContext} from 'react';
 import {GlobalStateContext} from '../../../libs/GlobalState';
 import {DeepReadOnly} from '../../../libs/misc';

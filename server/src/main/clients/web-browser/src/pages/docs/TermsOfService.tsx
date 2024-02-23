@@ -1,4 +1,3 @@
-import './TermsOfService.scss';
 import {DefaultPage} from '../../libs/DefaultPage/DefaultPage';
 
 export function TermsOfService() {

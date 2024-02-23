@@ -1,204 +1,297 @@
-import './DefaultPage.scss';
-
-import {
-  HomeOutlined,
-  RocketOutlined,
-  SettingOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
 import {GlobalStateContext} from '../GlobalState';
-import {Layout, Menu, MenuItemProps, MenuProps} from 'antd';
 import {Link} from 'react-router-dom';
-import {Outlet, useNavigate} from 'react-router';
+import {Outlet, To, useLocation} from 'react-router';
 import {useContext, useState} from 'react';
+import AppBar from '@mui/material/AppBar';
+import Drawer from '@mui/material/Drawer';
+import IconButton from '@mui/material/IconButton';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import MenuIcon from '@mui/icons-material/Menu';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import {styled} from 'styled-components';
+import {
+  ExpandLess,
+  ExpandMore,
+  Home,
+  Person,
+  Rocket,
+  Settings,
+} from '@mui/icons-material';
+import {Collapse, Divider} from '@mui/material';
+import {AvatarNavMenu} from './AvatarNavMenu';
 
-const Footer = Layout.Footer;
-const {Header, Sider, Content} = Layout;
+const drawerWidth = 220;
 
-enum MenuKeys {
-  ADMIN,
-  ADMIN_ACCOUNTS,
-  ADMIN_DISTRICTS,
-  ADMIN_SCHOOLS,
-  CLASS_MANAGEMENT,
-  DASHBOARD_ADMIN,
-  DASHBOARD_STUDENT,
-  DASHBOARD_TEACHER,
-  MY_ACCOUNT,
-  // PORTFOLIOS,
-  PROJECTS,
+const Wrapper = styled.div`
+  display: flex;
+`;
+
+const StyledAppBar = styled(AppBar)`
+  background: white;
+  border-bottom: 1px solid ${props => props.theme.palette.grey[300]};
+  color: ${props => props.theme.palette.warning.main};
+
+  ${props => props.theme.breakpoints.up('sm')} {
+    width: calc(100% - ${drawerWidth}px);
+    margin-left: ${drawerWidth}px;
+    color: black;
+  }
+`;
+
+const StyledLogoLink = styled(Link)`
+  display: block;
+  padding: ${props => props.theme.spacing(2)};
+
+  img {
+    max-width: 100%;
+  }
+`;
+
+const Nav = styled.nav`
+  ${props => props.theme.breakpoints.up('sm')} {
+    width: ${drawerWidth}px;
+    flex-shrink: 0;
+  }
+`;
+
+const Main = styled.main`
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  flex-grow: 1;
+  padding-left: ${props => props.theme.spacing(4)};
+  padding-right: ${props => props.theme.spacing(4)};
+
+  ${props => props.theme.breakpoints.up('sm')} {
+    width: calc(100% - ${drawerWidth}px);
+  }
+`;
+
+interface NavItem {
+  label: string;
+  to?: To;
+  icon?: React.ReactNode;
+  nestedItems?: NavItem[];
+  divider?: boolean;
+}
+interface NavItemProps extends NavItem {
+  currentPathname: string;
+  onClick: () => void;
+}
+
+const StyledListItemIcon = styled(ListItemIcon)`
+  min-width: 24px;
+  margin-right: 16px;
+`;
+
+function NavItem({
+  label,
+  icon,
+  to,
+  nestedItems,
+  divider,
+  onClick,
+  currentPathname,
+}: NavItemProps) {
+  const [open, setOpen] = useState(false);
+  const nestedListItems =
+    nestedItems?.map(item => {
+      return (
+        <NavItem
+          key={item.label}
+          onClick={onClick}
+          currentPathname={currentPathname}
+          {...item}
+        />
+      );
+    }) ?? [];
+  const nestedList = nestedItems ? (
+    <Collapse in={open} timeout="auto" unmountOnExit>
+      <List component="div" disablePadding>
+        {nestedListItems}
+      </List>
+    </Collapse>
+  ) : undefined;
+
+  return (
+    <>
+      {divider && <Divider />}
+      <ListItemButton
+        key={label}
+        onClick={() => {
+          if (nestedList) {
+            setOpen(!open);
+          }
+          onClick();
+        }}
+        component={to ? Link : 'div'}
+        to={to}
+        selected={currentPathname === to}
+      >
+        <StyledListItemIcon>{icon}</StyledListItemIcon>
+        <ListItemText primary={label} />
+        {nestedList && (open ? <ExpandLess /> : <ExpandMore />)}
+      </ListItemButton>
+      {nestedList}
+    </>
+  );
 }
 
 export function DefaultPageNav() {
   const global = useContext(GlobalStateContext);
+  const location = useLocation();
   const userX = global.optionalUserX();
-  const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
 
-  const topMenuItems: MenuProps['items'] = [
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const navItems: (NavItem & {
+    include: boolean;
+  })[] = [
     {
       label: 'Admin Dashboard',
-      key: MenuKeys.DASHBOARD_ADMIN,
-      icon: <HomeOutlined />,
-      style: {
-        display: userX?.isAdminX ? 'block' : 'none',
-      },
+      icon: <Home />,
+      include: !!userX?.isAdminX,
+      to: '/dashboards/admin-dashboard.html',
     },
     {
-      label: (userX?.isAdminX ? 'Student ' : '') + 'Dashboard',
-      key: MenuKeys.DASHBOARD_STUDENT,
-      icon: <HomeOutlined />,
-      style: {
-        display: userX?.isAdminX || userX?.isStudent ? 'block' : 'none',
-      },
+      label: 'Student Dashboard',
+      icon: <Home />,
+      include: !!userX?.isAdminX || !!userX?.isStudent,
+      to: '/dashboards/student-dashboard.html',
     },
     {
-      label: (userX?.isAdminX ? 'Teacher ' : '') + 'Dashboard',
-      key: MenuKeys.DASHBOARD_TEACHER,
-      icon: <HomeOutlined />,
-      style: {
-        display: userX?.isAdminX || userX?.isTeacher ? 'block' : 'none',
-      },
+      label: 'Teacher Dashboard',
+      icon: <Home />,
+      include: !!userX?.isAdminX || !!userX?.isTeacher,
+      to: '/dashboards/teacher-dashboard.html',
     },
     {
       label: 'Class Management',
-      key: MenuKeys.CLASS_MANAGEMENT,
-      icon: <UserOutlined />,
-      style: {
-        display: userX?.isAdminX || userX?.isTeacher ? 'block' : 'none',
-      },
+      icon: <Person />,
+      include: !!userX?.isAdminX || !!userX?.isTeacher,
+      to: '/class-management/class-management.html',
     },
     {
       label: 'Projects',
-      key: MenuKeys.PROJECTS,
-      icon: <RocketOutlined />,
+      icon: <Rocket />,
+      to: '/projects/projects.html',
+      include: true,
     },
-    // {
-    //   label: 'Portfolios',
-    //   key: MenuKeys.PORTFOLIOS,
-    //   icon: <BookOutlined />,
-    //   style: {
-    //     display: userX?.isAdminX || userX?.isStudent ? 'block' : 'none',
-    //   },
-    // },
     {
       label: 'Administration',
-      key: MenuKeys.ADMIN,
-      icon: <SettingOutlined />,
-      style: {
-        display: userX?.isAdminX ? 'block' : 'none',
-      },
-      children: [
+      icon: <Settings />,
+      include: !!userX?.isAdminX,
+      divider: true,
+      nestedItems: [
         {
           label: 'Accounts',
-          key: MenuKeys.ADMIN_ACCOUNTS,
+          to: '/admin/accounts.html',
+          include: true,
         },
-        {label: 'Schools', key: MenuKeys.ADMIN_SCHOOLS},
+        {
+          label: 'Schools',
+          to: '/profiles/edit-schools.html',
+          include: true,
+        },
         {
           label: 'Districts',
-          key: MenuKeys.ADMIN_DISTRICTS,
+          to: '/profiles/edit-districts.html',
+          include: true,
         },
       ],
     },
-  ];
+  ].filter(item => item.include);
 
-  const bottomMenuItems: MenuProps['items'] = [
-    {
-      label: 'My Account',
-      key: MenuKeys.MY_ACCOUNT,
-      icon: <UserOutlined />,
-    },
-  ];
+  const handleDrawerClose = () => {
+    setIsClosing(true);
+    setMobileOpen(false);
+  };
 
-  const menuItemClicked: MenuItemProps['onClick'] = ({key}) => {
-    switch (Number(key)) {
-      case MenuKeys.ADMIN: {
-        // not selectable.
-        break;
-      }
-      case MenuKeys.ADMIN_ACCOUNTS: {
-        navigate('/admin/accounts.html');
-        break;
-      }
-      case MenuKeys.ADMIN_DISTRICTS: {
-        navigate('/profiles/edit-districts.html');
-        break;
-      }
-      case MenuKeys.ADMIN_SCHOOLS: {
-        navigate('/profiles/edit-schools.html');
-        break;
-      }
-      case MenuKeys.CLASS_MANAGEMENT: {
-        navigate('/class-management/class-management.html');
-        break;
-      }
-      case MenuKeys.DASHBOARD_ADMIN: {
-        navigate('/dashboards/admin-dashboard.html');
-        break;
-      }
-      case MenuKeys.DASHBOARD_STUDENT: {
-        navigate('/dashboards/student-dashboard.html');
-        break;
-      }
-      case MenuKeys.DASHBOARD_TEACHER: {
-        navigate('/dashboards/teacher-dashboard.html');
-        break;
-      }
-      case MenuKeys.MY_ACCOUNT: {
-        navigate('/users/my-account.html');
-        break;
-      }
-      case MenuKeys.PROJECTS: {
-        navigate('/projects/projects.html');
-        break;
-      }
+  const handleDrawerTransitionEnd = () => {
+    setIsClosing(false);
+  };
+
+  const handleDrawerToggle = () => {
+    if (!isClosing) {
+      setMobileOpen(!mobileOpen);
     }
   };
 
+  const drawer = (
+    <div>
+      <StyledLogoLink to="/">
+        <img src="/images/logo-orange-on-white.svg" />
+      </StyledLogoLink>
+      <List>
+        {navItems.map(item => (
+          <NavItem
+            key={item.label}
+            currentPathname={location.pathname}
+            onClick={handleDrawerClose}
+            {...item}
+          />
+        ))}
+      </List>
+    </div>
+  );
+
   return (
-    <>
-      <Layout>
-        <Sider
-          collapsible
-          collapsed={collapsed}
-          onCollapse={() => setCollapsed(!collapsed)}
-          className="left-menu"
+    <Wrapper>
+      <StyledAppBar position="fixed" elevation={0}>
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{mr: 2, display: {sm: 'none'}}}
+          >
+            <MenuIcon />
+          </IconButton>
+          {/* TODO Move page title here from DefaultPage */}
+          <Typography variant="h6" noWrap component="div" sx={{flexGrow: 1}}>
+            {' '}
+          </Typography>
+          <AvatarNavMenu />
+        </Toolbar>
+      </StyledAppBar>
+      <Nav>
+        {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onTransitionEnd={handleDrawerTransitionEnd}
+          onClose={handleDrawerClose}
+          ModalProps={{
+            keepMounted: true, // Better open performance on mobile.
+          }}
+          sx={{
+            display: {xs: 'block', sm: 'none'},
+            '& .MuiDrawer-paper': {boxSizing: 'border-box', width: drawerWidth},
+          }}
         >
-          <Layout>
-            <Header>
-              <Link to="/">
-                <img
-                  src={
-                    collapsed
-                      ? '/images/logo-orange-on-white-circles.svg'
-                      : '/images/logo-orange-on-white.svg'
-                  }
-                  alt="Project Leo Logo | Go Home"
-                />
-              </Link>
-            </Header>
-            <Content>
-              <Menu
-                mode="vertical"
-                className="top-menu"
-                items={topMenuItems}
-                onClick={menuItemClicked}
-              />
-            </Content>
-            <Footer>
-              <Menu
-                mode="vertical"
-                className="bottom-menu"
-                items={bottomMenuItems}
-                onClick={menuItemClicked}
-              />
-            </Footer>
-          </Layout>
-        </Sider>
-        <Content>
-          <Outlet />
-        </Content>
-      </Layout>
-    </>
+          {drawer}
+        </Drawer>
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: {xs: 'none', sm: 'block'},
+            '& .MuiDrawer-paper': {boxSizing: 'border-box', width: drawerWidth},
+          }}
+          open
+        >
+          {drawer}
+        </Drawer>
+      </Nav>
+      <Main>
+        <Toolbar />
+        <Outlet />
+      </Main>
+    </Wrapper>
   );
 }
