@@ -22,6 +22,7 @@
         <npm.binary.directory>${project.build.directory}/org.davincischools.leo/npm
         </npm.binary.directory>
         <proto.version>3.25.2</proto.version>
+        <settings.offline>false</settings.offline>
     </properties>
 
     <dependencies>
