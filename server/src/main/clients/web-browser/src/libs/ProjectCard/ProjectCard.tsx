@@ -1,12 +1,9 @@
-import './ProjectCard.scss';
-
 import {
   Button,
   Card,
   CardActions,
   CardContent,
   Dialog,
-  Divider,
   IconButton,
   Paper,
   TextField,
@@ -14,12 +11,12 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
-import {useContext, useEffect, useRef, useState} from 'react';
+import {useContext, useEffect, useState} from 'react';
 import {pl_types} from 'pl-pb';
 import {DataObject, Info, ThumbDownAlt, ThumbUpAlt} from '@mui/icons-material';
 import {GlobalStateContext} from '../GlobalState';
 import {styled} from 'styled-components';
-import {SubmitHandler, useForm} from 'react-hook-form';
+import {useForm} from 'react-hook-form';
 import IProject = pl_types.IProject;
 import ThumbsState = pl_types.Project.ThumbsState;
 
