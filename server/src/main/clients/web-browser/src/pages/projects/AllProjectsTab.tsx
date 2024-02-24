@@ -27,6 +27,13 @@ const DialogActionBar = styled.div`
   align-items: flex-end;
 `;
 
+const Wrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${props => props.theme.spacing(4)};
+  margin: ${props => props.theme.spacing(4)} 0;
+`;
+
 export function AllProjectsTab() {
   const global = useContext(GlobalStateContext);
   const userX = global.useUserX(
@@ -99,7 +106,7 @@ export function AllProjectsTab() {
 
   return (
     <>
-      <div>
+      <Wrapper>
         {unsuccessfulProjects
           .filter(e => e.state === State.FAILED)
           .map(definition => (
@@ -143,7 +150,7 @@ export function AllProjectsTab() {
             aiResponse={project.projectDefinition?.aiResponse}
           />
         ))}
-      </div>
+      </Wrapper>
       <Dialog
         open={projectDetails != null}
         onClose={() => setProjectDetails(undefined)}
