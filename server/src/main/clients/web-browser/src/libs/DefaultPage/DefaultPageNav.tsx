@@ -16,9 +16,9 @@ import {styled} from 'styled-components';
 import {
   ExpandLess,
   ExpandMore,
+  Folder,
   Home,
   Person,
-  Rocket,
   Settings,
 } from '@mui/icons-material';
 import {Collapse, Divider} from '@mui/material';
@@ -179,7 +179,7 @@ export function DefaultPageNav() {
     },
     {
       label: 'Projects',
-      icon: <Rocket />,
+      icon: <Folder />,
       to: '/projects/projects.html',
       include: true,
     },
