@@ -111,7 +111,7 @@ function NavItem({
     }) ?? [];
   const nestedList = nestedItems ? (
     <Collapse in={open} timeout="auto" unmountOnExit>
-      <List component="div" disablePadding>
+      <List component="div" disablePadding dense>
         {nestedListItems}
       </List>
     </Collapse>
@@ -131,6 +131,7 @@ function NavItem({
         component={to ? Link : 'div'}
         to={to}
         selected={currentPathname === to}
+        dense
       >
         <StyledListItemIcon>{icon}</StyledListItemIcon>
         <ListItemText primary={label} />
