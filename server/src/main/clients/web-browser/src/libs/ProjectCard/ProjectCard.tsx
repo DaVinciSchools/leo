@@ -1,20 +1,23 @@
 import {
+  Alert,
   Button,
   Card,
-  CardActions,
   CardContent,
-  Dialog,
   IconButton,
-  Paper,
+  Link,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
-import {useContext, useEffect, useState} from 'react';
+import {useEffect} from 'react';
 import {pl_types} from 'pl-pb';
-import {DataObject, Info, ThumbDownAlt, ThumbUpAlt} from '@mui/icons-material';
-import {GlobalStateContext} from '../GlobalState';
+import {
+  DataObject,
+  InfoOutlined,
+  ThumbDownAlt,
+  ThumbUpAlt,
+} from '@mui/icons-material';
 import {styled} from 'styled-components';
 import {useForm} from 'react-hook-form';
 import IProject = pl_types.IProject;
@@ -24,23 +27,33 @@ const ActivateButton = styled(Button)`
   margin-left: auto;
 `;
 
+const StyledAlert = styled(Alert)`
+  margin: ${props => props.theme.spacing(1)} 0;
+`;
+
 const Form = styled.form`
   display: flex;
-  gap: ${props => props.theme.spacing(2)};
+  gap: ${props => props.theme.spacing(1)};
   align-items: flex-start;
+  width: 100%;
 `;
 
 const CardHeader = styled.div`
   display: flex;
   align-items: flex-start;
+  gap: ${props => props.theme.spacing(1)};
 
   h2 {
     flex-grow: 1;
   }
 `;
 
-const StyledDialog = styled(Paper)`
-  padding: ${props => props.theme.spacing(4)};
+const CardFooter = styled.div`
+  background: ${props => props.theme.palette.grey[100]};
+  display: flex;
+
+  padding: ${props => props.theme.spacing(2)};
+  gap: ${props => props.theme.spacing(1)};
 `;
 
 interface FeedbackForm {
@@ -58,19 +71,15 @@ export function ProjectCard(props: {
   thumbsStateReason: string;
   updateProject: (update: IProject) => void;
   showDetails: () => void;
-  aiPrompt?: string | null | undefined;
-  aiResponse?: string | null | undefined;
+  showAiPrompt?: () => void;
 }) {
-  const [showAiPrompt, setShowAiPrompt] = useState(false);
-  const global = useContext(GlobalStateContext);
-  const userX = global.optionalUserX();
-
   const {
     register,
     formState: {isDirty, isSubmitSuccessful},
     handleSubmit,
     reset,
     setFocus,
+    getValues,
   } = useForm<FeedbackForm>({
     defaultValues: {
       feedback: props.thumbsStateReason,
@@ -109,38 +118,55 @@ export function ProjectCard(props: {
               }}
               size="small"
             >
-              <Info />
+              <InfoOutlined />
             </IconButton>
-            {!!userX?.viewAiPrompts && !!props.aiPrompt && (
+            {!!props.showAiPrompt && (
               <IconButton
                 onClick={() => {
-                  setShowAiPrompt(true);
+                  props.showAiPrompt?.();
                 }}
                 size="small"
               >
                 <DataObject />
               </IconButton>
             )}
-          </CardHeader>
-          <Typography paragraph>{props.shortDescr}</Typography>
-          <Form onSubmit={onSubmit}>
-            <TextField
-              label="Feedback"
-              variant="outlined"
-              size="small"
-              fullWidth
-              InputLabelProps={{
-                shrink: true,
+            <ActivateButton
+              onClick={() => {
+                props.updateProject({
+                  active: !props.active,
+                  ...(!props.active
+                    ? {thumbsState: ThumbsState.THUMBS_UP}
+                    : {}),
+                });
+                if (!getValues().feedback) {
+                  setFocus('feedback');
+                }
               }}
-              placeholder={helperText}
-              {...register('feedback')}
-            />
-            <Button type="submit" disabled={!isDirty} variant="outlined">
-              Submit
-            </Button>
-          </Form>
+              variant={props.active ? 'text' : 'contained'}
+              color={props.active ? 'warning' : 'primary'}
+            >
+              {props.active ? 'Deactivate' : 'Activate'}
+            </ActivateButton>
+          </CardHeader>
+          {props.active && (
+            <StyledAlert severity="success">
+              This project is activated.
+            </StyledAlert>
+          )}
+          <Typography paragraph>{props.shortDescr}.</Typography>
+          <Typography paragraph>
+            <Link
+              component="button"
+              color="secondary"
+              onClick={() => {
+                props.showDetails();
+              }}
+            >
+              Read more &gt;&gt;
+            </Link>
+          </Typography>
         </CardContent>
-        <CardActions disableSpacing>
+        <CardFooter>
           <ToggleButtonGroup
             value={props.thumbsState}
             size="small"
@@ -154,7 +180,9 @@ export function ProjectCard(props: {
               props.updateProject({
                 thumbsState: newValue ?? ThumbsState.UNSET_THUMBS_STATE,
               });
-              setFocus('feedback');
+              if (!getValues().feedback) {
+                setFocus('feedback');
+              }
             }}
           >
             <ToggleButton value={ThumbsState.THUMBS_UP}>
@@ -164,26 +192,24 @@ export function ProjectCard(props: {
               <ThumbDownAlt fontSize="small" sx={{mr: 1}} /> Dislike
             </ToggleButton>
           </ToggleButtonGroup>
-          <ActivateButton
-            onClick={() => {
-              props.updateProject({
-                active: !props.active,
-              });
-              setFocus('feedback');
-            }}
-            variant={props.active ? 'text' : 'contained'}
-          >
-            {props.active ? 'Deactivate' : 'Activate'}
-          </ActivateButton>
-        </CardActions>
+          <Form onSubmit={onSubmit}>
+            <TextField
+              label="Feedback"
+              variant="outlined"
+              size="small"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              fullWidth
+              placeholder={helperText}
+              {...register('feedback')}
+            />
+            <Button type="submit" disabled={!isDirty} variant="outlined">
+              Submit
+            </Button>
+          </Form>
+        </CardFooter>
       </Card>
-      <Dialog
-        open={showAiPrompt}
-        onClose={() => setShowAiPrompt(false)}
-        PaperComponent={StyledDialog}
-      >
-        {props.aiResponse}
-      </Dialog>
     </>
   );
 }
