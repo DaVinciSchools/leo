@@ -16,9 +16,9 @@ import {styled} from 'styled-components';
 import {
   ExpandLess,
   ExpandMore,
+  Folder,
   Home,
   Person,
-  Rocket,
   Settings,
 } from '@mui/icons-material';
 import {Collapse, Divider} from '@mui/material';
@@ -111,7 +111,7 @@ function NavItem({
     }) ?? [];
   const nestedList = nestedItems ? (
     <Collapse in={open} timeout="auto" unmountOnExit>
-      <List component="div" disablePadding>
+      <List component="div" disablePadding dense>
         {nestedListItems}
       </List>
     </Collapse>
@@ -131,6 +131,7 @@ function NavItem({
         component={to ? Link : 'div'}
         to={to}
         selected={currentPathname === to}
+        dense
       >
         <StyledListItemIcon>{icon}</StyledListItemIcon>
         <ListItemText primary={label} />
@@ -178,7 +179,7 @@ export function DefaultPageNav() {
     },
     {
       label: 'Projects',
-      icon: <Rocket />,
+      icon: <Folder />,
       to: '/projects/projects.html',
       include: true,
     },
