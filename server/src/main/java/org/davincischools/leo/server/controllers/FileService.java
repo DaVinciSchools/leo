@@ -65,10 +65,35 @@ public class FileService {
       return;
     }
 
-    response.setContentType(fileX.getMimeType());
-    response.setContentLength(fileX.getFileContent().length);
-    response.getOutputStream().write(fileX.getFileContent());
-    response.setStatus(HttpServletResponse.SC_OK);
+    // Byte range support
+    String rangeHeader = request.getHeader("Range");
+    byte[] fileContent = fileX.getFileContent();
+
+    if (rangeHeader != null) {
+      String[] ranges = rangeHeader.substring("bytes=".length()).split("-");
+      long start = Long.parseLong(ranges[0]);
+      long end =
+          ranges.length > 1 && !ranges[1].isEmpty()
+              ? Long.parseLong(ranges[1])
+              : fileContent.length - 1;
+
+      if (start > end || start < 0 || end >= fileContent.length) {
+        response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+        return;
+      }
+
+      response.setHeader("Content-Range", "bytes " + start + "-" + end + "/" + fileContent.length);
+      response.setHeader("Accept-Ranges", "bytes");
+      response.setContentType(fileX.getMimeType());
+      response.setContentLength((int) (end - start + 1));
+      response.getOutputStream().write(fileContent, (int) start, (int) (end - start + 1));
+      response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+    } else {
+      response.setContentType(fileX.getMimeType());
+      response.setContentLength(fileContent.length);
+      response.getOutputStream().write(fileContent);
+      response.setStatus(HttpServletResponse.SC_OK);
+    }
   }
 
   @PostMapping(value = "/api/FileService/PostFile")
