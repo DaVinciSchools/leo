@@ -1,21 +1,64 @@
-import './ProjectCard.scss';
-
-import {Card, Form, Input, InputRef} from 'antd';
 import {
-  CheckCircleOutlined,
-  CheckCircleTwoTone,
-  DislikeOutlined,
-  DislikeTwoTone,
-  LikeOutlined,
-  LikeTwoTone,
-} from '@ant-design/icons';
-import {ReactNode, useContext, useRef, useState} from 'react';
+  Alert,
+  Button,
+  Card,
+  CardContent,
+  IconButton,
+  Link,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from '@mui/material';
+import {useEffect} from 'react';
 import {pl_types} from 'pl-pb';
-import {PsychologyTwoTone} from '@mui/icons-material';
-import {GlobalStateContext} from '../GlobalState';
-import {Modal} from '@mui/material';
+import {
+  DataObject,
+  InfoOutlined,
+  ThumbDownAlt,
+  ThumbUpAlt,
+} from '@mui/icons-material';
+import {styled} from 'styled-components';
+import {useForm} from 'react-hook-form';
 import IProject = pl_types.IProject;
 import ThumbsState = pl_types.Project.ThumbsState;
+
+const ActivateButton = styled(Button)`
+  margin-left: auto;
+`;
+
+const StyledAlert = styled(Alert)`
+  margin: ${props => props.theme.spacing(1)} 0;
+`;
+
+const Form = styled.form`
+  display: flex;
+  gap: ${props => props.theme.spacing(1)};
+  align-items: flex-start;
+  width: 100%;
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: ${props => props.theme.spacing(1)};
+
+  h2 {
+    flex-grow: 1;
+  }
+`;
+
+const CardFooter = styled.div`
+  background: ${props => props.theme.palette.grey[100]};
+  display: flex;
+
+  padding: ${props => props.theme.spacing(2)};
+  gap: ${props => props.theme.spacing(1)};
+`;
+
+interface FeedbackForm {
+  feedback: string;
+}
 
 export function ProjectCard(props: {
   id: number;
@@ -28,162 +71,145 @@ export function ProjectCard(props: {
   thumbsStateReason: string;
   updateProject: (update: IProject) => void;
   showDetails: () => void;
-  aiPrompt?: string | null | undefined;
-  aiResponse?: string | null | undefined;
+  showAiPrompt?: () => void;
 }) {
-  const global = useContext(GlobalStateContext);
-  const userX = global.optionalUserX();
+  const {
+    register,
+    formState: {isDirty, isSubmitSuccessful},
+    handleSubmit,
+    reset,
+    setFocus,
+    getValues,
+  } = useForm<FeedbackForm>({
+    defaultValues: {
+      feedback: props.thumbsStateReason,
+    },
+  });
 
-  const [showAiPrompt, setShowAiPrompt] = useState(false);
-  const thumbsQueryRef = useRef<InputRef>(null);
-  const actions: readonly ReactNode[] = [
-    <>
-      {props.thumbsState === ThumbsState.THUMBS_UP ? (
-        <LikeTwoTone
-          twoToneColor="#0000cc"
-          onClick={() =>
-            props.updateProject({thumbsState: ThumbsState.UNSET_THUMBS_STATE})
-          }
-        />
-      ) : (
-        <LikeOutlined
-          onClick={() => {
-            props.updateProject({thumbsState: ThumbsState.THUMBS_UP});
-            if (thumbsQueryRef.current != null) {
-              thumbsQueryRef.current.focus();
-            }
-          }}
-        />
-      )}
-    </>,
-    <>
-      {props.thumbsState === ThumbsState.THUMBS_DOWN ? (
-        <DislikeTwoTone
-          twoToneColor="#0000cc"
-          onClick={() =>
-            props.updateProject({thumbsState: ThumbsState.UNSET_THUMBS_STATE})
-          }
-        />
-      ) : (
-        <DislikeOutlined
-          onClick={() => {
-            props.updateProject({
-              favorite: false,
-              thumbsState: ThumbsState.THUMBS_DOWN,
-            });
-            if (thumbsQueryRef.current != null) {
-              thumbsQueryRef.current.focus();
-            }
-          }}
-        />
-      )}
-    </>,
-    <>
-      {props.active ? (
-        <CheckCircleTwoTone
-          twoToneColor="#00b500"
-          onClick={() =>
-            props.updateProject({
-              active: false,
-            })
-          }
-        />
-      ) : (
-        <CheckCircleOutlined
-          onClick={() => {
-            props.updateProject({
-              active: true,
-            });
-            if (thumbsQueryRef.current != null) {
-              thumbsQueryRef.current.focus();
-            }
-          }}
-        />
-      )}
-    </>,
-  ];
+  useEffect(() => {
+    reset({}, {keepValues: true});
+  }, [isSubmitSuccessful]);
 
-  const [thumbsStateReason, setThumbsStateReason] = useState(
-    props.thumbsStateReason
-  );
+  const onSubmit = handleSubmit(data => {
+    props.updateProject({
+      thumbsStateReason: data.feedback,
+    });
+  });
+
+  const helperText = props.active
+    ? 'Why did you choose this project?'
+    : props.thumbsState === ThumbsState.THUMBS_UP
+      ? 'Why do you like this project?'
+      : props.thumbsState === ThumbsState.THUMBS_DOWN
+        ? 'Why do you dislike this project?'
+        : 'What do you think about this project?';
 
   return (
     <>
-      <Card
-        id={props.id.toString()}
-        title={props.name}
-        extra={
-          <>
-            <span className="details-link" onClick={props.showDetails}>
-              Details
-            </span>
-            {!!userX?.viewAiPrompts && !!props.aiPrompt && (
-              <PsychologyTwoTone
-                className="global-two-tone-ai-color"
-                onClick={() => setShowAiPrompt(true)}
-                cursor="pointer"
-              />
+      <Card variant="outlined">
+        <CardContent>
+          <CardHeader>
+            <Typography variant="h5" component="h2" gutterBottom>
+              {props.name}
+            </Typography>
+            <IconButton
+              onClick={() => {
+                props.showDetails();
+              }}
+              size="small"
+            >
+              <InfoOutlined />
+            </IconButton>
+            {!!props.showAiPrompt && (
+              <IconButton
+                onClick={() => {
+                  props.showAiPrompt?.();
+                }}
+                size="small"
+              >
+                <DataObject />
+              </IconButton>
             )}
-          </>
-        }
-        actions={actions.slice()}
-        className={
-          props.active
-            ? 'active'
-            : props.favorite
-              ? 'favorite'
-              : props.thumbsState === ThumbsState.THUMBS_UP
-                ? 'like'
-                : props.thumbsState === ThumbsState.THUMBS_DOWN
-                  ? 'dislike'
-                  : undefined
-        }
-      >
-        {props.shortDescr}
-        <Form>
-          <Input
-            ref={thumbsQueryRef}
-            type="text"
-            placeholder={
-              props.active
-                ? 'Why did you choose this project?'
-                : props.thumbsState === ThumbsState.THUMBS_UP
-                  ? 'Why do you like this project?'
-                  : props.thumbsState === ThumbsState.THUMBS_DOWN
-                    ? 'Why do you dislike this project?'
-                    : 'What do you think about this project?'
+            <ActivateButton
+              onClick={() => {
+                props.updateProject({
+                  active: !props.active,
+                  ...(!props.active
+                    ? {thumbsState: ThumbsState.THUMBS_UP}
+                    : {}),
+                });
+                if (!getValues().feedback) {
+                  setFocus('feedback');
+                }
+              }}
+              variant={props.active ? 'text' : 'contained'}
+              color={props.active ? 'warning' : 'primary'}
+            >
+              {props.active ? 'Deactivate' : 'Activate'}
+            </ActivateButton>
+          </CardHeader>
+          {props.active && (
+            <StyledAlert severity="success">
+              This project is activated.
+            </StyledAlert>
+          )}
+          <Typography paragraph>{props.shortDescr}.</Typography>
+          <Typography paragraph>
+            <Link
+              component="button"
+              color="secondary"
+              onClick={() => {
+                props.showDetails();
+              }}
+            >
+              Read more &gt;&gt;
+            </Link>
+          </Typography>
+        </CardContent>
+        <CardFooter>
+          <ToggleButtonGroup
+            value={props.thumbsState}
+            size="small"
+            color={
+              props.thumbsState === ThumbsState.THUMBS_UP
+                ? 'secondary'
+                : 'error'
             }
-            name="thumbs_reason"
-            value={thumbsStateReason}
-            onChange={e => setThumbsStateReason(e.target.value)}
-            onBlur={() =>
+            exclusive
+            onChange={(event, newValue) => {
               props.updateProject({
-                thumbsStateReason: thumbsStateReason,
-              })
-            }
-          />
-        </Form>
-      </Card>
-      {showAiPrompt && (
-        <Modal open={showAiPrompt} onClose={() => setShowAiPrompt(false)}>
-          <textarea
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '90%',
-              height: '90%',
-              overflow: 'auto',
-              padding: '2em',
+                thumbsState: newValue ?? ThumbsState.UNSET_THUMBS_STATE,
+              });
+              if (!getValues().feedback) {
+                setFocus('feedback');
+              }
             }}
           >
-            {(props.aiPrompt ?? '') +
-              '\n\n-----\n\n' +
-              (props.aiResponse ?? '')}
-          </textarea>
-        </Modal>
-      )}
+            <ToggleButton value={ThumbsState.THUMBS_UP}>
+              <ThumbUpAlt fontSize="small" sx={{mr: 1}} /> Like
+            </ToggleButton>
+            <ToggleButton value={ThumbsState.THUMBS_DOWN}>
+              <ThumbDownAlt fontSize="small" sx={{mr: 1}} /> Dislike
+            </ToggleButton>
+          </ToggleButtonGroup>
+          <Form onSubmit={onSubmit}>
+            <TextField
+              label="Feedback"
+              variant="outlined"
+              size="small"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              fullWidth
+              placeholder={helperText}
+              {...register('feedback')}
+            />
+            <Button type="submit" disabled={!isDirty} variant="outlined">
+              Submit
+            </Button>
+          </Form>
+        </CardFooter>
+      </Card>
     </>
   );
 }

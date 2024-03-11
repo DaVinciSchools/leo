@@ -1,20 +1,37 @@
 import {GlobalStateContext} from '../../libs/GlobalState';
-import {Modal} from 'antd';
+import {Alert, Button, Dialog, Paper} from '@mui/material';
 import {ProjectCard} from '../../libs/ProjectCard/ProjectCard';
 import {ProjectPage} from '../../libs/ProjectPage/ProjectPage';
 import {createService} from '../../libs/protos';
 import {pl_types, project_management} from 'pl-pb';
 import {useContext, useEffect, useState} from 'react';
+import {styled} from 'styled-components';
 import {
   PROJECT_DEFINITION_SORTER,
   REVERSE_DATE_THEN_PROJECT_SORTER,
 } from '../../libs/sorters';
-import {TitledPaper} from '../../libs/TitledPaper/TitledPaper';
 import IProject = pl_types.IProject;
 import ProjectManagementService = project_management.ProjectManagementService;
 import ThumbsState = pl_types.Project.ThumbsState;
 import IProjectDefinition = pl_types.IProjectDefinition;
 import State = pl_types.ProjectDefinition.State;
+
+const StyledDialog = styled(Paper)`
+  padding: ${props => props.theme.spacing(4)};
+`;
+
+const DialogActionBar = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+`;
+
+const Wrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${props => props.theme.spacing(4)};
+  margin: ${props => props.theme.spacing(4)} 0;
+`;
 
 export function AllProjectsTab() {
   const global = useContext(GlobalStateContext);
@@ -27,6 +44,7 @@ export function AllProjectsTab() {
     readonly IProjectDefinition[]
   >([]);
   const [projectDetails, setProjectDetails] = useState<IProject>();
+  const [aiResponse, setAiResponse] = useState<string | null | undefined>();
 
   useEffect(() => {
     if (userX == null) {
@@ -82,36 +100,32 @@ export function AllProjectsTab() {
       });
   }
 
+  function showAiResponse(project: pl_types.IProject) {
+    setAiResponse(project.projectDefinition?.aiResponse);
+  }
+
   if (!userX) {
     return <></>;
   }
 
   return (
     <>
-      <div>
+      <Wrapper>
         {unsuccessfulProjects
           .filter(e => e.state === State.FAILED)
           .map(definition => (
-            <TitledPaper
-              title="Project Generation Failed"
-              highlightColor="red"
-              key={definition.id}
-            >
+            <Alert key={definition.id} color="error">
               Generating projects for this Ikigai configuration failed. If the
               problem persists, please contact the administrator.
-            </TitledPaper>
+            </Alert>
           ))}
         {unsuccessfulProjects
           .filter(e => e.state === State.PROCESSING)
           .map(definition => (
-            <TitledPaper
-              title="Project Generation In Progress"
-              highlightColor="lightgreen"
-              key={definition.id}
-            >
+            <Alert key={definition.id} severity="info">
               Projects are still being generated for this Ikigai configuration.
               Please refresh the page to check for updates.
-            </TitledPaper>
+            </Alert>
           ))}
         {projects.map(project => (
           <ProjectCard
@@ -128,37 +142,53 @@ export function AllProjectsTab() {
             updateProject={modifications =>
               updateProject(project, modifications)
             }
-            aiPrompt={project.projectDefinition?.aiPrompt}
-            aiResponse={project.projectDefinition?.aiResponse}
+            showAiPrompt={() => {
+              showAiResponse(project);
+            }}
           />
         ))}
-      </div>
-      <Modal
+      </Wrapper>
+      <Dialog
         open={projectDetails != null}
-        onOk={() => setProjectDetails(undefined)}
-        onCancel={() => setProjectDetails(undefined)}
-        cancelButtonProps={{style: {display: 'none'}}}
-        centered
-        style={{margin: '5%', minWidth: '60%'}}
+        onClose={() => setProjectDetails(undefined)}
+        PaperComponent={StyledDialog}
+        maxWidth="lg"
       >
         {projectDetails != null && (
-          <ProjectPage
-            id={projectDetails.id!}
-            key={projectDetails.id!}
-            name={projectDetails.name ?? 'undefined'}
-            shortDescr={projectDetails.shortDescr ?? 'undefined'}
-            longDescrHtml={projectDetails.longDescrHtml ?? 'undefined'}
-            milestones={projectDetails.milestones ?? []}
-            updateProject={modifications =>
-              updateProject(projectDetails, modifications)
-            }
-            onDeletePost={() => {}}
-            onSubmitPost={() => {}}
-            posts={[]}
-            editable={false}
-          />
+          <>
+            <ProjectPage
+              id={projectDetails.id!}
+              key={projectDetails.id!}
+              name={projectDetails.name ?? 'undefined'}
+              shortDescr={projectDetails.shortDescr ?? 'undefined'}
+              longDescrHtml={projectDetails.longDescrHtml ?? 'undefined'}
+              milestones={projectDetails.milestones ?? []}
+              updateProject={modifications =>
+                updateProject(projectDetails, modifications)
+              }
+              onDeletePost={() => {}}
+              onSubmitPost={() => {}}
+              posts={[]}
+              editable={false}
+            />
+            <DialogActionBar>
+              <Button
+                variant="contained"
+                onClick={() => setProjectDetails(undefined)}
+              >
+                Ok
+              </Button>
+            </DialogActionBar>
+          </>
         )}
-      </Modal>
+      </Dialog>
+      <Dialog
+        open={!!aiResponse}
+        onClose={() => setAiResponse(null)}
+        PaperComponent={StyledDialog}
+      >
+        {aiResponse}
+      </Dialog>
     </>
   );
 }

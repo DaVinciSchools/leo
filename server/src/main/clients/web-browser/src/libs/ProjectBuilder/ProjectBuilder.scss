@@ -5,6 +5,8 @@
   flex-flow: column nowrap;
   height: 100%;
   overflow-x: clip;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .project-builder-stepper {
@@ -43,8 +45,8 @@
 .project-builder-getting-started-buttons {
   display: flex;
   flex-flow: row nowrap;
-  gap: 1em;
-  justify-content: space-around;
+  gap: 3em;
+  place-content: center;
   margin: 0 auto;
   width: 100%;
 }

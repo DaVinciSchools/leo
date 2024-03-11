@@ -1,4 +1,3 @@
-import './StudentDashboard.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import {TabbedPanel} from '../../../libs/TabbedPanel/TabbedPanel';
 import {useContext, useEffect} from 'react';

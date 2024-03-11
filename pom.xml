@@ -24,12 +24,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.boot.version>3.2.2</spring.boot.version>
         <spring.boot.starter.version>3.2.2</spring.boot.starter.version>
-        <spring.framework.version>6.1.3</spring.framework.version>
-        <google.truth.version>1.4.0</google.truth.version>
+        <spring.framework.version>6.1.4</spring.framework.version>
+        <google.truth.version>1.4.1</google.truth.version>
         <lombok.version>1.18.30</lombok.version>
 
         <junit.jupiter.version>5.10.2</junit.jupiter.version>
-        <junit.version>4.13.2</junit.version>
         <surefire.version>3.2.5</surefire.version>
     </properties>
 
@@ -46,7 +45,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>32.1.3-jre</version>
+            <version>33.0.0-jre</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -106,16 +105,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <!-- JUnit testing. -->
-        <!-- Optional: Override the JUnit 4 API version provided by junit-vintage-engine. -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <!-- This needs to be "compile" scope because of the test database
-                 that is spun up when run without a database specified. -->
-            <scope>compile</scope>
-        </dependency>
         <!--JUnit Jupiter Engine to depend on the JUnit 5 engine and JUnit 5 API. -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -124,6 +113,12 @@
             <scope>test</scope>
         </dependency>
         <!--JUnit Jupiter Engine to depend on the JUnit 4 engine and JUnit 4 API.  -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>

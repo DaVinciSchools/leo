@@ -1,4 +1,3 @@
-import './Ikigai.scss';
 import {
   CSSProperties,
   PropsWithChildren,

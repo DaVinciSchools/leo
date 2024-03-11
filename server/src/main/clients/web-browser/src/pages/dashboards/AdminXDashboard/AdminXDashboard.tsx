@@ -1,4 +1,3 @@
-import './AdminXDashboard.scss';
 import {DefaultPage} from '../../../libs/DefaultPage/DefaultPage';
 import React, {Fragment, useContext, useEffect, useState} from 'react';
 import {GlobalStateContext} from '../../../libs/GlobalState';
