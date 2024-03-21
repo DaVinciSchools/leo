@@ -8,12 +8,10 @@ pipeline {
   environment {
     BRANCH_DIR="${HOME}/.project_leo/branches/${BRANCH_NAME}"
     RUN_DIR="${BRANCH_DIR}/targets/${GIT_COMMIT}"
-    MVN_REPO="${BRANCH_DIR}/.m2/repository"
     USER="${BRANCH_NAME}"
   }
   options {
     ansiColor('gnome-terminal')
-    disableConcurrentBuilds()
   }
   stages {
     stage('Build') {
@@ -23,7 +21,6 @@ pipeline {
               globalMavenSettingsConfig: '',
               jdk: 'JDK 17',
               maven: 'Maven 3',
-              mavenLocalRepo: '${MVN_REPO}',
               mavenSettingsConfig: '',
               traceability: true) {
             sh "mvn --batch-mode -Dstyle.color=always clean verify"
