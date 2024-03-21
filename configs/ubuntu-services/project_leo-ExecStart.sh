@@ -25,9 +25,9 @@ for HOME_DIR in /home/*; do
 
   LEO_HOME_DIR="${HOME_DIR}/.project_leo/run/${BRANCH}"
   SUBDOMAIN="${LEO_USER}"
-  HTTPS="$([ "$(hostname -f)" = projectleo.net ] && echo https || echo http)"
-  PORT="$(/root/bin/get-open-port)"
-  DEBUG_PORT="$(/root/bin/get-open-port)"
+  HTTPS="$([[ "$(hostname -f)" =~ project[-_]?leo ]] && echo https || echo http)"
+  PORT="$(/root/project_leo/configs/ubuntu-services/get_open_port.py)"
+  DEBUG_PORT="$(/root/project_leo/configs/ubuntu-services/get_open_port.py)"
 
   FILE=(/etc/apache2/sites-available/??-project_leo.template.sh)
   HTTPS="${HTTPS}" \

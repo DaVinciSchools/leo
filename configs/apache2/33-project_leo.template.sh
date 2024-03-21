@@ -28,9 +28,9 @@ ProxyRequests Off
 
   ProxyPass        "http://localhost:${PORT}/" nocanon retry=0
   ProxyPassReverse "http://localhost:${PORT}/"
-  ProxyPassReverse "${HTTPS}://${SUBDOMAIN}.${DOMAIN}/"
+  ProxyPassReverse "${HTTPS}://%{HTTP_HOST}/"
 
-  # Header edit Location "^http://localhost:${PORT}(.*)" "${HTTPS}://${SUBDOMAIN}.${DOMAIN}/\$1"
+  # Header edit Location "^http://localhost:${PORT}(.*)" "${HTTPS}://%{HTTP_HOST}s/\$1"
 </Location>
 
 EOF

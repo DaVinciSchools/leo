@@ -18,10 +18,10 @@ for HOME_DIR in /home/*; do
 
   [ ! -f "${HOME_DIR}/.run_jenkins" ] && continue;
 
-  HTTPS="$([ "$(hostname -f)" = projectleo.net ] && echo https || echo http)"
+  HTTPS="$([[ "$(hostname -f)" =~ project-?leo ]] && echo https || echo http)"
   USER="$(basename "${HOME_DIR}")"
-  PORT="$(/root/bin/get-open-port)"
-  SUBDOMAIN=www
+  PORT="$(/root/project_leo/configs/ubuntu-services/get_open_port.py)"
+  SUBDOMAIN=corp
 
   FILE=(/etc/apache2/sites-available/??-jenkins_home.template.sh)
   HTTPS="${HTTPS}" \

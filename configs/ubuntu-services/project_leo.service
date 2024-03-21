@@ -4,8 +4,8 @@
 Description=Project Leo Server
 
 [Service]
-ExecStart=/root/bin/services/project_leo-ExecStart.sh
-ExecStopPost=/root/bin/services/project_leo-ExecStopPost.sh
+ExecStart=/root/project_leo/configs/ubuntu-services/project_leo-ExecStart.sh
+ExecStopPost=/root/project_leo/configs/ubuntu-services/project_leo-ExecStopPost.sh
 Restart=no
 
 [Install]

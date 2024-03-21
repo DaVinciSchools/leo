@@ -1,10 +1,8 @@
-# Enable with: sudo systemctl enable project_leo_restart.service
-
 [Unit]
 Description=Restarts a Project Leo server started by the project_leo.service.
 
 [Service]
-ExecStart=/root/bin/services/restart_project_leo@-ExecStart.sh %i
+ExecStart=/root/project_leo/configs/ubuntu-services/restart_project_leo@-ExecStart.sh %i
 Restart=no
 
 [Install]
