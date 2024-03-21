@@ -44,7 +44,7 @@ sudo chmod a+r "${SOURCES_FILE}"
 DEB_URL=$( \
   wget -qO - https://docs.docker.com/desktop/install/ubuntu/ | \
   /usr/bin/grep --only-matching --max-count=1 \
-      'https://desktop\.docker\.com/linux/main/amd64/docker-desktop-[0-9.]\+-amd64.deb' )
+      'https://desktop\.docker\.com/linux/main/amd64/[0-9]\+/docker-desktop-[0-9.]\+-amd64.deb' )
 echo "Using the DEB package at: ${DEB_URL}"
 
 # Download DEB package locally.
